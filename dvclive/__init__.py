@@ -1,7 +1,11 @@
+from collections import OrderedDict
+
 from dvclive.error import DvcLiveError
 import shutil
 import time
 import os
+
+from dvclive.io import update_tsv
 
 SUFFIX_TSV = '.tsv'
 
@@ -46,8 +50,10 @@ class DvcLive:
             self._epoch = epoche
 
         fpath = os.path.join(self.dir, name + SUFFIX_TSV)
-        with open(fpath, 'a') as fd:
-            fd.write('{}\t{}\t{}\n'.format(ts, self._epoch, val))
+
+        d = OrderedDict([("timestamp", ts), ("epoch", self._epoch), (name, val)])
+        update_tsv(d, fpath)
+
 
     def read_epoche(self):
         # ToDo
