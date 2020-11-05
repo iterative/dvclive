@@ -1,0 +1,22 @@
+repos:
+- hooks:
+  - id: black
+    files: '.*\.py'
+    language_version: python3
+  repo: https://github.com/ambv/black
+  rev: 19.10b0
+-   repo: https://github.com/asottile/seed-isort-config
+    rev: v2.1.1
+    hooks:
+    -   id: seed-isort-config
+- hooks:
+  - id: isort
+    language_version: python3
+  repo: https://github.com/timothycrosley/isort
+  rev: 4.3.21
+- hooks:
+  - id: flake8
+    files: '.*\.py'
+    language_version: python3
+  repo: https://gitlab.com/pycqa/flake8
+  rev: 3.7.9
