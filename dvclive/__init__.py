@@ -4,9 +4,10 @@ import time
 from collections import OrderedDict
 
 from dvclive.error import DvcLiveError
-from dvclive.io import update_tsv, write_tsv
+from dvclive.io import update_tsv, write_json
 
 SUFFIX_TSV = ".tsv"
+SUFFIX_JSON = ".json"
 
 
 class DvcLive:
@@ -63,12 +64,12 @@ class DvcLive:
             self._epoch = epoche
 
         all_path = os.path.join(self.summary_dir, name + SUFFIX_TSV)
-        fpath = os.path.join(self.dir, name + SUFFIX_TSV)
+        fpath = os.path.join(self.dir, name + SUFFIX_JSON)
 
         d = OrderedDict(
             [("timestamp", ts), ("epoch", self._epoch), (name, val)]
         )
-        write_tsv(d, fpath)
+        write_json(d, fpath)
         update_tsv(d, all_path)
 
     def read_epoche(self):

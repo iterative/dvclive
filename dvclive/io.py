@@ -1,4 +1,5 @@
 import csv
+import json
 import os
 from collections import OrderedDict
 
@@ -22,3 +23,8 @@ def _write_tsv(d: dict, path: str, mode: str):
             writer.writerow(list(d.keys()))
 
         writer.writerow(list(d.values()))
+
+
+def write_json(d: dict, path: str):
+    with open(path, "w") as fd:
+        json.dump(d, fd)
