@@ -2,13 +2,8 @@ import csv
 import os
 from collections import OrderedDict
 
-def update_tsv(d, path):
-    """
 
-    :param d: eg {"accuracy": 0.24, "epoch": 5}
-    :param path:
-    :return:
-    """
+def update_tsv(d, path):
     # TODO what if d keys are not in order?
     assert isinstance(d, OrderedDict)
 
@@ -20,6 +15,3 @@ def update_tsv(d, path):
             writer.writerow(list(d.keys()))
 
         writer.writerow(list(d.values()))
-
-
-

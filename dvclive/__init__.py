@@ -7,7 +7,7 @@ import os
 
 from dvclive.io import update_tsv
 
-SUFFIX_TSV = '.tsv'
+SUFFIX_TSV = ".tsv"
 
 
 class DvcLive:
@@ -27,7 +27,7 @@ class DvcLive:
             try:
                 os.makedirs(dvclive.dir, exist_ok=True)
             except Exception as ex:
-                raise DvcLiveError('dvc-live cannot create log dir - {}'.format(ex))
+                raise DvcLiveError("dvc-live cannot create log dir - {}".format(ex))
 
     @property
     def dir(self):
@@ -38,14 +38,16 @@ class DvcLive:
 
     def log(self, name, val, epoche=None):
         if not self.dir:
-            raise DvcLiveError("Initialization error - call 'dvclive.init()' before "
-                            "'dvclive.log()'")
+            raise DvcLiveError(
+                "Initialization error - call 'dvclive.init()' before " "'dvclive.log()'"
+            )
 
-        ts = int(time.time()*1000)
+        ts = int(time.time() * 1000)
 
         if not isinstance(val, (int, float)):
-            raise DvcLiveError("Metrics '{}' has not supported type {}".foramt(
-                        name, type(val)))
+            raise DvcLiveError(
+                "Metrics '{}' has not supported type {}".foramt(name, type(val))
+            )
         if epoche:
             self._epoch = epoche
 
@@ -53,7 +55,6 @@ class DvcLive:
 
         d = OrderedDict([("timestamp", ts), ("epoch", self._epoch), (name, val)])
         update_tsv(d, fpath)
-
 
     def read_epoche(self):
         # ToDo
