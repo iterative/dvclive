@@ -14,7 +14,7 @@ class DvcLive:
         self._dir = None
         self._epoch = None
 
-    def init(self, directory, is_continue=False, epoch=0):
+    def init(self, directory: str, is_continue: bool = False, epoch: int = 0):
         self._dir = directory
         self._epoch = epoch
 
@@ -37,7 +37,7 @@ class DvcLive:
     def next_epoch(self):
         self._epoch += 1
 
-    def log(self, name, val, epoche=None):
+    def log(self, name: str, val: float, epoche: int = None):
         if not self.dir:
             raise DvcLiveError(
                 "Initialization error - call 'dvclive.init()' before "
@@ -70,5 +70,5 @@ class DvcLive:
 dvclive = DvcLive()
 
 
-def init(directory, is_continue=False, epoch=0):
+def init(directory: str, is_continue: bool = False, epoch: int = 0):
     dvclive.init(directory, is_continue, epoch)

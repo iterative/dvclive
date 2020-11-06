@@ -3,7 +3,7 @@ import os
 from collections import OrderedDict
 
 
-def update_tsv(d, path):
+def update_tsv(d: dict, path: str):
     # TODO what if d keys are not in order?
     assert isinstance(d, OrderedDict)
 
