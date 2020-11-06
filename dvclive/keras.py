@@ -1,4 +1,5 @@
 from tensorflow.keras.callbacks import Callback
+
 from dvclive import dvclive
 
 
@@ -8,4 +9,3 @@ class DvcLiveCallback(Callback):
         for metric, value in logs.items():
             dvclive.log(metric, value)
         dvclive.next_epoch()
-        pass
