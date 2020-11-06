@@ -4,7 +4,7 @@ import time
 from collections import OrderedDict
 
 from dvclive.error import DvcLiveError
-from dvclive.io import update_tsv
+from dvclive.io import update_tsv, write_tsv
 
 SUFFIX_TSV = ".tsv"
 
@@ -34,6 +34,13 @@ class DvcLive:
     def dir(self):
         return self._dir
 
+    @property
+    def summary_dir(self):
+        path = os.path.join(self.dir, "all")
+        if not os.path.exists(path):
+            os.mkdir(path)
+        return path
+
     def next_epoch(self):
         self._epoch += 1
 
@@ -55,12 +62,14 @@ class DvcLive:
         if epoche:
             self._epoch = epoche
 
+        all_path = os.path.join(self.summary_dir, name + SUFFIX_TSV)
         fpath = os.path.join(self.dir, name + SUFFIX_TSV)
 
         d = OrderedDict(
             [("timestamp", ts), ("epoch", self._epoch), (name, val)]
         )
-        update_tsv(d, fpath)
+        write_tsv(d, fpath)
+        update_tsv(d, all_path)
 
     def read_epoche(self):
         # ToDo
