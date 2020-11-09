@@ -77,6 +77,49 @@ class DvcLive:
         return 66
 
 
+def _find_dvc_root(root=None):
+    if not root:
+        root = os.getcwd()
+
+    root = os.path.realpath(root)
+
+    if not os.path.isdir(root):
+        # TODO
+        raise Exception("its not dir!")
+
+    def dvc_dir(dirname):
+        return os.path.join(dirname, ".dvc")
+
+    while True:
+        if os.path.exists(dvc_dir(root)):
+            return root
+        if os.path.ismount(root):
+            break
+        root = os.path.dirname(root)
+    # TODO
+    raise Exception("No DVC HERE!")
+
+
+def make_dvc_checkpoint():
+    import builtins
+    from time import sleep
+
+    if os.getenv("DVC_CHECKPOINT") is None:
+        return
+
+    root_dir = _find_dvc_root()
+    signal_file = os.path.join(root_dir, ".dvc", "tmp", "DVC_CHECKPOINT")
+
+    with builtins.open(signal_file, "w") as fobj:
+        # NOTE: force flushing/writing empty file to disk, otherwise when
+        # run in certain contexts (pytest) file may not actually be written
+        fobj.write("")
+        fobj.flush()
+        os.fsync(fobj.fileno())
+    while os.path.exists(signal_file):
+        sleep(1)
+
+
 dvclive = DvcLive()
 
 
