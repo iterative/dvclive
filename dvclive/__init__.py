@@ -14,6 +14,7 @@ class DvcLive:
     def __init__(self):
         self._dir = None
         self._epoch = None
+        self._metrics = {}
 
     def init(self, directory: str, is_continue: bool = False, epoch: int = 0):
         self._dir = directory
@@ -37,12 +38,19 @@ class DvcLive:
 
     @property
     def summary_dir(self):
-        path = os.path.join(self.dir, "all")
+        path = os.path.join(self.dir, "history")
         if not os.path.exists(path):
             os.mkdir(path)
         return path
 
+    @property
+    def metrics_summary_path(self):
+        return os.path.join(self.dir, "latest.json")
+
     def next_epoch(self):
+        write_json(self._metrics, self.metrics_summary_path)
+        self._metrics.clear()
+
         self._epoch += 1
 
     def log(self, name: str, val: float, epoche: int = None):
@@ -65,6 +73,7 @@ class DvcLive:
 
         all_path = os.path.join(self.summary_dir, name + SUFFIX_TSV)
         fpath = os.path.join(self.dir, name + SUFFIX_JSON)
+        self._metrics[name] = val
 
         d = OrderedDict(
             [("timestamp", ts), ("epoch", self._epoch), (name, val)]
