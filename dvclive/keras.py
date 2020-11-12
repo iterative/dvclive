@@ -8,4 +8,4 @@ class DvcLiveCallback(Callback):
         logs = logs or {}
         for metric, value in logs.items():
             dvclive.log(metric, value)
-        dvclive.next_epoch()
+        dvclive.next_step()

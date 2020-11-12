@@ -13,16 +13,16 @@ SUFFIX_JSON = ".json"
 class DvcLive:
     def __init__(self):
         self._dir = None
-        self._epoch = None
+        self._step = None
         self._metrics = {}
 
-    def init(self, directory: str, is_continue: bool = False, epoch: int = 0):
+    def init(self, directory: str, is_continue: bool = False, step: int = 0):
         self._dir = directory
-        self._epoch = epoch
+        self._step = step
 
         if is_continue:
-            if epoch == 0:
-                self._epoch = self.read_epoche()
+            if step == 0:
+                self._step = self.read_step()
         else:
             shutil.rmtree(directory, ignore_errors=True)
             try:
@@ -47,13 +47,13 @@ class DvcLive:
     def metrics_summary_path(self):
         return os.path.join(self.dir, "latest.json")
 
-    def next_epoch(self):
+    def next_step(self):
         write_json(self._metrics, self.metrics_summary_path)
         self._metrics.clear()
 
-        self._epoch += 1
+        self._step += 1
 
-    def log(self, name: str, val: float, epoche: int = None):
+    def log(self, name: str, val: float, step: int = None):
         if not self.dir:
             raise DvcLiveError(
                 "Initialization error - call 'dvclive.init()' before "
@@ -68,18 +68,16 @@ class DvcLive:
                     name, type(val)
                 )
             )
-        if epoche:
-            self._epoch = epoche
+        if step:
+            self._step = step
 
         all_path = os.path.join(self.summary_dir, name + SUFFIX_TSV)
         self._metrics[name] = val
 
-        d = OrderedDict(
-            [("timestamp", ts), ("epoch", self._epoch), (name, val)]
-        )
+        d = OrderedDict([("timestamp", ts), ("step", self._step), (name, val)])
         update_tsv(d, all_path)
 
-    def read_epoche(self):
+    def read_step(self):
         # ToDo
         return 66
 
@@ -130,5 +128,5 @@ def make_dvc_checkpoint():
 dvclive = DvcLive()
 
 
-def init(directory: str, is_continue: bool = False, epoch: int = 0):
-    dvclive.init(directory, is_continue, epoch)
+def init(directory: str, is_continue: bool = False, step: int = 0):
+    dvclive.init(directory, is_continue, step)
