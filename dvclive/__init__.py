@@ -4,7 +4,7 @@ import time
 from collections import OrderedDict
 
 from dvclive.error import DvcLiveError
-from dvclive.io import update_tsv, write_json, write_yaml
+from dvclive.io import update_tsv, write_yaml
 
 SUFFIX_TSV = ".tsv"
 SUFFIX_JSON = ".json"
@@ -47,13 +47,6 @@ class DvcLive:
     def summary_path(self):
         return os.path.join(self.dir, "latest.json")
 
-    @property
-    def metrics_path(self):
-        path = os.path.join(self.dir, "metrics")
-        if not os.path.exists(path):
-            os.mkdir(path)
-        return path
-
     def next_step(self):
         write_yaml(self._metrics, self.summary_path)
         self._metrics.clear()
@@ -83,7 +76,6 @@ class DvcLive:
 
         d = OrderedDict([("timestamp", ts), ("step", self._step), (name, val)])
         update_tsv(d, all_path)
-        write_json(d, os.path.join(self.metrics_path, name + ".json"))
 
     def read_step(self):
         # ToDo
