@@ -4,10 +4,7 @@ import time
 from collections import OrderedDict
 
 from dvclive.error import DvcLiveError
-from dvclive.io import update_tsv, write_yaml
-
-SUFFIX_TSV = ".tsv"
-SUFFIX_JSON = ".json"
+from dvclive.serialize import update_tsv, write_json
 
 
 class DvcLive:
@@ -48,7 +45,7 @@ class DvcLive:
         return os.path.join(self.dir, "latest.json")
 
     def next_step(self):
-        write_yaml(self._metrics, self.summary_path)
+        write_json(self._metrics, self.summary_path)
         self._metrics.clear()
 
         self._step += 1
@@ -71,7 +68,7 @@ class DvcLive:
         if step:
             self._step = step
 
-        all_path = os.path.join(self.history_path, name + SUFFIX_TSV)
+        all_path = os.path.join(self.history_path, name + ".tsv")
         self._metrics[name] = val
 
         d = OrderedDict([("timestamp", ts), ("step", self._step), (name, val)])
