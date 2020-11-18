@@ -3,7 +3,7 @@ import shutil
 import time
 from collections import OrderedDict
 
-from dvclive.error import DvcLiveError
+from dvclive.error import DvcLiveError, InitializationError
 from dvclive.serialize import update_tsv, write_json
 
 
@@ -52,10 +52,7 @@ class DvcLive:
 
     def log(self, name: str, val: float, step: int = None):
         if not self.dir:
-            raise DvcLiveError(
-                "Initialization error - call 'dvclive.init()' before "
-                "'dvclive.log()'"
-            )
+            raise InitializationError()
 
         ts = int(time.time() * 1000)
 

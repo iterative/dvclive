@@ -1,8 +1,8 @@
 from setuptools import find_packages, setup
 
-install_requires = [
-    "pylint==2.5.3",
-]
+tests_requires = ["pylint==2.5.3", "pytest>=6.0.1"]
 setup(
-    name="dvclive", packages=find_packages(), install_requires=install_requires
+    name="dvclive",
+    packages=find_packages(),
+    extras_require={"tests": tests_requires},
 )
