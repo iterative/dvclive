@@ -14,11 +14,13 @@ def test_logging(tmp_dir):
 
     dvclive.log("m1", 1)
 
+    assert (tmp_dir / "test_dir").is_dir()
+    assert (tmp_dir / "test_dir" / "m1.tsv").is_file()
+    assert not (tmp_dir / "test_dir.json").is_file()
+
     dvclive.next_step()
 
-    assert (tmp_dir / "test_dir" / "history").is_dir()
-    assert (tmp_dir / "test_dir" / "history" / "m1.tsv").is_file()
-    assert (tmp_dir / "test_dir" / "latest.json").is_file()
+    assert (tmp_dir / "test_dir.json").is_file()
 
 
 @pytest.mark.parametrize("summarize", [True, False])
