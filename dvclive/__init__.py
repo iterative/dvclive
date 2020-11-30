@@ -4,7 +4,7 @@ import time
 from collections import OrderedDict
 
 from dvclive.error import DvcLiveError, InitializationError
-from dvclive.serialize import update_tsv, write_json
+from dvclive.serialize import read_logs, update_tsv, write_json
 
 
 class DvcLive:
@@ -25,9 +25,11 @@ class DvcLive:
         self._step = step
         self._summarize = summarize
 
-        if is_continue:
+        if is_continue and self.exists:
             if step == 0:
-                self._step = self.read_step()
+                self._step = self.read_step() + 1
+            else:
+                self._step = step
         else:
             shutil.rmtree(directory, ignore_errors=True)
             try:
@@ -42,8 +44,12 @@ class DvcLive:
         return self._dir
 
     @property
+    def exists(self):
+        return os.path.isdir(self.dir)
+
+    @property
     def history_path(self):
-        if not os.path.exists(self.dir):
+        if not self.exists:
             os.mkdir(self.dir)
         return self.dir
 
@@ -52,12 +58,12 @@ class DvcLive:
         return self.dir + ".json"
 
     def next_step(self):
-        write_json(self._metrics, self.summary_path)
+        write_json({**self._metrics, "step": self._step}, self.summary_path)
 
         if self._summarize:
             from dvc.api.dvclive import summary
 
-            summary(self.dir, debug=True)
+            summary(self.dir)
 
         self._metrics.clear()
 
@@ -85,14 +91,16 @@ class DvcLive:
         update_tsv(d, all_path)
 
     def read_step(self):
-        # ToDo
-        return 66
+        if self.exists:
+            _, latest = read_logs(self.dir)
+            return int(latest["step"])
+        return 0
 
 
 dvclive = DvcLive()
 
 
 def init(
-    directory: str, is_continue: bool = False, step: int = 0, summarize=False
+    directory: str, is_continue: bool = False, step: int = 0, summarize=True
 ):
     dvclive.init(directory, is_continue, step, summarize)

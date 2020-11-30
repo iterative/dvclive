@@ -35,3 +35,25 @@ def write_json(d: dict, path: str):
 def write_yaml(d: dict, path: str):
     with open(path, "w") as fd:
         yaml.safe_dump(d, fd)
+
+
+def parse(path):
+    _, extension = os.path.splitext(path)
+    extension = extension.lower()
+    if extension == ".tsv":
+        with open(path, "r") as fd:
+            reader = csv.DictReader(fd, delimiter="\t")
+            return list(reader)
+    elif extension == ".json":
+        with open(path, "r") as fd:
+            return json.load(fd)
+    raise NotImplementedError
+
+
+def read_logs(path):
+    assert os.path.isdir(path)
+    history = {}
+    for p in os.listdir(path):
+        history[p] = parse(os.path.join(path, p))
+    latest = parse(path + ".json")
+    return history, latest

@@ -17,7 +17,7 @@ tests_requires = [
     "flake8",
     "pytest-cov",
 ]
-install_requires = ["dvc", *packages]
+install_requires = ["dvc", "funcy", *packages]
 setup(
     name="dvclive",
     packages=find_packages(),
