@@ -26,8 +26,9 @@ def test_create_logs_dir(tmp_dir):
     assert (tmp_dir / "logs").is_dir()
 
 
-def test_logging(tmp_dir):
-    init("logs")
+@pytest.mark.parametrize("dump_latest", [True, False])
+def test_logging(tmp_dir, dump_latest):
+    init("logs", dump_latest=dump_latest)
 
     dvclive.log("m1", 1)
 
@@ -37,19 +38,19 @@ def test_logging(tmp_dir):
 
     dvclive.next_step()
 
-    assert (tmp_dir / "logs.json").is_file()
+    assert (tmp_dir / "logs.json").is_file() == dump_latest
 
 
-@pytest.mark.parametrize("summarize", [True, False])
-def test_dvc_summary(tmp_dir, summarize):
-    init("logs", summarize=summarize)
+@pytest.mark.parametrize("report", [True, False])
+def test_dvc_summary(tmp_dir, report):
+    init("logs", generate_report=report)
 
     dvclive.log("m1", 1)
     dvclive.log("m1", 2)
 
     dvclive.next_step()
 
-    assert (tmp_dir / "logs.html").is_file() == summarize
+    assert (tmp_dir / "logs.html").is_file() == report
 
 
 @pytest.mark.parametrize(
