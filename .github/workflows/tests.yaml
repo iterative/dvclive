@@ -1,48 +1,48 @@
-name: tests
+#name: tests
 
-on:
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
+#on:
+#  pull_request:
+#    branches:
+#      - main
+#  push:
+#    branches:
+#      - main
 
-jobs:
-  code-check:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2.3.2
-    - name: set up Python 3.8
-      uses: actions/setup-python@v2.1.4
-      with:
-        python-version: 3.8
-    - name: install requirements
-      run: pip install ".[tests]"
-    - name: check formatting
-      run: pre-commit run --all-files
-  tests:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-18.04, windows-2019, macos-10.15]
-        pyv: ["3.7"]
+#jobs:
+#  code-check:
+#    runs-on: ubuntu-latest
+#    steps:
+#    - uses: actions/checkout@v2.3.2
+#    - name: set up Python 3.8
+#      uses: actions/setup-python@v2.1.4
+#      with:
+#        python-version: 3.8
+#    - name: install requirements
+#      run: pip install ".[tests]"
+#    - name: check formatting
+#      run: pre-commit run --all-files
+#  tests:
+#    runs-on: ${{ matrix.os }}
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        os: [ubuntu-18.04, windows-2019, macos-10.15]
+#        pyv: ["3.7"]
 
-    steps:
-    - uses: actions/checkout@v2.3.2
-    - name: set up python
-      uses: actions/setup-python@v2.1.4
-      with:
-        python-version: ${{ matrix.pyv }}
-    - name: install
-      run: |
-        pip install wheel
-        pip install -e ".[tests]"
-    - name: run tests
-      run: py.test --cov-report=xml --cov-report=term
-    - name: upload coverage report
-      uses: codecov/codecov-action@v1.0.13
-      with:
-        file: ./coverage.xml
-        fail_ci_if_error: false
+#    steps:
+#    - uses: actions/checkout@v2.3.2
+#    - name: set up python
+#      uses: actions/setup-python@v2.1.4
+#      with:
+#        python-version: ${{ matrix.pyv }}
+#    - name: install
+#      run: |
+#        pip install wheel
+#        pip install -e ".[tests]"
+#    - name: run tests
+#      run: py.test --cov-report=xml --cov-report=term
+#    - name: upload coverage report
+#      uses: codecov/codecov-action@v1.0.13
+#      with:
+#        file: ./coverage.xml
+#        fail_ci_if_error: false
