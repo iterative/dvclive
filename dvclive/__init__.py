@@ -12,18 +12,21 @@ class DvcLive:
         self._dir = None
         self._step = None
         self._metrics = {}
-        self._summarize = False
+        self._report = True
+        self._dump_latest = True
 
     def init(
         self,
         directory: str,
         is_continue: bool = False,
         step: int = 0,
-        summarize=False,
+        report=True,
+        dump_latest=True,
     ):
         self._dir = directory
         self._step = step
-        self._summarize = summarize
+        self._report = report
+        self._dump_latest = dump_latest
 
         if is_continue and self.exists:
             if step == 0:
@@ -58,9 +61,12 @@ class DvcLive:
         return self.dir + ".json"
 
     def next_step(self):
-        write_json({**self._metrics, "step": self._step}, self.summary_path)
+        if self._dump_latest:
+            write_json(
+                {"step": self._step, **self._metrics}, self.summary_path
+            )
 
-        if self._summarize:
+        if self._report:
             from dvc.api.dvclive import summary
 
             summary(self.dir)
@@ -101,6 +107,10 @@ dvclive = DvcLive()
 
 
 def init(
-    directory: str, is_continue: bool = False, step: int = 0, summarize=True
+    directory: str,
+    is_continue: bool = False,
+    step: int = 0,
+    generate_report=True,
+    dump_latest=True,
 ):
-    dvclive.init(directory, is_continue, step, summarize)
+    dvclive.init(directory, is_continue, step, generate_report, dump_latest)
