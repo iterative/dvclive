@@ -1,25 +1,47 @@
+import csv
+import json
 import os
 
 import pytest
 from funcy import last
 
 from dvclive import dvclive, init
-from dvclive.serialize import read_logs
 
 
-def read_history(logs_dir, metric_name):
-    history, _ = read_logs(logs_dir)
+def read_logs(path):
+    assert os.path.isdir(path)
+    history = {}
+    for p in os.listdir(path):
+        metric_name = os.path.splitext(p)[0]
+        history[metric_name] = _parse_tsv(os.path.join(path, p))
+    latest = _parse_json(path + ".json")
+    return history, latest
+
+
+def read_history(path, metric):
+    history, _ = read_logs(path)
     steps = []
     values = []
-    for e in history[metric_name + ".tsv"]:
+    for e in history[metric]:
         steps.append(int(e["step"]))
-        values.append(float(e[metric_name]))
+        values.append(float(e[metric]))
     return steps, values
 
 
-def read_latest(logs_dir, metric_name):
-    _, latest = read_logs(logs_dir)
+def read_latest(path, metric_name):
+    _, latest = read_logs(path)
     return latest["step"], latest[metric_name]
+
+
+def _parse_tsv(path):
+    with open(path, "r") as fd:
+        reader = csv.DictReader(fd, delimiter="\t")
+        return list(reader)
+
+
+def _parse_json(path):
+    with open(path, "r") as fd:
+        return json.load(fd)
 
 
 @pytest.mark.parametrize("path", ["logs", os.path.join("subdir", "logs")])
@@ -90,3 +112,15 @@ def test_infer_next_step(tmp_dir, mocker):  # pylint: disable=unused-argument
 
     assert read_history("logs", "m1") == ([0, 1, 2], [1.0, 2.0, 3.0])
     assert m.call_count == 2
+
+
+def test_custom_steps(tmp_dir):  # pylint: disable=unused-argument
+    init("logs")
+
+    steps = [0, 62, 1000]
+    metrics = [0.9, 0.8, 0.7]
+
+    for step, metric in zip(steps, metrics):
+        dvclive.log("m", metric, step=step)
+
+    assert read_history("logs", "m") == (steps, metrics)

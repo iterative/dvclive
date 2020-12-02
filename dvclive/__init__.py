@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import shutil
@@ -5,7 +6,7 @@ import time
 from collections import OrderedDict
 
 from dvclive.error import DvcLiveError, InitializationError
-from dvclive.serialize import read_logs, update_tsv, write_json
+from dvclive.serialize import update_tsv, write_json
 
 logger = logging.getLogger(__name__)
 
@@ -90,28 +91,32 @@ class DvcLive:
             )
             self.next_step()
 
-        ts = int(time.time() * 1000)
-
         if not isinstance(val, (int, float)):
             raise DvcLiveError(
                 "Metrics '{}' has not supported type {}".format(
                     name, type(val)
                 )
             )
+
         if step:
             self._step = step
 
         metric_history_path = os.path.join(self.history_path, name + ".tsv")
         self._metrics[name] = val
 
+        ts = int(time.time() * 1000)
         d = OrderedDict([("timestamp", ts), ("step", self._step), (name, val)])
         update_tsv(d, metric_history_path)
 
     def read_step(self):
         if self.exists:
-            _, latest = read_logs(self.dir)
+            latest = self.read_latest()
             return int(latest["step"])
         return 0
+
+    def read_latest(self):
+        with open(self.summary_path, "r") as fd:
+            return json.load(fd)
 
 
 dvclive = DvcLive()
