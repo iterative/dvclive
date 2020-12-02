@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import time
@@ -5,6 +6,10 @@ from collections import OrderedDict
 
 from dvclive.error import DvcLiveError, InitializationError
 from dvclive.serialize import read_logs, update_tsv, write_json
+
+logger = logging.getLogger(__name__)
+
+__version__ = "0.0.1"
 
 
 class DvcLive:
@@ -79,6 +84,12 @@ class DvcLive:
         if not self.dir:
             raise InitializationError()
 
+        if name in self._metrics.keys():
+            logger.info(
+                f"Found {name} in metrics dir, assuming new epoch started"
+            )
+            self.next_step()
+
         ts = int(time.time() * 1000)
 
         if not isinstance(val, (int, float)):
@@ -90,11 +101,11 @@ class DvcLive:
         if step:
             self._step = step
 
-        all_path = os.path.join(self.history_path, name + ".tsv")
+        metric_history_path = os.path.join(self.history_path, name + ".tsv")
         self._metrics[name] = val
 
         d = OrderedDict([("timestamp", ts), ("step", self._step), (name, val)])
-        update_tsv(d, all_path)
+        update_tsv(d, metric_history_path)
 
     def read_step(self):
         if self.exists:
@@ -110,7 +121,7 @@ def init(
     directory: str,
     is_continue: bool = False,
     step: int = 0,
-    generate_report=True,
+    report=True,
     dump_latest=True,
 ):
-    dvclive.init(directory, is_continue, step, generate_report, dump_latest)
+    dvclive.init(directory, is_continue, step, report, dump_latest)

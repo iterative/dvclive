@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from funcy import last
 
@@ -20,10 +22,11 @@ def read_latest(logs_dir, metric_name):
     return latest["step"], latest[metric_name]
 
 
-def test_create_logs_dir(tmp_dir):
-    init("logs")
+@pytest.mark.parametrize("path", ["logs", os.path.join("subdir", "logs")])
+def test_create_logs_dir(tmp_dir, path):
+    init(path)
 
-    assert (tmp_dir / "logs").is_dir()
+    assert (tmp_dir / path).is_dir()
 
 
 @pytest.mark.parametrize("dump_latest", [True, False])
@@ -43,11 +46,9 @@ def test_logging(tmp_dir, dump_latest):
 
 @pytest.mark.parametrize("report", [True, False])
 def test_dvc_summary(tmp_dir, report):
-    init("logs", generate_report=report)
+    init("logs", report=report)
 
     dvclive.log("m1", 1)
-    dvclive.log("m1", 2)
-
     dvclive.next_step()
 
     assert (tmp_dir / "logs.html").is_file() == report
@@ -77,3 +78,15 @@ def test_continue(
 
     assert read_history("logs", "metric") == (steps, metrics)
     assert read_latest("logs", "metric") == (last(steps), last(metrics))
+
+
+def test_infer_next_step(tmp_dir, mocker):  # pylint: disable=unused-argument
+    init("logs")
+
+    m = mocker.spy(dvclive, "next_step")
+    dvclive.log("m1", 1.0)
+    dvclive.log("m1", 2.0)
+    dvclive.log("m1", 3.0)
+
+    assert read_history("logs", "m1") == ([0, 1, 2], [1.0, 2.0, 3.0])
+    assert m.call_count == 2
