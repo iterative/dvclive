@@ -83,7 +83,11 @@ class DvcLive:
 
     def log(self, name: str, val: float, step: int = None):
         if not self.dir:
-            raise InitializationError()
+            if "DVCLIVE_CONFIG" in os.environ:
+                config = json.loads(os.environ["DVCLIVE_CONFIG"])
+                self.init(config["path"], report=False)
+            else:
+                raise InitializationError()
 
         if name in self._metrics.keys():
             logger.info(
