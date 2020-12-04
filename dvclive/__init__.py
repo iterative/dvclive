@@ -11,7 +11,8 @@ from dvclive.serialize import update_tsv, write_json
 logger = logging.getLogger(__name__)
 
 __version__ = "0.0.1"
-DEFAULT_DIR = 'dvclive'
+DEFAULT_DIR = "dvclive"
+
 
 class DvcLive:
     def __init__(self):
@@ -124,7 +125,7 @@ class DvcLive:
 
 
 dvclive = DvcLive()
-dvclive.init()
+
 
 def init(
     directory: str,
