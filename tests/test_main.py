@@ -5,7 +5,7 @@ import os
 import pytest
 from funcy import last
 
-from dvclive import dvclive, init
+from dvclive import DVCLIVE_PATH, DVCLIVE_SUMMARY, DvcLive, dvclive, init
 
 
 def read_logs(path):
@@ -124,3 +124,15 @@ def test_custom_steps(tmp_dir):  # pylint: disable=unused-argument
         dvclive.log("m", metric, step=step)
 
     assert read_history("logs", "m") == (steps, metrics)
+
+
+@pytest.mark.parametrize("summary", [True, False])
+def test_init_from_env(tmp_dir, summary):  # pylint: disable=unused-argument
+    logger = DvcLive()
+    os.environ[DVCLIVE_PATH] = "logs"
+    os.environ[DVCLIVE_SUMMARY] = str(summary)
+
+    logger.log("m", 0.1)
+
+    assert logger._dir == "logs"  # pylint: disable=protected-access
+    assert logger._dump_latest == summary  # pylint: disable=protected-access

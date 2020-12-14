@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 __version__ = "0.0.1"
 DEFAULT_DIR = "dvclive"
+DVCLIVE_PATH = "DVCLIVE_PATH"
+DVCLIVE_SUMMARY = "DVCLIVE_SUMMARY"
 
 
 class DvcLive:
@@ -43,7 +45,7 @@ class DvcLive:
         else:
             shutil.rmtree(directory, ignore_errors=True)
             try:
-                os.makedirs(dvclive.dir, exist_ok=True)
+                os.makedirs(self._dir, exist_ok=True)
             except Exception as ex:
                 raise DvcLiveError(
                     "dvc-live cannot create log dir - {}".format(ex)
@@ -83,15 +85,13 @@ class DvcLive:
         self._step += 1
 
     def _from_env(self):
-        directory = os.environ["DVCLIVE_PATH"]
-        dump_latest = (
-            os.environ.get("DVCLIVE_SUMMARY", "true").lower() == "true"
-        )
+        directory = os.environ[DVCLIVE_PATH]
+        dump_latest = os.environ.get(DVCLIVE_SUMMARY, "true").lower() == "true"
         self.init(directory, dump_latest=dump_latest, report=False)
 
     def log(self, name: str, val: float, step: int = None):
         if not self.dir:
-            if "DVCLIVE_PATH" in os.environ:
+            if DVCLIVE_PATH in os.environ:
                 self._from_env()
             else:
                 raise InitializationError()
