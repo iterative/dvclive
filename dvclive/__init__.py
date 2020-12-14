@@ -82,11 +82,17 @@ class DvcLive:
 
         self._step += 1
 
+    def _from_env(self):
+        directory = os.environ["DVCLIVE_PATH"]
+        dump_latest = (
+            os.environ.get("DVCLIVE_SUMMARY", "true").lower() == "true"
+        )
+        self.init(directory, dump_latest=dump_latest, report=False)
+
     def log(self, name: str, val: float, step: int = None):
         if not self.dir:
-            if "DVCLIVE_CONFIG" in os.environ:
-                config = json.loads(os.environ["DVCLIVE_CONFIG"])
-                self.init(config["path"], report=False)
+            if "DVCLIVE_PATH" in os.environ:
+                self._from_env()
             else:
                 raise InitializationError()
 
