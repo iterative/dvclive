@@ -130,7 +130,7 @@ def test_custom_steps(tmp_dir):  # pylint: disable=unused-argument
 def test_init_from_env(tmp_dir, summary):  # pylint: disable=unused-argument
     logger = DvcLive()
     os.environ[DVCLIVE_PATH] = "logs"
-    os.environ[DVCLIVE_SUMMARY] = str(summary)
+    os.environ[DVCLIVE_SUMMARY] = str(int(summary))
 
     logger.log("m", 0.1)
 

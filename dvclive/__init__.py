@@ -86,7 +86,7 @@ class DvcLive:
 
     def _from_env(self):
         directory = os.environ[DVCLIVE_PATH]
-        dump_latest = os.environ.get(DVCLIVE_SUMMARY, "true").lower() == "true"
+        dump_latest = bool(int(os.environ.get(DVCLIVE_SUMMARY, "0")))
         self.init(directory, dump_latest=dump_latest, report=False)
 
     def log(self, name: str, val: float, step: int = None):
