@@ -76,7 +76,7 @@ class DvcLive:
             )
 
         if self._report:
-            from dvc.api.dvclive import summary
+            from dvc.api.live import summary
 
             summary(self.dir)
 
