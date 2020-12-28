@@ -1,6 +1,7 @@
 from tensorflow.keras.callbacks import Callback
 
 from dvclive import dvclive
+from dvclive.dvc import make_checkpoint
 
 
 class DvcLiveCallback(Callback):
@@ -8,4 +9,5 @@ class DvcLiveCallback(Callback):
         logs = logs or {}
         for metric, value in logs.items():
             dvclive.log(metric, value)
+        make_checkpoint()
         dvclive.next_step()
