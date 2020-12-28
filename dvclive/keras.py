@@ -9,5 +9,5 @@ class DvcLiveCallback(Callback):
         logs = logs or {}
         for metric, value in logs.items():
             dvclive.log(metric, value)
-        make_checkpoint()
         dvclive.next_step()
+        make_checkpoint()
