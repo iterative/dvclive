@@ -32,7 +32,7 @@ limit-inference-results=100
 
 # List of plugins (as comma separated values of python modules names) to load,
 # usually to register additional checkers.
-#load-plugins=pylint_pytest,pylint_plugin_disable
+#load-plugins=pylint_plugin_disable
 
 # Pickle collected data for later comparisons.
 persistent=yes
@@ -177,7 +177,7 @@ disable=format,
         multiple-imports,
         # we use it to speedup/optimize
         import-outside-toplevel,
-        fixme,
+        protected-access
 
 
 # Enable the message, report, category or checker with the given id(s). You can

@@ -13,6 +13,7 @@ tests_requires = [
     "pytest>=6.0.1",
     "pre-commit",
     "pylint",
+    "pylint-plugin-utils",
     "black",
     "flake8",
     "pytest-cov",

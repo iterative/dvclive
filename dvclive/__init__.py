@@ -4,6 +4,7 @@ import os
 import shutil
 import time
 from collections import OrderedDict
+from typing import Dict
 
 from dvclive.error import DvcLiveError, InitializationError
 from dvclive.serialize import update_tsv, write_json
@@ -11,22 +12,17 @@ from dvclive.serialize import update_tsv, write_json
 logger = logging.getLogger(__name__)
 
 __version__ = "0.0.1"
-DEFAULT_DIR = "dvclive"
-DVCLIVE_PATH = "DVCLIVE_PATH"
-DVCLIVE_SUMMARY = "DVCLIVE_SUMMARY"
+_metric_logger = None
 
 
 class DvcLive:
-    def __init__(self):
-        self._dir = None
-        self._step = None
-        self._metrics = {}
-        self._report = True
-        self._dump_latest = True
+    DEFAULT_DIR = "dvclive"
+    DVCLIVE_PATH = "DVCLIVE_PATH"
+    DVCLIVE_SUMMARY = "DVCLIVE_SUMMARY"
 
-    def init(
+    def __init__(
         self,
-        directory: str = DEFAULT_DIR,
+        directory: str = None,
         is_continue: bool = False,
         step: int = 0,
         report=True,
@@ -36,20 +32,31 @@ class DvcLive:
         self._step = step
         self._report = report
         self._dump_latest = dump_latest
+        self._metrics: Dict[str, float] = {}
 
         if is_continue and self.exists:
             if step == 0:
                 self._step = self.read_step() + 1
             else:
                 self._step = step
-        else:
-            shutil.rmtree(directory, ignore_errors=True)
+        elif self.dir:
+            shutil.rmtree(self.dir, ignore_errors=True)
             try:
-                os.makedirs(self._dir, exist_ok=True)
+                os.makedirs(self.dir, exist_ok=True)
             except Exception as ex:
                 raise DvcLiveError(
                     "dvc-live cannot create log dir - {}".format(ex)
                 )
+
+    @staticmethod
+    def from_env():
+        if DvcLive.DVCLIVE_PATH in os.environ:
+            directory = os.environ[DvcLive.DVCLIVE_PATH]
+            dump_latest = bool(
+                int(os.environ.get(DvcLive.DVCLIVE_SUMMARY, "0"))
+            )
+            return DvcLive(directory, dump_latest=dump_latest, report=True)
+        return None
 
     @property
     def dir(self):
@@ -84,18 +91,7 @@ class DvcLive:
 
         self._step += 1
 
-    def _from_env(self):
-        directory = os.environ[DVCLIVE_PATH]
-        dump_latest = bool(int(os.environ.get(DVCLIVE_SUMMARY, "0")))
-        self.init(directory, dump_latest=dump_latest, report=False)
-
     def log(self, name: str, val: float, step: int = None):
-        if not self.dir:
-            if DVCLIVE_PATH in os.environ:
-                self._from_env()
-            else:
-                raise InitializationError()
-
         if name in self._metrics.keys():
             logger.info(
                 f"Found {name} in metrics dir, assuming new epoch started"
@@ -130,14 +126,36 @@ class DvcLive:
             return json.load(fd)
 
 
-dvclive = DvcLive()
-
-
 def init(
-    directory: str,
+    directory: str = None,
     is_continue: bool = False,
     step: int = 0,
     report=True,
     dump_latest=True,
-):
-    dvclive.init(directory, is_continue, step, report, dump_latest)
+) -> DvcLive:
+    global _metric_logger  # pylint: disable=global-statement
+    _metric_logger = DvcLive(
+        directory=directory or DvcLive.DEFAULT_DIR,
+        is_continue=is_continue,
+        step=step,
+        report=report,
+        dump_latest=dump_latest,
+    )
+    return _metric_logger
+
+
+def log(name: str, val: float, step: int = None):
+    global _metric_logger  # pylint: disable=global-statement
+    if not _metric_logger:
+        _metric_logger = DvcLive.from_env()
+    if not _metric_logger:
+        raise InitializationError()
+
+    _metric_logger.log(name=name, val=val, step=step)
+
+
+def next_step():
+    global _metric_logger  # pylint: disable=global-statement
+    if not _metric_logger:
+        raise InitializationError()
+    _metric_logger.next_step()
