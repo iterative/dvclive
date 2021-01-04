@@ -1,6 +1,6 @@
 from tensorflow.keras.callbacks import Callback
 
-from dvclive import dvclive
+import dvclive
 from dvclive.dvc import make_checkpoint
 
 
