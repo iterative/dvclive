@@ -6,6 +6,7 @@ import time
 from collections import OrderedDict
 from typing import Dict
 
+from dvclive import env
 from dvclive.error import DvcLiveError, InitializationError
 from dvclive.serialize import update_tsv, write_json
 
@@ -17,8 +18,6 @@ _metric_logger = None
 
 class DvcLive:
     DEFAULT_DIR = "dvclive"
-    DVCLIVE_PATH = "DVCLIVE_PATH"
-    DVCLIVE_SUMMARY = "DVCLIVE_SUMMARY"
 
     def __init__(
         self,
@@ -50,12 +49,11 @@ class DvcLive:
 
     @staticmethod
     def from_env():
-        if DvcLive.DVCLIVE_PATH in os.environ:
-            directory = os.environ[DvcLive.DVCLIVE_PATH]
-            dump_latest = bool(
-                int(os.environ.get(DvcLive.DVCLIVE_SUMMARY, "0"))
-            )
-            return DvcLive(directory, dump_latest=dump_latest, report=True)
+        if env.DVCLIVE_PATH in os.environ:
+            directory = os.environ[env.DVCLIVE_PATH]
+            dump_latest = bool(int(os.environ.get(env.DVCLIVE_SUMMARY, "0")))
+            report = bool(int(os.environ.get(env.DVCLIVE_REPORT, "0")))
+            return DvcLive(directory, dump_latest=dump_latest, report=report)
         return None
 
     @property
