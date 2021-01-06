@@ -126,10 +126,14 @@ def test_custom_steps(tmp_dir):  # pylint: disable=unused-argument
     assert read_history("logs", "m") == (steps, metrics)
 
 
+@pytest.mark.parametrize("report", [True, False])
 @pytest.mark.parametrize("summary", [True, False])
-def test_init_from_env(tmp_dir, summary):  # pylint: disable=unused-argument
-    os.environ[dvclive.DvcLive.DVCLIVE_PATH] = "logs"
-    os.environ[dvclive.DvcLive.DVCLIVE_SUMMARY] = str(int(summary))
+def test_init_from_env(
+    tmp_dir, summary, report
+):  # pylint: disable=unused-argument
+    os.environ[dvclive.env.DVCLIVE_PATH] = "logs"
+    os.environ[dvclive.env.DVCLIVE_SUMMARY] = str(int(summary))
+    os.environ[dvclive.env.DVCLIVE_REPORT] = str(int(summary))
 
     dvclive.log("m", 0.1)
 
