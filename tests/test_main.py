@@ -133,9 +133,10 @@ def test_init_from_env(
 ):  # pylint: disable=unused-argument
     os.environ[dvclive.env.DVCLIVE_PATH] = "logs"
     os.environ[dvclive.env.DVCLIVE_SUMMARY] = str(int(summary))
-    os.environ[dvclive.env.DVCLIVE_REPORT] = str(int(summary))
+    os.environ[dvclive.env.DVCLIVE_REPORT] = str(int(report))
 
     dvclive.log("m", 0.1)
 
     assert dvclive._metric_logger._dir == "logs"
     assert dvclive._metric_logger._dump_latest == summary
+    assert dvclive._metric_logger._report == report
