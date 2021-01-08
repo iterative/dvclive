@@ -31,7 +31,7 @@ class DvcLive:
         self._step = step
         self._report = report
         self._dump_latest = dump_latest
-        self._metrics: Dict[str, float] = {}
+        self._metrics: Dict[str, float] = OrderedDict()
 
         if is_continue and self.exists:
             if step == 0:
@@ -76,9 +76,9 @@ class DvcLive:
 
     def next_step(self):
         if self._dump_latest:
-            write_json(
-                {"step": self._step, **self._metrics}, self.summary_path
-            )
+            metrics = OrderedDict({"step": self._step})
+            metrics.update(self._metrics)
+            write_json(metrics, self.summary_path)
 
         if self._report:
             from dvc.api.live import summary
