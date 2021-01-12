@@ -51,9 +51,9 @@ def test_create_logs_dir(tmp_dir, path):
     assert (tmp_dir / path).is_dir()
 
 
-@pytest.mark.parametrize("dump_latest", [True, False])
-def test_logging(tmp_dir, dump_latest):
-    dvclive.init("logs", dump_latest=dump_latest)
+@pytest.mark.parametrize("summary", [True, False])
+def test_logging(tmp_dir, summary):
+    dvclive.init("logs", summary=summary)
 
     dvclive.log("m1", 1)
 
@@ -63,25 +63,25 @@ def test_logging(tmp_dir, dump_latest):
 
     dvclive.next_step()
 
-    assert (tmp_dir / "logs.json").is_file() == dump_latest
+    assert (tmp_dir / "logs.json").is_file() == summary
 
 
-@pytest.mark.parametrize("report", [True, False])
-def test_dvc_summary(tmp_dir, report):
-    dvclive.init("logs", report=report)
+@pytest.mark.parametrize("html", [True, False])
+def test_dvc_summary(tmp_dir, html):
+    dvclive.init("logs", html=html)
 
     dvclive.log("m1", 1)
     dvclive.next_step()
 
-    assert (tmp_dir / "logs.html").is_file() == report
+    assert (tmp_dir / "logs.html").is_file() == html
 
 
 @pytest.mark.parametrize(
-    "is_continue, steps, metrics",
+    "resume, steps, metrics",
     [(True, [0, 1, 2, 3], [0.9, 0.8, 0.7, 0.6]), (False, [0, 1], [0.7, 0.6])],
 )
 def test_continue(
-    tmp_dir, is_continue, steps, metrics
+    tmp_dir, resume, steps, metrics
 ):  # pylint: disable=unused-argument
     dvclive.init("logs")
 
@@ -92,7 +92,7 @@ def test_continue(
     assert read_history("logs", "metric") == ([0, 1], [0.9, 0.8])
     assert read_latest("logs", "metric") == (1, 0.8)
 
-    dvclive.init("logs", is_continue=is_continue)
+    dvclive.init("logs", resume=resume)
 
     for new_metric in [0.7, 0.6]:
         dvclive.log("metric", new_metric)
@@ -126,17 +126,17 @@ def test_custom_steps(tmp_dir):  # pylint: disable=unused-argument
     assert read_history("logs", "m") == (steps, metrics)
 
 
-@pytest.mark.parametrize("report", [True, False])
+@pytest.mark.parametrize("html", [True, False])
 @pytest.mark.parametrize("summary", [True, False])
 def test_init_from_env(
-    tmp_dir, summary, report
+    tmp_dir, summary, html
 ):  # pylint: disable=unused-argument
     os.environ[dvclive.env.DVCLIVE_PATH] = "logs"
     os.environ[dvclive.env.DVCLIVE_SUMMARY] = str(int(summary))
-    os.environ[dvclive.env.DVCLIVE_REPORT] = str(int(report))
+    os.environ[dvclive.env.DVCLIVE_REPORT] = str(int(html))
 
     dvclive.log("m", 0.1)
 
-    assert dvclive._metric_logger._dir == "logs"
-    assert dvclive._metric_logger._dump_latest == summary
-    assert dvclive._metric_logger._report == report
+    assert dvclive._metric_logger._path == "logs"
+    assert dvclive._metric_logger._summary == summary
+    assert dvclive._metric_logger._html == html

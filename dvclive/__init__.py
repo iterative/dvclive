@@ -21,19 +21,19 @@ class DvcLive:
 
     def __init__(
         self,
-        directory: str = None,
-        is_continue: bool = False,
+        path: str = None,
+        resume: bool = False,
         step: int = 0,
-        report=True,
-        dump_latest=True,
+        summary=True,
+        html=True,
     ):
-        self._dir = directory
+        self._path = path
         self._step = step
-        self._report = report
-        self._dump_latest = dump_latest
+        self._html = html
+        self._summary = summary
         self._metrics: Dict[str, float] = OrderedDict()
 
-        if is_continue and self.exists:
+        if resume and self.exists:
             if step == 0:
                 self._step = self.read_step() + 1
             else:
@@ -53,12 +53,12 @@ class DvcLive:
             directory = os.environ[env.DVCLIVE_PATH]
             dump_latest = bool(int(os.environ.get(env.DVCLIVE_SUMMARY, "0")))
             report = bool(int(os.environ.get(env.DVCLIVE_REPORT, "0")))
-            return DvcLive(directory, dump_latest=dump_latest, report=report)
+            return DvcLive(directory, summary=dump_latest, html=report)
         return None
 
     @property
     def dir(self):
-        return self._dir
+        return self._path
 
     @property
     def exists(self):
@@ -75,12 +75,12 @@ class DvcLive:
         return self.dir + ".json"
 
     def next_step(self):
-        if self._dump_latest:
+        if self._summary:
             metrics = OrderedDict({"step": self._step})
             metrics.update(self._metrics)
             write_json(metrics, self.summary_path)
 
-        if self._report:
+        if self._html:
             from dvc.api.live import summary
 
             summary(self.dir)
@@ -125,19 +125,19 @@ class DvcLive:
 
 
 def init(
-    directory: str = None,
-    is_continue: bool = False,
+    path: str = None,
+    resume: bool = False,
     step: int = 0,
-    report=True,
-    dump_latest=True,
+    summary=True,
+    html=True,
 ) -> DvcLive:
     global _metric_logger  # pylint: disable=global-statement
     _metric_logger = DvcLive(
-        directory=directory or DvcLive.DEFAULT_DIR,
-        is_continue=is_continue,
+        path=path or DvcLive.DEFAULT_DIR,
+        resume=resume,
         step=step,
-        report=report,
-        dump_latest=dump_latest,
+        summary=summary,
+        html=html,
     )
     return _metric_logger
 
