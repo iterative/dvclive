@@ -6,6 +6,7 @@ import pytest
 from funcy import last
 
 import dvclive
+from dvclive import env
 
 
 def read_logs(path):
@@ -105,7 +106,7 @@ def test_continue(
 def test_infer_next_step(tmp_dir, mocker):  # pylint: disable=unused-argument
     dvclive.init("logs")
 
-    m = mocker.spy(dvclive.DvcLive, "next_step")
+    m = mocker.spy(dvclive.metrics.MetricLogger, "next_step")
     dvclive.log("m1", 1.0)
     dvclive.log("m1", 2.0)
     dvclive.log("m1", 3.0)
@@ -131,9 +132,9 @@ def test_custom_steps(tmp_dir):  # pylint: disable=unused-argument
 def test_init_from_env(
     tmp_dir, summary, html
 ):  # pylint: disable=unused-argument
-    os.environ[dvclive.env.DVCLIVE_PATH] = "logs"
-    os.environ[dvclive.env.DVCLIVE_SUMMARY] = str(int(summary))
-    os.environ[dvclive.env.DVCLIVE_REPORT] = str(int(html))
+    os.environ[env.DVCLIVE_PATH] = "logs"
+    os.environ[env.DVCLIVE_SUMMARY] = str(int(summary))
+    os.environ[env.DVCLIVE_REPORT] = str(int(html))
 
     dvclive.log("m", 0.1)
 
