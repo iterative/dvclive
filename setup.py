@@ -1,4 +1,16 @@
+import importlib.util
+import os
+
 from setuptools import find_packages, setup
+
+# Read package meta-data from version.py
+# see https://packaging.python.org/guides/single-sourcing-package-version/
+pkg_dir = os.path.dirname(os.path.abspath(__file__))
+version_path = os.path.join(pkg_dir, "dvclive", "version.py")
+spec = importlib.util.spec_from_file_location("dvclive.version", version_path)
+dvc_version = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(dvc_version)
+version = dvc_version.__version__
 
 tf = ["tensorflow"]
 xgb = ["xgboost"]
@@ -19,8 +31,10 @@ tests_requires = [
     "sklearn",
 ] + all_libs
 install_requires = ["dvc", "funcy", "ruamel.yaml"]
+
 setup(
     name="dvclive",
+    version=version,
     packages=find_packages(exclude="tests"),
     description="Metric logger for ML projects.",
     long_description=open("README.md", "r").read(),

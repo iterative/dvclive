@@ -1,0 +1,27 @@
+name: Build packages
+on:
+  push:
+    branches:
+    - master
+  release:
+    types: [released]
+
+jobs:
+  python:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2.3.2
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v2.1.4
+      with:
+        python-version: 3.7
+    - name: Install
+      run: pip install ".[all,tests]"
+    - name: Build packages
+      run: ./scripts/build_package.sh
+    - name: Publish packages to PyPI
+      if: github.event_name == 'release'
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}
