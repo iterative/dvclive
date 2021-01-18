@@ -6,8 +6,7 @@ import time
 from collections import OrderedDict
 from typing import Dict
 
-from dvc import env
-
+from .dvc import make_checkpoint
 from .error import DvcLiveError
 from .serialize import update_tsv, write_json
 
@@ -24,16 +23,20 @@ class MetricLogger:
         step: int = 0,
         summary=True,
         html=True,
+        checkpoint=False,
     ):
-        self._path = path
-        self._step = step
-        self._html = html
+        self._path: str = path
+        self._step: int = step
+        self._html: bool = html
         self._summary = summary
         self._metrics: Dict[str, float] = OrderedDict()
+        self._checkpoint: bool = checkpoint
 
         if resume and self.exists:
             if step == 0:
-                self._step = self.read_step() + 1
+                self._step = self.read_step()
+                if self._step != 0:
+                    self._step += 1
             else:
                 self._step = step
         else:
@@ -47,11 +50,20 @@ class MetricLogger:
 
     @staticmethod
     def from_env():
+        from . import env
+
         if env.DVCLIVE_PATH in os.environ:
             directory = os.environ[env.DVCLIVE_PATH]
             dump_latest = bool(int(os.environ.get(env.DVCLIVE_SUMMARY, "0")))
             report = bool(int(os.environ.get(env.DVCLIVE_REPORT, "0")))
-            return MetricLogger(directory, summary=dump_latest, html=report)
+            checkpoint = bool(int(os.environ.get(env.DVC_CHECKPOINT, "0")))
+            return MetricLogger(
+                directory,
+                summary=dump_latest,
+                html=report,
+                checkpoint=checkpoint,
+                resume=checkpoint,
+            )
         return None
 
     @property
@@ -86,6 +98,9 @@ class MetricLogger:
         self._metrics.clear()
 
         self._step += 1
+
+        if self._checkpoint:
+            make_checkpoint()
 
     def log(self, name: str, val: float, step: int = None):
         if name in self._metrics.keys():
