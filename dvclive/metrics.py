@@ -41,7 +41,7 @@ class MetricLogger:
                 os.makedirs(self.dir, exist_ok=True)
             except Exception as ex:
                 raise DvcLiveError(
-                    "dvc-live cannot create log dir - {}".format(ex)
+                    "dvc-live cannot create log dir - '{}'".format(ex),
                 )
 
     @staticmethod
