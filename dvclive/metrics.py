@@ -7,8 +7,9 @@ from collections import OrderedDict
 from typing import Dict
 
 from dvc import env
-from dvclive.error import DvcLiveError
-from dvclive.serialize import update_tsv, write_json
+
+from .error import DvcLiveError
+from .serialize import update_tsv, write_json
 
 logger = logging.getLogger(__name__)
 

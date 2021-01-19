@@ -1,5 +1,5 @@
-from dvclive.error import InitializationError
-from dvclive.metrics import MetricLogger
+from .error import InitializationError
+from .metrics import MetricLogger
 
 __version__ = "0.0.1"
 _metric_logger = None
