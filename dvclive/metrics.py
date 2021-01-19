@@ -117,5 +117,5 @@ class MetricLogger:
         return 0
 
     def read_latest(self):
-        with open(self.summary_path, "r") as fd:
-            return json.load(fd)
+        with open(self.summary_path, "r") as fobj:
+            return json.load(fobj)
