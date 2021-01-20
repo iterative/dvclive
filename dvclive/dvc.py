@@ -1,5 +1,7 @@
 import os
 
+from . import env
+
 
 def _dvc_dir(dirname):
     return os.path.join(dirname, ".dvc")
@@ -28,14 +30,14 @@ def make_checkpoint():
     import builtins
     from time import sleep
 
-    if os.getenv("DVC_CHECKPOINT") is None:
+    if os.getenv(env.DVC_CHECKPOINT) is None:
         return
 
     root_dir = _find_dvc_root()
     if not root_dir:
         return
 
-    signal_file = os.path.join(root_dir, ".dvc", "tmp", "DVC_CHECKPOINT")
+    signal_file = os.path.join(root_dir, ".dvc", "tmp", env.DVC_CHECKPOINT)
 
     with builtins.open(signal_file, "w") as fobj:
         # NOTE: force flushing/writing empty file to disk, otherwise when
