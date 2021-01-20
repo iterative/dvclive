@@ -57,12 +57,13 @@ class MetricLogger:
             dump_latest = bool(int(os.environ.get(env.DVCLIVE_SUMMARY, "0")))
             report = bool(int(os.environ.get(env.DVCLIVE_REPORT, "0")))
             checkpoint = bool(int(os.environ.get(env.DVC_CHECKPOINT, "0")))
+            resume = bool(int(os.environ.get(env.DVCLIVE_RESUME, "0")))
             return MetricLogger(
                 directory,
                 summary=dump_latest,
                 html=report,
                 checkpoint=checkpoint,
-                resume=checkpoint,
+                resume=resume,
             )
         return None
 
