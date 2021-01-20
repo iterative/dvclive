@@ -12,7 +12,7 @@ def _find_dvc_root(root=None):
     root = os.path.realpath(root)
 
     if not os.path.isdir(root):
-        raise Exception("its not dir!")
+        raise NotADirectoryError(f"'{root}'")
 
     while True:
         if os.path.exists(_dvc_dir(root)):

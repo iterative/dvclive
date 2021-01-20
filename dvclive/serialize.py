@@ -8,8 +8,8 @@ from ruamel import yaml
 
 def update_tsv(d: OrderedDict, path: str):
     existed = os.path.exists(path)
-    with open(path, "a") as fd:
-        writer = csv.DictWriter(fd, d.keys(), delimiter="\t")
+    with open(path, "a") as fobj:
+        writer = csv.DictWriter(fobj, d.keys(), delimiter="\t")
 
         if not existed:
             writer.writeheader()
@@ -18,10 +18,10 @@ def update_tsv(d: OrderedDict, path: str):
 
 
 def write_json(d: dict, path: str):
-    with open(path, "w") as fd:
-        json.dump(d, fd)
+    with open(path, "w") as fobj:
+        json.dump(d, fobj)
 
 
 def write_yaml(d: dict, path: str):
-    with open(path, "w") as fd:
-        yaml.safe_dump(d, fd)
+    with open(path, "w") as fobj:
+        yaml.safe_dump(d, fobj)

@@ -7,8 +7,9 @@ from collections import OrderedDict
 from typing import Dict
 
 from dvc import env
-from dvclive.error import DvcLiveError
-from dvclive.serialize import update_tsv, write_json
+
+from .error import DvcLiveError
+from .serialize import update_tsv, write_json
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ class MetricLogger:
                 os.makedirs(self.dir, exist_ok=True)
             except Exception as ex:
                 raise DvcLiveError(
-                    "dvc-live cannot create log dir - {}".format(ex)
+                    "dvc-live cannot create log dir - '{}'".format(ex),
                 )
 
     @staticmethod
@@ -117,5 +118,5 @@ class MetricLogger:
         return 0
 
     def read_latest(self):
-        with open(self.summary_path, "r") as fd:
-            return json.load(fd)
+        with open(self.summary_path, "r") as fobj:
+            return json.load(fobj)
