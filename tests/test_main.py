@@ -8,6 +8,8 @@ from funcy import last
 import dvclive
 from dvclive import env
 
+# pylint: disable=unused-argument
+
 
 def read_logs(path):
     assert os.path.isdir(path)
@@ -81,9 +83,7 @@ def test_dvc_summary(tmp_dir, html):
     "resume, steps, metrics",
     [(True, [0, 1, 2, 3], [0.9, 0.8, 0.7, 0.6]), (False, [0, 1], [0.7, 0.6])],
 )
-def test_continue(
-    tmp_dir, resume, steps, metrics
-):  # pylint: disable=unused-argument
+def test_continue(tmp_dir, resume, steps, metrics):
     dvclive.init("logs")
 
     for metric in [0.9, 0.8]:
@@ -103,7 +103,7 @@ def test_continue(
     assert read_latest("logs", "metric") == (last(steps), last(metrics))
 
 
-def test_infer_next_step(tmp_dir, mocker):  # pylint: disable=unused-argument
+def test_infer_next_step(tmp_dir, mocker):
     dvclive.init("logs")
 
     m = mocker.spy(dvclive.metrics.MetricLogger, "next_step")
@@ -115,7 +115,7 @@ def test_infer_next_step(tmp_dir, mocker):  # pylint: disable=unused-argument
     assert m.call_count == 2
 
 
-def test_custom_steps(tmp_dir):  # pylint: disable=unused-argument
+def test_custom_steps(tmp_dir):
     dvclive.init("logs")
 
     steps = [0, 62, 1000]
@@ -129,9 +129,7 @@ def test_custom_steps(tmp_dir):  # pylint: disable=unused-argument
 
 @pytest.mark.parametrize("html", [True, False])
 @pytest.mark.parametrize("summary", [True, False])
-def test_init_from_env(
-    tmp_dir, summary, html
-):  # pylint: disable=unused-argument
+def test_init_from_env(tmp_dir, summary, html):
     os.environ[env.DVCLIVE_PATH] = "logs"
     os.environ[env.DVCLIVE_SUMMARY] = str(int(summary))
     os.environ[env.DVCLIVE_REPORT] = str(int(html))
