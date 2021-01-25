@@ -7,7 +7,7 @@ from funcy import first
 from sklearn import datasets
 
 import dvclive
-from dvclive.xgb import dvclive_callback
+from dvclive.xgb import DvcLiveCallback
 from tests.test_main import read_logs
 
 # pylint: disable=redefined-outer-name, unused-argument
@@ -31,9 +31,9 @@ def test_xgb_integration(tmp_dir, train_params, iris_data):
     xgb.train(
         train_params,
         iris_data,
-        callbacks=[dvclive_callback],
+        callbacks=[DvcLiveCallback("eval_data")],
         num_boost_round=5,
-        evals=[(iris_data, "dtrain")],
+        evals=[(iris_data, "eval_data")],
     )
 
     assert os.path.exists("logs")
