@@ -2,6 +2,8 @@ import os
 
 from . import env
 
+_CHECKPOINT_SLEEP = 0.1
+
 
 def _dvc_dir(dirname):
     return os.path.join(dirname, ".dvc")
@@ -46,4 +48,4 @@ def make_checkpoint():
         fobj.flush()
         os.fsync(fobj.fileno())
     while os.path.exists(signal_file):
-        sleep(1)
+        sleep(_CHECKPOINT_SLEEP)
