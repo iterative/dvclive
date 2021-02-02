@@ -132,7 +132,7 @@ def test_custom_steps(tmp_dir):
 def test_init_from_env(tmp_dir, summary, html):
     os.environ[env.DVCLIVE_PATH] = "logs"
     os.environ[env.DVCLIVE_SUMMARY] = str(int(summary))
-    os.environ[env.DVCLIVE_REPORT] = str(int(html))
+    os.environ[env.DVCLIVE_HTML] = str(int(html))
 
     dvclive.log("m", 0.1)
 

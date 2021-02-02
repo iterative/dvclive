@@ -55,13 +55,13 @@ class MetricLogger:
         if env.DVCLIVE_PATH in os.environ:
             directory = os.environ[env.DVCLIVE_PATH]
             dump_latest = bool(int(os.environ.get(env.DVCLIVE_SUMMARY, "0")))
-            report = bool(int(os.environ.get(env.DVCLIVE_REPORT, "0")))
+            html = bool(int(os.environ.get(env.DVCLIVE_HTML, "0")))
             checkpoint = bool(int(os.environ.get(env.DVC_CHECKPOINT, "0")))
             resume = bool(int(os.environ.get(env.DVCLIVE_RESUME, "0")))
             return MetricLogger(
                 directory,
                 summary=dump_latest,
-                html=report,
+                html=html,
                 checkpoint=checkpoint,
                 resume=resume,
             )
