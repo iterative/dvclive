@@ -18,7 +18,7 @@ tests_requires = [
     "pandas",
     "sklearn",
 ] + all_libs
-install_requires = ["dvc", "funcy"]
+install_requires = ["dvc", "funcy", "ruamel.yaml"]
 setup(
     name="dvclive",
     packages=find_packages(exclude="tests"),
