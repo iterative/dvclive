@@ -1,12 +1,9 @@
 from setuptools import find_packages, setup
 
-packages = []
-try:
-    # tf can be tensorflow-gpu
-    import tensorflow  # noqa # pylint: disable=unused-import
-except ImportError:
-    packages.append("tensorflow-cpu")
+tf = ["tensorflow"]
+xgb = ["xgboost"]
 
+all_libs = tf + xgb
 
 tests_requires = [
     "pylint==2.5.3",
@@ -17,11 +14,24 @@ tests_requires = [
     "black",
     "flake8",
     "pytest-cov",
-]
-install_requires = ["dvc", "funcy", *packages]
+    "pytest-mock",
+    "pandas",
+    "sklearn",
+] + all_libs
+install_requires = ["dvc", "funcy"]
 setup(
     name="dvclive",
-    packages=find_packages(),
+    packages=find_packages(exclude="tests"),
+    description="Metric logger for ML projects.",
+    long_description=open("README.md", "r").read(),
     install_requires=install_requires,
-    extras_require={"tests": tests_requires},
+    extras_require={
+        "tests": tests_requires,
+        "all": all_libs,
+        "tf": tf,
+        "xgb": xgb,
+    },
+    keywords="data-science metrics machine-learning developer-tools ai",
+    python_requires=">=3.6",
+    url="http://dvc.org",
 )
