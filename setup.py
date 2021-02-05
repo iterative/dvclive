@@ -30,7 +30,11 @@ tests_requires = [
     "pandas",
     "sklearn",
 ] + all_libs
-install_requires = ["dvc", "funcy", "ruamel.yaml"]
+install_requires = [
+    "dvc@https://github.com/iterative/dvc/archive/master.zip",
+    "funcy",
+    "ruamel.yaml",
+]
 
 setup(
     name="dvclive",
