@@ -35,6 +35,8 @@ install_requires = ["dvc", "funcy", "ruamel.yaml"]
 setup(
     name="dvclive",
     version=version,
+    author="Paweł Redzyński",
+    author_email="pawel@iterative.ai",
     packages=find_packages(exclude="tests"),
     description="Metric logger for ML projects.",
     long_description=open("README.md", "r").read(),
