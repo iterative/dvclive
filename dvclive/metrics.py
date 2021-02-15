@@ -43,10 +43,10 @@ class MetricLogger:
             shutil.rmtree(self.dir, ignore_errors=True)
             try:
                 os.makedirs(self.dir, exist_ok=True)
-            except Exception as ex:
+            except Exception as exception:
                 raise DvcLiveError(
-                    "dvc-live cannot create log dir - '{}'".format(ex),
-                )
+                    "dvc-live cannot create log dir - '{}'".format(self.dir),
+                ) from exception
 
     @staticmethod
     def from_env():

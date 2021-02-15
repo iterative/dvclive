@@ -1,7 +1,8 @@
+from dvclive.version import __version__  # noqa: F401
+
 from .error import InitializationError
 from .metrics import MetricLogger
 
-__version__ = "0.0.1"
 _metric_logger = None
 
 
