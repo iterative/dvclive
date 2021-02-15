@@ -28,6 +28,20 @@ def _find_dvc_root(root=None):
     return None
 
 
+def get_live_singal_path(root=None):
+    root = _find_dvc_root(root)
+
+    if not root:
+        return None
+
+    tmp = os.path.join(_dvc_dir(root), "tmp")
+
+    if not os.path.exists(tmp):
+        os.makedirs(tmp)
+
+    return os.path.join(tmp, "DVC_LIVE")
+
+
 def make_checkpoint():
     import builtins
     from time import sleep
