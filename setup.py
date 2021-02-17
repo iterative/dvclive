@@ -67,7 +67,7 @@ setup(
     author_email="pawel@iterative.ai",
     packages=find_packages(exclude="tests"),
     description="Metric logger for ML projects.",
-    long_description=open("README.md", "r").read(),
+    long_description=open("README.rst", "r", encoding="UTF-8").read(),
     install_requires=install_requires,
     extras_require={
         "tests": tests_requires,
