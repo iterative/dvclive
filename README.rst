@@ -13,5 +13,4 @@ The interface consists of three main methods:
 
 2. :code:`dvclive.log(metric, value, step)` - logs the metric value. The value and step will be appended to :code:`path/{metric}.tsv` file. The step value is optional.
 
-3. :code:`dvclive.next_step()` - signals :code:`dvclive` that current step has ended. Executed automatically if :code:`metric` is logged again.
-
+3. :code:`dvclive.next_step()` - signals :code:`dvclive` that current step has ended. Executed automatically if same :code:`metric` is logged again.
