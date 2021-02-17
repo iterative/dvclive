@@ -9,6 +9,7 @@ import dvclive
 from dvclive import env
 
 # pylint: disable=unused-argument
+from dvclive.dvc import SIGNAL_FILE
 
 
 def read_logs(path):
@@ -69,14 +70,27 @@ def test_logging(tmp_dir, summary):
     assert (tmp_dir / "logs.json").is_file() == summary
 
 
-@pytest.mark.parametrize("html", [True, False])
-def test_dvc_summary(tmp_dir, html):
+@pytest.mark.parametrize(
+    "dvc_repo,html,signal_exists",
+    [
+        (True, False, False),
+        (True, True, True),
+        (False, True, False),
+        (False, False, False),
+    ],
+)
+def test_html(tmp_dir, dvc_repo, html, signal_exists):
+    if dvc_repo:
+        from dvc.repo import Repo
+
+        Repo.init(no_scm=True)
+
     dvclive.init("logs", html=html)
 
     dvclive.log("m1", 1)
     dvclive.next_step()
 
-    assert (tmp_dir / "logs.html").is_file() == html
+    assert (tmp_dir / ".dvc" / "tmp" / SIGNAL_FILE).is_file() == signal_exists
 
 
 @pytest.mark.parametrize(

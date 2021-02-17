@@ -2,6 +2,7 @@ import os
 
 from . import env
 
+SIGNAL_FILE = "DVC_LIVE"
 _CHECKPOINT_SLEEP = 0.1
 
 
@@ -28,7 +29,7 @@ def _find_dvc_root(root=None):
     return None
 
 
-def get_live_singal_path(root=None):
+def get_signal_file_path(root=None):
     root = _find_dvc_root(root)
 
     if not root:
@@ -39,7 +40,7 @@ def get_live_singal_path(root=None):
     if not os.path.exists(tmp):
         os.makedirs(tmp)
 
-    return os.path.join(tmp, "DVC_LIVE")
+    return os.path.join(tmp, SIGNAL_FILE)
 
 
 def make_checkpoint():
