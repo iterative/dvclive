@@ -15,7 +15,9 @@ jobs:
       with:
         python-version: 3.8
     - name: install requirements
-      run: pip install ".[tests]"
+      run: pip install ".[tests]" collective.checkdocs
+    - name: Check README
+      run: python setup.py checkdocs
     - name: check formatting
       run: pre-commit run --all-files
   tests:
