@@ -55,9 +55,9 @@ tests_requires = [
     "sklearn",
 ] + all_libs
 install_requires = [
-    "dvc@https://github.com/iterative/dvc/archive/master.zip",
-    "funcy",
-    "ruamel.yaml",
+    "dvc==2.0.0a0",
+    "funcy>=1.14",
+    "ruamel.yaml>=0.16.1",
 ]
 
 setup(
