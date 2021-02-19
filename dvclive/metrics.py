@@ -46,8 +46,8 @@ class MetricLogger:
                 os.makedirs(self.dir, exist_ok=True)
             except Exception as exception:
                 raise DvcLiveError(
-                    "dvc-live cannot create log dir - '{}'".format(self.dir),
-                ) from exception
+                    "dvc-live cannot create log dir - '{}'".format(
+                        self.dir), ) from exception
 
     @staticmethod
     def from_env():
@@ -107,16 +107,12 @@ class MetricLogger:
     def log(self, name: str, val: float, step: int = None):
         if name in self._metrics.keys():
             logger.info(
-                f"Found {name} in metrics dir, assuming new epoch started"
-            )
+                f"Found {name} in metrics dir, assuming new epoch started")
             self.next_step()
 
         if not isinstance(val, (int, float)):
-            raise DvcLiveError(
-                "Metrics '{}' has not supported type {}".format(
-                    name, type(val)
-                )
-            )
+            raise DvcLiveError("Metrics '{}' has not supported type {}".format(
+                name, type(val)))
 
         if step:
             self._step = step
