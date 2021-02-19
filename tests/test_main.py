@@ -7,9 +7,8 @@ from funcy import last
 
 import dvclive
 from dvclive import env
-
-# pylint: disable=unused-argument
 from dvclive.dvc import SIGNAL_FILE
+# pylint: disable=unused-argument
 
 
 def read_logs(path):

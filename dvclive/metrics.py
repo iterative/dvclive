@@ -6,9 +6,11 @@ import time
 from collections import OrderedDict
 from typing import Dict
 
-from .dvc import get_signal_file_path, make_checkpoint
+from .dvc import get_signal_file_path
+from .dvc import make_checkpoint
 from .error import DvcLiveError
-from .serialize import update_tsv, write_json
+from .serialize import update_tsv
+from .serialize import write_json
 
 logger = logging.getLogger(__name__)
 
