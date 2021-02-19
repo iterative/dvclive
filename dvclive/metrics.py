@@ -18,7 +18,7 @@ class MetricLogger:
 
     def __init__(
         self,
-        path: str,
+        path: str = "dvclive",
         resume: bool = False,
         step: int = 0,
         summary=True,
