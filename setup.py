@@ -53,11 +53,10 @@ tests_requires = [
     "pytest-mock",
     "pandas",
     "sklearn",
+    "funcy>=1.14",
 ] + all_libs
 install_requires = [
     "dvc==2.0.0a0",
-    "funcy>=1.14",
-    "ruamel.yaml>=0.16.1",
 ]
 
 setup(
