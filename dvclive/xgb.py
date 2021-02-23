@@ -1,4 +1,3 @@
-from funcy import last
 from xgboost.callback import TrainingCallback
 
 import dvclive
@@ -11,6 +10,7 @@ class DvcLiveCallback(TrainingCallback):
 
     def after_iteration(self, model, epoch, evals_log):
         for key, values in evals_log[self._metric_data].items():
-            latest_metric = last(values)
+            if values:
+                latest_metric = values[-1]
             dvclive.log(key, latest_metric)
         dvclive.next_step()
