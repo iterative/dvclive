@@ -56,7 +56,7 @@ tests_requires = [
     "funcy>=1.14",
 ] + all_libs
 install_requires = [
-    "dvc==2.0.0a0",
+    "dvc>=2.0.0a0",
 ]
 
 setup(
