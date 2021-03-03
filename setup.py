@@ -54,7 +54,7 @@ tests_requires = [
     "pandas",
     "sklearn",
     "funcy>=1.14",
-    "dvc>=2.0.0a0",
+    "dvc>=2.0.0",
 ] + all_libs
 
 setup(
