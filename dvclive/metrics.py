@@ -6,7 +6,7 @@ import time
 from collections import OrderedDict
 from typing import Dict
 
-from .dvc import make_checkpoint
+from .dvc import get_signal_file_path, make_checkpoint
 from .error import DvcLiveError
 from .serialize import update_tsv, write_json
 
@@ -92,9 +92,11 @@ class MetricLogger:
             write_json(metrics, self.summary_path)
 
         if self._html:
-            from dvc.api.live import summary
-
-            summary(self.dir)
+            signal_file_path = get_signal_file_path()
+            if signal_file_path:
+                if not os.path.exists(signal_file_path):
+                    with open(signal_file_path, "w"):
+                        pass
 
         self._metrics.clear()
 
