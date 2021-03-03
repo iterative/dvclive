@@ -54,10 +54,8 @@ tests_requires = [
     "pandas",
     "sklearn",
     "funcy>=1.14",
-] + all_libs
-install_requires = [
     "dvc>=2.0.0a0",
-]
+] + all_libs
 
 setup(
     name="dvclive",
@@ -67,7 +65,6 @@ setup(
     packages=find_packages(exclude="tests"),
     description="Metric logger for ML projects.",
     long_description=open("README.rst", "r", encoding="UTF-8").read(),
-    install_requires=install_requires,
     extras_require={
         "tests": tests_requires,
         "all": all_libs,
