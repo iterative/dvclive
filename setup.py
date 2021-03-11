@@ -74,5 +74,6 @@ setup(
     keywords="data-science metrics machine-learning developer-tools ai",
     python_requires=">=3.6",
     cmdclass={"build_py": build_py},
-    url="http://dvc.org",
+    url="https://dvc.org/doc/dvclive",
+    download_url="https://github.com/iterative/dvclive",
 )
