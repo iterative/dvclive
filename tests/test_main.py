@@ -153,3 +153,9 @@ def test_init_from_env(tmp_dir, summary, html):
     assert dvclive._metric_logger._path == "logs"
     assert dvclive._metric_logger._summary == summary
     assert dvclive._metric_logger._html == html
+
+
+def test_no_init(tmp_dir):
+    dvclive.log("m", 0.1)
+
+    assert os.path.isdir("dvclive")
