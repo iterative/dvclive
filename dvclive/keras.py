@@ -5,6 +5,7 @@ import dvclive
 
 class DvcLiveCallback(Callback):
     def __init__(self, model_file = None):
+        super().__init__()
         self.model_file = model_file
 
     def on_epoch_end(self, epoch: int, logs: dict = None):
