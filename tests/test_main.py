@@ -143,13 +143,19 @@ def test_custom_steps(tmp_dir):
 
 @pytest.mark.parametrize("html", [True, False])
 @pytest.mark.parametrize("summary", [True, False])
-def test_init_from_env(tmp_dir, summary, html):
-    os.environ[env.DVCLIVE_PATH] = "logs"
-    os.environ[env.DVCLIVE_SUMMARY] = str(int(summary))
-    os.environ[env.DVCLIVE_HTML] = str(int(html))
+def test_init_from_env(tmp_dir, summary, html, monkeypatch):
+    monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
+    monkeypatch.setenv(env.DVCLIVE_SUMMARY, str(int(summary)))
+    monkeypatch.setenv(env.DVCLIVE_HTML, str(int(html)))
 
     dvclive.log("m", 0.1)
 
     assert dvclive._metric_logger._path == "logs"
     assert dvclive._metric_logger._summary == summary
     assert dvclive._metric_logger._html == html
+
+
+def test_no_init(tmp_dir):
+    dvclive.log("m", 0.1)
+
+    assert os.path.isdir("dvclive")
