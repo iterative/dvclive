@@ -25,5 +25,5 @@ DVCLive is a Python library. The interface consists of three main methods:
 Call to collaboration
 =====================
 
-Today only Python language is supported (while DVC is language agnostic) with a minimum number of connectors to libs (Keras, XGBoost).
-DVC team is happy to help in extending the functionality - please `create an issue <https://github.com/iterative/dvclive/issues>`_ to start a discussion.
+Today only Python is supported (while DVC is language agnostic), with a minimum number of connectors to ML libs (Keras, XGBoost).
+The DVCLive team is happy to extend the functionality as needed. Please `create an issue <https://github.com/iterative/dvclive/issues>`_ to start a discussion!
