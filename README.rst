@@ -4,7 +4,7 @@ DVCLive
 DVCLive is an open-source library for monitoring machine learning model performance. It's an ML logger similar to MLFlow, Weights & Biases, Neptune, Tenserboard, etc., but built on top of `DVC <https://dvc.org>`_, and with Git and MLOps princioples in mind:
 
 1. **Codification of data**. Tracked metrics are stored in readable text files that can be versioned by Git or other version control tools.
-2. **Distributed**. No services or servers are required. Metrics are stored in Git repository as text files or pointers to files in a storage (through DVC).
+2. **Distributed**. No services or servers are required. Metrics are stored in a Git repository as text files, or pointers to files in DVC storage.
 3. **GitOps API**. Plots are generated through DVC using Git commit SHAs or branch names, e.g.: :code:`dvc plots diff --target logs master`.
 
 .. image:: https://dvc.org/static/cdc4ec4dabed1d7de6b8606667ebfc83/9da93/dvclive-diff-html.png
