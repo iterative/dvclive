@@ -5,7 +5,7 @@ DVCLive is an open-source library for monitoring machine learning model performa
 
 1. **Codification of data**. Tracked metrics are stored in readable text files that can be versioned by Git or other version control tools.
 2. **Distributed**. No services or servers are required. Metrics are stored in Git repository as text files or pointers to files in a storage (through DVC).
-3. **GitOps API**. Graphs are generated through Git using Git sha or branches as source: `dvc plots diff --target logs master`.
+3. **GitOps API**. Plots are generated through DVC using Git commit SHAs or branch names, e.g.: :code:`dvc plots diff --target logs master`.
 
 .. image:: https://dvc.org/static/cdc4ec4dabed1d7de6b8606667ebfc83/9da93/dvclive-diff-html.png
 
