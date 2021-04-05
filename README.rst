@@ -9,7 +9,7 @@ DVCLive is an open-source library for monitoring machine learning model performa
 
 .. image:: https://dvc.org/static/cdc4ec4dabed1d7de6b8606667ebfc83/9da93/dvclive-diff-html.png
 
-4. **Automation**. DVCLive metrics are easy to use by any automation, DevOps, MLOps tools such as CI/CD (including `CML <https://cml.dev>`_), custome scripts or ML platforms.
+4. **Automation**. DVCLive metrics are easy to use by any automation, DevOps, or MLOps tool such as CI/CD (including `CML <https://cml.dev>`_), custom scripts, or ML platforms.
 
 
 Python API
