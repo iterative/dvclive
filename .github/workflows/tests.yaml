@@ -37,6 +37,8 @@ jobs:
       run: |
         pip install wheel
         pip install -e ".[tests]"
+    - name: check env
+      run: env
     - name: run tests
       run: py.test --cov dvclive --cov-report=xml
     - name: upload coverage report
