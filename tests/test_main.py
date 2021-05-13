@@ -11,7 +11,11 @@ from dvclive import env
 
 # pylint: disable=unused-argument
 from dvclive.dvc import SIGNAL_FILE
-from dvclive.error import DvcLiveError, InitializationError
+from dvclive.error import (
+    ConfigMismatchError,
+    DvcLiveError,
+    InitializationError,
+)
 
 
 def read_logs(path: str):
@@ -21,7 +25,10 @@ def read_logs(path: str):
         metric_name = str(metric_file).replace(path + os.path.sep, "")
         metric_name = metric_name.replace(".tsv", "")
         history[metric_name] = _parse_tsv(metric_file)
-    latest = _parse_json(path + ".json")
+    try:
+        latest = _parse_json(path + ".json")
+    except FileNotFoundError:
+        latest = {}
     return history, latest
 
 
@@ -207,6 +214,28 @@ def test_no_init(tmp_dir):
     dvclive.log("m", 0.1)
 
     assert os.path.isdir("dvclive")
+
+
+def test_fail_on_conflict(tmp_dir, monkeypatch):
+    dvclive.init("some_dir")
+    monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
+
+    with pytest.raises(ConfigMismatchError):
+        dvclive.log("m", 0.1)
+
+
+def test_dont_override_from_env(tmp_dir, monkeypatch):
+    dvclive.init("initial_path", summary=True, html=True)
+    dvclive.log("m", 0.1)
+
+    monkeypatch.setenv(env.DVCLIVE_PATH, "initial_path")
+    monkeypatch.setenv(env.DVCLIVE_SUMMARY, "1")
+    monkeypatch.setenv(env.DVCLIVE_HTML, "1")
+
+    dvclive.log("m", 0.2)
+    dvclive.log("m", 0.3)
+
+    assert read_history("initial_path", "m") == ([0, 1, 2], [0.1, 0.2, 0.3])
 
 
 @pytest.mark.parametrize("invalid_type", [{0: 1}, [0, 1], "foo", (0, 1)])

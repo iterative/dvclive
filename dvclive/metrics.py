@@ -61,23 +61,53 @@ class MetricLogger:
             os.remove(self.html_path)
 
     @staticmethod
-    def from_env():
+    def from_env(existing_logger: "MetricLogger" = None):
         from . import env
 
         if env.DVCLIVE_PATH in os.environ:
             directory = os.environ[env.DVCLIVE_PATH]
-            dump_latest = bool(int(os.environ.get(env.DVCLIVE_SUMMARY, "0")))
-            html = bool(int(os.environ.get(env.DVCLIVE_HTML, "0")))
-            checkpoint = bool(int(os.environ.get(env.DVC_CHECKPOINT, "0")))
-            resume = bool(int(os.environ.get(env.DVCLIVE_RESUME, "0")))
-            return MetricLogger(
-                directory,
-                summary=dump_latest,
-                html=html,
-                checkpoint=checkpoint,
-                resume=resume,
-            )
-        return None
+            env_config = {
+                "summary": bool(int(os.environ.get(env.DVCLIVE_SUMMARY, "0"))),
+                "html": bool(int(os.environ.get(env.DVCLIVE_HTML, "0"))),
+                "checkpoint": bool(
+                    int(os.environ.get(env.DVC_CHECKPOINT, "0"))
+                ),
+                "resume": bool(int(os.environ.get(env.DVCLIVE_RESUME, "0"))),
+            }
+
+            if existing_logger:
+
+                def config_matches(metric_logger: MetricLogger):
+                    return (
+                        env_config["summary"] == metric_logger._summary
+                        and env_config["html"] == metric_logger._html
+                        and env_config["checkpoint"]
+                        == metric_logger._checkpoint
+                    )
+
+                if existing_logger.dir == directory and config_matches(
+                    existing_logger
+                ):
+                    return existing_logger
+                else:
+                    logger.info(
+                        "Dvclive logger config ('%s') has changed. "
+                        "New logger will write to '%s'.",
+                        existing_logger.dir,
+                        directory,
+                    )
+
+            return MetricLogger(directory, **env_config)
+        return existing_logger
+
+    def matches_env_setup(self):
+        from . import env
+
+        if env.DVCLIVE_PATH in os.environ:
+            env_dir = os.environ[env.DVCLIVE_PATH]
+            return self.dir == env_dir
+
+        return True
 
     @property
     def dir(self):

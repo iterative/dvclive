@@ -1,11 +1,10 @@
-from typing import Union
+from typing import Optional, Union
 
 from dvclive.version import __version__  # noqa: F401
 
-from .error import InitializationError
 from .metrics import MetricLogger
 
-_metric_logger = None
+_metric_logger: Optional[MetricLogger] = None
 
 
 def init(
@@ -28,7 +27,12 @@ def init(
 
 def log(name: str, val: Union[int, float], step: int = None) -> None:
     global _metric_logger  # pylint: disable=global-statement
-    if not _metric_logger:
+    if _metric_logger:
+        if not _metric_logger.matches_env_setup():
+            from .error import ConfigMismatchError
+
+            raise ConfigMismatchError(_metric_logger)
+    else:
         _metric_logger = MetricLogger.from_env()
     if not _metric_logger:
         _metric_logger = MetricLogger()
@@ -39,5 +43,7 @@ def log(name: str, val: Union[int, float], step: int = None) -> None:
 def next_step() -> None:
     global _metric_logger  # pylint: disable=global-statement
     if not _metric_logger:
+        from .error import InitializationError
+
         raise InitializationError()
     _metric_logger.next_step()
