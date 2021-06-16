@@ -5,6 +5,5 @@ class DvcLiveError(Exception):
 class InitializationError(DvcLiveError):
     def __init__(self):
         super().__init__(
-            "Initialization error - call `dvclive.init()` before "
-            "`dvclive.log()`"
+            "Initialization error - no call was made to `dvclive.init()` or `dvclive.log()` "
         )
