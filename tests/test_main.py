@@ -97,7 +97,7 @@ def test_clean_up(tmp_dir):
     dvclive.init("logs", summary=True, html=True)
     dvclive.log("m1", 1)
     dvclive.next_step()
-    # TODO: how to properly dvc html creation
+    # TODO: how to properly mock dvc html creation
     (tmp_dir / "logs.html").touch()
 
     assert (tmp_dir / "logs" / "m1.tsv").is_file()
