@@ -41,6 +41,13 @@ class MetricLogger:
                 self._step = step
         else:
             shutil.rmtree(self.dir, ignore_errors=True)
+
+            try:
+                os.remove(self.summary_path)
+                os.remove(self.html_path)
+            except OSError:
+                pass
+
             try:
                 os.makedirs(self.dir, exist_ok=True)
             except Exception as exception:
@@ -85,7 +92,12 @@ class MetricLogger:
     def summary_path(self):
         return self.dir + ".json"
 
+    @property
+    def html_path(self):
+        return self.dir + ".html"
+
     def next_step(self):
+        print(self._step)
         if self._summary:
             metrics = OrderedDict({"step": self._step})
             metrics.update(self._metrics)
