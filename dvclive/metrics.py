@@ -97,7 +97,6 @@ class MetricLogger:
         return self.dir + ".html"
 
     def next_step(self):
-        print(self._step)
         if self._summary:
             metrics = OrderedDict({"step": self._step})
             metrics.update(self._metrics)
