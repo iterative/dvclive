@@ -20,7 +20,7 @@ def read_logs(path: str):
         metric_name = str(metric_file).replace(path + "/", "")
         metric_name = metric_name.replace(".tsv", "")
         history[metric_name] = _parse_tsv(metric_file)
-    latest = _parse_json(path+ ".json")
+    latest = _parse_json(path + ".json")
     return history, latest
 
 
@@ -77,7 +77,7 @@ def test_nested_logging(tmp_dir):
 
     dvclive.log("train/m1", 1)
     dvclive.log("val/val_1/m1", 1)
-    
+
     assert (tmp_dir / "logs").is_dir()
     assert (tmp_dir / "logs" / "train").is_dir()
     assert (tmp_dir / "logs" / "val" / "val_1").is_dir()
