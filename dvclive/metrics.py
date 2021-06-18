@@ -4,7 +4,6 @@ import os
 import shutil
 import time
 from collections import OrderedDict
-from pathlib import Path
 from typing import Dict
 
 from .dvc import get_signal_file_path, make_checkpoint
@@ -123,12 +122,12 @@ class MetricLogger:
         if step:
             self._step = step
 
-        metric_history_path = (Path(self.history_path) / name).with_suffix(
-            ".tsv"
-        )
-        metric_history_path.parent.mkdir(parents=True, exist_ok=True)
+        metric_history_path = os.path.join(self.history_path, name + ".tsv")
+        os.makedirs(os.path.dirname(metric_history_path), exist_ok=True)
 
-        self._nested_set(self._metrics, Path(name).parts, val)
+        self._nested_set(
+            self._metrics, os.path.normpath(name).split(os.path.sep), val,
+        )
 
         ts = int(time.time() * 1000)
         d = OrderedDict([("timestamp", ts), ("step", self._step), (name, val)])
