@@ -172,7 +172,7 @@ def test_init_from_env(tmp_dir, summary, html, monkeypatch):
 
     dvclive.log("m", 0.1)
 
-    assert str(dvclive._metric_logger._path) == "logs"
+    assert dvclive._metric_logger._path == "logs"
     assert dvclive._metric_logger._summary == summary
     assert dvclive._metric_logger._html == html
 
