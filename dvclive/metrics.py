@@ -4,6 +4,7 @@ import os
 import shutil
 import time
 from collections import OrderedDict
+from pathlib import Path
 from typing import Dict
 
 from .dvc import get_signal_file_path, make_checkpoint
@@ -122,8 +123,12 @@ class MetricLogger:
         if step:
             self._step = step
 
-        metric_history_path = os.path.join(self.history_path, name + ".tsv")
-        self._metrics[name] = val
+        metric_history_path = (Path(self.history_path) / name).with_suffix(
+            ".tsv"
+        )
+        metric_history_path.parent.mkdir(parents=True, exist_ok=True)
+
+        self._nested_set(self._metrics, Path(name).parts, val)
 
         ts = int(time.time() * 1000)
         d = OrderedDict([("timestamp", ts), ("step", self._step), (name, val)])
@@ -138,3 +143,9 @@ class MetricLogger:
     def read_latest(self):
         with open(self.summary_path, "r") as fobj:
             return json.load(fobj)
+
+    @staticmethod
+    def _nested_set(d, keys, value):
+        for key in keys[:-1]:
+            d = d.setdefault(key, {})
+        d[keys[-1]] = value
