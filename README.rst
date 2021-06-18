@@ -13,6 +13,28 @@ DVCLive is an open-source library for monitoring machine learning model performa
 
 4. **Automation**. DVCLive metrics are easy to use by any automation, DevOps, or MLOps tool such as CI/CD (including `CML <https://cml.dev>`_), custom scripts, or ML platforms.
 
+Installation
+============
+
+pip (PyPI)
+----------
+
+|PyPI|
+
+.. code-block:: bash
+
+   pip install dvclive
+
+Depending on the machine learning framework you plan to use to train your model, you might need to specify
+one of the optional dependencies: ``tf``, ``xgb``. Or ``all`` to include them all.
+The command should look like this: ``pip install dvclive[tf]`` (in this case TensorFlow and it's dependencies
+will be installed automatically).
+
+To install the development version, run:
+
+.. code-block:: bash
+
+   pip install git+git://github.com/iterative/dvclive
 
 Python API
 ==========
@@ -29,3 +51,7 @@ Call to collaboration
 
 Today only Python is supported (while DVC is language agnostic), with a minimum number of connectors to ML libs (Keras, XGBoost).
 The DVCLive team is happy to extend the functionality as needed. Please `create an issue <https://github.com/iterative/dvclive/issues>`_ to start a discussion!
+
+.. |PyPI| image:: https://img.shields.io/pypi/v/dvclive.svg?label=pip&logo=PyPI&logoColor=white
+   :target: https://pypi.org/project/dvclive
+   :alt: PyPI
