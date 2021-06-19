@@ -49,7 +49,12 @@ DVCLive is a Python library. The interface consists of three main methods:
 Call to collaboration
 =====================
 
-Today only Python is supported (while DVC is language agnostic), with a minimum number of connectors to ML libs (Keras, XGBoost).
+Today only Python is supported (while DVC is language agnostic), with a minimum number of integrations with ML Frameworks:
+
+- [Tensorflow/Keras](https://github.com/iterative/dvclive/blob/master/dvclive/keras.py)
+- [XGBoost](https://github.com/iterative/dvclive/blob/master/dvclive/xgb.py) 
+- [MMCV](https://mmcv.readthedocs.io/en/latest/api.html#mmcv.runner.DvcliveLoggerHook)
+
 The DVCLive team is happy to extend the functionality as needed. Please `create an issue <https://github.com/iterative/dvclive/issues>`_ to start a discussion!
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/dvclive.svg?label=pip&logo=PyPI&logoColor=white
