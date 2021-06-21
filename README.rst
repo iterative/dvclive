@@ -60,3 +60,11 @@ The DVCLive team is happy to extend the functionality as needed. Please `create 
 .. |PyPI| image:: https://img.shields.io/pypi/v/dvclive.svg?label=pip&logo=PyPI&logoColor=white
    :target: https://pypi.org/project/dvclive
    :alt: PyPI
+
+Copyright
+=========
+
+This project is distributed under the Apache license version 2.0 (see the LICENSE file in the project root).
+
+By submitting a pull request to this project, you agree to license your contribution under the Apache license version
+2.0 to this project.
