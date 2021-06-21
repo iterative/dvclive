@@ -3,6 +3,10 @@ DVCLive
 
 • `Docs <https://dvc.org/doc/dvclive>`_
 
+|CI| |Coverage| |Donate|
+
+|PyPI|
+
 **DVCLive** is an **open-source** library for monitoring machine learning model performance. It's an ML logger similar to MLFlow, Weights & Biases, Neptune, Tensorboard, etc., but built on top of `DVC <https://dvc.org>`_, and with Git and MLOps principles in mind:
 
 1. **Codification of data**. Tracked metrics are stored in readable text files that can be versioned by Git or other version control tools.
@@ -64,6 +68,18 @@ This project is distributed under the Apache license version 2.0 (see the LICENS
 
 By submitting a pull request to this project, you agree to license your contribution under the Apache license version
 2.0 to this project.
+
+.. |CI| image:: https://github.com/iterative/dvclive/workflows/tests/badge.svg
+   :target: https://github.com/iterative/dvclive/actions
+   :alt: GHA Tests
+
+.. |Coverage| image:: https://codecov.io/gh/iterative/dvclive/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/iterative/dvclive
+   :alt: Codecov
+
+.. |Donate| image:: https://img.shields.io/badge/patreon-donate-green.svg?logo=patreon
+   :target: https://www.patreon.com/DVCorg/overview
+   :alt: Donate
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/dvclive.svg?label=pip&logo=PyPI&logoColor=white
    :target: https://pypi.org/project/dvclive
