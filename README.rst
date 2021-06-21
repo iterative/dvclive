@@ -3,7 +3,7 @@ DVCLive
 
 • `Docs <https://dvc.org/doc/dvclive>`_
 
-DVCLive is an open-source library for monitoring machine learning model performance. It's an ML logger similar to MLFlow, Weights & Biases, Neptune, Tensorboard, etc., but built on top of `DVC <https://dvc.org>`_, and with Git and MLOps principles in mind:
+**DVCLive** is an **open-source** library for monitoring machine learning model performance. It's an ML logger similar to MLFlow, Weights & Biases, Neptune, Tensorboard, etc., but built on top of `DVC <https://dvc.org>`_, and with Git and MLOps principles in mind:
 
 1. **Codification of data**. Tracked metrics are stored in readable text files that can be versioned by Git or other version control tools.
 2. **Distributed**. No services or servers are required. Metrics are stored in a Git repository as text files, or pointers to files in DVC storage.
@@ -51,15 +51,11 @@ Call to collaboration
 
 Today only Python is supported (while DVC is language agnostic), with a minimum number of integrations with ML Frameworks:
 
-- [Tensorflow/Keras](https://github.com/iterative/dvclive/blob/master/dvclive/keras.py)
-- [XGBoost](https://github.com/iterative/dvclive/blob/master/dvclive/xgb.py) 
-- [MMCV](https://mmcv.readthedocs.io/en/latest/api.html#mmcv.runner.DvcliveLoggerHook)
+- `Tensorflow/Keras <https://github.com/iterative/dvclive/blob/master/dvclive/keras.py>`_
+- `XGBoost <https://github.com/iterative/dvclive/blob/master/dvclive/xgb.py>`_ 
+- `MMCV <https://mmcv.readthedocs.io/en/latest/api.html#mmcv.runner.DvcliveLoggerHook>`_
 
 The DVCLive team is happy to extend the functionality as needed. Please `create an issue <https://github.com/iterative/dvclive/issues>`_ to start a discussion!
-
-.. |PyPI| image:: https://img.shields.io/pypi/v/dvclive.svg?label=pip&logo=PyPI&logoColor=white
-   :target: https://pypi.org/project/dvclive
-   :alt: PyPI
 
 Copyright
 =========
@@ -68,3 +64,7 @@ This project is distributed under the Apache license version 2.0 (see the LICENS
 
 By submitting a pull request to this project, you agree to license your contribution under the Apache license version
 2.0 to this project.
+
+.. |PyPI| image:: https://img.shields.io/pypi/v/dvclive.svg?label=pip&logo=PyPI&logoColor=white
+   :target: https://pypi.org/project/dvclive
+   :alt: PyPI
