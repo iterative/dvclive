@@ -17,9 +17,9 @@ DVCLive
 
 4. **Automation**. DVCLive metrics are easy to use by any automation, DevOps, or MLOps tool such as CI/CD (including `CML <https://cml.dev>`_), custom scripts, or ML platforms.
 
-**DVCLive** integrates seamlessly with `DVC <https://dvc.org>`_; the logs/summaries it produces can be fed as `dvc plots`/`dvc metrics`. 
+**DVCLive** integrates seamlessly with `DVC <https://dvc.org>`_; the logs/summaries it produces can be fed as :code:`dvc plots`/:code:`dvc metrics`. 
 
-However, `DVC <https://dvc.org>`_ is *not required* to work with dvclive logs/summaries, and since they're saved as easily parsable `.tsv`/`.json` files, you can use your preferred visualization method.
+However, `DVC <https://dvc.org>`_ is *not required* to work with dvclive logs/summaries, and since they're saved as easily parsable :code:`.tsv`/:code:`.json` files, you can use your preferred visualization method.
 
 .. contents:: **Contents**
   :backlinks: none
