@@ -17,7 +17,7 @@ def read_logs(path: str):
     assert os.path.isdir(path)
     history = {}
     for metric_file in Path(path).rglob("*.tsv"):
-        metric_name = str(metric_file).replace(path + "/", "")
+        metric_name = str(metric_file).replace(path + os.path.sep, "")
         metric_name = metric_name.replace(".tsv", "")
         history[metric_name] = _parse_tsv(metric_file)
     latest = _parse_json(path + ".json")
