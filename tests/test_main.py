@@ -93,15 +93,20 @@ def test_html(tmp_dir, dvc_repo, html, signal_exists):
     assert (tmp_dir / ".dvc" / "tmp" / SIGNAL_FILE).is_file() == signal_exists
 
 
-def test_clean_up(tmp_dir):
-    dvclive.init("logs", summary=True, html=True)
+@pytest.mark.parametrize(
+    "summary,html",
+    [(True, True), (True, False), (False, True), (False, False)],
+)
+def test_clean_up(tmp_dir, summary, html):
+    dvclive.init("logs", summary=summary, html=html)
     dvclive.log("m1", 1)
     dvclive.next_step()
-    (tmp_dir / "logs.html").touch()
+    if html:
+        (tmp_dir / "logs.html").touch()
 
     assert (tmp_dir / "logs" / "m1.tsv").is_file()
-    assert (tmp_dir / "logs.json").is_file()
-    assert (tmp_dir / "logs.html").is_file()
+    assert (tmp_dir / "logs.json").is_file() == summary
+    assert (tmp_dir / "logs.html").is_file() == html
 
     dvclive.init("logs")
 
