@@ -9,6 +9,7 @@ from typing import Dict
 from .dvc import get_signal_file_path, make_checkpoint
 from .error import DvcLiveError
 from .serialize import update_tsv, write_json
+from .utils import nested_set
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +126,7 @@ class MetricLogger:
         metric_history_path = os.path.join(self.history_path, name + ".tsv")
         os.makedirs(os.path.dirname(metric_history_path), exist_ok=True)
 
-        self._nested_set(
+        nested_set(
             self._metrics, os.path.normpath(name).split(os.path.sep), val,
         )
 
@@ -142,9 +143,3 @@ class MetricLogger:
     def read_latest(self):
         with open(self.summary_path, "r") as fobj:
             return json.load(fobj)
-
-    @staticmethod
-    def _nested_set(d, keys, value):
-        for key in keys[:-1]:
-            d = d.setdefault(key, {})
-        d[keys[-1]] = value
