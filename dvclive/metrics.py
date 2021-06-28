@@ -42,11 +42,10 @@ class MetricLogger:
         else:
             shutil.rmtree(self.dir, ignore_errors=True)
 
-            try:
+            if os.path.exists(self.summary_path):
                 os.remove(self.summary_path)
+            if os.path.exists(self.html_path):
                 os.remove(self.html_path)
-            except OSError:
-                pass
 
             try:
                 os.makedirs(self.dir, exist_ok=True)
