@@ -41,6 +41,12 @@ class MetricLogger:
                 self._step = step
         else:
             shutil.rmtree(self.dir, ignore_errors=True)
+
+            if os.path.exists(self.summary_path):
+                os.remove(self.summary_path)
+            if os.path.exists(self.html_path):
+                os.remove(self.html_path)
+
             try:
                 os.makedirs(self.dir, exist_ok=True)
             except Exception as exception:
@@ -84,6 +90,10 @@ class MetricLogger:
     @property
     def summary_path(self):
         return self.dir + ".json"
+
+    @property
+    def html_path(self):
+        return self.dir + ".html"
 
     def next_step(self):
         if self._summary:
