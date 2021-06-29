@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+from pathlib import Path
 
 import pytest
 from funcy import last
@@ -12,12 +13,13 @@ from dvclive import env
 from dvclive.dvc import SIGNAL_FILE
 
 
-def read_logs(path):
+def read_logs(path: str):
     assert os.path.isdir(path)
     history = {}
-    for p in os.listdir(path):
-        metric_name = os.path.splitext(p)[0]
-        history[metric_name] = _parse_tsv(os.path.join(path, p))
+    for metric_file in Path(path).rglob("*.tsv"):
+        metric_name = str(metric_file).replace(path + os.path.sep, "")
+        metric_name = metric_name.replace(".tsv", "")
+        history[metric_name] = _parse_tsv(metric_file)
     latest = _parse_json(path + ".json")
     return history, latest
 
@@ -68,6 +70,26 @@ def test_logging(tmp_dir, summary):
     dvclive.next_step()
 
     assert (tmp_dir / "logs.json").is_file() == summary
+
+
+def test_nested_logging(tmp_dir):
+    dvclive.init("logs", summary=True)
+
+    dvclive.log("train/m1", 1)
+    dvclive.log("val/val_1/m1", 1)
+
+    assert (tmp_dir / "logs").is_dir()
+    assert (tmp_dir / "logs" / "train").is_dir()
+    assert (tmp_dir / "logs" / "val" / "val_1").is_dir()
+    assert (tmp_dir / "logs" / "train" / "m1.tsv").is_file()
+    assert (tmp_dir / "logs" / "val" / "val_1" / "m1.tsv").is_file()
+
+    dvclive.next_step()
+
+    _, summary = read_logs("logs")
+
+    assert summary["train"]["m1"] == 1
+    assert summary["val"]["val_1"]["m1"] == 1
 
 
 @pytest.mark.parametrize(
