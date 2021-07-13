@@ -1,3 +1,5 @@
+from typing import Union
+
 from dvclive.version import __version__  # noqa: F401
 
 from .error import InitializationError
@@ -24,7 +26,7 @@ def init(
     return _metric_logger
 
 
-def log(name: str, val: float, step: int = None):
+def log(name: str, val: Union[int, float], step: int = None) -> None:
     global _metric_logger  # pylint: disable=global-statement
     if not _metric_logger:
         _metric_logger = MetricLogger.from_env()
@@ -34,7 +36,7 @@ def log(name: str, val: float, step: int = None):
     _metric_logger.log(name=name, val=val, step=step)
 
 
-def next_step():
+def next_step() -> None:
     global _metric_logger  # pylint: disable=global-statement
     if not _metric_logger:
         raise InitializationError()
