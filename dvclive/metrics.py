@@ -4,7 +4,7 @@ import os
 import shutil
 import time
 from collections import OrderedDict
-from typing import Dict
+from typing import Dict, Union
 
 from .dvc import get_signal_file_path, make_checkpoint
 from .error import DvcLiveError
@@ -116,7 +116,7 @@ class MetricLogger:
         if self._checkpoint:
             make_checkpoint()
 
-    def log(self, name: str, val: float, step: int = None):
+    def log(self, name: str, val: Union[int, float], step: int = None):
         if name in self._metrics.keys():
             logger.info(
                 f"Found {name} in metrics dir, assuming new epoch started"
