@@ -29,7 +29,7 @@ def log(name: str, val: float, step: int = None):
     if not _metric_logger:
         _metric_logger = MetricLogger.from_env()
     if not _metric_logger:
-        raise InitializationError()
+        _metric_logger = MetricLogger()
 
     _metric_logger.log(name=name, val=val, step=step)
 

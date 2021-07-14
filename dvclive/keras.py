@@ -1,4 +1,6 @@
-from tensorflow.keras.callbacks import Callback
+from tensorflow.keras.callbacks import (  # pylint: disable=no-name-in-module
+    Callback,
+)
 
 import dvclive
 

@@ -9,6 +9,7 @@ from typing import Dict
 from .dvc import get_signal_file_path, make_checkpoint
 from .error import DvcLiveError
 from .serialize import update_tsv, write_json
+from .utils import nested_set
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,12 @@ class MetricLogger:
                 self._step = step
         else:
             shutil.rmtree(self.dir, ignore_errors=True)
+
+            if os.path.exists(self.summary_path):
+                os.remove(self.summary_path)
+            if os.path.exists(self.html_path):
+                os.remove(self.html_path)
+
             try:
                 os.makedirs(self.dir, exist_ok=True)
             except Exception as exception:
@@ -85,6 +92,10 @@ class MetricLogger:
     def summary_path(self):
         return self.dir + ".json"
 
+    @property
+    def html_path(self):
+        return self.dir + ".html"
+
     def next_step(self):
         if self._summary:
             metrics = OrderedDict({"step": self._step})
@@ -123,7 +134,11 @@ class MetricLogger:
             self._step = step
 
         metric_history_path = os.path.join(self.history_path, name + ".tsv")
-        self._metrics[name] = val
+        os.makedirs(os.path.dirname(metric_history_path), exist_ok=True)
+
+        nested_set(
+            self._metrics, os.path.normpath(name).split(os.path.sep), val,
+        )
 
         ts = int(time.time() * 1000)
         d = OrderedDict([("timestamp", ts), ("step", self._step), (name, val)])

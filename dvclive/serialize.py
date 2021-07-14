@@ -17,4 +17,4 @@ def update_tsv(d: OrderedDict, path: str):
 
 def write_json(d: dict, path: str):
     with open(path, "w") as fobj:
-        json.dump(d, fobj)
+        json.dump(d, fobj, indent=4)
