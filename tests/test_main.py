@@ -11,7 +11,7 @@ from dvclive import env
 
 # pylint: disable=unused-argument
 from dvclive.dvc import SIGNAL_FILE
-from dvclive.error import DvcLiveError
+from dvclive.error import DvcLiveError, InitializationError
 
 
 def read_logs(path: str):
@@ -211,3 +211,8 @@ def test_invalid_metric_type(tmp_dir, invalid_type):
 
     with pytest.raises(DvcLiveError, match="has not supported type"):
         dvclive.log("m", invalid_type)
+
+
+def test_initialization_error(tmp_dir):
+    with pytest.raises(InitializationError):
+        dvclive.next_step()
