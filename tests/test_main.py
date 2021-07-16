@@ -1,4 +1,5 @@
 import csv
+from dvclive.error import DvcLiveError
 import json
 import os
 from pathlib import Path
@@ -203,3 +204,14 @@ def test_no_init(tmp_dir):
     dvclive.log("m", 0.1)
 
     assert os.path.isdir("dvclive")
+
+@pytest.mark.parametrize("invalid_type", [
+    {0: 1},
+    [0, 1],
+    "foo",
+    (0, 1)
+])
+def test_invalid_metric_type(tmp_dir, invalid_type):
+
+    with pytest.raises(DvcLiveError, match="has not supported type"):
+        dvclive.log("m", invalid_type)
