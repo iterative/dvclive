@@ -1,5 +1,4 @@
 import csv
-from dvclive.error import DvcLiveError
 import json
 import os
 from pathlib import Path
@@ -12,6 +11,7 @@ from dvclive import env
 
 # pylint: disable=unused-argument
 from dvclive.dvc import SIGNAL_FILE
+from dvclive.error import DvcLiveError
 
 
 def read_logs(path: str):
@@ -205,12 +205,8 @@ def test_no_init(tmp_dir):
 
     assert os.path.isdir("dvclive")
 
-@pytest.mark.parametrize("invalid_type", [
-    {0: 1},
-    [0, 1],
-    "foo",
-    (0, 1)
-])
+
+@pytest.mark.parametrize("invalid_type", [{0: 1}, [0, 1], "foo", (0, 1)])
 def test_invalid_metric_type(tmp_dir, invalid_type):
 
     with pytest.raises(DvcLiveError, match="has not supported type"):
