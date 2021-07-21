@@ -120,20 +120,23 @@ def test_html(tmp_dir, dvc_repo, html, signal_exists):
     "summary,html",
     [(True, True), (True, False), (False, True), (False, False)],
 )
-def test_clean_up(tmp_dir, summary, html):
+def test_cleanup(tmp_dir, summary, html):
     dvclive.init("logs", summary=summary, html=html)
     dvclive.log("m1", 1)
     dvclive.next_step()
     if html:
         (tmp_dir / "logs.html").touch()
 
-    assert (tmp_dir / "logs" / "m1.tsv").is_file()
+    (tmp_dir / "logs" / "some_user_file.txt").touch()
+
+    assert (tmp_dir / "logs" / "m1.dvclive.tsv").is_file()
     assert (tmp_dir / "logs.json").is_file() == summary
     assert (tmp_dir / "logs.html").is_file() == html
 
     dvclive.init("logs")
 
-    assert not (tmp_dir / "logs" / "m1.tsv").is_file()
+    assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
+    assert not (tmp_dir / "logs" / "m1.dvclive.tsv").is_file()
     assert not (tmp_dir / "logs.json").is_file()
     assert not (tmp_dir / "logs.html").is_file()
 
