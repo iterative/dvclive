@@ -52,7 +52,7 @@ class MetricLogger:
     def _cleanup(self):
 
         for dvclive_file in Path(self.dir).rglob("*.dvclive.tsv"):
-            dvclive_file.unlink(missing_ok=True)
+            dvclive_file.unlink()
 
         if os.path.exists(self.summary_path):
             os.remove(self.summary_path)
