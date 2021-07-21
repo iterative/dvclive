@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import shutil
 import time
 from collections import OrderedDict
 from pathlib import Path
@@ -51,7 +50,7 @@ class MetricLogger:
                 ) from exception
 
     def _cleanup(self):
-        
+
         for dvclive_file in Path(self.dir).rglob("*.dvclive.tsv"):
             dvclive_file.unlink(missing_ok=True)
 
@@ -139,7 +138,9 @@ class MetricLogger:
         if step:
             self._step = step
 
-        metric_history_path = os.path.join(self.history_path, name + ".dvclive.tsv")
+        metric_history_path = os.path.join(
+            self.history_path, name + ".dvclive.tsv"
+        )
         os.makedirs(os.path.dirname(metric_history_path), exist_ok=True)
 
         nested_set(
