@@ -138,9 +138,7 @@ class MetricLogger:
         if step:
             self._step = step
 
-        metric_history_path = os.path.join(
-            self.history_path, name + ".tsv"
-        )
+        metric_history_path = os.path.join(self.history_path, name + ".tsv")
         os.makedirs(os.path.dirname(metric_history_path), exist_ok=True)
 
         nested_set(
