@@ -19,7 +19,7 @@ def read_logs(path: str):
     history = {}
     for metric_file in Path(path).rglob("*.tsv"):
         metric_name = str(metric_file).replace(path + os.path.sep, "")
-        metric_name = metric_name.replace(".dvclive.tsv", "")
+        metric_name = metric_name.replace(".tsv", "")
         history[metric_name] = _parse_tsv(metric_file)
     latest = _parse_json(path + ".json")
     return history, latest
@@ -65,7 +65,7 @@ def test_logging(tmp_dir, summary):
     dvclive.log("m1", 1)
 
     assert (tmp_dir / "logs").is_dir()
-    assert (tmp_dir / "logs" / "m1.dvclive.tsv").is_file()
+    assert (tmp_dir / "logs" / "m1.tsv").is_file()
     assert not (tmp_dir / "logs.json").is_file()
 
     dvclive.next_step()
@@ -82,8 +82,8 @@ def test_nested_logging(tmp_dir):
     assert (tmp_dir / "logs").is_dir()
     assert (tmp_dir / "logs" / "train").is_dir()
     assert (tmp_dir / "logs" / "val" / "val_1").is_dir()
-    assert (tmp_dir / "logs" / "train" / "m1.dvclive.tsv").is_file()
-    assert (tmp_dir / "logs" / "val" / "val_1" / "m1.dvclive.tsv").is_file()
+    assert (tmp_dir / "logs" / "train" / "m1.tsv").is_file()
+    assert (tmp_dir / "logs" / "val" / "val_1" / "m1.tsv").is_file()
 
     dvclive.next_step()
 
@@ -129,14 +129,14 @@ def test_cleanup(tmp_dir, summary, html):
 
     (tmp_dir / "logs" / "some_user_file.txt").touch()
 
-    assert (tmp_dir / "logs" / "m1.dvclive.tsv").is_file()
+    assert (tmp_dir / "logs" / "m1.tsv").is_file()
     assert (tmp_dir / "logs.json").is_file() == summary
     assert (tmp_dir / "logs.html").is_file() == html
 
     dvclive.init("logs")
 
     assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
-    assert not (tmp_dir / "logs" / "m1.dvclive.tsv").is_file()
+    assert not (tmp_dir / "logs" / "m1.tsv").is_file()
     assert not (tmp_dir / "logs.json").is_file()
     assert not (tmp_dir / "logs.html").is_file()
 
