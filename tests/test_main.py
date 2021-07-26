@@ -21,8 +21,8 @@ def read_logs(path: str):
         metric_name = str(metric_file).replace(path + os.path.sep, "")
         metric_name = metric_name.replace(".tsv", "")
         history[metric_name] = _parse_tsv(metric_file)
-    latest = _parse_json(path + ".json")
-    return history, latest
+    summary = _parse_json(path + ".json")
+    return history, summary
 
 
 def read_history(path, metric):
@@ -36,8 +36,8 @@ def read_history(path, metric):
 
 
 def read_latest(path, metric_name):
-    _, latest = read_logs(path)
-    return latest["step"], latest[metric_name]
+    _, summary = read_logs(path)
+    return summary["last"]["step"], summary["last"][metric_name]
 
 
 def _parse_tsv(path):
@@ -89,8 +89,8 @@ def test_nested_logging(tmp_dir):
 
     _, summary = read_logs("logs")
 
-    assert summary["train"]["m1"] == 1
-    assert summary["val"]["val_1"]["m1"] == 1
+    assert summary["last"]["train"]["m1"] == 1
+    assert summary["last"]["val"]["val_1"]["m1"] == 1
 
 
 @pytest.mark.parametrize(
@@ -219,3 +219,20 @@ def test_invalid_metric_type(tmp_dir, invalid_type):
 def test_initialization_error(tmp_dir):
     with pytest.raises(InitializationError):
         dvclive.next_step()
+
+
+def test_summary_last_max_min(tmp_dir):
+    for value in [0.1, 0.2, 0.15]:
+        dvclive.log("m", value)
+        dvclive.next_step()
+
+    _, summary = read_logs("dvclive")
+
+    assert summary["last"]["step"] == 2
+    assert summary["last"]["m"] == 0.15
+    
+    assert summary["max"]["step"] == 2
+    assert summary["max"]["m"] == 0.2
+
+    assert summary["min"]["step"] == 0
+    assert summary["min"]["m"] == 0.1
