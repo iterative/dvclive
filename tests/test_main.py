@@ -230,7 +230,7 @@ def test_summary_last_max_min(tmp_dir):
 
     assert summary["last"]["step"] == 2
     assert summary["last"]["m"] == 0.15
-    
+
     assert summary["max"]["step"] == 2
     assert summary["max"]["m"] == 0.2
 

@@ -31,6 +31,8 @@ class MetricLogger:
         self._html: bool = html
         self._summary = summary
         self._metrics: Dict[str, float] = OrderedDict()
+        self._max_values: Dict[str, float] = OrderedDict()
+        self._min_values: Dict[str, float] = OrderedDict()
         self._checkpoint: bool = checkpoint
 
         if resume and self.exists:
@@ -103,9 +105,8 @@ class MetricLogger:
 
     def next_step(self):
         if self._summary:
-            metrics = OrderedDict({"step": self._step})
-            metrics.update(self._metrics)
-            write_json(metrics, self.summary_path)
+            summary = self._get_summary()
+            write_json(summary, self.summary_path)
 
         if self._html:
             signal_file_path = get_signal_file_path()
@@ -141,9 +142,7 @@ class MetricLogger:
         metric_history_path = os.path.join(self.history_path, name + ".tsv")
         os.makedirs(os.path.dirname(metric_history_path), exist_ok=True)
 
-        nested_set(
-            self._metrics, os.path.normpath(name).split(os.path.sep), val,
-        )
+        self._metrics[name] = val
 
         ts = int(time.time() * 1000)
         d = OrderedDict([("timestamp", ts), ("step", self._step), (name, val)])
@@ -151,10 +150,40 @@ class MetricLogger:
 
     def read_step(self):
         if self.exists:
-            latest = self.read_latest()
+            latest = self.read_summary()["last"]
             return int(latest["step"])
         return 0
 
-    def read_latest(self):
+    def read_summary(self):
         with open(self.summary_path, "r") as fobj:
             return json.load(fobj)
+
+    def _get_summary(self):
+        summary = OrderedDict({"last": {}, "max": {}, "min": {}})
+        self._metrics["step"] = self._step
+        for name, value in self._metrics.items():
+            nested_set(
+                summary["last"],
+                os.path.normpath(name).split(os.path.sep),
+                value,
+            )
+
+            if value > self._max_values.get(name, float("-inf")):
+                self._max_values[name] = value
+
+            nested_set(
+                summary["max"],
+                os.path.normpath(name).split(os.path.sep),
+                self._max_values[name],
+            )
+
+            if value < self._min_values.get(name, float("inf")):
+                self._min_values[name] = value
+
+            nested_set(
+                summary["min"],
+                os.path.normpath(name).split(os.path.sep),
+                self._min_values[name],
+            )
+
+        return summary
