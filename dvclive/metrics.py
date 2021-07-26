@@ -1,9 +1,9 @@
 import json
 import logging
 import os
-import shutil
 import time
 from collections import OrderedDict
+from pathlib import Path
 from typing import Dict, Union
 
 from .dvc import get_signal_file_path, make_checkpoint
@@ -41,19 +41,24 @@ class MetricLogger:
             else:
                 self._step = step
         else:
-            shutil.rmtree(self.dir, ignore_errors=True)
-
-            if os.path.exists(self.summary_path):
-                os.remove(self.summary_path)
-            if os.path.exists(self.html_path):
-                os.remove(self.html_path)
-
+            self._cleanup()
             try:
                 os.makedirs(self.dir, exist_ok=True)
             except Exception as exception:
                 raise DvcLiveError(
                     "dvc-live cannot create log dir - '{}'".format(self.dir),
                 ) from exception
+
+    def _cleanup(self):
+
+        for dvclive_file in Path(self.dir).rglob("*.tsv"):
+            dvclive_file.unlink()
+
+        if os.path.exists(self.summary_path):
+            os.remove(self.summary_path)
+
+        if os.path.exists(self.html_path):
+            os.remove(self.html_path)
 
     @staticmethod
     def from_env():
