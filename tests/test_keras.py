@@ -47,17 +47,26 @@ def test_keras_callback(tmp_dir, xor_model, capture_wrap):
 
     assert "accuracy" in logs
 
+
 @pytest.mark.parametrize("save_weights_only", (True, False))
-def test_keras_model_file(tmp_dir, xor_model, mocker, save_weights_only, capture_wrap):
+def test_keras_model_file(
+    tmp_dir, xor_model, mocker, save_weights_only, capture_wrap
+):
     model, x, y = xor_model()
     save = mocker.spy(model, "save")
     save_weights = mocker.spy(model, "save_weights")
 
     dvclive.init("logs")
     model.fit(
-        x, y, epochs=1, batch_size=1, callbacks=[DvcLiveCallback(
-            model_file="model.h5", save_weights_only=save_weights_only
-        )],
+        x,
+        y,
+        epochs=1,
+        batch_size=1,
+        callbacks=[
+            DvcLiveCallback(
+                model_file="model.h5", save_weights_only=save_weights_only
+            )
+        ],
     )
     assert save.call_count != save_weights_only
     assert save_weights.call_count == save_weights_only
