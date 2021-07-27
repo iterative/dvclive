@@ -34,11 +34,13 @@ def xor_model():
     yield make
 
 
-def test_keras_callback(tmp_dir, xor_model):
+def test_keras_callback(tmp_dir, xor_model, capture_wrap):
     model, x, y = xor_model()
 
     dvclive.init("logs")
-    model.fit(x, y, epochs=1, batch_size=1, callbacks=[DvcLiveCallback()])
+    model.fit(
+        x, y, epochs=1, batch_size=1, callbacks=[DvcLiveCallback()],
+    )
 
     assert os.path.exists("logs")
     logs, _ = read_logs("logs")
