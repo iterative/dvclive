@@ -1,14 +1,15 @@
 import json
 import logging
 import os
-import shutil
 import time
 from collections import OrderedDict
-from typing import Dict
+from pathlib import Path
+from typing import Dict, Union
 
 from .dvc import get_signal_file_path, make_checkpoint
 from .error import DvcLiveError
 from .serialize import update_tsv, write_json
+from .utils import nested_set
 
 logger = logging.getLogger(__name__)
 
@@ -40,13 +41,24 @@ class MetricLogger:
             else:
                 self._step = step
         else:
-            shutil.rmtree(self.dir, ignore_errors=True)
+            self._cleanup()
             try:
                 os.makedirs(self.dir, exist_ok=True)
             except Exception as exception:
                 raise DvcLiveError(
                     "dvc-live cannot create log dir - '{}'".format(self.dir),
                 ) from exception
+
+    def _cleanup(self):
+
+        for dvclive_file in Path(self.dir).rglob("*.tsv"):
+            dvclive_file.unlink()
+
+        if os.path.exists(self.summary_path):
+            os.remove(self.summary_path)
+
+        if os.path.exists(self.html_path):
+            os.remove(self.html_path)
 
     @staticmethod
     def from_env():
@@ -85,6 +97,10 @@ class MetricLogger:
     def summary_path(self):
         return self.dir + ".json"
 
+    @property
+    def html_path(self):
+        return self.dir + ".html"
+
     def next_step(self):
         if self._summary:
             metrics = OrderedDict({"step": self._step})
@@ -105,7 +121,7 @@ class MetricLogger:
         if self._checkpoint:
             make_checkpoint()
 
-    def log(self, name: str, val: float, step: int = None):
+    def log(self, name: str, val: Union[int, float], step: int = None):
         if name in self._metrics.keys():
             logger.info(
                 f"Found {name} in metrics dir, assuming new epoch started"
@@ -123,7 +139,11 @@ class MetricLogger:
             self._step = step
 
         metric_history_path = os.path.join(self.history_path, name + ".tsv")
-        self._metrics[name] = val
+        os.makedirs(os.path.dirname(metric_history_path), exist_ok=True)
+
+        nested_set(
+            self._metrics, os.path.normpath(name).split(os.path.sep), val,
+        )
 
         ts = int(time.time() * 1000)
         d = OrderedDict([("timestamp", ts), ("step", self._step), (name, val)])

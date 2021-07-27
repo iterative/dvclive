@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+from pathlib import Path
 
 import pytest
 from funcy import last
@@ -10,14 +11,16 @@ from dvclive import env
 
 # pylint: disable=unused-argument
 from dvclive.dvc import SIGNAL_FILE
+from dvclive.error import DvcLiveError, InitializationError
 
 
-def read_logs(path):
+def read_logs(path: str):
     assert os.path.isdir(path)
     history = {}
-    for p in os.listdir(path):
-        metric_name = os.path.splitext(p)[0]
-        history[metric_name] = _parse_tsv(os.path.join(path, p))
+    for metric_file in Path(path).rglob("*.tsv"):
+        metric_name = str(metric_file).replace(path + os.path.sep, "")
+        metric_name = metric_name.replace(".tsv", "")
+        history[metric_name] = _parse_tsv(metric_file)
     latest = _parse_json(path + ".json")
     return history, latest
 
@@ -70,6 +73,26 @@ def test_logging(tmp_dir, summary):
     assert (tmp_dir / "logs.json").is_file() == summary
 
 
+def test_nested_logging(tmp_dir):
+    dvclive.init("logs", summary=True)
+
+    dvclive.log("train/m1", 1)
+    dvclive.log("val/val_1/m1", 1)
+
+    assert (tmp_dir / "logs").is_dir()
+    assert (tmp_dir / "logs" / "train").is_dir()
+    assert (tmp_dir / "logs" / "val" / "val_1").is_dir()
+    assert (tmp_dir / "logs" / "train" / "m1.tsv").is_file()
+    assert (tmp_dir / "logs" / "val" / "val_1" / "m1.tsv").is_file()
+
+    dvclive.next_step()
+
+    _, summary = read_logs("logs")
+
+    assert summary["train"]["m1"] == 1
+    assert summary["val"]["val_1"]["m1"] == 1
+
+
 @pytest.mark.parametrize(
     "dvc_repo,html,signal_exists",
     [
@@ -91,6 +114,31 @@ def test_html(tmp_dir, dvc_repo, html, signal_exists):
     dvclive.next_step()
 
     assert (tmp_dir / ".dvc" / "tmp" / SIGNAL_FILE).is_file() == signal_exists
+
+
+@pytest.mark.parametrize(
+    "summary,html",
+    [(True, True), (True, False), (False, True), (False, False)],
+)
+def test_cleanup(tmp_dir, summary, html):
+    dvclive.init("logs", summary=summary, html=html)
+    dvclive.log("m1", 1)
+    dvclive.next_step()
+    if html:
+        (tmp_dir / "logs.html").touch()
+
+    (tmp_dir / "logs" / "some_user_file.txt").touch()
+
+    assert (tmp_dir / "logs" / "m1.tsv").is_file()
+    assert (tmp_dir / "logs.json").is_file() == summary
+    assert (tmp_dir / "logs.html").is_file() == html
+
+    dvclive.init("logs")
+
+    assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
+    assert not (tmp_dir / "logs" / "m1.tsv").is_file()
+    assert not (tmp_dir / "logs.json").is_file()
+    assert not (tmp_dir / "logs.html").is_file()
 
 
 @pytest.mark.parametrize(
@@ -159,3 +207,15 @@ def test_no_init(tmp_dir):
     dvclive.log("m", 0.1)
 
     assert os.path.isdir("dvclive")
+
+
+@pytest.mark.parametrize("invalid_type", [{0: 1}, [0, 1], "foo", (0, 1)])
+def test_invalid_metric_type(tmp_dir, invalid_type):
+
+    with pytest.raises(DvcLiveError, match="has not supported type"):
+        dvclive.log("m", invalid_type)
+
+
+def test_initialization_error(tmp_dir):
+    with pytest.raises(InitializationError):
+        dvclive.next_step()
