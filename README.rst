@@ -80,9 +80,9 @@ Call to collaboration
 
 Today only Python is supported (while DVC is language agnostic), with a minimum number of integrations with *ML frameworks*:
 
+- `MMCV <https://github.com/iterative/dvclive/blob/master/dvclive/mmcv.py>`_
 - `Tensorflow/Keras <https://github.com/iterative/dvclive/blob/master/dvclive/keras.py>`_
 - `XGBoost <https://github.com/iterative/dvclive/blob/master/dvclive/xgb.py>`_ 
-- `MMCV <https://mmcv.readthedocs.io/en/latest/api.html#mmcv.runner.DvcliveLoggerHook>`_
 
 The DVCLive team is happy to extend the functionality as needed. Please `create an issue <https://github.com/iterative/dvclive/issues>`_ to start a discussion!
 
