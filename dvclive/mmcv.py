@@ -14,7 +14,7 @@ class DVCLiveLoggerHook(LoggerHook):
     It requires `dvclive`_ to be installed.
 
     Args:
-        model_file (str): 
+        model_file (str):
             Default None.
             If not None, after each epoch the model will
             be saved to {model_file}.
