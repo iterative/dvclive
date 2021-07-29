@@ -61,7 +61,7 @@ class MetricLogger:
             os.remove(self.html_path)
 
     @staticmethod
-    def from_env(existing_logger: "MetricLogger" = None):
+    def from_env():
         from . import env
 
         if env.DVCLIVE_PATH in os.environ:
@@ -74,31 +74,8 @@ class MetricLogger:
                 ),
                 "resume": bool(int(os.environ.get(env.DVCLIVE_RESUME, "0"))),
             }
-
-            if existing_logger:
-
-                def config_matches(metric_logger: MetricLogger):
-                    return (
-                        env_config["summary"] == metric_logger._summary
-                        and env_config["html"] == metric_logger._html
-                        and env_config["checkpoint"]
-                        == metric_logger._checkpoint
-                    )
-
-                if existing_logger.dir == directory and config_matches(
-                    existing_logger
-                ):
-                    return existing_logger
-                else:
-                    logger.info(
-                        "Dvclive logger config ('%s') has changed. "
-                        "New logger will write to '%s'.",
-                        existing_logger.dir,
-                        directory,
-                    )
-
             return MetricLogger(directory, **env_config)
-        return existing_logger
+        return None
 
     def matches_env_setup(self):
         from . import env

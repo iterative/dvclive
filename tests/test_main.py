@@ -224,20 +224,6 @@ def test_fail_on_conflict(tmp_dir, monkeypatch):
         dvclive.log("m", 0.1)
 
 
-def test_dont_override_from_env(tmp_dir, monkeypatch):
-    dvclive.init("initial_path", summary=True, html=True)
-    dvclive.log("m", 0.1)
-
-    monkeypatch.setenv(env.DVCLIVE_PATH, "initial_path")
-    monkeypatch.setenv(env.DVCLIVE_SUMMARY, "1")
-    monkeypatch.setenv(env.DVCLIVE_HTML, "1")
-
-    dvclive.log("m", 0.2)
-    dvclive.log("m", 0.3)
-
-    assert read_history("initial_path", "m") == ([0, 1, 2], [0.1, 0.2, 0.3])
-
-
 @pytest.mark.parametrize("invalid_type", [{0: 1}, [0, 1], "foo", (0, 1)])
 def test_invalid_metric_type(tmp_dir, invalid_type):
 
