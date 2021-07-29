@@ -212,7 +212,7 @@ def test_init_from_env(tmp_dir, summary, html, monkeypatch):
 def test_init_overrides_env(tmp_dir, html, summary, monkeypatch):
     monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
     monkeypatch.setenv(env.DVCLIVE_SUMMARY, str(int(not summary)))
-    monkeypatch.setenv(env.DVCLIVE_SUMMARY, str(int(not html)))
+    monkeypatch.setenv(env.DVCLIVE_HTML, str(int(not html)))
 
     dvclive.init("logs", summary=summary, html=html)
 
