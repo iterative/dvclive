@@ -207,6 +207,18 @@ def test_init_from_env(tmp_dir, summary, html, monkeypatch):
     assert dvclive._metric_logger._html == html
 
 
+def test_init_overrides_env(tmp_dir, monkeypatch):
+    monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
+    monkeypatch.setenv(env.DVCLIVE_SUMMARY, "0")
+    monkeypatch.setenv(env.DVCLIVE_HTML, "0")
+
+    dvclive.init("logs", summary=True, html=True)
+
+    assert dvclive._metric_logger._path == "logs"
+    assert dvclive._metric_logger._summary == True
+    assert dvclive._metric_logger._html == True
+
+
 def test_no_init(tmp_dir):
     dvclive.log("m", 0.1)
 
