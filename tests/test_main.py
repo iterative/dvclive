@@ -25,10 +25,7 @@ def read_logs(path: str):
         metric_name = str(metric_file).replace(path + os.path.sep, "")
         metric_name = metric_name.replace(".tsv", "")
         history[metric_name] = _parse_tsv(metric_file)
-    try:
-        latest = _parse_json(path + ".json")
-    except FileNotFoundError:
-        latest = {}
+    latest = _parse_json(path + ".json")
     return history, latest
 
 
