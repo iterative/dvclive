@@ -11,7 +11,11 @@ from dvclive import env
 
 # pylint: disable=unused-argument
 from dvclive.dvc import SIGNAL_FILE
-from dvclive.error import DvcLiveError, InitializationError
+from dvclive.error import (
+    ConfigMismatchError,
+    DvcLiveError,
+    InitializationError,
+)
 
 
 def read_logs(path: str):
@@ -207,6 +211,14 @@ def test_no_init(tmp_dir):
     dvclive.log("m", 0.1)
 
     assert os.path.isdir("dvclive")
+
+
+def test_fail_on_conflict(tmp_dir, monkeypatch):
+    dvclive.init("some_dir")
+    monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
+
+    with pytest.raises(ConfigMismatchError):
+        dvclive.log("m", 0.1)
 
 
 @pytest.mark.parametrize("invalid_type", [{0: 1}, [0, 1], "foo", (0, 1)])
