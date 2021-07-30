@@ -36,10 +36,11 @@ class build_py(_build_py):
         _build_py.run(self)
 
 
+mmcv = ["mmcv", "torch", "torchvision"]
 tf = ["tensorflow"]
 xgb = ["xgboost"]
 
-all_libs = tf + xgb
+all_libs = mmcv + tf + xgb
 
 tests_requires = [
     "pylint==2.5.3",

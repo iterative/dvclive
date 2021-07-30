@@ -43,7 +43,10 @@ jobs:
     - name: install libomp
       # required for xgboost
       if: runner.os == 'macOS'
-      run: brew install libomp
+      run: |
+        wget https://raw.githubusercontent.com/Homebrew/homebrew-core/679923b4eb48a8dc7ecc1f05d06063cd79b3fc00/Formula/libomp.rb -O $(find $(brew --repository) -name libomp.rb)
+        brew install ninja libomp
+        brew pin libomp        
     - name: run tests
       run: py.test -v --cov dvclive --cov-report=xml
     - name: upload coverage report
