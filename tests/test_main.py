@@ -184,8 +184,8 @@ def test_infer_next_step(tmp_dir, mocker):
 def test_custom_steps(tmp_dir):
     dvclive.init("logs")
 
-    steps = [0, 62, 1000]
-    metrics = [0.9, 0.8, 0.7]
+    steps = [10, 0, 62, 1000]
+    metrics = [1.0, 0.9, 0.8, 0.7]
 
     for step, metric in zip(steps, metrics):
         dvclive.log("m", metric, step=step)
