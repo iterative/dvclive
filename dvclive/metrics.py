@@ -142,7 +142,7 @@ class MetricLogger:
                 )
             )
 
-        if step:
+        if step is not None:
             self._step = step
 
         metric_history_path = os.path.join(self.history_path, name + ".tsv")

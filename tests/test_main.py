@@ -193,6 +193,17 @@ def test_custom_steps(tmp_dir):
     assert read_history("logs", "m") == (steps, metrics)
 
 
+def test_log_reset_with_step_0(tmp_dir):
+    for i in range(3):
+        dvclive.log("train_m", 1, step=i)
+
+    for i in range(3):
+        dvclive.log("val_m", 1, step=i)
+
+    assert read_history("dvclive", "train_m") == ([0, 1, 2], [1, 1, 1])
+    assert read_history("dvclive", "val_m") == ([0, 1, 2], [1, 1, 1])
+
+
 @pytest.mark.parametrize("html", [True, False])
 @pytest.mark.parametrize("summary", [True, False])
 def test_init_from_env(tmp_dir, summary, html, monkeypatch):
