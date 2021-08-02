@@ -50,7 +50,7 @@ pip (PyPI)
    pip install dvclive
 
 Depending on the *ML framework* you plan to use to train your model, you might need to specify
-one of the optional dependencies: ``tf``, ``xgb``. Or ``all`` to include them all.
+one of the optional dependencies: ``mmcv``, ``tf``, ``xgb``. Or ``all`` to include them all.
 The command should look like this: ``pip install dvclive[tf]`` (in this case TensorFlow and it's dependencies
 will be installed automatically).
 
