@@ -1,7 +1,7 @@
 import os
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytest
 import xgboost as xgb
 from funcy import first
@@ -32,7 +32,7 @@ def test_xgb_integration(tmp_dir, train_params, iris_data):
     xgb.train(
         train_params,
         iris_data,
-        callbacks=[DvcLiveCallback("eval_data", model_file="model_xgb.json")],
+        callbacks=[DvcLiveCallback("eval_data")],
         num_boost_round=5,
         evals=[(iris_data, "eval_data")],
     )
@@ -42,8 +42,19 @@ def test_xgb_integration(tmp_dir, train_params, iris_data):
     logs, _ = read_logs("logs")
     assert len(logs) == 1
     assert len(first(logs.values())) == 5
-    
-    preds = xgb.predict(iris_data)
-    xgb2 = xgb.Booster(model_file="model_xgb.json")
-    preds2 = xgb2.predict(iris_data)
+
+
+def test_xgb_model_file(tmp_dir, train_params, iris_data):
+    dvclive.init("logs")
+    model = xgb.train(
+        train_params,
+        iris_data,
+        callbacks=[DvcLiveCallback("eval_data", model_file="model_xgb.json")],
+        num_boost_round=5,
+        evals=[(iris_data, "eval_data")],
+    )
+
+    preds = model.predict(iris_data)
+    model2 = xgb.Booster(model_file="model_xgb.json")
+    preds2 = model2.predict(iris_data)
     assert np.sum(np.abs(preds2 - preds)) == 0
