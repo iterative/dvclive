@@ -31,9 +31,9 @@ Please read the `Usage guide <https://dvc.org/doc/dvclive/usage>`_ for a detaile
 
 **DVCLive** is a Python library. The interface consists of three main methods:
 
-1. :code:`dvclive.init(path)` - initializes a DVCLive logger. The metrics will be saved under (optional) :code:`path`, defaults to `dvclive`.
-2. :code:`dvclive.log(metric, value, step)` - logs the metric value. The :code:`value` and :code:`step` (optional) will be appended to :code:`path/{metric}.tsv` file.
-3. :code:`dvclive.next_step()` - signals that the current step has ended (implied when the same :code:`metric` is logged again).
+1. `dvclive.init() <https://dvc.org/doc/dvclive/api-reference/init>`_
+2. `dvclive.log() <https://dvc.org/doc/dvclive/api-reference/log>`_ 
+3. `dvclive.next_step() <https://dvc.org/doc/dvclive/api-reference/next_step>`_
 
 If you are ussing a ML training framework, check the existing integrations_.
 
