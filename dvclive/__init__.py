@@ -12,7 +12,6 @@ def init(
     resume: bool = False,
     step: int = 0,
     summary: bool = True,
-    html: bool = True,
 ) -> MetricLogger:
     global _metric_logger  # pylint: disable=global-statement
     _metric_logger = MetricLogger(
@@ -20,7 +19,6 @@ def init(
         resume=resume,
         step=step,
         summary=summary,
-        html=html,
     )
     return _metric_logger
 
