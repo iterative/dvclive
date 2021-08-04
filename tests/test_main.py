@@ -106,13 +106,13 @@ def test_nested_logging(tmp_dir):
         (False, False, False),
     ],
 )
-def test_html(tmp_dir, dvc_repo, html, signal_exists):
+def test_html(tmp_dir, dvc_repo, html, signal_exists, monkeypatch):
     if dvc_repo:
         from dvc.repo import Repo
 
         Repo.init(no_scm=True)
-
-    dvclive.init("logs", html=html)
+    monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
+    monkeypatch.setenv(env.DVCLIVE_HTML, str(int(html)))
 
     dvclive.log("m1", 1)
     dvclive.next_step()
@@ -125,7 +125,7 @@ def test_html(tmp_dir, dvc_repo, html, signal_exists):
     [(True, True), (True, False), (False, True), (False, False)],
 )
 def test_cleanup(tmp_dir, summary, html):
-    dvclive.init("logs", summary=summary, html=html)
+    dvclive.init("logs", summary=summary)
     dvclive.log("m1", 1)
     dvclive.next_step()
     if html:
@@ -218,18 +218,15 @@ def test_init_from_env(tmp_dir, summary, html, monkeypatch):
     assert dvclive._metric_logger._html == html
 
 
-@pytest.mark.parametrize("html", [True, False])
 @pytest.mark.parametrize("summary", [True, False])
-def test_init_overrides_env(tmp_dir, html, summary, monkeypatch):
-    monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
+def test_init_overrides_env(tmp_dir, summary, monkeypatch):
+    monkeypatch.setenv(env.DVCLIVE_PATH, "FOO")
     monkeypatch.setenv(env.DVCLIVE_SUMMARY, str(int(not summary)))
-    monkeypatch.setenv(env.DVCLIVE_HTML, str(int(not html)))
 
-    dvclive.init("logs", summary=summary, html=html)
+    dvclive.init("logs", summary=summary)
 
     assert dvclive._metric_logger._path == "logs"
     assert dvclive._metric_logger._summary == summary
-    assert dvclive._metric_logger._html == html
 
 
 def test_no_init(tmp_dir):
