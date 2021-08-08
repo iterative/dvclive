@@ -31,7 +31,7 @@ def iris_data():
     return (x_train, y_train), (x_test, y_test)
 
 
-def test_lgbm_integration(model_params, iris_data):
+def test_lgbm_integration(tmp_dir, model_params, iris_data):
     dvclive.init("logs")
     model = lgbm.LGBMClassifier()
     model.set_params(**model_params)
@@ -51,7 +51,7 @@ def test_lgbm_integration(model_params, iris_data):
     assert len(first(logs.values())) == 5
 
 
-def test_lgbm_model_file(model_params, iris_data):
+def test_lgbm_model_file(tmp_dir, model_params, iris_data):
     dvclive.init("logs")
     model = lgbm.LGBMClassifier()
     model.set_params(**model_params)
