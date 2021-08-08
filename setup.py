@@ -39,8 +39,9 @@ class build_py(_build_py):
 mmcv = ["mmcv", "torch", "torchvision"]
 tf = ["tensorflow"]
 xgb = ["xgboost"]
+lgbm = ["lightgbm"]
 
-all_libs = mmcv + tf + xgb
+all_libs = mmcv + tf + xgb + lgbm
 
 tests_requires = [
     "pylint==2.5.3",
@@ -71,6 +72,7 @@ setup(
         "all": all_libs,
         "tf": tf,
         "xgb": xgb,
+        "lgbm": lgbm,
     },
     keywords="data-science metrics machine-learning developer-tools ai",
     python_requires=">=3.6",
