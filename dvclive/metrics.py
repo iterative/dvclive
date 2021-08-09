@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, Union
 
 from .dvc import get_signal_file_path, make_checkpoint
-from .error import DvcLiveError
+from .error import DvcLiveError, InvalidMetricTypeError
 from .serialize import update_tsv, write_json
 from .utils import nested_set
 
@@ -136,11 +136,7 @@ class MetricLogger:
             self.next_step()
 
         if not isinstance(val, (int, float)):
-            raise DvcLiveError(
-                "Metrics '{}' has not supported type {}".format(
-                    name, type(val)
-                )
-            )
+            raise InvalidMetricTypeError(name, type(val))
 
         if step is not None:
             self._step = step

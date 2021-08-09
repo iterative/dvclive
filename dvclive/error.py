@@ -25,3 +25,10 @@ class ConfigMismatchError(DvcLiveError):
             f"Dvclive initialized in '{ml.dir}' conflicts "
             f"with '{os.environ[env.DVCLIVE_PATH]}' provided by DVC."
         )
+
+
+class InvalidMetricTypeError(DvcLiveError):
+    def __init__(self, name, val):
+        self.name = name
+        self.val = val
+        super().__init__(f"Metrics '{name}' has not supported type {val}")

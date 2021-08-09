@@ -13,8 +13,8 @@ from dvclive import env
 from dvclive.dvc import SIGNAL_FILE
 from dvclive.error import (
     ConfigMismatchError,
-    DvcLiveError,
     InitializationError,
+    InvalidMetricTypeError,
 )
 
 
@@ -245,8 +245,10 @@ def test_fail_on_conflict(tmp_dir, monkeypatch):
 
 @pytest.mark.parametrize("invalid_type", [{0: 1}, [0, 1], "foo", (0, 1)])
 def test_invalid_metric_type(tmp_dir, invalid_type):
-
-    with pytest.raises(DvcLiveError, match="has not supported type"):
+    with pytest.raises(
+        InvalidMetricTypeError,
+        match=f"Metrics 'm' has not supported type {type(invalid_type)}",
+    ):
         dvclive.log("m", invalid_type)
 
 
