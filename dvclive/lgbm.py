@@ -11,7 +11,6 @@ class DvcLiveCallback:
             metric = eval_result[1]
             value = eval_result[2]
             dvclive.log(metric, value)
-        dvclive.next_step()
-
-        if self.model_file and env.iteration == env.end_iteration - 1:
+        if self.model_file:
             env.model.save_model(self.model_file)
+        dvclive.next_step()
