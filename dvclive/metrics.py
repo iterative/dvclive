@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, Union
 
 from .dvc import get_signal_file_path, make_checkpoint
-from .error import DvcLiveError
+from .error import InvalidMetricTypeError
 from .serialize import update_tsv, write_json
 from .utils import nested_set
 
@@ -42,12 +42,7 @@ class MetricLogger:
                 self._step = step
         else:
             self._cleanup()
-            try:
-                os.makedirs(self.dir, exist_ok=True)
-            except Exception as exception:
-                raise DvcLiveError(
-                    "dvc-live cannot create log dir - '{}'".format(self.dir),
-                ) from exception
+            os.makedirs(self.dir, exist_ok=True)
 
     def _cleanup(self):
 
@@ -136,11 +131,7 @@ class MetricLogger:
             self.next_step()
 
         if not isinstance(val, (int, float)):
-            raise DvcLiveError(
-                "Metrics '{}' has not supported type {}".format(
-                    name, type(val)
-                )
-            )
+            raise InvalidMetricTypeError(name, type(val))
 
         if step is not None:
             self._step = step
