@@ -27,7 +27,7 @@ However, `DVC <https://dvc.org>`_ is *not required* to work with dvclive logs/su
 Quick Start
 ===========
 
-Please read the `Usage guide <https://dvc.org/doc/dvclive/usage>`_ for a detailed version.
+Please read the `Usage guide <https://dvc.org/doc/dvclive/user-guide>`_ for a detailed version.
 
 **DVCLive** is a Python library. The interface consists of three main methods:
 
@@ -35,7 +35,7 @@ Please read the `Usage guide <https://dvc.org/doc/dvclive/usage>`_ for a detaile
 2. `dvclive.log() <https://dvc.org/doc/dvclive/api-reference/log>`_ 
 3. `dvclive.next_step() <https://dvc.org/doc/dvclive/api-reference/next_step>`_
 
-If you are ussing a ML training framework, check the existing integrations_.
+If you are ussing a ML training framework, check the existing `ML Frameworks <https://dvc.org/doc/dvclive/user-guide/ml-frameworks>`_ page.
 
 Installation
 ============
@@ -73,19 +73,19 @@ The main difference with those *ML Loggers* is that **DVCLive** does not require
 
 Logged metrics are stored as plain text files that can be versioned by version control tools (i.e Git) or tracked as pointers to files in DVC storage. 
 
-.. _integrations:
-
 Call to collaboration
 =====================
 
-Today only Python is supported (while DVC is language agnostic), with a minimum number of integrations with *ML frameworks*:
+Today only Python is supported (while DVC is language agnostic), along with the following *ML frameworks*:
 
-- `LightGBM <https://github.com/iterative/dvclive/blob/master/dvclive/lgbm.py>`_
-- `MMCV <https://github.com/iterative/dvclive/blob/master/dvclive/mmcv.py>`_
-- `Tensorflow/Keras <https://github.com/iterative/dvclive/blob/master/dvclive/keras.py>`_
-- `XGBoost <https://github.com/iterative/dvclive/blob/master/dvclive/xgb.py>`_ 
+- `Keras <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/keras>`_
+- `LightGBM <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/lightgbm>`_
+- `MMCV <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/mmcv>`_
+- `PyTorch <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/pytorch>`_
+- `Tensorflow <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/tensorflow>`_
+- `XGBoost <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/xgboost>`_ 
 
-The DVCLive team is happy to extend the functionality as needed. Please `create an issue <https://github.com/iterative/dvclive/issues>`_ to start a discussion!
+The DVCLive team is happy to extend the functionality as needed. Please `create an issue <https://github.com/iterative/dvclive/issues>`_ or check the `existing ones <https://github.com/iterative/dvclive/issues?q=is%3Aissue+is%3Aopen+label%3Aintegrations>`_ to start a discussion!
 
 Copyright
 =========
