@@ -145,13 +145,6 @@ def test_cleanup(tmp_dir, summary, html):
     assert not (tmp_dir / "logs.html").is_file()
 
 
-def test_fail_on_create_log_dir():
-    with pytest.raises(
-        PermissionError, match="Permission denied",
-    ):
-        dvclive.init("/logs")
-
-
 @pytest.mark.parametrize(
     "resume, steps, metrics",
     [(True, [0, 1, 2, 3], [0.9, 0.8, 0.7, 0.6]), (False, [0, 1], [0.7, 0.6])],
