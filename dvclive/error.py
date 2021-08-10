@@ -32,3 +32,9 @@ class InvalidMetricTypeError(DvcLiveError):
         self.name = name
         self.val = val
         super().__init__(f"Metrics '{name}' has not supported type {val}")
+
+
+class CannotCreateLogDirError(DvcLiveError):
+    def __init__(self, directory):
+        self.directory = directory
+        super().__init__(f"dvc-live cannot create log dir - '{directory}'")

@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, Union
 
 from .dvc import get_signal_file_path, make_checkpoint
-from .error import DvcLiveError, InvalidMetricTypeError
+from .error import CannotCreateLogDirError, InvalidMetricTypeError
 from .serialize import update_tsv, write_json
 from .utils import nested_set
 
@@ -45,9 +45,7 @@ class MetricLogger:
             try:
                 os.makedirs(self.dir, exist_ok=True)
             except Exception as exception:
-                raise DvcLiveError(
-                    "dvc-live cannot create log dir - '{}'".format(self.dir),
-                ) from exception
+                raise CannotCreateLogDirError(self.dir) from exception
 
     def _cleanup(self):
 
