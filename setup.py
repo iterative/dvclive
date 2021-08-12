@@ -40,8 +40,9 @@ mmcv = ["mmcv", "torch", "torchvision"]
 tf = ["tensorflow"]
 xgb = ["xgboost"]
 lgbm = ["lightgbm"]
+hugginface = ["transformers", "datasets"]
 
-all_libs = mmcv + tf + xgb + lgbm
+all_libs = mmcv + tf + xgb + lgbm + hugginface
 
 tests_requires = [
     "pylint==2.5.3",
@@ -73,6 +74,7 @@ setup(
         "tf": tf,
         "xgb": xgb,
         "lgbm": lgbm,
+        "huggingface": hugginface,
     },
     keywords="data-science metrics machine-learning developer-tools ai",
     python_requires=">=3.6",
