@@ -82,7 +82,7 @@ def test_huggingface_integration(tmp_dir, model, args, data, tokenizer):
 
     logs, _ = read_logs("logs")
 
-    assert len(logs) == 6
+    assert len(logs) == 10
     assert "eval_matthews_correlation" in logs
     assert "eval_loss" in logs
     assert len(first(logs.values())) == 2

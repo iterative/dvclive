@@ -24,8 +24,19 @@ class DvcLiveCallback(TrainerCallback):
         for key, value in metrics.items():
             dvclive.log(key, value)
 
-        if self.model_file:
-            model = kwargs["model"]
-            model.save_pretrained(self.model_file)
+    def on_log(
+        self,
+        args: TrainingArguments,
+        state: TrainerState,
+        control: TrainerControl,
+        **kwargs
+    ):
+        logs = kwargs["logs"]
+        for key, value in logs.items():
+            if "train_" in key:
+                dvclive.log(key, value)
 
+            if self.model_file:
+                model = kwargs["model"]
+                model.save_pretrained(self.model_file)
         dvclive.next_step()
