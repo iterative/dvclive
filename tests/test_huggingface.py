@@ -3,7 +3,6 @@ import os
 import numpy as np
 import pytest
 from datasets import load_dataset, load_metric
-from funcy import first
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
