@@ -13,19 +13,18 @@ class DvcLiveCallback(TrainerCallback):
         super().__init__()
         self.model_file = model_file
 
-    def on_evaluate(
+    def on_log(
         self,
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
         **kwargs
     ):
-        metrics = kwargs["metrics"]
-        for key, value in metrics.items():
+        logs = kwargs["logs"]
+        for key, value in logs.items():
             dvclive.log(key, value)
 
-        if self.model_file:
-            model = kwargs["model"]
-            model.save_pretrained(self.model_file)
-
+            if self.model_file:
+                model = kwargs["model"]
+                model.save_pretrained(self.model_file)
         dvclive.next_step()

@@ -3,7 +3,6 @@ import os
 import numpy as np
 import pytest
 from datasets import load_dataset, load_metric
-from funcy import first
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -82,10 +81,11 @@ def test_huggingface_integration(tmp_dir, model, args, data, tokenizer):
 
     logs, _ = read_logs("logs")
 
-    assert len(logs) == 6
+    assert len(logs) == 10
     assert "eval_matthews_correlation" in logs
     assert "eval_loss" in logs
-    assert len(first(logs.values())) == 2
+    assert len(logs["epoch"]) == 3
+    assert len(logs["eval_loss"]) == 2
 
 
 def test_huggingface_model_file(tmp_dir, model, args, data, tokenizer):
