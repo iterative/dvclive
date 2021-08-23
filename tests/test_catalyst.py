@@ -9,7 +9,7 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 
 import dvclive
-from dvclive.catalyst import DVCCallback
+from dvclive.catalyst import DvcLiveCallback
 from tests.test_main import read_logs
 
 # pylint: disable=redefined-outer-name, unused-argument
@@ -55,7 +55,7 @@ def test_catalyst_callback(tmp_dir, runner, loaders):
         num_epochs=2,
         callbacks=[
             dl.AccuracyCallback(input_key="logits", target_key="targets"),
-            DVCCallback(),
+            DvcLiveCallback(),
         ],
         logdir="./logs",
         valid_loader="valid",
@@ -89,7 +89,7 @@ def test_catalyst_model_file(tmp_dir, runner, loaders):
         num_epochs=2,
         callbacks=[
             dl.AccuracyCallback(input_key="logits", target_key="targets"),
-            DVCCallback("model.pth"),
+            DvcLiveCallback("model.pth"),
         ],
         logdir="./logs",
         valid_loader="valid",
