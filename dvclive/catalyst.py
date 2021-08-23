@@ -3,7 +3,7 @@ from catalyst.core.callback import Callback, CallbackOrder
 import dvclive
 
 
-class DVCCallback(Callback):
+class DvcLiveCallback(Callback):
     def __init__(self, model_file=None):
         super().__init__(order=CallbackOrder.external)
         self.model_file = model_file
