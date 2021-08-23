@@ -41,8 +41,9 @@ tf = ["tensorflow"]
 xgb = ["xgboost"]
 lgbm = ["lightgbm"]
 hugginface = ["transformers", "datasets"]
+catalyst = ["catalyst"]
 
-all_libs = mmcv + tf + xgb + lgbm + hugginface
+all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst
 
 tests_requires = [
     "pylint==2.5.3",
@@ -75,6 +76,7 @@ setup(
         "xgb": xgb,
         "lgbm": lgbm,
         "huggingface": hugginface,
+        "catalyst": catalyst,
     },
     keywords="data-science metrics machine-learning developer-tools ai",
     python_requires=">=3.6",
