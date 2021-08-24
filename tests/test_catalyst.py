@@ -10,7 +10,6 @@ from torch.utils.data import DataLoader
 
 import dvclive
 from dvclive.catalyst import DvcLiveCallback
-from tests.test_main import read_logs
 
 # pylint: disable=redefined-outer-name, unused-argument
 
@@ -66,11 +65,13 @@ def test_catalyst_callback(tmp_dir, runner, loaders):
     )
 
     assert os.path.exists("dvc_logs")
-    logs, _ = read_logs("dvc_logs")
 
-    assert "train\\accuracy" in logs
-    assert "valid\\loss" in logs
-    assert len(logs["train\\accuracy"]) == 2
+    train_path = tmp_dir / "dvc_logs/train"
+    valid_path = tmp_dir / "dvc_logs/valid"
+
+    assert train_path.is_dir()
+    assert valid_path.is_dir()
+    assert (train_path / "accuracy.tsv").exists()
 
 
 def test_catalyst_model_file(tmp_dir, runner, loaders):
