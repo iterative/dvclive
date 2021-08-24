@@ -14,8 +14,7 @@ class DvcLiveCallback(Callback):
         for loader_key, per_loader_metrics in runner.epoch_metrics.items():
             for key, value in per_loader_metrics.items():
                 key = key.replace("/", "_")
-                key += "_" + loader_key
-                dvclive.log(key, float(value), step)
+                dvclive.log(f"{loader_key}/{key}", float(value), step)
 
         if self.model_file:
             checkpoint = runner.engine.pack_checkpoint(
