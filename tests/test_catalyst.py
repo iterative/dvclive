@@ -68,9 +68,9 @@ def test_catalyst_callback(tmp_dir, runner, loaders):
     assert os.path.exists("dvc_logs")
     logs, _ = read_logs("dvc_logs")
 
-    assert "accuracy_train" in logs
-    assert "loss_valid" in logs
-    assert len(logs["accuracy_train"]) == 2
+    assert "train\\accuracy" in logs
+    assert "valid\\loss" in logs
+    assert len(logs["train\\accuracy"]) == 2
 
 
 def test_catalyst_model_file(tmp_dir, runner, loaders):
