@@ -251,7 +251,7 @@ def test_invalid_metric_type(tmp_dir, invalid_type):
     ):
         dvclive.log("m", invalid_type)
 
-
-def test_initialization_error(tmp_dir):
+@pytest.mark.parametrize("cmd", [dvclive.next_step, dvclive.get_step])
+def test_initialization_error(tmp_dir, cmd):
     with pytest.raises(InitializationError):
-        dvclive.next_step()
+        cmd()
