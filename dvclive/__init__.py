@@ -27,7 +27,7 @@ def _lazy_init(_metric_logger):
         _metric_logger = MetricLogger.from_env()
     if not _metric_logger:
         _metric_logger = MetricLogger()
-    
+
     return _metric_logger
 
 

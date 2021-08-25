@@ -286,6 +286,7 @@ def test_get_step_custom_steps(tmp_dir):
 
         assert dvclive.get_step() == step
 
+
 def test_get_step_control_flow(tmp_dir):
     dvclive.init("logs")
 
