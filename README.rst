@@ -78,6 +78,8 @@ Call to collaboration
 
 Today only Python is supported (while DVC is language agnostic), along with the following *ML frameworks*:
 
+- `Catalyst <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/catalyst>`_
+- `Hugging Face <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/huggingface>`_
 - `Keras <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/keras>`_
 - `LightGBM <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/lightgbm>`_
 - `MMCV <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/mmcv>`_
