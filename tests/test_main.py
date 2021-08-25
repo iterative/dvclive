@@ -252,14 +252,12 @@ def test_invalid_metric_type(tmp_dir, invalid_type):
         dvclive.log("m", invalid_type)
 
 
-@pytest.mark.parametrize("cmd", [dvclive.next_step, dvclive.get_step])
-def test_initialization_error(tmp_dir, cmd):
+def test_initialization_error(tmp_dir):
     with pytest.raises(InitializationError):
-        cmd()
+        dvclive.next_step()
 
 
-def test_get_step(tmp_dir):
-    dvclive.init("logs")
+def test_get_step_init(tmp_dir):
     assert dvclive.get_step() == 0
 
 
@@ -287,3 +285,14 @@ def test_get_step_custom_steps(tmp_dir):
         dvclive.log("m", metric, step=step)
 
         assert dvclive.get_step() == step
+
+def test_get_step_control_flow(tmp_dir):
+    dvclive.init("logs")
+
+    while dvclive.get_step() < 10:
+        dvclive.log("i", dvclive.get_step())
+        dvclive.next_step()
+
+    steps, values = read_history("logs", "i")
+    assert steps == list(range(10))
+    assert values == [float(x) for x in range(10)]

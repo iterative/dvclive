@@ -17,8 +17,7 @@ def init(
     return _metric_logger
 
 
-def log(name: str, val: Union[int, float], step: int = None) -> None:
-    global _metric_logger  # pylint: disable=global-statement
+def _lazy_init(_metric_logger):
     if _metric_logger:
         if not _metric_logger.matches_env_setup():
             from .error import ConfigMismatchError
@@ -28,16 +27,19 @@ def log(name: str, val: Union[int, float], step: int = None) -> None:
         _metric_logger = MetricLogger.from_env()
     if not _metric_logger:
         _metric_logger = MetricLogger()
+    
+    return _metric_logger
 
+
+def log(name: str, val: Union[int, float], step: int = None) -> None:
+    global _metric_logger  # pylint: disable=global-statement
+    _metric_logger = _lazy_init(_metric_logger)
     _metric_logger.log(name=name, val=val, step=step)
 
 
 def get_step() -> None:
     global _metric_logger  # pylint: disable=global-statement
-    if not _metric_logger:
-        from .error import InitializationError
-
-        raise InitializationError()
+    _metric_logger = _lazy_init(_metric_logger)
     return _metric_logger.step
 
 
