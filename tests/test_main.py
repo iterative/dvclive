@@ -8,6 +8,7 @@ from funcy import last
 
 import dvclive
 from dvclive import env
+from dvclive import dvc
 
 # pylint: disable=unused-argument
 from dvclive.dvc import SIGNAL_FILE
@@ -255,3 +256,33 @@ def test_invalid_metric_type(tmp_dir, invalid_type):
 def test_initialization_error(tmp_dir, cmd):
     with pytest.raises(InitializationError):
         cmd()
+
+
+def test_get_step(tmp_dir):
+    dvclive.init("logs")
+    assert dvclive.get_step() == 0
+
+
+def test_get_step_resume(tmp_dir):
+    dvclive.init("logs")
+
+    for metric in [0.9, 0.8]:
+        dvclive.log("metric", metric)
+        dvclive.next_step()
+
+    assert dvclive.get_step() == 2
+
+    dvclive.init("logs", resume=True)
+
+    assert dvclive.get_step() == 2
+
+def test_get_step_custom_steps(tmp_dir):
+    dvclive.init("logs")
+
+    steps = [0, 62, 1000]
+    metrics = [0.9, 0.8, 0.7]
+
+    for step, metric in zip(steps, metrics):
+        dvclive.log("m", metric, step=step)
+
+        assert dvclive.get_step() == step
