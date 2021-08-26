@@ -273,6 +273,8 @@ def test_get_step_resume(tmp_dir):
     dvclive.init("logs", resume=True)
 
     assert dvclive.get_step() == 2
+    dvclive.init("logs", resume=False)
+    assert dvclive.get_step() == 0
 
 
 def test_get_step_custom_steps(tmp_dir):
@@ -282,9 +284,17 @@ def test_get_step_custom_steps(tmp_dir):
     metrics = [0.9, 0.8, 0.7]
 
     for step, metric in zip(steps, metrics):
-        dvclive.log("m", metric, step=step)
-
+        dvclive.log("x", metric, step=step)
         assert dvclive.get_step() == step
+
+        dvclive.log("y", metric, step=step)
+        assert dvclive.get_step() == step
+
+        dvclive.log("z", metric)
+        assert dvclive.get_step() == step
+
+    for metric in ["x", "y", "z"]:
+        assert read_history("logs", "x") == (steps, metrics)
 
 
 def test_get_step_control_flow(tmp_dir):
