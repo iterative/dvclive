@@ -21,25 +21,22 @@ class MetricLogger:
         self,
         path: str = "dvclive",
         resume: bool = False,
-        step: int = 0,
         summary=True,
         html=True,
         checkpoint=False,
     ):
         self._path: str = path
-        self._step: int = step
+        self._step: int = 0
         self._html: bool = html
         self._summary = summary
         self._metrics: Dict[str, float] = OrderedDict()
         self._checkpoint: bool = checkpoint
 
         if resume and self.exists:
-            if step == 0:
-                self._step = self.read_step()
-                if self._step != 0:
-                    self._step += 1
-            else:
-                self._step = step
+            self._step = self.read_step()
+            if self._step != 0:
+                self._step += 1
+
         else:
             self._cleanup()
             os.makedirs(self.dir, exist_ok=True)
@@ -102,6 +99,10 @@ class MetricLogger:
     @property
     def html_path(self):
         return self.dir + ".html"
+
+    @property
+    def step(self):
+        return self._step
 
     def next_step(self):
         if self._summary:

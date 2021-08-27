@@ -255,3 +255,55 @@ def test_invalid_metric_type(tmp_dir, invalid_type):
 def test_initialization_error(tmp_dir):
     with pytest.raises(InitializationError):
         dvclive.next_step()
+
+
+def test_get_step_init(tmp_dir):
+    assert dvclive.get_step() == 0
+
+
+def test_get_step_resume(tmp_dir):
+    dvclive.init("logs")
+
+    for metric in [0.9, 0.8]:
+        dvclive.log("metric", metric)
+        dvclive.next_step()
+
+    assert dvclive.get_step() == 2
+
+    dvclive.init("logs", resume=True)
+
+    assert dvclive.get_step() == 2
+    dvclive.init("logs", resume=False)
+    assert dvclive.get_step() == 0
+
+
+def test_get_step_custom_steps(tmp_dir):
+    dvclive.init("logs")
+
+    steps = [0, 62, 1000]
+    metrics = [0.9, 0.8, 0.7]
+
+    for step, metric in zip(steps, metrics):
+        dvclive.log("x", metric, step=step)
+        assert dvclive.get_step() == step
+
+        dvclive.log("y", metric, step=step)
+        assert dvclive.get_step() == step
+
+        dvclive.log("z", metric)
+        assert dvclive.get_step() == step
+
+    for metric in ["x", "y", "z"]:
+        assert read_history("logs", "x") == (steps, metrics)
+
+
+def test_get_step_control_flow(tmp_dir):
+    dvclive.init("logs")
+
+    while dvclive.get_step() < 10:
+        dvclive.log("i", dvclive.get_step())
+        dvclive.next_step()
+
+    steps, values = read_history("logs", "i")
+    assert steps == list(range(10))
+    assert values == [float(x) for x in range(10)]
