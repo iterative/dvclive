@@ -42,8 +42,9 @@ xgb = ["xgboost"]
 lgbm = ["lightgbm"]
 hugginface = ["transformers", "datasets"]
 catalyst = ["catalyst"]
+fastai = ["fastai"]
 
-all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst
+all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai
 
 tests_requires = [
     "pylint==2.5.3",
@@ -77,6 +78,7 @@ setup(
         "lgbm": lgbm,
         "huggingface": hugginface,
         "catalyst": catalyst,
+        "fastai": fastai,
     },
     keywords="data-science metrics machine-learning developer-tools ai",
     python_requires=">=3.6",
