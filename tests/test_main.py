@@ -125,24 +125,27 @@ def test_html(tmp_dir, dvc_repo, html, signal_exists, monkeypatch):
     [(True, True), (True, False), (False, True), (False, False)],
 )
 def test_cleanup(tmp_dir, summary, html):
-    dvclive.init("logs", summary=summary)
+    logger = dvclive.init("logs", summary=summary)
     dvclive.log("m1", 1)
     dvclive.next_step()
+
+    html_path = tmp_dir / logger.html_path
     if html:
-        (tmp_dir / "logs.html").touch()
+        html_path.parent.mkdir()
+        html_path.touch()
 
     (tmp_dir / "logs" / "some_user_file.txt").touch()
 
     assert (tmp_dir / "logs" / "m1.tsv").is_file()
     assert (tmp_dir / "logs.json").is_file() == summary
-    assert (tmp_dir / "logs.html").is_file() == html
+    assert html_path.is_file() == html
 
     dvclive.init("logs")
 
     assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
     assert not (tmp_dir / "logs" / "m1.tsv").is_file()
     assert not (tmp_dir / "logs.json").is_file()
-    assert not (tmp_dir / "logs.html").is_file()
+    assert not (html_path).is_file()
 
 
 @pytest.mark.parametrize(
