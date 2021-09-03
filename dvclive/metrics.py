@@ -98,7 +98,7 @@ class MetricLogger:
 
     @property
     def html_path(self):
-        return self.dir + ".html"
+        return self.dir + "_dvc_plots/index.html"
 
     @property
     def step(self):
