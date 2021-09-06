@@ -37,7 +37,7 @@ def log(name: str, val: Union[int, float], step: int = None) -> None:
     _metric_logger.log(name=name, val=val, step=step)
 
 
-def get_step() -> None:
+def get_step() -> int:
     global _metric_logger  # pylint: disable=global-statement
     _metric_logger = _lazy_init(_metric_logger)
     return _metric_logger.step
