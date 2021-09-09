@@ -13,3 +13,19 @@ def nested_set(d, keys, value):
     for key in keys[:-1]:
         d = d.setdefault(key, {})
     d[keys[-1]] = value
+
+def nested_get(d, keys):
+    """Get `value` in d[keys[0]]...[keys[-1]].
+
+    Example:
+    >>> d = {'person': {'address': {'city': 'New York'}}}
+    >>> nested_get(d, ['person', 'address', 'city'])
+    >>> d
+    'New York'
+    """
+    value = d
+    for key in keys:
+        if key not in value:
+            return None
+        value = value[key]
+    return value
