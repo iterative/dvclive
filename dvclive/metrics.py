@@ -4,12 +4,12 @@ import os
 import time
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 from .dvc import get_signal_file_path, make_checkpoint
 from .error import InvalidMetricTypeError
 from .serialize import update_tsv, write_json
-from .utils import nested_set
+from .utils import nested_get, nested_set
 
 logger = logging.getLogger(__name__)
 
@@ -124,8 +124,9 @@ class MetricLogger:
         if self._checkpoint:
             make_checkpoint()
 
-    def log(self, name: str, val: Union[int, float], step: int = None):
-        if name in self._metrics.keys():
+    def log(self, name: str, val: Union[int, float], step: Optional[int] = None):
+        splitted_name = os.path.normpath(name).split(os.path.sep)
+        if nested_get(self._metrics, splitted_name) is not None:
             logger.info(
                 f"Found {name} in metrics dir, assuming new epoch started"
             )
@@ -141,7 +142,7 @@ class MetricLogger:
         os.makedirs(os.path.dirname(metric_history_path), exist_ok=True)
 
         nested_set(
-            self._metrics, os.path.normpath(name).split(os.path.sep), val,
+            self._metrics, splitted_name, val,
         )
 
         ts = int(time.time() * 1000)
