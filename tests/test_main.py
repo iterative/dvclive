@@ -172,7 +172,7 @@ def test_continue(tmp_dir, resume, steps, metrics):
     assert read_latest("logs", "metric") == (last(steps), last(metrics))
 
 
-@pytest.mark.parametrize("metric", ["m1", "train/m1"])
+@pytest.mark.parametrize("metric", ["m1", os.path.join("train", "m1")])
 def test_infer_next_step(tmp_dir, mocker, metric):
     dvclive.init("logs")
 

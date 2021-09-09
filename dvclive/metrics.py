@@ -124,7 +124,9 @@ class MetricLogger:
         if self._checkpoint:
             make_checkpoint()
 
-    def log(self, name: str, val: Union[int, float], step: Optional[int] = None):
+    def log(
+        self, name: str, val: Union[int, float], step: Optional[int] = None
+    ):
         splitted_name = os.path.normpath(name).split(os.path.sep)
         if nested_get(self._metrics, splitted_name) is not None:
             logger.info(

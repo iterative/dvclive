@@ -14,6 +14,7 @@ def nested_set(d, keys, value):
         d = d.setdefault(key, {})
     d[keys[-1]] = value
 
+
 def nested_get(d, keys):
     """Get `value` in d[keys[0]]...[keys[-1]].
 
