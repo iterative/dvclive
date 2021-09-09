@@ -191,17 +191,20 @@ def test_custom_steps(tmp_dir):
     metrics = [0.9, 0.8, 0.7]
 
     for step, metric in zip(steps, metrics):
-        dvclive.log("m", metric, step=step)
+        dvclive.set_step(step)
+        dvclive.log("m", metric)
 
     assert read_history("logs", "m") == (steps, metrics)
 
 
-def test_log_reset_with_step_0(tmp_dir):
+def test_log_reset_with_set_step(tmp_dir):
     for i in range(3):
-        dvclive.log("train_m", 1, step=i)
+        dvclive.set_step(i)
+        dvclive.log("train_m", 1)
 
     for i in range(3):
-        dvclive.log("val_m", 1, step=i)
+        dvclive.set_step(i)
+        dvclive.log("val_m", 1)
 
     assert read_history("dvclive", "train_m") == ([0, 1, 2], [1, 1, 1])
     assert read_history("dvclive", "val_m") == ([0, 1, 2], [1, 1, 1])
@@ -287,17 +290,11 @@ def test_get_step_custom_steps(tmp_dir):
     metrics = [0.9, 0.8, 0.7]
 
     for step, metric in zip(steps, metrics):
-        dvclive.log("x", metric, step=step)
+        dvclive.set_step(step)
+        dvclive.log("x", metric)
         assert dvclive.get_step() == step
 
-        dvclive.log("y", metric, step=step)
-        assert dvclive.get_step() == step
-
-        dvclive.log("z", metric)
-        assert dvclive.get_step() == step
-
-    for metric in ["x", "y", "z"]:
-        assert read_history("logs", "x") == (steps, metrics)
+    assert read_history("logs", "x") == (steps, metrics)
 
 
 def test_get_step_control_flow(tmp_dir):
