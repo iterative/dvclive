@@ -42,7 +42,7 @@ def get_step() -> int:
     _metric_logger = _lazy_init(_metric_logger)
     return _metric_logger.get_step()
 
-def set_step(step) -> int:
+def set_step(step: int):
     global _metric_logger  # pylint: disable=global-statement
     _metric_logger = _lazy_init(_metric_logger)
     return _metric_logger.set_step(step)
