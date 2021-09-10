@@ -104,6 +104,7 @@ class MetricLogger:
         return self._step
 
     def set_step(self, step: int):
+        self.next_step()
         self._step = step
 
     def next_step(self):
