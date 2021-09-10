@@ -172,15 +172,16 @@ def test_continue(tmp_dir, resume, steps, metrics):
     assert read_latest("logs", "metric") == (last(steps), last(metrics))
 
 
-def test_infer_next_step(tmp_dir, mocker):
+@pytest.mark.parametrize("metric", ["m1", os.path.join("train", "m1")])
+def test_infer_next_step(tmp_dir, mocker, metric):
     dvclive.init("logs")
 
     m = mocker.spy(dvclive.metrics.MetricLogger, "next_step")
-    dvclive.log("m1", 1.0)
-    dvclive.log("m1", 2.0)
-    dvclive.log("m1", 3.0)
+    dvclive.log(metric, 1.0)
+    dvclive.log(metric, 2.0)
+    dvclive.log(metric, 3.0)
 
-    assert read_history("logs", "m1") == ([0, 1, 2], [1.0, 2.0, 3.0])
+    assert read_history("logs", metric) == ([0, 1, 2], [1.0, 2.0, 3.0])
     assert m.call_count == 2
 
 
