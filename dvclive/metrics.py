@@ -4,7 +4,7 @@ import os
 import time
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Tuple, Union
 
 from .dvc import get_signal_file_path, make_checkpoint
 from .error import InvalidMetricTypeError
