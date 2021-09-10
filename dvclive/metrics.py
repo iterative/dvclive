@@ -4,7 +4,7 @@ import os
 import time
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, Tuple, Union
+from typing import Dict, Union
 
 from .dvc import get_signal_file_path, make_checkpoint
 from .error import InvalidMetricTypeError
@@ -29,7 +29,7 @@ class MetricLogger:
         self._step: int = 0
         self._html: bool = html
         self._summary = summary
-        self._metrics: Dict[str, Tuple[float, float]] = OrderedDict()
+        self._metrics: Dict[str, float] = OrderedDict()
         self._checkpoint: bool = checkpoint
 
         if resume and self.exists:
