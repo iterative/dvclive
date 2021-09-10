@@ -185,17 +185,20 @@ def test_infer_next_step(tmp_dir, mocker, metric):
     assert m.call_count == 2
 
 
-def test_custom_steps(tmp_dir):
+def test_custom_steps(tmp_dir, mocker):
     dvclive.init("logs")
 
     steps = [0, 62, 1000]
     metrics = [0.9, 0.8, 0.7]
+
+    m = mocker.spy(dvclive.metrics.MetricLogger, "next_step")
 
     for step, metric in zip(steps, metrics):
         dvclive.set_step(step)
         dvclive.log("m", metric)
 
     assert read_history("logs", "m") == (steps, metrics)
+    assert m.call_count == 2
 
 
 def test_log_reset_with_set_step(tmp_dir):
