@@ -14,10 +14,7 @@ repos:
         language_version: python3
     repo: https://gitlab.com/pycqa/flake8
     rev: 3.8.3
-  - repo: local
-    hooks:
-    - id: pylint
-      name: pylint
-      entry: pylint
-      language: system
-      types: [python]
+  - hooks:
+      - id: pylint
+    repo: https://github.com/pycqa/pylint
+    rev: pylint-2.6.0
