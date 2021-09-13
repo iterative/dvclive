@@ -144,7 +144,9 @@ class MetricLogger:
         os.makedirs(os.path.dirname(metric_history_path), exist_ok=True)
 
         nested_set(
-            self._metrics, splitted_name, val,
+            self._metrics,
+            splitted_name,
+            val,
         )
 
         ts = int(time.time() * 1000)

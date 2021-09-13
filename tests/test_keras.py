@@ -39,7 +39,11 @@ def test_keras_callback(tmp_dir, xor_model, capture_wrap):
 
     dvclive.init("logs")
     model.fit(
-        x, y, epochs=1, batch_size=1, callbacks=[DvcLiveCallback()],
+        x,
+        y,
+        epochs=1,
+        batch_size=1,
+        callbacks=[DvcLiveCallback()],
     )
 
     assert os.path.exists("logs")
