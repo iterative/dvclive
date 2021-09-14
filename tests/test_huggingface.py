@@ -59,7 +59,9 @@ def model():
 @pytest.fixture
 def args():
     return TrainingArguments(
-        "test-glue", evaluation_strategy="epoch", num_train_epochs=2,
+        "test-glue",
+        evaluation_strategy="epoch",
+        num_train_epochs=2,
     )
 
 
