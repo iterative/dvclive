@@ -32,3 +32,10 @@ class InvalidMetricTypeError(DvcLiveError):
         self.name = name
         self.val = val
         super().__init__(f"Metrics '{name}' has not supported type {val}")
+
+class MetricAlreadyLoggedError(DvcLiveError):
+    def __init__(self, name, step):
+        self.name = name
+        self.val = step
+        super().__init__(
+            f"Metric '{name}' has already being logged whith step '{step}'")
