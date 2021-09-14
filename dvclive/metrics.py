@@ -6,10 +6,9 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Dict, Optional, Union
 
+from .data import Scalar
 from .dvc import get_signal_file_path, make_checkpoint
 from .error import InvalidMetricTypeError
-from .serialize import update_tsv, write_json
-from .utils import nested_get, nested_set
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +28,7 @@ class MetricLogger:
         self._step: int = 0
         self._html: bool = html
         self._summary = summary
-        self._metrics: Dict[str, float] = OrderedDict()
+        self._data: Dict[str, Any] = OrderedDict()
         self._checkpoint: bool = checkpoint
 
         if resume and self.exists:
@@ -105,19 +104,12 @@ class MetricLogger:
         return self._step
 
     def next_step(self):
-        if self._summary:
-            metrics = OrderedDict({"step": self._step})
-            metrics.update(self._metrics)
-            write_json(metrics, self.summary_path)
-
         if self._html:
             signal_file_path = get_signal_file_path()
             if signal_file_path:
                 if not os.path.exists(signal_file_path):
                     with open(signal_file_path, "w"):
                         pass
-
-        self._metrics.clear()
 
         self._step += 1
 
@@ -127,29 +119,17 @@ class MetricLogger:
     def log(
         self, name: str, val: Union[int, float], step: Optional[int] = None
     ):
-        splitted_name = os.path.normpath(name).split(os.path.sep)
-        if nested_get(self._metrics, splitted_name) is not None:
-            logger.info(
-                f"Found {name} in metrics dir, assuming new epoch started"
-            )
-            self.next_step()
-
-        if not isinstance(val, (int, float)):
+        if name in self._data:
+            data = self._data[name]
+            data.val = val
+            data.step = step
+        elif val == Scalar:
+            data = Scalar(name, val, step, self.dir)
+            self._data[name] = data
+        else:
             raise InvalidMetricTypeError(name, type(val))
 
-        if step is not None:
-            self._step = step
-
-        metric_history_path = os.path.join(self.history_path, name + ".tsv")
-        os.makedirs(os.path.dirname(metric_history_path), exist_ok=True)
-
-        nested_set(
-            self._metrics, splitted_name, val,
-        )
-
-        ts = int(time.time() * 1000)
-        d = OrderedDict([("timestamp", ts), ("step", self._step), (name, val)])
-        update_tsv(d, metric_history_path)
+        data.dump(self.dir)
 
     def read_step(self):
         if self.exists:
