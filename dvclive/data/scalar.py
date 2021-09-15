@@ -35,14 +35,10 @@ class Scalar:
         self._step = val
 
     @property
-    def output_plot_path(self) -> Path:
+    def output_path(self) -> Path:
         _path = self.output_folder / self.name
         _path.parent.mkdir(exist_ok=True, parents=True)
         return _path.with_suffix(".tsv")
-
-    @property
-    def output_summary_path(self) -> Path:
-        return self.output_folder.with_suffix(".json")
 
     def dump(self, val, step, summary_path):
         self.step = step
@@ -50,8 +46,8 @@ class Scalar:
         ts = int(time.time() * 1000)
         d = OrderedDict([("timestamp", ts), ("step", self.step), (self.name, val)])
 
-        existed = os.path.exists(self.output_plot_path)
-        with open(self.output_plot_path, "a") as fobj:
+        existed = os.path.exists(self.output_path)
+        with open(self.output_path, "a") as fobj:
             writer = csv.DictWriter(fobj, d.keys(), delimiter="\t")
 
             if not existed:
