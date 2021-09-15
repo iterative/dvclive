@@ -4,6 +4,8 @@ import os
 import time
 
 from collections import OrderedDict
+from pathlib import Path
+from typing import Optional
 
 from dvclive.error import AlreadyLoggedError
 from dvclive.utils import nested_set
@@ -13,10 +15,8 @@ class Scalar:
 
     def __init__(self, name: str, output_folder: str) -> None:
         self.name = name
-        self.output_folder = output_folder
-        self._step: int = -1
-
-        os.makedirs(os.path.dirname(self.output_plot_path), exist_ok=True)
+        self.output_folder: Path = Path(output_folder)
+        self._step: Optional[int] = None
 
     @staticmethod
     def could_log(o: object) -> bool:
@@ -32,16 +32,19 @@ class Scalar:
     def step(self, val: int) -> None:
         if val == self._step:
             raise AlreadyLoggedError(self.name, val)
+        self._step = val
 
     @property
-    def output_plot_path(self) -> str:
-        return os.path.join(self.output_folder, self.name + ".tsv")
+    def output_plot_path(self) -> Path:
+        _path = self.output_folder / self.name
+        _path.parent.mkdir(exist_ok=True, parents=True)
+        return _path.with_suffix(".tsv")
 
     @property
-    def output_summary_path(self) -> str:
-        return self.output_folder + ".json"
+    def output_summary_path(self) -> Path:
+        return self.output_folder.with_suffix(".json")
 
-    def dump(self, val, step: int, summary: bool = False):
+    def dump(self, val, step, summary_path):
         self.step = step
 
         ts = int(time.time() * 1000)
@@ -56,17 +59,18 @@ class Scalar:
 
             writer.writerow(d)
         
-        if summary:
-            splitted_name = os.path.normpath(self.name).split(os.path.sep)
+        if os.path.exists(summary_path):
 
-            with open(self.output_summary_path) as f:
+            with open(summary_path) as f:
                 summary_data = json.load(f)
+
+            summary_data["step"] = self.step
 
             nested_set(
                 summary_data,
-                splitted_name,
+                os.path.normpath(self.name).split(os.path.sep),
                 val
             )
 
-            with open(self.output_summary_path, "w") as f:
+            with open(summary_path, "w") as f:
                 json.dump(summary_data, f, indent=4)

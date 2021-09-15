@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class MetricLogger:
-
+    DEFAULT_DIR = "dvclive"
+    
     def __init__(
         self,
         path: str = "dvclive",
@@ -33,10 +34,9 @@ class MetricLogger:
             self._step = self.read_step()
             if self._step != 0:
                 self._step += 1
-
         else:
             self._cleanup()
-            os.makedirs(self.dir, exist_ok=True)
+            self._init_paths()
 
     def _cleanup(self):
 
@@ -48,6 +48,12 @@ class MetricLogger:
 
         if os.path.exists(self.html_path):
             os.remove(self.html_path)
+
+    def _init_paths(self):
+        os.makedirs(self.dir, exist_ok=True)
+        if self._summary:
+            with open(self.summary_path, "w") as f:
+                json.dump({"step": self._step}, f, indent=4)
 
     @staticmethod
     def from_env():
@@ -126,7 +132,7 @@ class MetricLogger:
         else:
             raise InvalidDataTypeError(name, type(val))
 
-        data.dump(val, self._step, self._summary)
+        data.dump(val, self._step, self.summary_path)
 
     def read_step(self):
         if self.exists:
