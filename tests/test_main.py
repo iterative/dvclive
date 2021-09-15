@@ -173,10 +173,9 @@ def test_require_step_update(tmp_dir, metric):
     dvclive.log(metric, 1.0)
     with pytest.raises(
         AlreadyLoggedError,
-        match=f"'{metric}' has already being logged whith step '0'"
+        match=f"'{metric}' has already being logged whith step '0'",
     ):
         dvclive.log(metric, 2.0)
-
 
 
 def test_custom_steps(tmp_dir, mocker):

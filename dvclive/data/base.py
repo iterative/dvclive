@@ -1,5 +1,4 @@
 import abc
-
 from pathlib import Path
 from typing import Optional
 
@@ -7,7 +6,6 @@ from dvclive.error import DataAlreadyLoggedError
 
 
 class Data(abc.ABC):
-
     def __init__(self, name: str, output_folder: str) -> None:
         self.name = name
         self.output_folder: Path = Path(output_folder)
@@ -17,7 +15,7 @@ class Data(abc.ABC):
     @property
     def step(self) -> int:
         return self._step
-    
+
     @step.setter
     def step(self, val: int) -> None:
         if val == self._step:
@@ -28,7 +26,7 @@ class Data(abc.ABC):
     @abc.abstractmethod
     def output_path(self) -> Path:
         pass
-    
+
     @property
     @abc.abstractmethod
     def summary(self):
