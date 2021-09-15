@@ -12,8 +12,8 @@ from dvclive import env
 # pylint: disable=unused-argument
 from dvclive.dvc import SIGNAL_FILE
 from dvclive.error import (
-    DataAlreadyLoggedError,
     ConfigMismatchError,
+    DataAlreadyLoggedError,
     InitializationError,
     InvalidDataTypeError,
 )
