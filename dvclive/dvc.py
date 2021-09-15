@@ -43,6 +43,14 @@ def get_signal_file_path(root=None):
     return os.path.join(tmp, SIGNAL_FILE)
 
 
+def make_html():
+    signal_file_path = get_signal_file_path()
+    if signal_file_path:
+        if not os.path.exists(signal_file_path):
+            with open(signal_file_path, "w"):
+                pass
+
+
 def make_checkpoint():
     import builtins
     from time import sleep

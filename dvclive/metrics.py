@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Union
 
 from .data import Scalar
-from .dvc import get_signal_file_path, make_checkpoint
+from .dvc import make_checkpoint, make_html
 from .error import InvalidDataTypeError
 
 logger = logging.getLogger(__name__)
@@ -111,11 +111,7 @@ class MetricLogger:
 
     def next_step(self):
         if self._html:
-            signal_file_path = get_signal_file_path()
-            if signal_file_path:
-                if not os.path.exists(signal_file_path):
-                    with open(signal_file_path, "w"):
-                        pass
+            make_html()
 
         self._step += 1
 
