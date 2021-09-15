@@ -34,9 +34,9 @@ class InvalidDataTypeError(DvcLiveError):
         super().__init__(f"Data '{name}' has not supported type {val}")
 
 
-class AlreadyLoggedError(DvcLiveError):
+class DataAlreadyLoggedError(DvcLiveError):
     def __init__(self, name, step):
         self.name = name
         self.val = step
         super().__init__(
-            f"'{name}' has already being logged whith step '{step}'")
+            f"Data '{name}' has already being logged whith step '{step}'")

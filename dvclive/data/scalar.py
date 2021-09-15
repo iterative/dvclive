@@ -24,11 +24,10 @@ class Scalar(Data):
         return _path.with_suffix(".tsv")
 
     def dump(self, val, step):
-        self.val = val
-        self.step = step
+        super().dump(val, step)
 
         ts = int(time.time() * 1000)
-        d = OrderedDict([("timestamp", ts), ("step", self.step), (self.name, val)])
+        d = OrderedDict([("timestamp", ts), ("step", self.step), (self.name, self.val)])
 
         existed = self.output_path.exists()
         with open(self.output_path, "a") as fobj:

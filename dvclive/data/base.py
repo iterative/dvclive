@@ -3,7 +3,7 @@ import abc
 from pathlib import Path
 from typing import Optional
 
-from dvclive.error import AlreadyLoggedError
+from dvclive.error import DataAlreadyLoggedError
 
 
 class Data(abc.ABC):
@@ -21,7 +21,7 @@ class Data(abc.ABC):
     @step.setter
     def step(self, val: int) -> None:
         if val == self._step:
-            raise AlreadyLoggedError(self.name, val)
+            raise DataAlreadyLoggedError(self.name, val)
         self._step = val
 
     @property
@@ -39,6 +39,6 @@ class Data(abc.ABC):
     def could_log(val: object) -> bool:
         pass
 
-    @abc.abstractmethod
     def dump(self, val, step):
-        pass
+        self.val = val
+        self.step = step
