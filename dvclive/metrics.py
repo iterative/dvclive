@@ -125,7 +125,8 @@ class MetricLogger:
             raise InvalidDataTypeError(name, type(val))
 
         data.dump(val, self._step)
-        self.make_summary()
+        if self._summary:
+            self.make_summary()
 
     def make_summary(self):
         summary_data = {"step": self.get_step()}
