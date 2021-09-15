@@ -9,12 +9,10 @@ class DvcLiveCallback(Callback):
         self.model_file = model_file
 
     def on_epoch_end(self, runner) -> None:
-        step = runner.stage_epoch_step
-
         for loader_key, per_loader_metrics in runner.epoch_metrics.items():
             for key, value in per_loader_metrics.items():
                 key = key.replace("/", "_")
-                dvclive.log(f"{loader_key}/{key}", float(value), step)
+                dvclive.log(f"{loader_key}/{key}", float(value))
 
         if self.model_file:
             checkpoint = runner.engine.pack_checkpoint(

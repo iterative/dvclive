@@ -13,7 +13,7 @@ class DvcLiveCallback(Callback):
             self.learn.recorder.metric_names, self.learn.recorder.log
         ):
             key = key.replace("_", "/")
-            dvclive.log(f"{key}", float(value), self.learn.epoch)
+            dvclive.log(f"{key}", float(value))
 
         if self.model_file:
             self.learn.save(self.model_file)

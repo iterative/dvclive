@@ -4,7 +4,7 @@ import os
 import time
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Union
 
 from .dvc import get_signal_file_path, make_checkpoint
 from .error import InvalidMetricTypeError
@@ -29,7 +29,7 @@ class MetricLogger:
         self._step: int = 0
         self._html: bool = html
         self._summary = summary
-        self._metrics: Dict[str, float] = OrderedDict()
+        self._metrics: Dict[str, Any] = OrderedDict()
         self._checkpoint: bool = checkpoint
 
         if resume and self.exists:
@@ -100,9 +100,13 @@ class MetricLogger:
     def html_path(self):
         return self.dir + "_dvc_plots/index.html"
 
-    @property
-    def step(self):
+    def get_step(self) -> int:
         return self._step
+
+    def set_step(self, step: int):
+        if self._metrics:
+            self.next_step()
+        self._step = step
 
     def next_step(self):
         if self._summary:
@@ -124,9 +128,7 @@ class MetricLogger:
         if self._checkpoint:
             make_checkpoint()
 
-    def log(
-        self, name: str, val: Union[int, float], step: Optional[int] = None
-    ):
+    def log(self, name: str, val: Union[int, float]):
         splitted_name = os.path.normpath(name).split(os.path.sep)
         if nested_get(self._metrics, splitted_name) is not None:
             logger.info(
@@ -136,9 +138,6 @@ class MetricLogger:
 
         if not isinstance(val, (int, float)):
             raise InvalidMetricTypeError(name, type(val))
-
-        if step is not None:
-            self._step = step
 
         metric_history_path = os.path.join(self.history_path, name + ".tsv")
         os.makedirs(os.path.dirname(metric_history_path), exist_ok=True)
