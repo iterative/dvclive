@@ -53,6 +53,8 @@ class MetricLogger:
 
     def _init_paths(self):
         os.makedirs(self.dir, exist_ok=True)
+        if self._summary:
+            self.make_summary()
 
     @staticmethod
     def from_env():
@@ -100,9 +102,6 @@ class MetricLogger:
         return self._step
 
     def set_step(self, step: int) -> None:
-        if self._summary:
-            self.make_summary()
-
         if self._html:
             make_html()
 
@@ -125,12 +124,13 @@ class MetricLogger:
         else:
             raise InvalidDataTypeError(name, type(val))
 
-        data.dump(val, self._step, self.summary_path)
+        data.dump(val, self._step)
+        self.make_summary()
 
     def make_summary(self):
         summary_data = {"step": self.get_step()}
 
-        for data in self._data:
+        for data in self._data.values():
             summary_data.update(data.summary)
 
         with open(self.summary_path, "w") as f:
