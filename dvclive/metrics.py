@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class MetricLogger:
     DEFAULT_DIR = "dvclive"
-    
+
     def __init__(
         self,
         path: str = "dvclive",
@@ -113,9 +113,8 @@ class MetricLogger:
     def next_step(self):
         self.set_step(self.get_step() + 1)
 
-    def log(
-        self, name: str, val: Union[int, float]):
-    
+    def log(self, name: str, val: Union[int, float]):
+
         if name in self._data:
             data = self._data[name]
         elif Scalar.could_log(val):
