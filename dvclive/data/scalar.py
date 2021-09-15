@@ -17,10 +17,11 @@ class Scalar:
         self.name = name
         self.output_folder: Path = Path(output_folder)
         self._step: Optional[int] = None
+        self.val = None
 
     @staticmethod
-    def could_log(o: object) -> bool:
-        if isinstance(o, (int, float)):
+    def could_log(val: object) -> bool:
+        if isinstance(val, (int, float)):
             return True
         return False
 
@@ -40,7 +41,8 @@ class Scalar:
         _path.parent.mkdir(exist_ok=True, parents=True)
         return _path.with_suffix(".tsv")
 
-    def dump(self, val, step, summary_path):
+    def dump(self, val, step):
+        self.val = val
         self.step = step
 
         ts = int(time.time() * 1000)
@@ -54,19 +56,13 @@ class Scalar:
                 writer.writeheader()
 
             writer.writerow(d)
-        
-        if os.path.exists(summary_path):
-
-            with open(summary_path) as f:
-                summary_data = json.load(f)
-
-            summary_data["step"] = self.step
-
-            nested_set(
-                summary_data,
-                os.path.normpath(self.name).split(os.path.sep),
-                val
-            )
-
-            with open(summary_path, "w") as f:
-                json.dump(summary_data, f, indent=4)
+    
+    @property
+    def summary(self):
+        d = {}
+        nested_set(
+            d,
+            os.path.normpath(self.name).split(os.path.sep),
+            self.val
+        )
+        return d

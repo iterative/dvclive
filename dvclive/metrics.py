@@ -53,9 +53,6 @@ class MetricLogger:
 
     def _init_paths(self):
         os.makedirs(self.dir, exist_ok=True)
-        if self._summary:
-            with open(self.summary_path, "w") as f:
-                json.dump({"step": self._step}, f, indent=4)
 
     @staticmethod
     def from_env():
@@ -92,12 +89,6 @@ class MetricLogger:
         return os.path.isdir(self.dir)
 
     @property
-    def history_path(self):
-        if not self.exists:
-            os.mkdir(self.dir)
-        return self.dir
-
-    @property
     def summary_path(self):
         return self.dir + ".json"
 
@@ -108,7 +99,10 @@ class MetricLogger:
     def get_step(self) -> int:
         return self._step
 
-    def set_step(self, step: int):
+    def set_step(self, step: int) -> None:
+        if self._summary:
+            self.make_summary()
+
         if self._html:
             make_html()
 
@@ -122,6 +116,7 @@ class MetricLogger:
 
     def log(
         self, name: str, val: Union[int, float]):
+    
         if name in self._data:
             data = self._data[name]
         elif Scalar.could_log(val):
@@ -131,6 +126,15 @@ class MetricLogger:
             raise InvalidDataTypeError(name, type(val))
 
         data.dump(val, self._step, self.summary_path)
+
+    def make_summary(self):
+        summary_data = {"step": self.get_step()}
+
+        for data in self._data:
+            summary_data.update(data.summary)
+
+        with open(self.summary_path, "w") as f:
+            json.dump(summary_data, f, indent=4)
 
     def read_step(self):
         if self.exists:
