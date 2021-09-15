@@ -4,19 +4,32 @@ import time
 
 from collections import OrderedDict
 
+from dvclive.error import AlreadyLoggedError
+
 
 class Scalar:
 
-    def __init__(self, name, val, step, output_folder) -> None:
+    def __init__(self, name, output_folder) -> None:
         self.name = name
-        self.val = val
-        self.step = step
         self.output_folder = output_folder
+        self._step = None
 
-    def __eq__(self, o: object) -> bool:
+        os.makedirs(os.path.dirname(self.output_plot_path), exist_ok=True)
+
+    @staticmethod
+    def could_log(o: object):
         if isinstance(o, (int, float)):
             return True
         return False
+
+    @property
+    def step(self):
+        return self._step
+    
+    @step.setter
+    def step(self, val):
+        if val == self._step:
+            raise AlreadyLoggedError(self.name, val)
 
     @property
     def output_plot_path(self):
@@ -26,15 +39,13 @@ class Scalar:
     def output_summary_path(self):
         return self.output_folder + ".json"
 
-    def dump(self, output_folder, step):
-        output_path = os.path.join(output_folder, self.output_plot_path)
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
+    def dump(self, val, step):
+        self.step = step
         ts = int(time.time() * 1000)
-        d = OrderedDict([("timestamp", ts), ("step", step), (self.name, self.val)])
+        d = OrderedDict([("timestamp", ts), ("step", self.step), (self.name, val)])
 
-        existed = os.path.exists(path)
-        with open(path, "a") as fobj:
+        existed = os.path.exists(self.output_plot_path)
+        with open(self.output_plot_path, "a") as fobj:
             writer = csv.DictWriter(fobj, d.keys(), delimiter="\t")
 
             if not existed:
@@ -42,7 +53,5 @@ class Scalar:
 
             writer.writerow(d)
         
+
         splitted_name = os.path.normpath(self.name).split(os.path.sep)
-
-
-

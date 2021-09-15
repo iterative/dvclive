@@ -8,7 +8,7 @@ from typing import Dict, Optional, Union
 
 from .data import Scalar
 from .dvc import get_signal_file_path, make_checkpoint
-from .error import InvalidMetricTypeError
+from .error import InvalidDataTypeError
 
 logger = logging.getLogger(__name__)
 
@@ -117,19 +117,16 @@ class MetricLogger:
             make_checkpoint()
 
     def log(
-        self, name: str, val: Union[int, float], step: Optional[int] = None
-    ):
+        self, name: str, val: Union[int, float]):
         if name in self._data:
             data = self._data[name]
-            data.val = val
-            data.step = step
-        elif val == Scalar:
-            data = Scalar(name, val, step, self.dir)
+        elif Scalar.could_log(val):
+            data = Scalar(name, self.dir)
             self._data[name] = data
         else:
-            raise InvalidMetricTypeError(name, type(val))
+            raise InvalidDataTypeError(name, type(val))
 
-        data.dump(self.dir)
+        data.dump(val, self.step)
 
     def read_step(self):
         if self.exists:
