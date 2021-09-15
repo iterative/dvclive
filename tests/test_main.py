@@ -12,7 +12,7 @@ from dvclive import env
 # pylint: disable=unused-argument
 from dvclive.dvc import SIGNAL_FILE
 from dvclive.error import (
-    AlreadyLoggedError,
+    DataAlreadyLoggedError,
     ConfigMismatchError,
     InitializationError,
     InvalidDataTypeError,
@@ -172,7 +172,7 @@ def test_require_step_update(tmp_dir, metric):
 
     dvclive.log(metric, 1.0)
     with pytest.raises(
-        AlreadyLoggedError,
+        DataAlreadyLoggedError,
         match=f"'{metric}' has already being logged whith step '0'",
     ):
         dvclive.log(metric, 2.0)
