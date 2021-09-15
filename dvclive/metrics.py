@@ -25,9 +25,11 @@ class MetricLogger:
     ):
         self._path: str = path
         self._step: int = 0
-        self._html: bool = html
-        self._summary = summary
         self._data: Dict[str, Any] = OrderedDict()
+
+        self._summary: bool = summary
+
+        self._html: bool = html
         self._checkpoint: bool = checkpoint
 
         if resume and self.exists:
@@ -107,16 +109,16 @@ class MetricLogger:
         return self._step
 
     def set_step(self, step: int):
-        self._step = step
-
-    def next_step(self):
         if self._html:
             make_html()
 
-        self._step += 1
-
         if self._checkpoint:
             make_checkpoint()
+
+        self._step = step
+
+    def next_step(self):
+        self.set_step(self.get_step() + 1)
 
     def log(
         self, name: str, val: Union[int, float]):
