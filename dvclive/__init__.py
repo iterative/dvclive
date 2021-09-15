@@ -31,16 +31,22 @@ def _lazy_init(_metric_logger):
     return _metric_logger
 
 
-def log(name: str, val: Union[int, float], step: int = None) -> None:
+def log(name: str, val: Union[int, float]) -> None:
     global _metric_logger  # pylint: disable=global-statement
     _metric_logger = _lazy_init(_metric_logger)
-    _metric_logger.log(name=name, val=val, step=step)
+    _metric_logger.log(name=name, val=val)
 
 
 def get_step() -> int:
     global _metric_logger  # pylint: disable=global-statement
     _metric_logger = _lazy_init(_metric_logger)
-    return _metric_logger.step
+    return _metric_logger.get_step()
+
+
+def set_step(step: int):
+    global _metric_logger  # pylint: disable=global-statement
+    _metric_logger = _lazy_init(_metric_logger)
+    return _metric_logger.set_step(step)
 
 
 def next_step() -> None:

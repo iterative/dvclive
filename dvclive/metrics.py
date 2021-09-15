@@ -97,9 +97,11 @@ class MetricLogger:
     def html_path(self):
         return self.dir + "_dvc_plots/index.html"
 
-    @property
-    def step(self):
+    def get_step(self) -> int:
         return self._step
+
+    def set_step(self, step: int):
+        self._step = step
 
     def next_step(self):
         if self._html:
@@ -124,7 +126,7 @@ class MetricLogger:
         else:
             raise InvalidDataTypeError(name, type(val))
 
-        data.dump(val, self.step, self._summary)
+        data.dump(val, self._step, self._summary)
 
     def read_step(self):
         if self.exists:
