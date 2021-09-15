@@ -8,11 +8,15 @@ _metric_logger: Optional[MetricLogger] = None
 
 
 def init(
-    path: str = None, resume: bool = False, summary: bool = True,
+    path: str = None,
+    resume: bool = False,
+    summary: bool = True,
 ) -> MetricLogger:
     global _metric_logger  # pylint: disable=global-statement
     _metric_logger = MetricLogger(
-        path=path or MetricLogger.DEFAULT_DIR, resume=resume, summary=summary,
+        path=path or MetricLogger.DEFAULT_DIR,
+        resume=resume,
+        summary=summary,
     )
     return _metric_logger
 

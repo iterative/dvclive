@@ -6,17 +6,17 @@ repos:
       - id: black
         language_version: python3
     repo: https://github.com/ambv/black
-    rev: 19.10b0
+    rev: 21.8b0
   - hooks:
       - id: isort
         language_version: python3
     repo: https://github.com/timothycrosley/isort
-    rev: 5.4.2
+    rev: 5.9.3
   - hooks:
       - id: flake8
         language_version: python3
     repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.3
+    rev: 3.9.2
   - repo: local
     hooks:
     - id: pylint
