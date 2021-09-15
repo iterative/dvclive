@@ -25,7 +25,7 @@ def test_mmcv_hook(tmp_dir, mocker):
 
     runner.run([loader, loader], [("train", 1), ("val", 1)])
 
-    assert set_step.call_count == 5
+    assert set_step.call_count == 6
     assert log.call_count == 12
 
     logs, _ = read_logs("logs")
