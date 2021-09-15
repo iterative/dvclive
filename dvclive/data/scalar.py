@@ -1,39 +1,21 @@
 import csv
-import json
 import os
 import time
 
 from collections import OrderedDict
 from pathlib import Path
-from typing import Optional
 
-from dvclive.error import AlreadyLoggedError
 from dvclive.utils import nested_set
+from .base import Data
 
 
-class Scalar:
-
-    def __init__(self, name: str, output_folder: str) -> None:
-        self.name = name
-        self.output_folder: Path = Path(output_folder)
-        self._step: Optional[int] = None
-        self.val = None
+class Scalar(Data):
 
     @staticmethod
     def could_log(val: object) -> bool:
         if isinstance(val, (int, float)):
             return True
         return False
-
-    @property
-    def step(self) -> int:
-        return self._step
-    
-    @step.setter
-    def step(self, val: int) -> None:
-        if val == self._step:
-            raise AlreadyLoggedError(self.name, val)
-        self._step = val
 
     @property
     def output_path(self) -> Path:
@@ -48,7 +30,7 @@ class Scalar:
         ts = int(time.time() * 1000)
         d = OrderedDict([("timestamp", ts), ("step", self.step), (self.name, val)])
 
-        existed = os.path.exists(self.output_path)
+        existed = self.output_path.exists()
         with open(self.output_path, "a") as fobj:
             writer = csv.DictWriter(fobj, d.keys(), delimiter="\t")
 
