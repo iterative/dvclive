@@ -1,1 +1,1 @@
-from .scalar import Scalar
+from .scalar import Scalar  # noqa: F401
