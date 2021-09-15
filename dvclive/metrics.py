@@ -1,10 +1,9 @@
 import json
 import logging
 import os
-import time
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Union
 
 from .data import Scalar
 from .dvc import get_signal_file_path, make_checkpoint
@@ -14,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class MetricLogger:
-    DEFAULT_DIR = "dvclive"
 
     def __init__(
         self,
@@ -126,7 +124,7 @@ class MetricLogger:
         else:
             raise InvalidDataTypeError(name, type(val))
 
-        data.dump(val, self.step)
+        data.dump(val, self.step, self._summary)
 
     def read_step(self):
         if self.exists:
