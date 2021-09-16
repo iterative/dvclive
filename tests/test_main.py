@@ -173,7 +173,7 @@ def test_require_step_update(tmp_dir, metric):
     dvclive.log(metric, 1.0)
     with pytest.raises(
         DataAlreadyLoggedError,
-        match=f"'{metric}' has already being logged whith step '0'",
+        match=rf"'{metric}' has already being logged whith step '0'",
     ):
         dvclive.log(metric, 2.0)
 
@@ -250,7 +250,7 @@ def test_fail_on_conflict(tmp_dir, monkeypatch):
 def test_invalid_metric_type(tmp_dir, invalid_type):
     with pytest.raises(
         InvalidDataTypeError,
-        match=rf"Data 'm' has not supported type {type(invalid_type)}",
+        match=f"Data 'm' has not supported type {type(invalid_type)}",
     ):
         dvclive.log("m", invalid_type)
 
