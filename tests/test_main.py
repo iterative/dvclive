@@ -250,7 +250,7 @@ def test_fail_on_conflict(tmp_dir, monkeypatch):
 def test_invalid_metric_type(tmp_dir, invalid_type):
     with pytest.raises(
         InvalidDataTypeError,
-        match=f"Data 'm' has not supported type {type(invalid_type)}",
+        match=rf"Data 'm' has not supported type {type(invalid_type)}",
     ):
         dvclive.log("m", invalid_type)
 
