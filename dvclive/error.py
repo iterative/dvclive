@@ -22,8 +22,8 @@ class ConfigMismatchError(DvcLiveError):
         from . import env
 
         super().__init__(
-            fr"Dvclive initialized in '{ml.dir}' conflicts "
-            fr"with '{os.environ[env.DVCLIVE_PATH]}' provided by DVC."
+            f"Dvclive initialized in '{ml.dir}' conflicts "
+            f"with '{os.environ[env.DVCLIVE_PATH]}' provided by DVC."
         )
 
 
@@ -31,7 +31,7 @@ class InvalidDataTypeError(DvcLiveError):
     def __init__(self, name, val):
         self.name = name
         self.val = val
-        super().__init__(fr"Data '{name}' has not supported type {val}")
+        super().__init__(f"Data '{name}' has not supported type {val}")
 
 
 class DataAlreadyLoggedError(DvcLiveError):
@@ -39,5 +39,5 @@ class DataAlreadyLoggedError(DvcLiveError):
         self.name = name
         self.val = step
         super().__init__(
-            fr"Data '{name}' has already being logged whith step '{step}'"
+            f"Data '{name}' has already being logged whith step '{step}'"
         )
