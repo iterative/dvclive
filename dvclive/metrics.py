@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, Union
 
 from .dvc import get_signal_file_path, make_checkpoint
-from .error import InvalidMetricTypeError
+from .error import ConfigMismatchError, InvalidMetricTypeError
 from .serialize import update_tsv, write_json
 from .utils import nested_get, nested_set
 
@@ -21,16 +21,21 @@ class MetricLogger:
         self,
         path: str = "dvclive",
         resume: bool = False,
-        summary=True,
-        html=True,
-        checkpoint=False,
+        summary: bool = True,
+        html: bool = True,
+        checkpoint: bool = False,
+        from_env: bool = True
     ):
         self._path: str = path
-        self._step: int = 0
-        self._html: bool = html
         self._summary = summary
-        self._metrics: Dict[str, Any] = OrderedDict()
+        self._html: bool = html
         self._checkpoint: bool = checkpoint
+
+        self._step: int = 0
+        self._metrics: Dict[str, Any] = OrderedDict()
+
+        if from_env:
+            self.update_from_env()
 
         if resume and self.exists:
             self._step = self.read_step()
@@ -52,12 +57,14 @@ class MetricLogger:
         if os.path.exists(self.html_path):
             os.remove(self.html_path)
 
-    @staticmethod
-    def from_env():
+    def update_from_env(self) -> None:
         from . import env
 
         if env.DVCLIVE_PATH in os.environ:
-            directory = os.environ[env.DVCLIVE_PATH]
+
+            if self.dir != os.environ[env.DVCLIVE_PATH]:
+                raise ConfigMismatchError(self)
+
             env_config = {
                 "summary": bool(int(os.environ.get(env.DVCLIVE_SUMMARY, "0"))),
                 "html": bool(int(os.environ.get(env.DVCLIVE_HTML, "0"))),
@@ -66,17 +73,10 @@ class MetricLogger:
                 ),
                 "resume": bool(int(os.environ.get(env.DVCLIVE_RESUME, "0"))),
             }
-            return MetricLogger(directory, **env_config)
-        return None
-
-    def matches_env_setup(self):
-        from . import env
-
-        if env.DVCLIVE_PATH in os.environ:
-            env_dir = os.environ[env.DVCLIVE_PATH]
-            return self.dir == env_dir
-
-        return True
+            for k, v in env_config.items():
+                if getattr(self, k) != v:
+                    logger.info(f"Overriding {k} with value provided by DVC: {v}")
+                    setattr(self, k, v)
 
     @property
     def dir(self):
