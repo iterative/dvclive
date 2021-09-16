@@ -18,7 +18,7 @@ jobs:
       with:
         python-version: 3.8
     - name: install requirements
-      run: pip install Pygments pre-commit collective.checkdocs
+      run: pip install pylint Pygments pre-commit collective.checkdocs
     - name: Check README
       run: python setup.py checkdocs
     - name: check formatting
