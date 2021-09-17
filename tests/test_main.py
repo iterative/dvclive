@@ -73,6 +73,10 @@ def test_logging(tmp_dir, summary):
     assert (tmp_dir / "logs" / "m1.tsv").is_file()
     assert (tmp_dir / "logs.json").is_file() == summary
 
+    if summary:
+        _, s = read_logs("logs")
+        assert s["m1"] == 1
+
 
 def test_nested_logging(tmp_dir):
     dvclive.init("logs", summary=True)
