@@ -10,6 +10,9 @@ from .base import Data
 
 
 class Scalar(Data):
+    subdir = "linear"
+    suffixes = [".csv", ".tsv"]
+
     @staticmethod
     def could_log(val: object) -> bool:
         if isinstance(val, (int, float)):

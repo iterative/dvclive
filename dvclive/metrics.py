@@ -41,9 +41,12 @@ class MetricLogger:
             self._init_paths()
 
     def _cleanup(self):
-
-        for dvclive_file in Path(self.dir).rglob("*.tsv"):
-            dvclive_file.unlink()
+        
+        for data_type in DATA_TYPES:
+            subdir = Path(self.dir) / data_type.subdir
+            data_files = f"*{'|*'.join(data_type.suffixes)}"
+            for data_file in subdir.rglob(data_files):
+                data_file.unlink()
 
         if os.path.exists(self.summary_path):
             os.remove(self.summary_path)
@@ -92,11 +95,11 @@ class MetricLogger:
 
     @property
     def summary_path(self):
-        return self.dir + ".json"
+        return os.path.join(self.dir, "summary.json")
 
     @property
     def html_path(self):
-        return self.dir + "_dvc_plots/index.html"
+        return os.path.join(self.dir, "html")
 
     def get_step(self) -> int:
         return self._step
