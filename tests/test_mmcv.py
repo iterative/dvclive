@@ -17,7 +17,7 @@ def test_mmcv_hook(tmp_dir, mocker):
     hook = DVCLiveLoggerHook()
     runner.register_hook(hook, priority="VERY_LOW")
 
-    next_step = mocker.spy(dvclive.metrics.MetricLogger, "next_step")
+    set_step = mocker.spy(dvclive.metrics.MetricLogger, "set_step")
     log = mocker.spy(dvclive.metrics.MetricLogger, "log")
     loader = torch.utils.data.DataLoader(torch.ones((5, 2)))
 
@@ -25,7 +25,7 @@ def test_mmcv_hook(tmp_dir, mocker):
 
     runner.run([loader, loader], [("train", 1), ("val", 1)])
 
-    assert next_step.call_count == 5
+    assert set_step.call_count == 6
     assert log.call_count == 12
 
     logs, _ = read_logs("logs")

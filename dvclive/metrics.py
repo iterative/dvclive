@@ -1,15 +1,13 @@
 import json
 import logging
 import os
-import time
 from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, Union
 
-from .dvc import get_signal_file_path, make_checkpoint
-from .error import ConfigMismatchError, InvalidMetricTypeError
-from .serialize import update_tsv, write_json
-from .utils import nested_get, nested_set
+from .data import Scalar
+from .dvc import make_checkpoint, make_html
+from .error import ConfigMismatchError, InvalidDataTypeError
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +25,11 @@ class MetricLogger:
         from_env: bool = True
     ):
         self._path: str = path
-        self._summary = summary
+        self._step: int = 0
+        self._data: Dict[str, Any] = OrderedDict()
+
+        self._summary: bool = summary
+
         self._html: bool = html
         self._checkpoint: bool = checkpoint
 
@@ -41,10 +43,9 @@ class MetricLogger:
             self._step = self.read_step()
             if self._step != 0:
                 self._step += 1
-
         else:
             self._cleanup()
-            os.makedirs(self.dir, exist_ok=True)
+            self._init_paths()
 
     def _cleanup(self):
 
@@ -56,6 +57,11 @@ class MetricLogger:
 
         if os.path.exists(self.html_path):
             os.remove(self.html_path)
+
+    def _init_paths(self):
+        os.makedirs(self.dir, exist_ok=True)
+        if self._summary:
+            self.make_summary()
 
     def update_from_env(self) -> None:
         from . import env
@@ -87,12 +93,6 @@ class MetricLogger:
         return os.path.isdir(self.dir)
 
     @property
-    def history_path(self):
-        if not self.exists:
-            os.mkdir(self.dir)
-        return self.dir
-
-    @property
     def summary_path(self):
         return self.dir + ".json"
 
@@ -103,54 +103,40 @@ class MetricLogger:
     def get_step(self) -> int:
         return self._step
 
-    def set_step(self, step: int):
-        if self._metrics:
-            self.next_step()
-        self._step = step
-
-    def next_step(self):
-        if self._summary:
-            metrics = OrderedDict({"step": self._step})
-            metrics.update(self._metrics)
-            write_json(metrics, self.summary_path)
-
+    def set_step(self, step: int) -> None:
         if self._html:
-            signal_file_path = get_signal_file_path()
-            if signal_file_path:
-                if not os.path.exists(signal_file_path):
-                    with open(signal_file_path, "w"):
-                        pass
-
-        self._metrics.clear()
-
-        self._step += 1
+            make_html()
 
         if self._checkpoint:
             make_checkpoint()
 
+        self._step = step
+
+    def next_step(self):
+        self.set_step(self.get_step() + 1)
+
     def log(self, name: str, val: Union[int, float]):
-        splitted_name = os.path.normpath(name).split(os.path.sep)
-        if nested_get(self._metrics, splitted_name) is not None:
-            logger.info(
-                f"Found {name} in metrics dir, assuming new epoch started"
-            )
-            self.next_step()
 
-        if not isinstance(val, (int, float)):
-            raise InvalidMetricTypeError(name, type(val))
+        if name in self._data:
+            data = self._data[name]
+        elif Scalar.could_log(val):
+            data = Scalar(name, self.dir)
+            self._data[name] = data
+        else:
+            raise InvalidDataTypeError(name, type(val))
 
-        metric_history_path = os.path.join(self.history_path, name + ".tsv")
-        os.makedirs(os.path.dirname(metric_history_path), exist_ok=True)
+        data.dump(val, self._step)
+        if self._summary:
+            self.make_summary()
 
-        nested_set(
-            self._metrics,
-            splitted_name,
-            val,
-        )
+    def make_summary(self):
+        summary_data = {"step": self.get_step()}
 
-        ts = int(time.time() * 1000)
-        d = OrderedDict([("timestamp", ts), ("step", self._step), (name, val)])
-        update_tsv(d, metric_history_path)
+        for data in self._data.values():
+            summary_data.update(data.summary)
+
+        with open(self.summary_path, "w") as f:
+            json.dump(summary_data, f, indent=4)
 
     def read_step(self):
         if self.exists:
