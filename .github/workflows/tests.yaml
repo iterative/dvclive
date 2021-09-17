@@ -18,7 +18,7 @@ jobs:
       with:
         python-version: 3.8
     - name: install requirements
-      run: pip install pylint Pygments pre-commit collective.checkdocs
+      run: pip install ".[tests]" collective.checkdocs --use-deprecated=legacy-resolver
     - name: Check README
       run: python setup.py checkdocs
     - name: check formatting
