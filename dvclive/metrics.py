@@ -5,7 +5,7 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, Union
 
-from .data import Scalar
+from .data import DATA_TYPES
 from .dvc import make_checkpoint, make_html
 from .error import InvalidDataTypeError
 
@@ -115,15 +115,19 @@ class MetricLogger:
 
     def log(self, name: str, val: Union[int, float]):
 
+        data = None
         if name in self._data:
             data = self._data[name]
-        elif Scalar.could_log(val):
-            data = Scalar(name, self.dir)
-            self._data[name] = data
         else:
+            for data_type in DATA_TYPES:
+                if data_type.could_log(val):
+                    data = data_type(name, self.dir)
+                    self._data[name] = data
+        if data is None:
             raise InvalidDataTypeError(name, type(val))
 
         data.dump(val, self._step)
+
         if self._summary:
             self.make_summary()
 
