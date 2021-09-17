@@ -56,6 +56,10 @@ class MetricLogger:
 
     def _init_paths(self):
         os.makedirs(self.dir, exist_ok=True)
+        for data_type in DATA_TYPES:
+            os.makedirs(
+                os.path.join(self.dir, data_type.subdir), exist_ok=True)
+
         if self._summary:
             self.make_summary()
 

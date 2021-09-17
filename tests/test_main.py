@@ -10,6 +10,7 @@ import dvclive
 from dvclive import env
 
 # pylint: disable=unused-argument
+from dvclive.data import DATA_TYPES
 from dvclive.dvc import SIGNAL_FILE
 from dvclive.error import (
     ConfigMismatchError,
@@ -26,7 +27,7 @@ def read_logs(path: str):
         metric_name = str(metric_file).replace(path + os.path.sep, "")
         metric_name = metric_name.replace(".tsv", "")
         history[metric_name] = _parse_tsv(metric_file)
-    latest = _parse_json(path + ".json")
+    latest = _parse_json(os.path.join(path + "summary.json"))
     return history, latest
 
 
@@ -57,10 +58,12 @@ def _parse_json(path):
 
 
 @pytest.mark.parametrize("path", ["logs", os.path.join("subdir", "logs")])
-def test_create_logs_dir(tmp_dir, path):
+def test_init_paths(tmp_dir, path):
     dvclive.init(path)
 
     assert (tmp_dir / path).is_dir()
+    for data_type in DATA_TYPES:
+        assert (tmp_dir / path / data_type.subdir).is_dir()
 
 
 @pytest.mark.parametrize("summary", [True, False])

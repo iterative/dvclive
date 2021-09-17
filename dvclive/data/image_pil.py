@@ -10,15 +10,15 @@ class ImagePIL(Data):
 
     @staticmethod
     def could_log(val: object) -> bool:
-        if isinstance(val, Image.Image):
+        if isinstance(val, Image):
             return True
         return False
 
     @property
     def output_path(self) -> Path:
-        if self.name.suffix not in self.suffixes:
+        if Path(self.name).suffix not in self.suffixes:
             raise ValueError(
-                f"Invalid image suffix {self.name.suffix}."
+                f"Invalid image suffix '{Path(self.name).suffix}'"
                 f" Must be one of {self.suffixes}"
             )
         return self.output_folder / self.subdir / self.name
