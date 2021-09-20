@@ -21,10 +21,11 @@ from dvclive.error import (
 
 
 def read_logs(path: str):
-    assert os.path.isdir(path)
+    path = Path(path)
+    assert path.is_dir()
     history = {}
-    for metric_file in Path(path).rglob("*.tsv"):
-        metric_name = str(metric_file).replace(path + os.path.sep, "")
+    for metric_file in (path / Scalar.subdir).rglob("*.tsv"):
+        metric_name = str(metric_file).replace(str(path / Scalar.subdir) + os.path.sep, "")
         metric_name = metric_name.replace(".tsv", "")
         history[metric_name] = _parse_tsv(metric_file)
     latest = _parse_json(os.path.join(path, "summary.json"))
@@ -86,11 +87,9 @@ def test_nested_logging(tmp_dir):
     dvclive.log("train/m1", 1)
     dvclive.log("val/val_1/m1", 1)
 
-    assert (tmp_dir / "logs").is_dir()
-    assert (tmp_dir / "logs" / "train").is_dir()
-    assert (tmp_dir / "logs" / "val" / "val_1").is_dir()
-    assert (tmp_dir / "logs" / "train" / "m1.tsv").is_file()
-    assert (tmp_dir / "logs" / "val" / "val_1" / "m1.tsv").is_file()
+    assert (tmp_dir / "logs" / Scalar.subdir / "val" / "val_1").is_dir()
+    assert (tmp_dir / "logs" / Scalar.subdir / "train" / "m1.tsv").is_file()
+    assert (tmp_dir / "logs" / Scalar.subdir / "val" / "val_1" / "m1.tsv").is_file()
 
     _, summary = read_logs("logs")
 
@@ -129,22 +128,21 @@ def test_cleanup(tmp_dir, summary, html):
     logger = dvclive.init("logs", summary=summary)
     dvclive.log("m1", 1)
 
-    html_path = tmp_dir / logger.html_path
+    html_path = tmp_dir / logger.html_path / "index.html"
     if html:
-        html_path.parent.mkdir()
         html_path.touch()
 
     (tmp_dir / "logs" / "some_user_file.txt").touch()
 
-    assert (tmp_dir / "logs" / "m1.tsv").is_file()
-    assert (tmp_dir / "logs.json").is_file() == summary
+    assert (tmp_dir / "logs" / Scalar.subdir / "m1.tsv").is_file()
+    assert (tmp_dir / logger.summary_path).is_file() == summary
     assert html_path.is_file() == html
 
     dvclive.init("logs", summary=summary)
 
     assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
-    assert not (tmp_dir / "logs" / "m1.tsv").is_file()
-    assert (tmp_dir / "logs.json").is_file() == summary
+    assert not (tmp_dir / "logs"  / Scalar.subdir / "m1.tsv").is_file()
+    assert (tmp_dir / logger.summary_path).is_file() == summary
     assert not (html_path).is_file()
 
 

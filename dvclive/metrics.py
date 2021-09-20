@@ -1,5 +1,6 @@
 import json
 import logging
+import shutil
 import os
 from collections import OrderedDict
 from pathlib import Path
@@ -44,15 +45,15 @@ class MetricLogger:
 
         for data_type in DATA_TYPES:
             subdir = Path(self.dir) / data_type.subdir
-            data_files = f"*{'|*'.join(data_type.suffixes)}"
-            for data_file in subdir.rglob(data_files):
-                data_file.unlink()
+            for suffix in data_type.suffixes:
+                for data_file in subdir.rglob(f"*{suffix}"):
+                    data_file.unlink()
 
         if os.path.exists(self.summary_path):
             os.remove(self.summary_path)
 
         if os.path.exists(self.html_path):
-            os.remove(self.html_path)
+            shutil.rmtree(self.html_path, ignore_errors=True)
 
     def _init_paths(self):
         os.makedirs(self.dir, exist_ok=True)
@@ -63,6 +64,8 @@ class MetricLogger:
 
         if self._summary:
             self.make_summary()
+        if self._html:
+            os.makedirs(self.html_path, exist_ok=True)
 
     @staticmethod
     def from_env():

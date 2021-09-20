@@ -33,7 +33,6 @@ class Scalar(Data):
             [("timestamp", ts), ("step", self.step), (self.name, self.val)]
         )
 
-        print(self.output_path)
         existed = self.output_path.exists()
         with open(self.output_path, "a") as fobj:
             writer = csv.DictWriter(fobj, d.keys(), delimiter="\t")
