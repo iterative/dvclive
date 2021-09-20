@@ -1,9 +1,9 @@
-from PIL import Image 
+from PIL import Image
+
 from .image_pil import ImagePIL
 
 
 class ImageNumpy(ImagePIL):
-
     @staticmethod
     def could_log(val: object) -> bool:
         if val.__class__.__module__ == "numpy":

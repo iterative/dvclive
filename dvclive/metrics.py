@@ -41,7 +41,7 @@ class MetricLogger:
             self._init_paths()
 
     def _cleanup(self):
-        
+
         for data_type in DATA_TYPES:
             subdir = Path(self.dir) / data_type.subdir
             data_files = f"*{'|*'.join(data_type.suffixes)}"
@@ -58,7 +58,8 @@ class MetricLogger:
         os.makedirs(self.dir, exist_ok=True)
         for data_type in DATA_TYPES:
             os.makedirs(
-                os.path.join(self.dir, data_type.subdir), exist_ok=True)
+                os.path.join(self.dir, data_type.subdir), exist_ok=True
+            )
 
         if self._summary:
             self.make_summary()

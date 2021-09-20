@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from PIL.Image import Image
+
 from .base import Data
 
 
