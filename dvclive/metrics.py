@@ -132,7 +132,6 @@ class MetricLogger:
                     self._data[name] = data
         if data is None:
             raise InvalidDataTypeError(name, type(val))
-
         data.dump(val, self._step)
 
         if self._summary:

@@ -10,7 +10,7 @@ from .base import Data
 
 
 class Scalar(Data):
-    subdir = "linear"
+    subdir = "scalar"
     suffixes = [".csv", ".tsv"]
 
     @staticmethod
@@ -21,7 +21,7 @@ class Scalar(Data):
 
     @property
     def output_path(self) -> Path:
-        _path = self.output_folder / self.name
+        _path = self.output_folder / self.subdir / self.name
         _path.parent.mkdir(exist_ok=True, parents=True)
         return _path.with_suffix(".tsv")
 
@@ -33,6 +33,7 @@ class Scalar(Data):
             [("timestamp", ts), ("step", self.step), (self.name, self.val)]
         )
 
+        print(self.output_path)
         existed = self.output_path.exists()
         with open(self.output_path, "a") as fobj:
             writer = csv.DictWriter(fobj, d.keys(), delimiter="\t")
