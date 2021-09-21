@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from PIL.Image import Image
-
 from .base import Data
 
 
@@ -11,7 +9,7 @@ class ImagePIL(Data):
 
     @staticmethod
     def could_log(val: object) -> bool:
-        if isinstance(val, Image):
+        if val.__class__.__module__ == "PIL.Image":
             return True
         return False
 

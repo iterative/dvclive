@@ -43,8 +43,9 @@ lgbm = ["lightgbm"]
 hugginface = ["transformers", "datasets"]
 catalyst = ["catalyst"]
 fastai = ["fastai"]
+image = ["pillow"]
 
-all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai
+all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai + image
 
 tests_requires = [
     "pylint==2.5.3",
