@@ -10,7 +10,7 @@ from .base import Data
 
 
 class Scalar(Data):
-    subdir = "scalar"
+    subdir = "scalars"
     suffixes = [".csv", ".tsv"]
 
     @staticmethod
