@@ -16,6 +16,13 @@ def test_PIL(tmp_dir):
     assert (tmp_dir / logger.dir / ImagePIL.subdir / "image.png").exists()
 
 
+def test_invalid_extension(tmp_dir):
+    dvclive.init()
+    img = Image.new("RGB", (500, 500), (250, 250, 250))
+    with pytest.raises(ValueError):
+        dvclive.log("image.foo", img)
+
+
 @pytest.mark.parametrize("shape", [(500, 500), (500, 500, 3), (500, 500, 4)])
 def test_numpy(tmp_dir, shape):
     logger = dvclive.init()
