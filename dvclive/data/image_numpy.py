@@ -10,6 +10,7 @@ class ImageNumpy(ImagePIL):
 
     def dump(self, val, step) -> None:
         from PIL import Image
+
         val = Image.fromarray(val)
         super().dump(val, step)
 
