@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
+# pylint: disable=unused-argument
 import dvclive
 from dvclive.data import ImageNumpy, ImagePIL
 
