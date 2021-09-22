@@ -103,7 +103,7 @@ class MetricLogger:
 
     @property
     def summary_path(self):
-        return os.path.join(self.dir, "summary.json")
+        return str(self.dir) + ".json"
 
     @property
     def html_path(self):
