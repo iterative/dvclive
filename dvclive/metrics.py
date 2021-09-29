@@ -3,7 +3,7 @@ import logging
 import os
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from .data import Scalar
 from .dvc import make_checkpoint, make_html
@@ -17,29 +17,30 @@ class MetricLogger:
 
     def __init__(
         self,
-        path: str = "dvclive",
+        path: Optional[str] = None,
         resume: bool = False,
         summary: bool = True,
         html: bool = True,
         checkpoint: bool = False,
-        from_env: bool = True
+        from_env: bool = True,
     ):
-        self._path: str = path
-        self._step: int = 0
-        self._data: Dict[str, Any] = OrderedDict()
 
+        self._path: Optional[str] = path
+        self._resume: bool = resume
         self._summary: bool = summary
-
         self._html: bool = html
         self._checkpoint: bool = checkpoint
 
-        self._step: int = 0
-        self._metrics: Dict[str, Any] = OrderedDict()
-
         if from_env:
-            self.update_from_env()
+            self.init_from_env()
 
-        if resume and self.exists:
+        if self._path is None:
+            self._path = self.DEFAULT_DIR
+
+        self._step: int = 0
+        self._data: Dict[str, Any] = OrderedDict()
+
+        if self._resume and self.exists:
             self._step = self.read_step()
             if self._step != 0:
                 self._step += 1
@@ -63,25 +64,30 @@ class MetricLogger:
         if self._summary:
             self.make_summary()
 
-    def update_from_env(self) -> None:
+    def init_from_env(self) -> None:
         from . import env
 
         if env.DVCLIVE_PATH in os.environ:
 
-            if self.dir != os.environ[env.DVCLIVE_PATH]:
+            if self.dir and self.dir != os.environ[env.DVCLIVE_PATH]:
                 raise ConfigMismatchError(self)
 
             env_config = {
-                "summary": bool(int(os.environ.get(env.DVCLIVE_SUMMARY, "0"))),
-                "html": bool(int(os.environ.get(env.DVCLIVE_HTML, "0"))),
-                "checkpoint": bool(
+                "_path": os.environ.get(env.DVCLIVE_PATH),
+                "_summary": bool(
+                    int(os.environ.get(env.DVCLIVE_SUMMARY, "0"))
+                ),
+                "_html": bool(int(os.environ.get(env.DVCLIVE_HTML, "0"))),
+                "_checkpoint": bool(
                     int(os.environ.get(env.DVC_CHECKPOINT, "0"))
                 ),
-                "resume": bool(int(os.environ.get(env.DVCLIVE_RESUME, "0"))),
+                "_resume": bool(int(os.environ.get(env.DVCLIVE_RESUME, "0"))),
             }
             for k, v in env_config.items():
                 if getattr(self, k) != v:
-                    logger.info(f"Overriding {k} with value provided by DVC: {v}")
+                    logger.info(
+                        f"Overriding {k} with value provided by DVC: {v}"
+                    )
                     setattr(self, k, v)
 
     @property

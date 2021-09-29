@@ -7,7 +7,6 @@ import xgboost as xgb
 from funcy import first
 from sklearn import datasets
 
-import dvclive
 from dvclive.xgb import DvcLiveCallback
 from tests.test_main import read_logs
 
@@ -28,7 +27,6 @@ def iris_data():
 
 
 def test_xgb_integration(tmp_dir, train_params, iris_data):
-    dvclive.init("logs")
     xgb.train(
         train_params,
         iris_data,
@@ -37,15 +35,14 @@ def test_xgb_integration(tmp_dir, train_params, iris_data):
         evals=[(iris_data, "eval_data")],
     )
 
-    assert os.path.exists("logs")
+    assert os.path.exists("dvclive")
 
-    logs, _ = read_logs("logs")
+    logs, _ = read_logs("dvclive")
     assert len(logs) == 1
     assert len(first(logs.values())) == 5
 
 
 def test_xgb_model_file(tmp_dir, train_params, iris_data):
-    dvclive.init("logs")
     model = xgb.train(
         train_params,
         iris_data,

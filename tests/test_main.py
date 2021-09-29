@@ -6,15 +6,13 @@ from pathlib import Path
 import pytest
 from funcy import last
 
-import dvclive
-from dvclive import env
+from dvclive import MetricLogger, env
 
 # pylint: disable=unused-argument
 from dvclive.dvc import SIGNAL_FILE
 from dvclive.error import (
     ConfigMismatchError,
     DataAlreadyLoggedError,
-    InitializationError,
     InvalidDataTypeError,
 )
 
@@ -58,14 +56,14 @@ def _parse_json(path):
 
 @pytest.mark.parametrize("path", ["logs", os.path.join("subdir", "logs")])
 def test_create_logs_dir(tmp_dir, path):
-    dvclive.init(path)
+    MetricLogger(path)
 
     assert (tmp_dir / path).is_dir()
 
 
 @pytest.mark.parametrize("summary", [True, False])
 def test_logging(tmp_dir, summary):
-    dvclive.init("logs", summary=summary)
+    dvclive = MetricLogger("logs", summary=summary)
 
     dvclive.log("m1", 1)
 
@@ -79,7 +77,7 @@ def test_logging(tmp_dir, summary):
 
 
 def test_nested_logging(tmp_dir):
-    dvclive.init("logs", summary=True)
+    dvclive = MetricLogger("logs", summary=True)
 
     dvclive.log("train/m1", 1)
     dvclive.log("val/val_1/m1", 1)
@@ -110,9 +108,11 @@ def test_html(tmp_dir, dvc_repo, html, signal_exists, monkeypatch):
         from dvc.repo import Repo
 
         Repo.init(no_scm=True)
+
     monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
     monkeypatch.setenv(env.DVCLIVE_HTML, str(int(html)))
 
+    dvclive = MetricLogger()
     dvclive.log("m1", 1)
     dvclive.next_step()
 
@@ -124,10 +124,10 @@ def test_html(tmp_dir, dvc_repo, html, signal_exists, monkeypatch):
     [(True, True), (True, False), (False, True), (False, False)],
 )
 def test_cleanup(tmp_dir, summary, html):
-    logger = dvclive.init("logs", summary=summary)
+    dvclive = MetricLogger("logs", summary=summary)
     dvclive.log("m1", 1)
 
-    html_path = tmp_dir / logger.html_path
+    html_path = tmp_dir / dvclive.html_path
     if html:
         html_path.parent.mkdir()
         html_path.touch()
@@ -138,7 +138,7 @@ def test_cleanup(tmp_dir, summary, html):
     assert (tmp_dir / "logs.json").is_file() == summary
     assert html_path.is_file() == html
 
-    dvclive.init("logs", summary=summary)
+    dvclive = MetricLogger("logs", summary=summary)
 
     assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
     assert not (tmp_dir / "logs" / "m1.tsv").is_file()
@@ -151,7 +151,7 @@ def test_cleanup(tmp_dir, summary, html):
     [(True, [0, 1, 2, 3], [0.9, 0.8, 0.7, 0.6]), (False, [0, 1], [0.7, 0.6])],
 )
 def test_continue(tmp_dir, resume, steps, metrics):
-    dvclive.init("logs")
+    dvclive = MetricLogger("logs")
 
     for metric in [0.9, 0.8]:
         dvclive.log("metric", metric)
@@ -160,7 +160,7 @@ def test_continue(tmp_dir, resume, steps, metrics):
     assert read_history("logs", "metric") == ([0, 1], [0.9, 0.8])
     assert read_latest("logs", "metric") == (1, 0.8)
 
-    dvclive.init("logs", resume=resume)
+    dvclive = MetricLogger("logs", resume=resume)
 
     for new_metric in [0.7, 0.6]:
         dvclive.log("metric", new_metric)
@@ -172,7 +172,7 @@ def test_continue(tmp_dir, resume, steps, metrics):
 
 @pytest.mark.parametrize("metric", ["m1", os.path.join("train", "m1")])
 def test_require_step_update(tmp_dir, metric):
-    dvclive.init("logs")
+    dvclive = MetricLogger("logs")
 
     dvclive.log(metric, 1.0)
     with pytest.raises(
@@ -183,7 +183,7 @@ def test_require_step_update(tmp_dir, metric):
 
 
 def test_custom_steps(tmp_dir, mocker):
-    dvclive.init("logs")
+    dvclive = MetricLogger("logs")
 
     steps = [0, 62, 1000]
     metrics = [0.9, 0.8, 0.7]
@@ -197,6 +197,7 @@ def test_custom_steps(tmp_dir, mocker):
 
 
 def test_log_reset_with_set_step(tmp_dir):
+    dvclive = MetricLogger()
     for i in range(3):
         dvclive.set_step(i)
         dvclive.log("train_m", 1)
@@ -218,40 +219,34 @@ def test_init_from_env(tmp_dir, summary, html, monkeypatch):
     monkeypatch.setenv(env.DVCLIVE_SUMMARY, str(int(summary)))
     monkeypatch.setenv(env.DVCLIVE_HTML, str(int(html)))
 
-    dvclive.log("m", 0.1)
-
-    assert dvclive._metric_logger._path == "logs"
-    assert dvclive._metric_logger._summary == summary
-    assert dvclive._metric_logger._html == html
+    dvclive = MetricLogger()
+    assert dvclive._path == "logs"
+    assert dvclive._summary == summary
+    assert dvclive._html == html
 
 
 @pytest.mark.parametrize("summary", [True, False])
-def test_init_overrides_env(tmp_dir, summary, monkeypatch):
+def test_not_from_env(tmp_dir, summary, monkeypatch):
     monkeypatch.setenv(env.DVCLIVE_PATH, "FOO")
     monkeypatch.setenv(env.DVCLIVE_SUMMARY, str(int(not summary)))
 
-    dvclive.init("logs", summary=summary)
+    dvclive = MetricLogger("logs", summary=summary, from_env=False)
 
-    assert dvclive._metric_logger._path == "logs"
-    assert dvclive._metric_logger._summary == summary
-
-
-def test_no_init(tmp_dir):
-    dvclive.log("m", 0.1)
-
-    assert os.path.isdir("dvclive")
+    assert dvclive._path == "logs"
+    assert dvclive._summary == summary
 
 
 def test_fail_on_conflict(tmp_dir, monkeypatch):
-    dvclive.init("some_dir")
     monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
 
     with pytest.raises(ConfigMismatchError):
-        dvclive.log("m", 0.1)
+        MetricLogger("dvclive")
 
 
 @pytest.mark.parametrize("invalid_type", [{0: 1}, [0, 1], "foo", (0, 1)])
 def test_invalid_metric_type(tmp_dir, invalid_type):
+    dvclive = MetricLogger()
+
     with pytest.raises(
         InvalidDataTypeError,
         match=f"Data 'm' has not supported type {type(invalid_type)}",
@@ -259,17 +254,8 @@ def test_invalid_metric_type(tmp_dir, invalid_type):
         dvclive.log("m", invalid_type)
 
 
-def test_initialization_error(tmp_dir):
-    with pytest.raises(InitializationError):
-        dvclive.next_step()
-
-
-def test_get_step_init(tmp_dir):
-    assert dvclive.get_step() == 0
-
-
 def test_get_step_resume(tmp_dir):
-    dvclive.init("logs")
+    dvclive = MetricLogger()
 
     for metric in [0.9, 0.8]:
         dvclive.log("metric", metric)
@@ -277,15 +263,15 @@ def test_get_step_resume(tmp_dir):
 
     assert dvclive.get_step() == 2
 
-    dvclive.init("logs", resume=True)
-
+    dvclive = MetricLogger(resume=True)
     assert dvclive.get_step() == 2
-    dvclive.init("logs", resume=False)
+
+    dvclive = MetricLogger(resume=False)
     assert dvclive.get_step() == 0
 
 
 def test_get_step_custom_steps(tmp_dir):
-    dvclive.init("logs")
+    dvclive = MetricLogger()
 
     steps = [0, 62, 1000]
     metrics = [0.9, 0.8, 0.7]
@@ -297,12 +283,12 @@ def test_get_step_custom_steps(tmp_dir):
 
 
 def test_get_step_control_flow(tmp_dir):
-    dvclive.init("logs")
+    dvclive = MetricLogger()
 
     while dvclive.get_step() < 10:
         dvclive.log("i", dvclive.get_step())
         dvclive.next_step()
 
-    steps, values = read_history("logs", "i")
+    steps, values = read_history("dvclive", "i")
     assert steps == list(range(10))
     assert values == [float(x) for x in range(10)]
