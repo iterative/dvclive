@@ -36,7 +36,7 @@ class build_py(_build_py):
         _build_py.run(self)
 
 
-mmcv = ["mmcv", "torch", "torchvision"]
+mmcv = ["mmcv"]
 tf = ["tensorflow"]
 xgb = ["xgboost"]
 lgbm = ["lightgbm"]
@@ -74,9 +74,11 @@ setup(
         "tf": tf,
         "xgb": xgb,
         "lgbm": lgbm,
+        "mmcv": mmcv,
         "huggingface": hugginface,
         "catalyst": catalyst,
         "fastai": fastai,
+        "image": image
     },
     keywords="data-science metrics machine-learning developer-tools ai",
     python_requires=">=3.6",
