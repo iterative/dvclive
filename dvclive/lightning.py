@@ -15,10 +15,7 @@ class DvcLiveLogger(LightningLoggerBase):
 
         super().__init__()
         self._prefix = prefix
-        self._dvclive_init = dict(
-            path=save_dir,
-            summary=summary,
-        )
+        self._dvclive_init = kwargs
         self._experiment = experiment
         self._version = run_name
 
