@@ -49,3 +49,7 @@ def test_step_formatting(tmp_dir, pattern):
         assert (
             tmp_dir / logger.dir / pattern.format(step=step)
         ).exists()
+
+    summary = _parse_json("dvclive.json")
+
+    assert summary[pattern] == os.path.join(logger.dir, pattern.format(step=step))
