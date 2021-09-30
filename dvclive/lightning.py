@@ -18,11 +18,6 @@ class DvcLiveLogger(LightningLoggerBase):
         experiment=None,
     ):
 
-        if dvclive is None:
-            raise ImportError(
-                "You want to use `dvclive` logger which is not installed yet,"
-                " install it with `pip install dvclive`."
-            )
 
         super().__init__()
         self._prefix = prefix
