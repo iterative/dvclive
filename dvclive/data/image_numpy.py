@@ -13,7 +13,3 @@ class ImageNumpy(ImagePIL):
 
         val = Image.fromarray(val)
         super().dump(val, step)
-
-    @property
-    def summary(self):
-        return {}
