@@ -30,6 +30,4 @@ class ImagePIL(Data):
 
     @property
     def summary(self):
-        return {
-            self.name: str(self.output_path)
-        }
+        return {self.name: str(self.output_path)}

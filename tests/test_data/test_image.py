@@ -19,6 +19,7 @@ def test_PIL(tmp_dir):
 
     assert summary["image.png"] == os.path.join(logger.dir, "image.png")
 
+
 def test_invalid_extension(tmp_dir):
     dvclive.init()
     img = Image.new("RGB", (500, 500), (250, 250, 250))
@@ -46,6 +47,4 @@ def test_step_formatting(tmp_dir, pattern):
         dvclive.next_step()
 
     for step in range(3):
-        assert (
-            tmp_dir / logger.dir / pattern.format(step=step)
-        ).exists()
+        assert (tmp_dir / logger.dir / pattern.format(step=step)).exists()
