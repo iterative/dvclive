@@ -1,5 +1,7 @@
 from dvclive.error import DvcLiveError
+
 from .image_pil import ImagePIL
+
 
 class ImageNumpy(ImagePIL):
     @staticmethod
@@ -15,7 +17,8 @@ class ImageNumpy(ImagePIL):
             raise DvcLiveError(
                 "'pillow' is required for logging images."
                 " You can install it by running"
-                " 'pip install pillow'") from e
+                " 'pip install pillow'"
+            ) from e
 
         val = Image.fromarray(val)
         super().dump(val, step)

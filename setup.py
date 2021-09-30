@@ -78,7 +78,7 @@ setup(
         "huggingface": hugginface,
         "catalyst": catalyst,
         "fastai": fastai,
-        "image": image
+        "image": image,
     },
     keywords="data-science metrics machine-learning developer-tools ai",
     python_requires=">=3.6",
