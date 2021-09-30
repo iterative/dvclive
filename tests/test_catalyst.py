@@ -10,7 +10,6 @@ from torch.utils.data import DataLoader
 
 import dvclive
 from dvclive.catalyst import DvcLiveCallback
-from dvclive.data import Scalar
 
 # pylint: disable=redefined-outer-name, unused-argument
 
@@ -67,8 +66,8 @@ def test_catalyst_callback(tmp_dir, runner, loaders):
 
     assert os.path.exists("dvc_logs")
 
-    train_path = tmp_dir / "dvc_logs" / Scalar.subdir / "train"
-    valid_path = tmp_dir / "dvc_logs" / Scalar.subdir / "valid"
+    train_path = tmp_dir / "dvc_logs" / "train"
+    valid_path = tmp_dir / "dvc_logs" / "valid"
 
     assert train_path.is_dir()
     assert valid_path.is_dir()
