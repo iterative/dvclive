@@ -4,7 +4,6 @@ from .base import Data
 
 
 class ImagePIL(Data):
-    subdir = "images"
     suffixes = [".jpg", ".jpeg", ".gif", ".png"]
 
     @staticmethod
@@ -20,7 +19,7 @@ class ImagePIL(Data):
                 f"Invalid image suffix '{Path(self.name).suffix}'"
                 f" Must be one of {self.suffixes}"
             )
-        return self.output_folder / self.subdir / self.name
+        return self.output_folder / self.name
 
     def dump(self, val, step) -> None:
         super().dump(val, step)

@@ -44,9 +44,8 @@ class MetricLogger:
     def _cleanup(self):
 
         for data_type in DATA_TYPES:
-            subdir = Path(self.dir) / data_type.subdir
             for suffix in data_type.suffixes:
-                for data_file in subdir.rglob(f"*{suffix}"):
+                for data_file in Path(self.dir).rglob(f"*{suffix}"):
                     data_file.unlink()
 
         if os.path.exists(self.summary_path):
@@ -57,11 +56,6 @@ class MetricLogger:
 
     def _init_paths(self):
         os.makedirs(self.dir, exist_ok=True)
-        for data_type in DATA_TYPES:
-            os.makedirs(
-                os.path.join(self.dir, data_type.subdir), exist_ok=True
-            )
-
         if self._summary:
             self.make_summary()
         if self._html:
@@ -107,7 +101,7 @@ class MetricLogger:
 
     @property
     def html_path(self):
-        return os.path.join(self.dir, "html")
+        return str(self.dir) + "_dvc_plots/index.html"
 
     def get_step(self) -> int:
         return self._step

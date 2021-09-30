@@ -10,7 +10,6 @@ import dvclive
 from dvclive import env
 
 # pylint: disable=unused-argument
-from dvclive.data import DATA_TYPES, Scalar
 from dvclive.dvc import SIGNAL_FILE
 from dvclive.error import (
     ConfigMismatchError,
@@ -24,13 +23,11 @@ def read_logs(path: str):
     path = Path(path)
     assert path.is_dir()
     history = {}
-    for metric_file in (path / Scalar.subdir).rglob("*.tsv"):
-        metric_name = str(metric_file).replace(
-            str(path / Scalar.subdir) + os.path.sep, ""
-        )
+    for metric_file in path.rglob("*.tsv"):
+        metric_name = str(metric_file).replace(str(path) + os.path.sep, "")
         metric_name = metric_name.replace(".tsv", "")
         history[metric_name] = _parse_tsv(metric_file)
-    latest = _parse_json(os.path.join(path, "summary.json"))
+    latest = _parse_json(str(path) + ".json")
     return history, latest
 
 
@@ -65,8 +62,6 @@ def test_init_paths(tmp_dir, path):
     dvclive.init(path)
 
     assert (tmp_dir / path).is_dir()
-    for data_type in DATA_TYPES:
-        assert (tmp_dir / path / data_type.subdir).is_dir()
 
 
 @pytest.mark.parametrize("summary", [True, False])
@@ -75,7 +70,7 @@ def test_logging(tmp_dir, summary):
 
     dvclive.log("m1", 1)
 
-    assert (tmp_dir / "logs" / Scalar.subdir / "m1.tsv").is_file()
+    assert (tmp_dir / "logs" / "m1.tsv").is_file()
     assert (tmp_dir / logger.summary_path).is_file() == summary
 
     if summary:
@@ -89,11 +84,9 @@ def test_nested_logging(tmp_dir):
     dvclive.log("train/m1", 1)
     dvclive.log("val/val_1/m1", 1)
 
-    assert (tmp_dir / "logs" / Scalar.subdir / "val" / "val_1").is_dir()
-    assert (tmp_dir / "logs" / Scalar.subdir / "train" / "m1.tsv").is_file()
-    assert (
-        tmp_dir / "logs" / Scalar.subdir / "val" / "val_1" / "m1.tsv"
-    ).is_file()
+    assert (tmp_dir / "logs" / "val" / "val_1").is_dir()
+    assert (tmp_dir / "logs" / "train" / "m1.tsv").is_file()
+    assert (tmp_dir / "logs" / "val" / "val_1" / "m1.tsv").is_file()
 
     _, summary = read_logs("logs")
 
@@ -138,14 +131,14 @@ def test_cleanup(tmp_dir, summary, html):
 
     (tmp_dir / "logs" / "some_user_file.txt").touch()
 
-    assert (tmp_dir / "logs" / Scalar.subdir / "m1.tsv").is_file()
+    assert (tmp_dir / "logs" / "m1.tsv").is_file()
     assert (tmp_dir / logger.summary_path).is_file() == summary
     assert html_path.is_file() == html
 
     dvclive.init("logs", summary=summary)
 
     assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
-    assert not (tmp_dir / "logs" / Scalar.subdir / "m1.tsv").is_file()
+    assert not (tmp_dir / "logs" / "m1.tsv").is_file()
     assert (tmp_dir / logger.summary_path).is_file() == summary
     assert not (html_path).is_file()
 

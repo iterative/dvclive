@@ -10,7 +10,6 @@ from .base import Data
 
 
 class Scalar(Data):
-    subdir = "scalars"
     suffixes = [".csv", ".tsv"]
 
     @staticmethod
@@ -21,7 +20,7 @@ class Scalar(Data):
 
     @property
     def output_path(self) -> Path:
-        _path = self.output_folder / self.subdir / self.name
+        _path = self.output_folder / self.name
         _path.parent.mkdir(exist_ok=True, parents=True)
         return _path.with_suffix(".tsv")
 
