@@ -12,10 +12,9 @@ class DvcLiveLogger(LightningLoggerBase):
     def __init__(
         self,
         run_name: Union[str, int],
-        save_dir: Optional[str] = None,
-        summary: Optional[bool] = True,
         prefix="",
         experiment=None,
+        **kwargs
     ):
 
         super().__init__()
