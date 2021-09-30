@@ -19,6 +19,7 @@ def test_PIL(tmp_dir):
 
     assert summary["image.png"] == os.path.join(logger.dir, "image.png")
 
+
 def test_invalid_extension(tmp_dir):
     dvclive.init()
     img = Image.new("RGB", (500, 500), (250, 250, 250))
