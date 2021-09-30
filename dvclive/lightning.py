@@ -10,11 +10,7 @@ import dvclive
 
 class DvcLiveLogger(LightningLoggerBase):
     def __init__(
-        self,
-        run_name: Union[str, int],
-        prefix="",
-        experiment=None,
-        **kwargs
+        self, run_name: Union[str, int], prefix="", experiment=None, **kwargs
     ):
 
         super().__init__()
