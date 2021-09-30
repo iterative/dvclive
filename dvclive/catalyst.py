@@ -1,12 +1,12 @@
 from catalyst.core.callback import Callback, CallbackOrder
 
-from dvclive import MetricLogger
+from dvclive import DVCLive
 
 
 class DvcLiveCallback(Callback):
     def __init__(self, model_file=None, **kwargs):
         super().__init__(order=CallbackOrder.external)
-        self.dvclive = MetricLogger(**kwargs)
+        self.dvclive = DVCLive(**kwargs)
         self.model_file = model_file
 
     def on_epoch_end(self, runner) -> None:

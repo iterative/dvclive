@@ -2,7 +2,7 @@ from tensorflow.keras.callbacks import (  # pylint: disable=no-name-in-module
     Callback,
 )
 
-from dvclive import MetricLogger
+from dvclive import DVCLive
 
 
 class DvcLiveCallback(Callback):
@@ -12,7 +12,7 @@ class DvcLiveCallback(Callback):
         super().__init__()
         self.model_file = model_file
         self.save_weights_only = save_weights_only
-        self.dvclive = MetricLogger(**kwargs)
+        self.dvclive = DVCLive(**kwargs)
 
     def on_epoch_end(self, epoch: int, logs: dict = None):
         logs = logs or {}

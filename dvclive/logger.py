@@ -12,7 +12,7 @@ from .error import ConfigMismatchError, InvalidDataTypeError
 logger = logging.getLogger(__name__)
 
 
-class MetricLogger:
+class DVCLive:
     DEFAULT_DIR = "dvclive"
 
     def __init__(

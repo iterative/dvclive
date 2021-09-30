@@ -1,13 +1,13 @@
 from fastai.callback.core import Callback
 
-from dvclive import MetricLogger
+from dvclive import DVCLive
 
 
 class DvcLiveCallback(Callback):
     def __init__(self, model_file=None, **kwargs):
         super().__init__()
         self.model_file = model_file
-        self.dvclive = MetricLogger(**kwargs)
+        self.dvclive = DVCLive(**kwargs)
 
     def after_epoch(self):
         for key, value in zip(
