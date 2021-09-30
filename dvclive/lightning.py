@@ -18,7 +18,6 @@ class DvcLiveLogger(LightningLoggerBase):
         experiment=None,
     ):
 
-
         super().__init__()
         self._prefix = prefix
         self._dvclive_init = dict(
