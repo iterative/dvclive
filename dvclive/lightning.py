@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
 from pytorch_lightning.loggers import LightningLoggerBase
 from pytorch_lightning.loggers.base import rank_zero_experiment
@@ -10,7 +10,11 @@ import dvclive
 
 class DvcLiveLogger(LightningLoggerBase):
     def __init__(
-        self, run_name: Union[str, int], prefix="", experiment=None, **kwargs
+        self,
+        run_name: Optional[str] = "dvclive_run",
+        prefix="",
+        experiment=None,
+        **kwargs
     ):
 
         super().__init__()

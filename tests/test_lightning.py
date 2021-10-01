@@ -74,7 +74,7 @@ def test_lightning_integration():
     # init model
     model = LitMNIST()
     # init logger
-    dvclive_logger = DvcLiveLogger("test_run", save_dir="logs")
+    dvclive_logger = DvcLiveLogger("test_run", path="logs")
     print(dvclive_logger.version)
     trainer = Trainer(
         logger=dvclive_logger, max_epochs=1, checkpoint_callback=False
