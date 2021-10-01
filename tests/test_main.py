@@ -225,17 +225,6 @@ def test_init_from_env(tmp_dir, summary, html, monkeypatch):
     assert dvclive._html == html
 
 
-@pytest.mark.parametrize("summary", [True, False])
-def test_not_from_env(tmp_dir, summary, monkeypatch):
-    monkeypatch.setenv(env.DVCLIVE_PATH, "FOO")
-    monkeypatch.setenv(env.DVCLIVE_SUMMARY, str(int(not summary)))
-
-    dvclive = DVCLive("logs", summary=summary, from_env=False)
-
-    assert dvclive._path == "logs"
-    assert dvclive._summary == summary
-
-
 def test_fail_on_conflict(tmp_dir, monkeypatch):
     monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
 

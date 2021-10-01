@@ -20,19 +20,15 @@ class DVCLive:
         path: Optional[str] = None,
         resume: bool = False,
         summary: bool = True,
-        html: bool = True,
-        checkpoint: bool = False,
-        from_env: bool = True,
     ):
 
         self._path: Optional[str] = path
         self._resume: bool = resume
         self._summary: bool = summary
-        self._html: bool = html
-        self._checkpoint: bool = checkpoint
+        self._html: bool = True
+        self._checkpoint: bool = False
 
-        if from_env:
-            self.init_from_env()
+        self.init_from_env()
 
         if self._path is None:
             self._path = self.DEFAULT_DIR
