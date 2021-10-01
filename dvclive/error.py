@@ -2,7 +2,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .metrics import DVCLive
+    from .logger import DVCLive
 
 
 class DvcLiveError(Exception):
