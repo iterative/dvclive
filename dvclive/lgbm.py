@@ -1,11 +1,11 @@
-from dvclive import MetricLogger
+from dvclive import Live
 
 
 class DvcLiveCallback:
     def __init__(self, model_file=None, **kwargs):
         super().__init__()
         self.model_file = model_file
-        self.dvclive = MetricLogger(**kwargs)
+        self.dvclive = Live(**kwargs)
 
     def __call__(self, env):
         for eval_result in env.evaluation_result_list:

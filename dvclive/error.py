@@ -2,7 +2,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .logger import MetricLogger
+    from .logger import Live
 
 
 class DvcLiveError(Exception):
@@ -10,7 +10,7 @@ class DvcLiveError(Exception):
 
 
 class ConfigMismatchError(DvcLiveError):
-    def __init__(self, ml: "MetricLogger"):
+    def __init__(self, ml: "Live"):
         from . import env
 
         super().__init__(
