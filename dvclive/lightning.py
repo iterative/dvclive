@@ -1,5 +1,4 @@
 from typing import Dict, Optional
-from dvclive.logger import MetricLogger
 
 from pytorch_lightning.loggers import LightningLoggerBase
 from pytorch_lightning.loggers.base import rank_zero_experiment
@@ -7,6 +6,7 @@ from pytorch_lightning.utilities import rank_zero_only
 from torch import is_tensor
 
 from dvclive import MetricLogger
+from dvclive.logger import MetricLogger
 
 
 class DvcLiveLogger(LightningLoggerBase):
