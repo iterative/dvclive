@@ -43,8 +43,9 @@ lgbm = ["lightgbm"]
 hugginface = ["transformers", "datasets"]
 catalyst = ["catalyst"]
 fastai = ["fastai"]
+pl = ["pytorch_lightning"]
 
-all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai
+all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai + pl
 
 tests_requires = [
     "pylint==2.5.3",
@@ -76,6 +77,7 @@ setup(
         "huggingface": hugginface,
         "catalyst": catalyst,
         "fastai": fastai,
+        "pytorch_lightning": pl,
     },
     keywords="data-science metrics machine-learning developer-tools ai",
     python_requires=">=3.6",
