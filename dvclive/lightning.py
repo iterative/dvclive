@@ -6,7 +6,6 @@ from pytorch_lightning.utilities import rank_zero_only
 from torch import is_tensor
 
 from dvclive import MetricLogger
-from dvclive.logger import MetricLogger
 
 
 class DvcLiveLogger(LightningLoggerBase):
