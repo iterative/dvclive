@@ -5,14 +5,14 @@ from transformers import (
     TrainingArguments,
 )
 
-from dvclive import DVCLive
+from dvclive import MetricLogger
 
 
 class DvcLiveCallback(TrainerCallback):
     def __init__(self, model_file=None, **kwargs):
         super().__init__()
         self.model_file = model_file
-        self.dvclive = DVCLive(**kwargs)
+        self.dvclive = MetricLogger(**kwargs)
 
     def on_log(
         self,

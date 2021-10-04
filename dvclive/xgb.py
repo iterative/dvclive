@@ -1,6 +1,6 @@
 from xgboost.callback import TrainingCallback
 
-from dvclive import DVCLive
+from dvclive import MetricLogger
 
 
 class DvcLiveCallback(TrainingCallback):
@@ -8,7 +8,7 @@ class DvcLiveCallback(TrainingCallback):
         super().__init__()
         self._metric_data = metric_data
         self.model_file = model_file
-        self.dvclive = DVCLive(**kwargs)
+        self.dvclive = MetricLogger(**kwargs)
 
     def after_iteration(self, model, epoch, evals_log):
         for key, values in evals_log[self._metric_data].items():
