@@ -47,7 +47,7 @@ pl = ["pytorch_lightning"]
 image = ["pillow"]
 
 all_libs = (
-    mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai + +pl + image
+    mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai + pl + image
 )
 
 tests_requires = [
