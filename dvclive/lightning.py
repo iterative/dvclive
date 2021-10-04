@@ -1,11 +1,12 @@
 from typing import Dict, Optional
+from dvclive.logger import MetricLogger
 
 from pytorch_lightning.loggers import LightningLoggerBase
 from pytorch_lightning.loggers.base import rank_zero_experiment
 from pytorch_lightning.utilities import rank_zero_only
 from torch import is_tensor
 
-import dvclive
+from dvclive import MetricLogger
 
 
 class DvcLiveLogger(LightningLoggerBase):
@@ -46,7 +47,7 @@ class DvcLiveLogger(LightningLoggerBase):
             assert (
                 rank_zero_only.rank == 0
             ), "tried to init log dirs in non global_rank=0"
-            self._experiment = dvclive.init(**self._dvclive_init)
+            self._experiment = MetricLogger(**self._dvclive_init)
 
         return self._experiment
 
