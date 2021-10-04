@@ -46,9 +46,7 @@ fastai = ["fastai"]
 pl = ["pytorch_lightning"]
 image = ["pillow"]
 
-all_libs = (
-    mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai + pl + image
-)
+all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai + pl + image
 
 tests_requires = [
     "pylint==2.5.3",
