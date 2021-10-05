@@ -8,7 +8,6 @@ from funcy import first
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
-import dvclive
 from dvclive.lgbm import DvcLiveCallback
 from tests.test_main import read_logs
 
@@ -32,7 +31,6 @@ def iris_data():
 
 
 def test_lgbm_integration(tmp_dir, model_params, iris_data):
-    dvclive.init("logs")
     model = lgbm.LGBMClassifier()
     model.set_params(**model_params)
 
@@ -44,15 +42,14 @@ def test_lgbm_integration(tmp_dir, model_params, iris_data):
         callbacks=[DvcLiveCallback()],
     )
 
-    assert os.path.exists("logs")
+    assert os.path.exists("dvclive")
 
-    logs, _ = read_logs("logs")
+    logs, _ = read_logs("dvclive")
     assert len(logs) == 1
     assert len(first(logs.values())) == 5
 
 
 def test_lgbm_model_file(tmp_dir, model_params, iris_data):
-    dvclive.init("logs")
     model = lgbm.LGBMClassifier()
     model.set_params(**model_params)
 

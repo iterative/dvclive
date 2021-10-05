@@ -2,7 +2,6 @@ import os
 
 import pytest
 
-import dvclive
 from dvclive.keras import DvcLiveCallback
 from tests.test_main import read_logs
 
@@ -37,7 +36,6 @@ def xor_model():
 def test_keras_callback(tmp_dir, xor_model, capture_wrap):
     model, x, y = xor_model()
 
-    dvclive.init("logs")
     model.fit(
         x,
         y,
@@ -46,8 +44,8 @@ def test_keras_callback(tmp_dir, xor_model, capture_wrap):
         callbacks=[DvcLiveCallback()],
     )
 
-    assert os.path.exists("logs")
-    logs, _ = read_logs("logs")
+    assert os.path.exists("dvclive")
+    logs, _ = read_logs("dvclive")
 
     assert "accuracy" in logs
 
@@ -60,7 +58,6 @@ def test_keras_model_file(
     save = mocker.spy(model, "save")
     save_weights = mocker.spy(model, "save_weights")
 
-    dvclive.init("logs")
     model.fit(
         x,
         y,

@@ -70,7 +70,7 @@ class LitMNIST(LightningModule):
         return Adam(self.parameters(), lr=1e-3)
 
 
-def test_lightning_integration():
+def test_lightning_integration(tmp_dir):
     # init model
     model = LitMNIST()
     # init logger
