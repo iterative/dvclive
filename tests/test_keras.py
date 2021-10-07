@@ -96,8 +96,9 @@ def test_keras_load_model_on_resume(
         batch_size=1,
         callbacks=[
             DvcLiveCallback(
-                model_file="model.h5", save_weights_only=save_weights_only,
-                resume=True
+                model_file="model.h5",
+                save_weights_only=save_weights_only,
+                resume=True,
             )
         ],
     )

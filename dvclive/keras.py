@@ -3,7 +3,9 @@ import os
 from tensorflow.keras.callbacks import (  # pylint: disable=no-name-in-module
     Callback,
 )
-from tensorflow.keras.models import load_model  # pylint: disable=no-name-in-module
+from tensorflow.keras.models import (  # pylint: disable=no-name-in-module
+    load_model,
+)
 
 from dvclive import Live
 
@@ -19,8 +21,8 @@ class DvcLiveCallback(Callback):
 
     def on_train_begin(self, logs=None):
         if (
-            self.dvclive._resume and
-            self.model_file is not None
+            self.dvclive._resume
+            and self.model_file is not None
             and os.path.exists(self.model_file)
         ):
             if self.save_weights_only:
