@@ -107,9 +107,7 @@ def test_keras_load_model_on_resume(
     assert load_weights.call_count == save_weights_only
 
 
-def test_keras_no_resume_skip_load(
-    tmp_dir, xor_model, mocker, capture_wrap
-):
+def test_keras_no_resume_skip_load(tmp_dir, xor_model, mocker, capture_wrap):
     model, x, y = xor_model()
 
     model.save_weights("model.h5")
@@ -180,4 +178,3 @@ def test_keras_None_model_file_skip_load(
     )
 
     assert load_weights.call_count == 0
-
