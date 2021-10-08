@@ -105,3 +105,79 @@ def test_keras_load_model_on_resume(
 
     assert load_model.call_count != save_weights_only
     assert load_weights.call_count == save_weights_only
+
+
+def test_keras_no_resume_skip_load(
+    tmp_dir, xor_model, mocker, capture_wrap
+):
+    model, x, y = xor_model()
+
+    model.save_weights("model.h5")
+
+    load_weights = mocker.spy(model, "load_weights")
+
+    model.fit(
+        x,
+        y,
+        epochs=1,
+        batch_size=1,
+        callbacks=[
+            DvcLiveCallback(
+                model_file="model.h5",
+                save_weights_only=True,
+                resume=False,
+            )
+        ],
+    )
+
+    assert load_weights.call_count == 0
+
+
+def test_keras_no_existing_model_file_skip_load(
+    tmp_dir, xor_model, mocker, capture_wrap
+):
+    model, x, y = xor_model()
+
+    load_weights = mocker.spy(model, "load_weights")
+
+    model.fit(
+        x,
+        y,
+        epochs=1,
+        batch_size=1,
+        callbacks=[
+            DvcLiveCallback(
+                model_file="model.h5",
+                save_weights_only=True,
+                resume=True,
+            )
+        ],
+    )
+
+    assert load_weights.call_count == 0
+
+
+def test_keras_None_model_file_skip_load(
+    tmp_dir, xor_model, mocker, capture_wrap
+):
+    model, x, y = xor_model()
+
+    model.save_weights("model.h5")
+
+    load_weights = mocker.spy(model, "load_weights")
+
+    model.fit(
+        x,
+        y,
+        epochs=1,
+        batch_size=1,
+        callbacks=[
+            DvcLiveCallback(
+                save_weights_only=True,
+                resume=True,
+            )
+        ],
+    )
+
+    assert load_weights.call_count == 0
+
