@@ -27,21 +27,32 @@ However, `DVC <https://dvc.org>`_ is *not required* to work with dvclive logs/su
 Quick Start
 ===========
 
-Please read the `Usage guide <https://dvc.org/doc/dvclive/user-guide>`_ for a detailed version.
+Please read the `Get Started <https://dvc.org/doc/dvclive/get-started>`_ for a detailed version.
 
 **DVCLive** is a Python library. The interface consists of three main steps:
 
 1. Initialize DVCLive
 
-`dvclive.init() <https://dvc.org/doc/dvclive/api-reference/init>`_
+.. code-block:: python
+
+  from dvclive import Live
+
+  live = Live()
+
 
 2. Log metrics
 
-`dvclive.log() <https://dvc.org/doc/dvclive/api-reference/log>`_ 
+
+.. code-block:: python
+
+  live.log("metric", 1)
 
 3. Increase the step number
 
-`dvclive.next_step() <https://dvc.org/doc/dvclive/api-reference/next_step>`_
+.. code-block:: python
+
+  live.next_step()
+ 
 
 If you are ussing a ML training framework, check the existing `ML Frameworks <https://dvc.org/doc/dvclive/user-guide/ml-frameworks>`_ page.
 
