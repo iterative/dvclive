@@ -69,7 +69,7 @@ def test_logging(tmp_dir, summary):
     dvclive.log("m1", 1)
 
     assert (tmp_dir / "logs" / "m1.tsv").is_file()
-    assert (tmp_dir / logger.summary_path).is_file() == summary
+    assert (tmp_dir / dvclive.summary_path).is_file() == summary
 
     if summary:
         _, s = read_logs("logs")
@@ -132,14 +132,14 @@ def test_cleanup(tmp_dir, summary, html):
     (tmp_dir / "logs" / "some_user_file.txt").touch()
 
     assert (tmp_dir / "logs" / "m1.tsv").is_file()
-    assert (tmp_dir / logger.summary_path).is_file() == summary
+    assert (tmp_dir / dvclive.summary_path).is_file() == summary
     assert html_path.is_file() == html
 
     dvclive = Live("logs", summary=summary)
 
     assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
     assert not (tmp_dir / "logs" / "m1.tsv").is_file()
-    assert (tmp_dir / logger.summary_path).is_file() == summary
+    assert (tmp_dir / dvclive.summary_path).is_file() == summary
     assert not (html_path).is_file()
 
 
