@@ -12,7 +12,6 @@ from fastai.tabular.all import (
     untar_data,
 )
 
-import dvclive
 from dvclive.fastai import DvcLiveCallback
 
 # pylint: disable=redefined-outer-name, unused-argument
@@ -41,25 +40,21 @@ def data_loader():
 
 
 def test_fastai_callback(tmp_dir, data_loader):
-    dvclive.init("dvc_logs")
-
     learn = tabular_learner(data_loader, metrics=accuracy)
     learn.model_dir = os.path.abspath("./")
     learn.fit_one_cycle(2, cbs=[DvcLiveCallback("model")])
 
-    assert os.path.exists("dvc_logs")
+    assert os.path.exists("dvclive")
 
-    train_path = tmp_dir / "dvc_logs" / "train"
-    valid_path = tmp_dir / "dvc_logs" / "valid"
+    train_path = tmp_dir / "dvclive/train"
+    valid_path = tmp_dir / "dvclive/valid"
 
     assert train_path.is_dir()
     assert valid_path.is_dir()
-    assert (tmp_dir / "dvc_logs" / "accuracy.tsv").exists()
+    assert (tmp_dir / "dvclive/accuracy.tsv").exists()
 
 
 def test_fastai_model_file(tmp_dir, data_loader):
-    dvclive.init("dvc_logs")
-
     learn = tabular_learner(data_loader, metrics=accuracy)
     learn.model_dir = os.path.abspath("./")
     learn.fit_one_cycle(2, cbs=[DvcLiveCallback("model")])

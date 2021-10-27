@@ -27,13 +27,32 @@ However, `DVC <https://dvc.org>`_ is *not required* to work with dvclive logs/su
 Quick Start
 ===========
 
-Please read the `Usage guide <https://dvc.org/doc/dvclive/user-guide>`_ for a detailed version.
+Please read the `Get Started <https://dvc.org/doc/dvclive/get-started>`_ for a detailed version.
 
-**DVCLive** is a Python library. The interface consists of three main methods:
+**DVCLive** is a Python library. The interface consists of three main steps:
 
-1. `dvclive.init() <https://dvc.org/doc/dvclive/api-reference/init>`_
-2. `dvclive.log() <https://dvc.org/doc/dvclive/api-reference/log>`_ 
-3. `dvclive.next_step() <https://dvc.org/doc/dvclive/api-reference/next_step>`_
+1. Initialize DVCLive
+
+.. code-block:: python
+
+  from dvclive import Live
+
+  live = Live()
+
+
+2. Log metrics
+
+
+.. code-block:: python
+
+  live.log("metric", 1)
+
+3. Increase the step number
+
+.. code-block:: python
+
+  live.next_step()
+ 
 
 If you are ussing a ML training framework, check the existing `ML Frameworks <https://dvc.org/doc/dvclive/user-guide/ml-frameworks>`_ page.
 
@@ -85,6 +104,7 @@ Today only Python is supported (while DVC is language agnostic), along with the 
 - `LightGBM <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/lightgbm>`_
 - `MMCV <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/mmcv>`_
 - `PyTorch <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/pytorch>`_
+- `PyTorch Lightning <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/pytorch-lightning>`_
 - `Tensorflow <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/tensorflow>`_
 - `XGBoost <https://dvc.org/doc/dvclive/user-guide/ml-frameworks/xgboost>`_ 
 

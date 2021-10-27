@@ -8,20 +8,16 @@ from catalyst.utils.torch import get_available_engine
 from torch import nn, optim
 from torch.utils.data import DataLoader
 
-import dvclive
 from dvclive.catalyst import DvcLiveCallback
 
 # pylint: disable=redefined-outer-name, unused-argument
 
 
-@pytest.fixture
-def loaders():
-    train_data = MNIST(
-        os.getcwd(), train=True, download=True, transform=ToTensor()
-    )
-    valid_data = MNIST(
-        os.getcwd(), train=False, download=True, transform=ToTensor()
-    )
+@pytest.fixture(scope="session")
+def loaders(tmp_path_factory):
+    path = tmp_path_factory.mktemp("catalyst_mnist")
+    train_data = MNIST(path, train=True, download=True, transform=ToTensor())
+    valid_data = MNIST(path, train=False, download=True, transform=ToTensor())
     return {
         "train": DataLoader(train_data, batch_size=32),
         "valid": DataLoader(valid_data, batch_size=32),
@@ -40,8 +36,6 @@ def runner():
 
 
 def test_catalyst_callback(tmp_dir, runner, loaders):
-    dvclive.init("dvc_logs")
-
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.02)
@@ -64,10 +58,10 @@ def test_catalyst_callback(tmp_dir, runner, loaders):
         load_best_on_end=True,
     )
 
-    assert os.path.exists("dvc_logs")
+    assert os.path.exists("dvclive")
 
-    train_path = tmp_dir / "dvc_logs" / "train"
-    valid_path = tmp_dir / "dvc_logs" / "valid"
+    train_path = tmp_dir / "dvclive/train"
+    valid_path = tmp_dir / "dvclive/valid"
 
     assert train_path.is_dir()
     assert valid_path.is_dir()
@@ -75,8 +69,6 @@ def test_catalyst_callback(tmp_dir, runner, loaders):
 
 
 def test_catalyst_model_file(tmp_dir, runner, loaders):
-    dvclive.init("dvc_logs")
-
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.02)

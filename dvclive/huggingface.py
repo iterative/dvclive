@@ -5,13 +5,14 @@ from transformers import (
     TrainingArguments,
 )
 
-import dvclive
+from dvclive import Live
 
 
 class DvcLiveCallback(TrainerCallback):
-    def __init__(self, model_file=None):
+    def __init__(self, model_file=None, **kwargs):
         super().__init__()
         self.model_file = model_file
+        self.dvclive = Live(**kwargs)
 
     def on_log(
         self,
@@ -22,9 +23,9 @@ class DvcLiveCallback(TrainerCallback):
     ):
         logs = kwargs["logs"]
         for key, value in logs.items():
-            dvclive.log(key, value)
+            self.dvclive.log(key, value)
 
             if self.model_file:
                 model = kwargs["model"]
                 model.save_pretrained(self.model_file)
-        dvclive.next_step()
+        self.dvclive.next_step()

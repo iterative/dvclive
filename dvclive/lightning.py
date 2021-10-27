@@ -5,7 +5,7 @@ from pytorch_lightning.loggers.base import rank_zero_experiment
 from pytorch_lightning.utilities import rank_zero_only
 from torch import is_tensor
 
-import dvclive
+from dvclive import Live
 
 
 class DvcLiveLogger(LightningLoggerBase):
@@ -14,12 +14,18 @@ class DvcLiveLogger(LightningLoggerBase):
         run_name: Optional[str] = "dvclive_run",
         prefix="",
         experiment=None,
-        **kwargs
+        path: Optional[str] = None,
+        resume: bool = False,
+        summary: bool = True,
     ):
 
         super().__init__()
         self._prefix = prefix
-        self._dvclive_init = kwargs
+        self._dvclive_init = {
+            "path": path,
+            "resume": resume,
+            "summary": summary,
+        }
         self._experiment = experiment
         self._version = run_name
 
@@ -46,7 +52,7 @@ class DvcLiveLogger(LightningLoggerBase):
             assert (
                 rank_zero_only.rank == 0
             ), "tried to init log dirs in non global_rank=0"
-            self._experiment = dvclive.init(**self._dvclive_init)
+            self._experiment = Live(**self._dvclive_init)
 
         return self._experiment
 

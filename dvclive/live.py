@@ -4,36 +4,40 @@ import os
 import shutil
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from .data import DATA_TYPES
 from .dvc import make_checkpoint, make_html
-from .error import InvalidDataTypeError
+from .error import ConfigMismatchError, InvalidDataTypeError
 
 logger = logging.getLogger(__name__)
 
 
-class MetricLogger:
+class Live:
     DEFAULT_DIR = "dvclive"
 
     def __init__(
         self,
-        path: str = "dvclive",
+        path: Optional[str] = None,
         resume: bool = False,
-        summary=True,
-        html=True,
-        checkpoint=False,
+        summary: bool = True,
     ):
-        self._path: str = path
+
+        self._path: Optional[str] = path
+        self._resume: bool = resume
+        self._summary: bool = summary
+        self._html: bool = True
+        self._checkpoint: bool = False
+
+        self.init_from_env()
+
+        if self._path is None:
+            self._path = self.DEFAULT_DIR
+
         self._step: int = 0
         self._data: Dict[str, Any] = OrderedDict()
 
-        self._summary: bool = summary
-
-        self._html: bool = html
-        self._checkpoint: bool = checkpoint
-
-        if resume and self.exists:
+        if self._resume and self.exists:
             self._step = self.read_step()
             if self._step != 0:
                 self._step += 1
@@ -61,31 +65,31 @@ class MetricLogger:
         if self._html:
             os.makedirs(self.html_path, exist_ok=True)
 
-    @staticmethod
-    def from_env():
+    def init_from_env(self) -> None:
         from . import env
 
         if env.DVCLIVE_PATH in os.environ:
-            directory = os.environ[env.DVCLIVE_PATH]
+
+            if self.dir and self.dir != os.environ[env.DVCLIVE_PATH]:
+                raise ConfigMismatchError(self)
+
             env_config = {
-                "summary": bool(int(os.environ.get(env.DVCLIVE_SUMMARY, "0"))),
-                "html": bool(int(os.environ.get(env.DVCLIVE_HTML, "0"))),
-                "checkpoint": bool(
+                "_path": os.environ.get(env.DVCLIVE_PATH),
+                "_summary": bool(
+                    int(os.environ.get(env.DVCLIVE_SUMMARY, "0"))
+                ),
+                "_html": bool(int(os.environ.get(env.DVCLIVE_HTML, "0"))),
+                "_checkpoint": bool(
                     int(os.environ.get(env.DVC_CHECKPOINT, "0"))
                 ),
-                "resume": bool(int(os.environ.get(env.DVCLIVE_RESUME, "0"))),
+                "_resume": bool(int(os.environ.get(env.DVCLIVE_RESUME, "0"))),
             }
-            return MetricLogger(directory, **env_config)
-        return None
-
-    def matches_env_setup(self):
-        from . import env
-
-        if env.DVCLIVE_PATH in os.environ:
-            env_dir = os.environ[env.DVCLIVE_PATH]
-            return self.dir == env_dir
-
-        return True
+            for k, v in env_config.items():
+                if getattr(self, k) != v:
+                    logger.info(
+                        f"Overriding {k} with value provided by DVC: {v}"
+                    )
+                    setattr(self, k, v)
 
     @property
     def dir(self):

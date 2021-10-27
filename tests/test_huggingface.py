@@ -10,7 +10,6 @@ from transformers import (
     TrainingArguments,
 )
 
-import dvclive
 from dvclive.huggingface import DvcLiveCallback
 from tests.test_main import read_logs
 
@@ -66,8 +65,6 @@ def args():
 
 
 def test_huggingface_integration(tmp_dir, model, args, data, tokenizer):
-    dvclive.init("logs")
-
     trainer = Trainer(
         model,
         args,
@@ -79,9 +76,9 @@ def test_huggingface_integration(tmp_dir, model, args, data, tokenizer):
     trainer.add_callback(DvcLiveCallback())
     trainer.train()
 
-    assert os.path.exists("logs")
+    assert os.path.exists("dvclive")
 
-    logs, _ = read_logs("logs")
+    logs, _ = read_logs("dvclive")
 
     assert len(logs) == 10
     assert "eval_matthews_correlation" in logs
@@ -91,7 +88,6 @@ def test_huggingface_integration(tmp_dir, model, args, data, tokenizer):
 
 
 def test_huggingface_model_file(tmp_dir, model, args, data, tokenizer):
-    dvclive.init("logs")
     model_path = tmp_dir / "model_hf"
 
     trainer = Trainer(
