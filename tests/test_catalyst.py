@@ -65,7 +65,8 @@ def test_catalyst_callback(tmp_dir, runner, loaders):
 
     assert train_path.is_dir()
     assert valid_path.is_dir()
-    assert (train_path / "accuracy.tsv").exists()
+    assert any("accuracy" in x.name for x in train_path.iterdir())
+    assert any("accuracy" in x.name for x in valid_path.iterdir())
 
 
 def test_catalyst_model_file(tmp_dir, runner, loaders):
