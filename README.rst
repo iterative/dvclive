@@ -13,7 +13,7 @@ DVCLive
 2. **Distributed**. No services or servers are required. Metrics are stored in a Git repository as text files, or pointers to files in `DVC <https://dvc.org>`_ storage.
 3. **GitOps API**. Plots are generated through `DVC <https://dvc.org>`_ using Git commit SHAs or branch names, e.g.: :code:`dvc plots diff --target logs master`.
 
-.. image:: https://dvc.org/static/cdc4ec4dabed1d7de6b8606667ebfc83/9da93/dvclive-diff-html.png
+.. image:: https://raw.githubusercontent.com/iterative/dvc.org/master/static/uploads/images/2021-02-18/dvclive-diff-html.png
 
 4. **Automation**. DVCLive metrics are easy to use by any automation, DevOps, or MLOps tool such as CI/CD (including `CML <https://cml.dev>`_), custom scripts, or ML platforms.
 
