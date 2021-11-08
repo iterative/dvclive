@@ -19,7 +19,7 @@ class ImagePIL(Data):
                 f"Invalid image suffix '{Path(self.name).suffix}'"
                 f" Must be one of {self.suffixes}"
             )
-        return self.output_folder / self.name
+        return self.output_folder / "{step}" / self.name
 
     def dump(self, val, step) -> None:
         super().dump(val, step)

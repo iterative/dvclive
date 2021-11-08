@@ -14,10 +14,10 @@ def test_PIL(tmp_dir):
     img = Image.new("RGB", (500, 500), (250, 250, 250))
     dvclive.log("image.png", img)
 
-    assert (tmp_dir / dvclive.dir / "image.png").exists()
+    assert (tmp_dir / dvclive.dir / "0" / "image.png").exists()
     summary = _parse_json("dvclive.json")
 
-    assert summary["image.png"] == os.path.join(dvclive.dir, "image.png")
+    assert summary["image.png"] == os.path.join(dvclive.dir, "0", "image.png")
 
 
 def test_invalid_extension(tmp_dir):
@@ -33,24 +33,21 @@ def test_numpy(tmp_dir, shape):
     img = np.ones(shape, np.uint8) * 255
     dvclive.log("image.png", img)
 
-    assert (tmp_dir / dvclive.dir / "image.png").exists()
+    assert (tmp_dir / dvclive.dir / "0" / "image.png").exists()
 
 
-@pytest.mark.parametrize(
-    "pattern", ["image_{step}.png", str(os.path.join("{step}", "image.png"))]
-)
-def test_step_formatting(tmp_dir, pattern):
+def test_step_formatting(tmp_dir):
     dvclive = Live()
     img = np.ones((500, 500, 3), np.uint8)
     for _ in range(3):
-        dvclive.log(pattern, img)
+        dvclive.log("image.png", img)
         dvclive.next_step()
 
     for step in range(3):
-        assert (tmp_dir / dvclive.dir / pattern.format(step=step)).exists()
+        assert (tmp_dir / dvclive.dir / str(step) / "image.png").exists()
 
     summary = _parse_json("dvclive.json")
 
-    assert summary[pattern] == os.path.join(
-        dvclive.dir, pattern.format(step=step)
+    assert summary["image.png"] == os.path.join(
+        dvclive.dir, str(step), "image.png"
     )
