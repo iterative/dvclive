@@ -5,6 +5,20 @@ from .base import Data
 
 class Image(Data):
     suffixes = [".jpg", ".jpeg", ".gif", ".png"]
+    subfolder = "images"
+
+    @property
+    def no_step_output_path(self) -> Path:
+        return self.output_folder / self.name
+
+    @property
+    def output_path(self) -> Path:
+        if self._step is None:
+            output_path = self.no_step_output_path
+        else:
+            output_path = self.output_folder / f"{self._step}" / self.name
+        output_path.parent.mkdir(exist_ok=True, parents=True)
+        return output_path
 
     @staticmethod
     def could_log(val: object) -> bool:
@@ -14,34 +28,22 @@ class Image(Data):
             return True
         return False
 
-    @property
-    def output_path(self) -> Path:
-        if Path(self.name).suffix not in self.suffixes:
-            raise ValueError(
-                f"Invalid image suffix '{Path(self.name).suffix}'"
-                f" Must be one of {self.suffixes}"
-            )
-        if self._step is None:
-            output_path = self.output_folder / self.name
+    def first_step_dump(self) -> None:
+        if self.no_step_output_path.exists():
+            self.no_step_output_path.rename(self.output_path)
+
+    def no_step_dump(self) -> None:
+        self.step_dump()
+
+    def step_dump(self) -> None:
+        if self.val.__class__.__module__ == "numpy":
+            from PIL import Image as ImagePIL
+
+            _val = ImagePIL.fromarray(self.val)
         else:
-            output_path = self.output_folder / f"{self._step}" / self.name
-        output_path.parent.mkdir(exist_ok=True, parents=True)
-        return output_path
+            _val = self.val
 
-    def dump(self, val, step) -> None:
-        if self._step_none_logged and self._step is None:
-            super().dump(val, step)
-            step_none_path = self.output_folder / self.name
-            if step_none_path.exists():
-                step_none_path.rename(self.output_path)
-        else:
-            super().dump(val, step)
-            if val.__class__.__module__ == "numpy":
-                from PIL import Image as ImagePIL
-
-                val = ImagePIL.fromarray(val)
-
-            val.save(self.output_path)
+        _val.save(self.output_path)
 
     @property
     def summary(self):

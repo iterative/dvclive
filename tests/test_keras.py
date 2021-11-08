@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+from dvclive.data.scalar import Scalar
 from dvclive.keras import DvcLiveCallback
 from tests.test_main import read_logs
 
@@ -45,7 +46,7 @@ def test_keras_callback(tmp_dir, xor_model, capture_wrap):
     )
 
     assert os.path.exists("dvclive")
-    logs, _ = read_logs("dvclive")
+    logs, _ = read_logs(tmp_dir / "dvclive" / Scalar.subfolder)
 
     assert "accuracy" in logs
 

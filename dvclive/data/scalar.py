@@ -11,6 +11,7 @@ from .base import Data
 
 class Scalar(Data):
     suffixes = [".csv", ".tsv"]
+    subfolder = "scalars"
 
     @staticmethod
     def could_log(val: object) -> bool:
@@ -24,23 +25,30 @@ class Scalar(Data):
         _path.parent.mkdir(exist_ok=True, parents=True)
         return _path.with_suffix(".tsv")
 
-    def dump(self, val, step):
-        super().dump(val, step)
+    @property
+    def no_step_output_path(self) -> Path:
+        return self.output_path
 
-        if step is not None:
-            ts = int(time.time() * 1000)
-            d = OrderedDict(
-                [("timestamp", ts), ("step", self.step), (self.name, self.val)]
-            )
+    def first_step_dump(self) -> None:
+        self.step_dump()
 
-            existed = self.output_path.exists()
-            with open(self.output_path, "a") as fobj:
-                writer = csv.DictWriter(fobj, d.keys(), delimiter="\t")
+    def no_step_dump(self) -> None:
+        pass
 
-                if not existed:
-                    writer.writeheader()
+    def step_dump(self) -> None:
+        ts = int(time.time() * 1000)
+        d = OrderedDict(
+            [("timestamp", ts), ("step", self.step), (self.name, self.val)]
+        )
 
-                writer.writerow(d)
+        existed = self.output_path.exists()
+        with open(self.output_path, "a") as fobj:
+            writer = csv.DictWriter(fobj, d.keys(), delimiter="\t")
+
+            if not existed:
+                writer.writeheader()
+
+            writer.writerow(d)
 
     @property
     def summary(self):
