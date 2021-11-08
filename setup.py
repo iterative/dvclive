@@ -36,7 +36,7 @@ class build_py(_build_py):
         _build_py.run(self)
 
 
-mmcv = ["mmcv", "torch", "torchvision"]
+mmcv = ["mmcv"]
 tf = ["tensorflow"]
 xgb = ["xgboost"]
 lgbm = ["lightgbm"]
@@ -44,8 +44,9 @@ hugginface = ["transformers", "datasets"]
 catalyst = ["catalyst"]
 fastai = ["fastai"]
 pl = ["pytorch_lightning"]
+image = ["pillow"]
 
-all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai + pl
+all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai + pl + image
 
 tests_requires = [
     "pylint==2.5.3",
@@ -74,9 +75,11 @@ setup(
         "tf": tf,
         "xgb": xgb,
         "lgbm": lgbm,
+        "mmcv": mmcv,
         "huggingface": hugginface,
         "catalyst": catalyst,
         "fastai": fastai,
+        "image": image,
         "pytorch_lightning": pl,
     },
     keywords="data-science metrics machine-learning developer-tools ai",

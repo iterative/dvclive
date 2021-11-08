@@ -1,11 +1,12 @@
 import json
 import logging
 import os
+import shutil
 from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-from .data import Scalar
+from .data import DATA_TYPES
 from .dvc import make_checkpoint, make_html
 from .error import ConfigMismatchError, InvalidDataTypeError
 
@@ -46,19 +47,23 @@ class Live:
 
     def _cleanup(self):
 
-        for dvclive_file in Path(self.dir).rglob("*.tsv"):
-            dvclive_file.unlink()
+        for data_type in DATA_TYPES:
+            for suffix in data_type.suffixes:
+                for data_file in Path(self.dir).rglob(f"*{suffix}"):
+                    data_file.unlink()
 
         if os.path.exists(self.summary_path):
             os.remove(self.summary_path)
 
         if os.path.exists(self.html_path):
-            os.remove(self.html_path)
+            shutil.rmtree(Path(self.html_path).parent, ignore_errors=True)
 
     def _init_paths(self):
         os.makedirs(self.dir, exist_ok=True)
         if self._summary:
             self.make_summary()
+        if self._html:
+            os.makedirs(Path(self.html_path).parent, exist_ok=True)
 
     def init_from_env(self) -> None:
         from . import env
@@ -96,11 +101,11 @@ class Live:
 
     @property
     def summary_path(self):
-        return self.dir + ".json"
+        return str(self.dir) + ".json"
 
     @property
     def html_path(self):
-        return self.dir + "_dvc_plots/index.html"
+        return str(self.dir) + "_dvc_plots/index.html"
 
     def get_step(self) -> int:
         return self._step
@@ -119,15 +124,18 @@ class Live:
 
     def log(self, name: str, val: Union[int, float]):
 
+        data = None
         if name in self._data:
             data = self._data[name]
-        elif Scalar.could_log(val):
-            data = Scalar(name, self.dir)
-            self._data[name] = data
         else:
+            for data_type in DATA_TYPES:
+                if data_type.could_log(val):
+                    data = data_type(name, self.dir)
+                    self._data[name] = data
+        if data is None:
             raise InvalidDataTypeError(name, type(val))
-
         data.dump(val, self._step)
+
         if self._summary:
             self.make_summary()
 
