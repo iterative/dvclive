@@ -69,6 +69,15 @@ class LitMNIST(LightningModule):
     def configure_optimizers(self):
         return Adam(self.parameters(), lr=1e-3)
 
+    def predict_dataloader(self):
+        pass
+
+    def test_dataloader(self):
+        pass
+
+    def val_dataloader(self):
+        pass
+
 
 def test_lightning_integration(tmp_dir):
     # init model
