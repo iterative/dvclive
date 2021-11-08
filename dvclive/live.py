@@ -56,14 +56,14 @@ class Live:
             os.remove(self.summary_path)
 
         if os.path.exists(self.html_path):
-            shutil.rmtree(self.html_path, ignore_errors=True)
+            shutil.rmtree(Path(self.html_path).parent, ignore_errors=True)
 
     def _init_paths(self):
         os.makedirs(self.dir, exist_ok=True)
         if self._summary:
             self.make_summary()
         if self._html:
-            os.makedirs(self.html_path, exist_ok=True)
+            os.makedirs(Path(self.html_path).parent, exist_ok=True)
 
     def init_from_env(self) -> None:
         from . import env
