@@ -26,6 +26,17 @@ class InvalidDataTypeError(DvcLiveError):
         super().__init__(f"Data '{name}' has not supported type {val}")
 
 
+class InvalidPlotTypeError(DvcLiveError):
+    def __init__(self, name):
+        from .data import PLOTS
+
+        self.name = name
+        super().__init__(
+            f"Plot type '{name}' is not supported."
+            f"\nSupported types are: {list(PLOTS)}"
+        )
+
+
 class DataAlreadyLoggedError(DvcLiveError):
     def __init__(self, name, step):
         self.name = name

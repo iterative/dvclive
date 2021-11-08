@@ -3,12 +3,17 @@ import logging
 import os
 import shutil
 from collections import OrderedDict
+from itertools import chain
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-from .data import DATA_TYPES
+from .data import DATA_TYPES, PLOTS, Image, Scalar
 from .dvc import make_checkpoint, make_html
-from .error import ConfigMismatchError, InvalidDataTypeError
+from .error import (
+    ConfigMismatchError,
+    InvalidDataTypeError,
+    InvalidPlotTypeError,
+)
 from .utils import nested_update
 
 logger = logging.getLogger(__name__)
@@ -36,7 +41,9 @@ class Live:
             self._path = self.DEFAULT_DIR
 
         self._step: Optional[int] = None
-        self._data: Dict[str, Any] = OrderedDict()
+        self._scalars: Dict[str, Any] = OrderedDict()
+        self._images: Dict[str, Any] = OrderedDict()
+        self._plots: Dict[str, Any] = OrderedDict()
 
         if self._resume:
             self._step = self.read_step()
@@ -47,11 +54,10 @@ class Live:
             self._init_paths()
 
     def _cleanup(self):
-
         for data_type in DATA_TYPES:
-            for suffix in data_type.suffixes:
-                for data_file in Path(self.dir).rglob(f"*{suffix}"):
-                    data_file.unlink()
+            shutil.rmtree(
+                Path(self.dir) / data_type.subfolder, ignore_errors=True
+            )
 
         if os.path.exists(self.summary_path):
             os.remove(self.summary_path)
@@ -117,7 +123,11 @@ class Live:
         if self._step is None:
             self._step = 0
             self._init_paths()
-            for data in self._data.values():
+            for data in chain(
+                self._scalars.values(),
+                self._images.values(),
+                self._plots.values(),
+            ):
                 data.dump(data.val, self._step)
             if self._summary:
                 self.make_summary()
@@ -134,28 +144,51 @@ class Live:
         self.set_step(self.get_step() + 1)
 
     def log(self, name: str, val: Union[int, float]):
-        data = None
-        if name in self._data:
-            data = self._data[name]
-        else:
-            for data_type in DATA_TYPES:
-                if data_type.could_log(val):
-                    data = data_type(name, self.dir)
-                    self._data[name] = data
-        if data is None:
+        if not Scalar.could_log(val):
             raise InvalidDataTypeError(name, type(val))
+
+        if name in self._scalars:
+            data = self._scalars[name]
+        else:
+            data = Scalar(name, self.dir)
+            self._scalars[name] = data
 
         data.dump(val, self._step)
 
         if self._summary:
             self.make_summary()
 
+    def log_image(self, name: str, val):
+        if not Image.could_log(val):
+            raise InvalidDataTypeError(name, type(val))
+
+        if name in self._images:
+            data = self._images[name]
+        else:
+            data = Image(name, self.dir)
+            self._images[name] = data
+
+        data.dump(val, self._step)
+
+    def log_plot(self, name, labels, predictions, **kwargs):
+        val = (labels, predictions)
+
+        if name in self._plots:
+            data = self._plots[name]
+        elif name in PLOTS and PLOTS[name].could_log(val):
+            data = PLOTS[name](name, self.dir)
+            self._plots[name] = data
+        else:
+            raise InvalidPlotTypeError(name)
+
+        data.dump(val, self._step, **kwargs)
+
     def make_summary(self):
         summary_data = {}
         if self._step is not None:
             summary_data["step"] = self.get_step()
 
-        for data in self._data.values():
+        for data in self._scalars.values():
             summary_data = nested_update(summary_data, data.summary)
 
         with open(self.summary_path, "w") as f:

@@ -12,6 +12,7 @@ from fastai.tabular.all import (
     untar_data,
 )
 
+from dvclive.data.scalar import Scalar
 from dvclive.fastai import DvcLiveCallback
 
 # pylint: disable=redefined-outer-name, unused-argument
@@ -46,12 +47,12 @@ def test_fastai_callback(tmp_dir, data_loader):
 
     assert os.path.exists("dvclive")
 
-    train_path = tmp_dir / "dvclive/train"
-    valid_path = tmp_dir / "dvclive/valid"
+    train_path = tmp_dir / "dvclive" / Scalar.subfolder / "train"
+    valid_path = tmp_dir / "dvclive" / Scalar.subfolder / "valid"
 
     assert train_path.is_dir()
     assert valid_path.is_dir()
-    assert (tmp_dir / "dvclive/accuracy.tsv").exists()
+    assert (tmp_dir / "dvclive" / Scalar.subfolder / "accuracy.tsv").exists()
 
 
 def test_fastai_model_file(tmp_dir, data_loader):

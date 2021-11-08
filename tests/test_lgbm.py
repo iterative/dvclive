@@ -8,6 +8,7 @@ from funcy import first
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
+from dvclive.data.scalar import Scalar
 from dvclive.lgbm import DvcLiveCallback
 from tests.test_main import read_logs
 
@@ -44,7 +45,7 @@ def test_lgbm_integration(tmp_dir, model_params, iris_data):
 
     assert os.path.exists("dvclive")
 
-    logs, _ = read_logs("dvclive")
+    logs, _ = read_logs(tmp_dir / "dvclive" / Scalar.subfolder)
     assert len(logs) == 1
     assert len(first(logs.values())) == 5
 

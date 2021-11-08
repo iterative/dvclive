@@ -10,6 +10,7 @@ from transformers import (
     TrainingArguments,
 )
 
+from dvclive.data.scalar import Scalar
 from dvclive.huggingface import DvcLiveCallback
 from tests.test_main import read_logs
 
@@ -78,7 +79,7 @@ def test_huggingface_integration(tmp_dir, model, args, data, tokenizer):
 
     assert os.path.exists("dvclive")
 
-    logs, _ = read_logs("dvclive")
+    logs, _ = read_logs(tmp_dir / "dvclive" / Scalar.subfolder)
 
     assert len(logs) == 10
     assert "eval_matthews_correlation" in logs
