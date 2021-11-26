@@ -89,7 +89,8 @@ def test_huggingface_integration(tmp_dir, model, args, data, tokenizer):
 
 def test_huggingface_model_file(tmp_dir, model, args, data, tokenizer, mocker):
     model_path = tmp_dir / "model_hf"
-    save = mocker.spy(model, "save_pretrained")
+    model_save = mocker.spy(model, "save_pretrained")
+    tokernizer_save = mocker.spy(tokenizer, "save_pretrained")
     trainer = Trainer(
         model,
         args,
@@ -102,6 +103,10 @@ def test_huggingface_model_file(tmp_dir, model, args, data, tokenizer, mocker):
     trainer.train()
 
     assert model_path.is_dir()
+
     assert (model_path / "pytorch_model.bin").exists()
     assert (model_path / "config.json").exists()
-    assert save.call_count == 2
+    assert model_save.call_count == 2
+
+    assert (model_path / "tokenizer.json").exists()
+    assert tokernizer_save.call_count == 2
