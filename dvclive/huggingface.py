@@ -24,8 +24,15 @@ class DvcLiveCallback(TrainerCallback):
         logs = kwargs["logs"]
         for key, value in logs.items():
             self.dvclive.log(key, value)
-
-            if self.model_file:
-                model = kwargs["model"]
-                model.save_pretrained(self.model_file)
         self.dvclive.next_step()
+
+    def on_epoch_end(
+        self,
+        args: TrainingArguments,
+        state: TrainerState,
+        control: TrainerControl,
+        **kwargs
+    ):
+        if self.model_file:
+            model = kwargs["model"]
+            model.save_pretrained(self.model_file)
