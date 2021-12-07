@@ -81,15 +81,18 @@ def test_nested_logging(tmp_dir):
 
     dvclive.log("train/m1", 1)
     dvclive.log("val/val_1/m1", 1)
+    dvclive.log("val/val_1/m2", 1)
 
     assert (tmp_dir / "logs" / "val" / "val_1").is_dir()
     assert (tmp_dir / "logs" / "train" / "m1.tsv").is_file()
     assert (tmp_dir / "logs" / "val" / "val_1" / "m1.tsv").is_file()
+    assert (tmp_dir / "logs" / "val" / "val_1" / "m2.tsv").is_file()
 
     _, summary = read_logs("logs")
 
     assert summary["train"]["m1"] == 1
     assert summary["val"]["val_1"]["m1"] == 1
+    assert summary["val"]["val_1"]["m2"] == 1
 
 
 @pytest.mark.parametrize(

@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional, Union
 from .data import DATA_TYPES
 from .dvc import make_checkpoint, make_html
 from .error import ConfigMismatchError, InvalidDataTypeError
+from .utils import nested_update
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +144,7 @@ class Live:
         summary_data = {"step": self.get_step()}
 
         for data in self._data.values():
-            summary_data.update(data.summary)
+            summary_data = nested_update(summary_data, data.summary)
 
         with open(self.summary_path, "w") as f:
             json.dump(summary_data, f, indent=4)
