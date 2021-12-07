@@ -3,25 +3,15 @@ import logging
 import os
 import shutil
 from collections import OrderedDict
-from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from .data import DATA_TYPES
 from .dvc import make_checkpoint, make_html
+from .utils import nested_update
 from .error import ConfigMismatchError, InvalidDataTypeError
 
 logger = logging.getLogger(__name__)
-
-
-def update_nesteddict(d, u):
-    """Update values of a nested dictionnary of varying depth"""
-    for k, v in u.items():
-        if isinstance(v, Mapping):
-            d[k] = update_nesteddict(d.get(k, {}), v)
-        else:
-            d[k] = v
-    return d
 
 
 class Live:
@@ -154,7 +144,7 @@ class Live:
         summary_data = {"step": self.get_step()}
 
         for data in self._data.values():
-            summary_data = update_nesteddict(summary_data, data.summary)
+            summary_data = nested_update(summary_data, data.summary)
 
         with open(self.summary_path, "w") as f:
             json.dump(summary_data, f, indent=4)

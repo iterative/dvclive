@@ -1,3 +1,6 @@
+from collections.abc import Mapping
+
+
 def nested_set(d, keys, value):
     """Set d[keys[0]]...[keys[-1]] to `value`.
 
@@ -13,3 +16,13 @@ def nested_set(d, keys, value):
     for key in keys[:-1]:
         d = d.setdefault(key, {})
     d[keys[-1]] = value
+
+
+def nested_update(d, u):
+    """Update values of a nested dictionnary of varying depth"""
+    for k, v in u.items():
+        if isinstance(v, Mapping):
+            d[k] = nested_update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
