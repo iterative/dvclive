@@ -8,8 +8,8 @@ from typing import Any, Dict, Optional, Union
 
 from .data import DATA_TYPES
 from .dvc import make_checkpoint, make_html
-from .utils import nested_update
 from .error import ConfigMismatchError, InvalidDataTypeError
+from .utils import nested_update
 
 logger = logging.getLogger(__name__)
 
