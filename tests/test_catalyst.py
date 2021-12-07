@@ -3,7 +3,6 @@ import os
 import pytest
 from catalyst import dl
 from catalyst.contrib.datasets import MNIST
-from catalyst.data import ToTensor
 from catalyst.utils.torch import get_available_engine
 from torch import nn, optim
 from torch.utils.data import DataLoader
@@ -16,8 +15,8 @@ from dvclive.catalyst import DvcLiveCallback
 @pytest.fixture(scope="session")
 def loaders(tmp_path_factory):
     path = tmp_path_factory.mktemp("catalyst_mnist")
-    train_data = MNIST(path, train=True, download=True, transform=ToTensor())
-    valid_data = MNIST(path, train=False, download=True, transform=ToTensor())
+    train_data = MNIST(path, train=True, download=True)
+    valid_data = MNIST(path, train=False, download=True)
     return {
         "train": DataLoader(train_data, batch_size=32),
         "valid": DataLoader(valid_data, batch_size=32),
