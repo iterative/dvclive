@@ -3,7 +3,7 @@ import logging
 import os
 import shutil
 from collections import OrderedDict
-from collections.abs import Mapping
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
