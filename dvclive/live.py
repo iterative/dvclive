@@ -35,7 +35,7 @@ class Live:
         if self._path is None:
             self._path = self.DEFAULT_DIR
 
-        self._step: int = 0
+        self._step: Optional[int] = None
         self._data: Dict[str, Any] = OrderedDict()
 
         if self._resume and self.exists:
@@ -60,11 +60,13 @@ class Live:
             shutil.rmtree(Path(self.html_path).parent, ignore_errors=True)
 
     def _init_paths(self):
-        os.makedirs(self.dir, exist_ok=True)
+        if self._step is not None:
+            os.makedirs(self.dir, exist_ok=True)
+            if self._html:
+                os.makedirs(Path(self.html_path).parent, exist_ok=True)
         if self._summary:
+            os.makedirs(Path(self.summary_path).parent, exist_ok=True)
             self.make_summary()
-        if self._html:
-            os.makedirs(Path(self.html_path).parent, exist_ok=True)
 
     def init_from_env(self) -> None:
         from . import env
@@ -109,9 +111,17 @@ class Live:
         return str(self.dir) + "_dvc_plots/index.html"
 
     def get_step(self) -> int:
-        return self._step
+        return self._step or 0
 
     def set_step(self, step: int) -> None:
+        if self._step is None:
+            self._step = 0
+            self._init_paths()
+            for data in self._data.values():
+                data.dump(data.val, self._step)
+            if self._summary:
+                self.make_summary()
+
         if self._html:
             make_html()
 
@@ -124,7 +134,6 @@ class Live:
         self.set_step(self.get_step() + 1)
 
     def log(self, name: str, val: Union[int, float]):
-
         data = None
         if name in self._data:
             data = self._data[name]
@@ -135,13 +144,16 @@ class Live:
                     self._data[name] = data
         if data is None:
             raise InvalidDataTypeError(name, type(val))
+
         data.dump(val, self._step)
 
         if self._summary:
             self.make_summary()
 
     def make_summary(self):
-        summary_data = {"step": self.get_step()}
+        summary_data = {}
+        if self._step is not None:
+            summary_data["step"] = self.get_step()
 
         for data in self._data.values():
             summary_data = nested_update(summary_data, data.summary)
@@ -152,8 +164,8 @@ class Live:
     def read_step(self):
         if self.exists:
             latest = self.read_latest()
-            return int(latest["step"])
-        return 0
+            return latest.get("step", None)
+        return None
 
     def read_latest(self):
         with open(self.summary_path, "r") as fobj:

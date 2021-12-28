@@ -14,10 +14,10 @@ def test_PIL(tmp_dir):
     img = Image.new("RGB", (500, 500), (250, 250, 250))
     dvclive.log("image.png", img)
 
-    assert (tmp_dir / dvclive.dir / "0" / "image.png").exists()
+    assert (tmp_dir / dvclive.dir / "image.png").exists()
     summary = _parse_json("dvclive.json")
 
-    assert summary["image.png"] == os.path.join(dvclive.dir, "0", "image.png")
+    assert summary["image.png"] == os.path.join(dvclive.dir, "image.png")
 
 
 def test_invalid_extension(tmp_dir):
@@ -33,7 +33,7 @@ def test_numpy(tmp_dir, shape):
     img = np.ones(shape, np.uint8) * 255
     dvclive.log("image.png", img)
 
-    assert (tmp_dir / dvclive.dir / "0" / "image.png").exists()
+    assert (tmp_dir / dvclive.dir / "image.png").exists()
 
 
 def test_step_formatting(tmp_dir):
@@ -50,4 +50,22 @@ def test_step_formatting(tmp_dir):
 
     assert summary["image.png"] == os.path.join(
         dvclive.dir, str(step), "image.png"
+    )
+
+
+def test_step_rename(tmp_dir, mocker):
+    from pathlib import Path
+
+    rename = mocker.spy(Path, "rename")
+    dvclive = Live()
+    img = np.ones((500, 500, 3), np.uint8)
+    dvclive.log("image.png", img)
+    assert (tmp_dir / dvclive.dir / "image.png").exists()
+
+    dvclive.next_step()
+
+    assert not (tmp_dir / dvclive.dir / "image.png").exists()
+    assert (tmp_dir / dvclive.dir / "0" / "image.png").exists()
+    rename.assert_called_once_with(
+        Path(dvclive.dir) / "image.png", Path(dvclive.dir) / "0" / "image.png"
     )

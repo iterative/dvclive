@@ -27,19 +27,20 @@ class Scalar(Data):
     def dump(self, val, step):
         super().dump(val, step)
 
-        ts = int(time.time() * 1000)
-        d = OrderedDict(
-            [("timestamp", ts), ("step", self.step), (self.name, self.val)]
-        )
+        if step is not None:
+            ts = int(time.time() * 1000)
+            d = OrderedDict(
+                [("timestamp", ts), ("step", self.step), (self.name, self.val)]
+            )
 
-        existed = self.output_path.exists()
-        with open(self.output_path, "a") as fobj:
-            writer = csv.DictWriter(fobj, d.keys(), delimiter="\t")
+            existed = self.output_path.exists()
+            with open(self.output_path, "a") as fobj:
+                writer = csv.DictWriter(fobj, d.keys(), delimiter="\t")
 
-            if not existed:
-                writer.writeheader()
+                if not existed:
+                    writer.writeheader()
 
-            writer.writerow(d)
+                writer.writerow(d)
 
     @property
     def summary(self):

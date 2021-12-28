@@ -11,6 +11,7 @@ class Data(abc.ABC):
         self.output_folder: Path = Path(output_folder)
         self._step: Optional[int] = None
         self.val = None
+        self._step_none_logged: bool = False
 
     @property
     def step(self) -> int:
@@ -18,8 +19,11 @@ class Data(abc.ABC):
 
     @step.setter
     def step(self, val: int) -> None:
-        if val == self._step:
+        if not self._step_none_logged and val is None:
+            self._step_none_logged = True
+        elif val == self._step:
             raise DataAlreadyLoggedError(self.name, val)
+
         self._step = val
 
     @property
