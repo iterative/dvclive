@@ -55,25 +55,34 @@ def _parse_json(path):
         return json.load(fd)
 
 
-@pytest.mark.parametrize("path", ["logs", os.path.join("subdir", "logs")])
-def test_create_logs_dir(tmp_dir, path):
-    Live(path)
-
-    assert (tmp_dir / path).is_dir()
-
-
 @pytest.mark.parametrize("summary", [True, False])
-def test_logging(tmp_dir, summary):
+def test_logging_no_step(tmp_dir, summary):
     dvclive = Live("logs", summary=summary)
 
     dvclive.log("m1", 1)
 
-    assert (tmp_dir / "logs" / "m1.tsv").is_file()
+    assert not (tmp_dir / "logs").is_dir()
+    assert not (tmp_dir / "logs" / "m1.tsv").is_file()
     assert (tmp_dir / dvclive.summary_path).is_file() == summary
 
     if summary:
-        _, s = read_logs("logs")
+        s = _parse_json(dvclive.summary_path)
         assert s["m1"] == 1
+        assert "step" not in s
+
+
+@pytest.mark.parametrize("path", ["logs", os.path.join("subdir", "logs")])
+def test_logging_step(tmp_dir, path):
+    dvclive = Live(path)
+    dvclive.log("m1", 1)
+    dvclive.next_step()
+    assert (tmp_dir / path).is_dir()
+    assert (tmp_dir / path / "m1.tsv").is_file()
+    assert (tmp_dir / dvclive.summary_path).is_file()
+
+    s = _parse_json(dvclive.summary_path)
+    assert s["m1"] == 1
+    assert s["step"] == 0
 
 
 def test_nested_logging(tmp_dir):
@@ -83,12 +92,14 @@ def test_nested_logging(tmp_dir):
     dvclive.log("val/val_1/m1", 1)
     dvclive.log("val/val_1/m2", 1)
 
+    dvclive.next_step()
+
     assert (tmp_dir / "logs" / "val" / "val_1").is_dir()
     assert (tmp_dir / "logs" / "train" / "m1.tsv").is_file()
     assert (tmp_dir / "logs" / "val" / "val_1" / "m1.tsv").is_file()
     assert (tmp_dir / "logs" / "val" / "val_1" / "m2.tsv").is_file()
 
-    _, summary = read_logs("logs")
+    summary = _parse_json(dvclive.summary_path)
 
     assert summary["train"]["m1"] == 1
     assert summary["val"]["val_1"]["m1"] == 1
@@ -127,6 +138,7 @@ def test_html(tmp_dir, dvc_repo, html, signal_exists, monkeypatch):
 def test_cleanup(tmp_dir, summary, html):
     dvclive = Live("logs", summary=summary)
     dvclive.log("m1", 1)
+    dvclive.next_step()
 
     html_path = tmp_dir / dvclive.html_path
     if html:
@@ -175,9 +187,10 @@ def test_require_step_update(tmp_dir, metric):
     dvclive = Live("logs")
 
     dvclive.log(metric, 1.0)
+
     with pytest.raises(
         DataAlreadyLoggedError,
-        match="has already being logged whith step '0'",
+        match="has already being logged whith step 'None'",
     ):
         dvclive.log(metric, 2.0)
 
