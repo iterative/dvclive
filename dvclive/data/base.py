@@ -5,18 +5,34 @@ from typing import Optional
 from dvclive.error import DataAlreadyLoggedError
 
 
+def _is_np(val):
+    return val.__class__.__module__ == "numpy"
+
+
+def _is_tf(val):
+    return val.__class__.__module__.split(".")[0] == "tensorflow"
+
+
 class Data(abc.ABC):
     def __init__(self, name: str, output_folder: str) -> None:
         self.name = name
         self.output_folder: Path = Path(output_folder) / self.subfolder
         self._step: Optional[int] = None
-        self.val = None
+        self._val = None
         self._step_none_logged: bool = False
         self._dump_kwargs = None
 
     @property
     def step(self) -> int:
         return self._step
+
+    @property
+    def val(self):
+        return self._val
+
+    @val.setter
+    def val(self, x):
+        self._val = x
 
     @step.setter
     def step(self, val: int) -> None:

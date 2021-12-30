@@ -6,7 +6,7 @@ from pathlib import Path
 
 from dvclive.utils import nested_set
 
-from .base import Data
+from .base import Data, _is_tf
 
 
 class Scalar(Data):
@@ -17,7 +17,25 @@ class Scalar(Data):
     def could_log(val: object) -> bool:
         if isinstance(val, (int, float)):
             return True
+        if _is_tf(val):
+            return True
         return False
+
+    @property
+    def val(self):
+        return self._val
+
+    @val.setter
+    def val(self, x):
+        if _is_tf(x):
+            import numpy as np
+
+            x = x.numpy().squeeze()
+            if isinstance(x, np.integer):
+                x = int(x)
+            else:
+                x = float(x)
+        self._val = x
 
     @property
     def output_path(self) -> Path:

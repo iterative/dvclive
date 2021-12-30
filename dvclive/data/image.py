@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .base import Data
+from .base import Data, _is_np, _is_tf
 
 
 class Image(Data):
@@ -24,9 +24,26 @@ class Image(Data):
     def could_log(val: object) -> bool:
         if val.__class__.__module__ == "PIL.Image":
             return True
-        if val.__class__.__module__ == "numpy":
+        if _is_np(val):
+            return True
+        if _is_tf(val) and val.ndim in [2, 3]:
             return True
         return False
+
+    @property
+    def val(self):
+        return self._val
+
+    @val.setter
+    def val(self, x):
+        if _is_np(x) or _is_tf(x):
+            from PIL import Image as ImagePIL
+
+            if _is_tf(x):
+                x = x.numpy().squeeze()
+            self._val = ImagePIL.fromarray(x)
+        else:
+            self._val = x
 
     def first_step_dump(self) -> None:
         if self.no_step_output_path.exists():
@@ -36,14 +53,7 @@ class Image(Data):
         self.step_dump()
 
     def step_dump(self) -> None:
-        if self.val.__class__.__module__ == "numpy":
-            from PIL import Image as ImagePIL
-
-            _val = ImagePIL.fromarray(self.val)
-        else:
-            _val = self.val
-
-        _val.save(self.output_path)
+        self.val.save(self.output_path)
 
     @property
     def summary(self):

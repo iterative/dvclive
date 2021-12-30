@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
+import tensorflow as tf
 from PIL import Image
 
-# pylint: disable=unused-argument
+# pylint: disable=unused-argument,no-value-for-parameter
 from dvclive import Live
 from dvclive.data import Image as LiveImage
 
@@ -27,6 +28,14 @@ def test_numpy(tmp_dir, shape):
     dvclive = Live()
     img = np.ones(shape, np.uint8) * 255
     dvclive.log_image("image.png", img)
+
+    assert (tmp_dir / dvclive.dir / LiveImage.subfolder / "image.png").exists()
+
+
+@pytest.mark.parametrize("shape", [(500, 500), (500, 500, 3), (500, 500, 4)])
+def test_tensorflow(tmp_dir, shape):
+    dvclive = Live()
+    dvclive.log_image("image.png", tf.zeros(shape=shape, dtype=tf.uint8))
 
     assert (tmp_dir / dvclive.dir / LiveImage.subfolder / "image.png").exists()
 

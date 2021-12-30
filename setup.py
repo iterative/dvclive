@@ -46,8 +46,22 @@ hugginface = ["transformers", "datasets"]
 catalyst = ["catalyst<=21.12"]
 fastai = ["fastai"]
 pl = ["pytorch_lightning"]
+image = ["pillow"]
+tensorboard = tf + ["gorilla"]
 
-all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai + pl + plots
+all_libs = (
+    mmcv
+    + tf
+    + xgb
+    + lgbm
+    + hugginface
+    + catalyst
+    + fastai
+    + pl
+    + image
+    + plots
+    + tensorboard
+)
 
 tests_requires = [
     "pylint==2.5.3",
@@ -83,6 +97,7 @@ setup(
         "sklearn": plots,
         "image": image,
         "plots": plots,
+        "tensorboard": tensorboard,
     },
     keywords="data-science metrics machine-learning developer-tools ai",
     python_requires=">=3.6",

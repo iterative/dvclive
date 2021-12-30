@@ -179,3 +179,37 @@ def test_keras_None_model_file_skip_load(
     )
 
     assert load_weights.call_count == 0
+
+
+def test_patch_tensorboard_keras_callback(tmp_dir, xor_model, mocker):
+    import gorilla
+    import tensorflow as tf
+
+    from dvclive.tensorboard import patch_tensorboard
+
+    scalar = mocker.spy(tf.summary, "scalar")
+    image = mocker.spy(tf.summary, "image")
+
+    patches = patch_tensorboard(path="logs")
+
+    model, x, y = xor_model()
+
+    model.fit(
+        x,
+        y,
+        epochs=2,
+        batch_size=1,
+        callbacks=[tf.keras.callbacks.TensorBoard()],
+    )
+
+    assert not scalar.call_count
+    assert not image.call_count
+
+    assert os.path.exists("logs")
+    logs, _ = read_logs("logs/scalars")
+
+    assert "epoch_accuracy" in logs
+    assert len(logs["epoch_accuracy"]) == 2
+
+    for patch in patches:
+        gorilla.revert(patch)
