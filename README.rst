@@ -54,7 +54,7 @@ Please read the `Get Started <https://dvc.org/doc/dvclive/get-started>`_ for a d
   live.next_step()
  
 
-If you are ussing a ML training framework, check the existing `ML Frameworks <https://dvc.org/doc/dvclive/ml-frameworks>`_ page.
+If you are using a ML training framework, check the existing `ML Frameworks <https://dvc.org/doc/dvclive/ml-frameworks>`_ page.
 
 Installation
 ============
