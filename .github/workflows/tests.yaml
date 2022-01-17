@@ -39,6 +39,8 @@ jobs:
     - name: install
       run: |
         pip install wheel
+        # https://github.com/PyTorchLightning/metrics/issues/770
+        pip install torchmetrics < 0.7.0
         pip install ".[tests]" --use-deprecated=legacy-resolver
     - name: install libomp
       # required for xgboost
