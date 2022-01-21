@@ -1,60 +1,20 @@
 DVCLive
 =======
 
-• `Docs <https://dvc.org/doc/dvclive>`_
 
 |CI| |Coverage| |Donate|
 
 |PyPI|
 
-**DVCLive** is an **open-source** library for monitoring the progress of metrics during training of machine learning models. It's built with Git and MLOps principles in mind:
+DVCLive is a Python library for logging machine learning metrics and other metadata in simple file formats, which is fully compatible with DVC.
 
-1. **Codification of data**. Tracked metrics are stored in readable text files that can be versioned by Git or other version control tools.
-2. **Distributed**. No services or servers are required. Metrics are stored in a Git repository as text files, or pointers to files in `DVC <https://dvc.org>`_ storage.
-3. **GitOps API**. Plots are generated through `DVC <https://dvc.org>`_ using Git commit SHAs or branch names, e.g.: :code:`dvc plots diff --target logs master`.
+`Documentation <https://dvc.org/doc/dvclive>`_
+=============
 
-.. image:: https://raw.githubusercontent.com/iterative/dvc.org/master/static/uploads/images/2021-02-18/dvclive-diff-html.png
-
-4. **Automation**. DVCLive metrics are easy to use by any automation, DevOps, or MLOps tool such as CI/CD (including `CML <https://cml.dev>`_), custom scripts, or ML platforms.
-
-**DVCLive** integrates seamlessly with `DVC <https://dvc.org>`_; the logs/summaries it produces can be fed as :code:`dvc plots`/:code:`dvc metrics`. 
-
-However, `DVC <https://dvc.org>`_ is *not required* to work with dvclive logs/summaries, and since they're saved as easily parsable :code:`.tsv`/:code:`.json` files, you can use your preferred visualization method.
-
-.. contents:: **Contents**
-  :backlinks: none
-
-Quick Start
-===========
-
-Please read the `Get Started <https://dvc.org/doc/dvclive/get-started>`_ for a detailed version.
-
-**DVCLive** is a Python library. The interface consists of three main steps:
-
-1. Initialize DVCLive
-
-.. code-block:: python
-
-  from dvclive import Live
-
-  live = Live()
-
-
-2. Log metrics
-
-
-.. code-block:: python
-
-  live.log("metric", 1)
-
-3. Increase the step number
-
-.. code-block:: python
-
-  live.next_step()
- 
-
-If you are using a ML training framework, check the existing `ML Frameworks <https://dvc.org/doc/dvclive/ml-frameworks>`_ page.
+- `Get Started <https://dvc.org/doc/dvclive/get-started>`_
+- `DVCLive with DVC <https://dvc.org/doc/dvclive/dvclive-with-dvc>`_
+- `ML Frameworks <https://dvc.org/doc/dvclive/ml-frameworks>`_
+- `API Reference <https://dvc.org/doc/dvclive/api-reference>`_
 
 Installation
 ============
@@ -90,25 +50,7 @@ Comparison to related technologies
 
 The main difference with those *ML Loggers* is that **DVCLive** does not require any additional services or servers to run. 
 
-Logged metrics are stored as plain text files that can be versioned by version control tools (i.e Git) or tracked as pointers to files in DVC storage. 
-
-Call to collaboration
-=====================
-
-Today only Python is supported (while DVC is language agnostic), along with the following *ML frameworks*:
-
-- `Catalyst <https://dvc.org/doc/dvclive/ml-frameworks/catalyst>`_
-- `Fast.ai <https://dvc.org/doc/dvclive/ml-frameworks/fastai>`_
-- `Hugging Face <https://dvc.org/doc/dvclive/ml-frameworks/huggingface>`_
-- `Keras <https://dvc.org/doc/dvclive/ml-frameworks/keras>`_
-- `LightGBM <https://dvc.org/doc/dvclive/ml-frameworks/lightgbm>`_
-- `MMCV <https://dvc.org/doc/dvclive/ml-frameworks/mmcv>`_
-- `PyTorch <https://dvc.org/doc/dvclive/ml-frameworks/pytorch>`_
-- `PyTorch Lightning <https://dvc.org/doc/dvclive/ml-frameworks/pytorch-lightning>`_
-- `Tensorflow <https://dvc.org/doc/dvclive/ml-frameworks/tensorflow>`_
-- `XGBoost <https://dvc.org/doc/dvclive/ml-frameworks/xgboost>`_ 
-
-The DVCLive team is happy to extend the functionality as needed. Please `create an issue <https://github.com/iterative/dvclive/issues>`_ or check the `existing ones <https://github.com/iterative/dvclive/issues?q=is%3Aissue+is%3Aopen+label%3Aintegrations>`_ to start a discussion!
+Logged metrics and metadata are stored as plain text files that can be versioned by version control tools (i.e Git) or tracked as pointers to files in DVC storage. 
 
 Copyright
 =========
