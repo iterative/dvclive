@@ -182,6 +182,12 @@ def test_continue(tmp_dir, resume, steps, metrics):
     assert read_latest("logs", "metric") == (last(steps), last(metrics))
 
 
+def test_resume_on_first_init(tmp_dir):
+    dvclive = Live(resume=True)
+
+    assert dvclive._step == 0
+
+
 @pytest.mark.parametrize("metric", ["m1", os.path.join("train", "m1")])
 def test_require_step_update(tmp_dir, metric):
     dvclive = Live("logs")

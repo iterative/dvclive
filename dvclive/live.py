@@ -38,7 +38,7 @@ class Live:
         self._step: Optional[int] = None
         self._data: Dict[str, Any] = OrderedDict()
 
-        if self._resume and self.exists:
+        if self._resume:
             self._step = self.read_step()
             if self._step != 0:
                 self._step += 1
@@ -162,10 +162,10 @@ class Live:
             json.dump(summary_data, f, indent=4)
 
     def read_step(self):
-        if self.exists:
+        if Path(self.summary_path).exists():
             latest = self.read_latest()
-            return latest.get("step", None)
-        return None
+            return latest.get("step", 0)
+        return 0
 
     def read_latest(self):
         with open(self.summary_path, "r") as fobj:
