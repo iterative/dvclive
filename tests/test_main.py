@@ -188,6 +188,13 @@ def test_resume_on_first_init(tmp_dir):
     assert dvclive._step == 0
 
 
+def test_resume_no_summary(tmp_dir):
+    with pytest.raises(
+        ValueError, match="`resume` can't be used without `summary`"
+    ):
+        Live(resume=True, summary=False)
+
+
 @pytest.mark.parametrize("metric", ["m1", os.path.join("train", "m1")])
 def test_require_step_update(tmp_dir, metric):
     dvclive = Live("logs")
