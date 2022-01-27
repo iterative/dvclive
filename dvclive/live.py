@@ -23,7 +23,8 @@ class Live:
         resume: bool = False,
         summary: bool = True,
     ):
-
+        if resume and not summary:
+            raise ValueError("`resume` can't be used without `summary`")
         self._path: Optional[str] = path
         self._resume: bool = resume
         self._summary: bool = summary
