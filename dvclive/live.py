@@ -18,11 +18,15 @@ class Live:
     DEFAULT_DIR = "dvclive"
 
     def __init__(
-        self,
-        path: Optional[str] = None,
-        resume: bool = False,
-        summary: bool = True,
+        self, path: Optional[str] = None, resume: bool = False, **kwargs
     ):
+        if "summary" in kwargs:
+            logger.warning(
+                "`summary` is being deprecated in 0.5.0 "
+                "and will be removed in 0.6.0. Making the "
+                "summary generation no longer optional",
+            )
+        summary = kwargs.get("summary", True)
         if resume and not summary:
             raise ValueError("`resume` can't be used without `summary`")
         self._path: Optional[str] = path
