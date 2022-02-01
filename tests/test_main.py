@@ -1,4 +1,3 @@
-import csv
 import json
 import os
 from pathlib import Path
@@ -15,6 +14,7 @@ from dvclive.error import (
     DataAlreadyLoggedError,
     InvalidDataTypeError,
 )
+from dvclive.utils import _parse_tsv
 
 
 def read_logs(path: str):
@@ -42,12 +42,6 @@ def read_history(path, metric):
 def read_latest(path, metric_name):
     _, latest = read_logs(path)
     return latest["step"], latest[metric_name]
-
-
-def _parse_tsv(path):
-    with open(path, "r") as fd:
-        reader = csv.DictReader(fd, delimiter="\t")
-        return list(reader)
 
 
 def _parse_json(path):

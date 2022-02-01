@@ -1,3 +1,5 @@
+import csv
+import shutil
 from collections.abc import Mapping
 
 
@@ -26,3 +28,13 @@ def nested_update(d, u):
         else:
             d[k] = v
     return d
+
+
+def _parse_tsv(path):
+    with open(path, "r") as fd:
+        reader = csv.DictReader(fd, delimiter="\t")
+        return list(reader)
+
+
+def is_cml_available():
+    return shutil.which("cml") is not None

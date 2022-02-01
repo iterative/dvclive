@@ -2,14 +2,16 @@ import json
 import logging
 import os
 import shutil
+import subprocess
 from collections import OrderedDict
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Dict, Optional, Union
 
 from .data import DATA_TYPES
 from .dvc import make_checkpoint, make_html
 from .error import ConfigMismatchError, InvalidDataTypeError
-from .utils import nested_update
+from .utils import is_cml_available, nested_update
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +20,11 @@ class Live:
     DEFAULT_DIR = "dvclive"
 
     def __init__(
-        self, path: Optional[str] = None, resume: bool = False, **kwargs
+        self,
+        path: Optional[str] = None,
+        resume: bool = False,
+        report: bool = True,
+        **kwargs,
     ):
         if "summary" in kwargs:
             logger.warning(
@@ -31,6 +37,7 @@ class Live:
             raise ValueError("`resume` can't be used without `summary`")
         self._path: Optional[str] = path
         self._resume: bool = resume
+        self._report: bool = report
         self._summary: bool = summary
         self._html: bool = True
         self._checkpoint: bool = False
@@ -133,6 +140,9 @@ class Live:
         if self._checkpoint:
             make_checkpoint()
 
+        if self._report and is_cml_available():
+            self.make_report()
+
         self._step = step
 
     def next_step(self):
@@ -165,6 +175,18 @@ class Live:
 
         with open(self.summary_path, "w") as f:
             json.dump(summary_data, f, indent=4)
+
+    def make_report(self):
+        from .report import build_report
+
+        report = build_report(self.dir)
+        with TemporaryDirectory() as tmpdir:
+            file = Path(tmpdir) / "report.md"
+            file.write_text(report)
+            subprocess.run(
+                ["cml", "send-comment", "--update", str(file)], check=True
+            )
+        return True
 
     def read_step(self):
         if Path(self.summary_path).exists():
