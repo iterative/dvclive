@@ -184,7 +184,7 @@ class Live:
             file = Path(tmpdir) / "report.md"
             file.write_text(report)
             subprocess.run(
-                ["cml", "send-comment", "--update", str(file)], check=True
+                ["cml", "send-comment", str(file)], check=True
             )
         return True
 
