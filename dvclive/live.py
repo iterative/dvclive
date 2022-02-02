@@ -183,9 +183,7 @@ class Live:
         with TemporaryDirectory() as tmpdir:
             file = Path(tmpdir) / "report.md"
             file.write_text(report)
-            subprocess.run(
-                ["cml", "send-comment", str(file)], check=True
-            )
+            subprocess.run(["cml", "send-comment", str(file)], check=True)
         return True
 
     def read_step(self):
