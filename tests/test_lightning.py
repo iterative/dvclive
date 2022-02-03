@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import MNIST
 
+from dvclive.data.scalar import Scalar
 from dvclive.lightning import DvcLiveLogger
 from tests.test_main import read_logs
 
@@ -84,7 +85,6 @@ def test_lightning_integration(tmp_dir):
     model = LitMNIST()
     # init logger
     dvclive_logger = DvcLiveLogger("test_run", path="logs")
-    print(dvclive_logger.version)
     trainer = Trainer(
         logger=dvclive_logger, max_epochs=1, checkpoint_callback=False
     )
@@ -93,7 +93,7 @@ def test_lightning_integration(tmp_dir):
     assert os.path.exists("logs")
     assert not os.path.exists("DvcLiveLogger")
 
-    logs, _ = read_logs("logs")
+    logs, _ = read_logs(tmp_dir / "logs" / Scalar.subfolder)
 
     assert len(logs) == 3
     assert "train_loss_step" in logs

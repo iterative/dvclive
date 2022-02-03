@@ -36,6 +36,8 @@ class build_py(_build_py):
         _build_py.run(self)
 
 
+image = ["pillow"]
+plots = ["scikit-learn"]
 mmcv = ["mmcv"]
 tf = ["tensorflow"]
 xgb = ["xgboost"]
@@ -44,9 +46,8 @@ hugginface = ["transformers", "datasets"]
 catalyst = ["catalyst"]
 fastai = ["fastai"]
 pl = ["pytorch_lightning"]
-image = ["pillow"]
 
-all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai + pl + image
+all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai + pl + plots
 
 tests_requires = [
     "pylint==2.5.3",
@@ -56,7 +57,6 @@ tests_requires = [
     "pytest-cov>=2.12.1",
     "pytest-mock>=3.6.1",
     "pandas>=1.3.1",
-    "sklearn",
     "funcy>=1.14",
     "dvc>=2.0.0",
 ] + all_libs
@@ -79,8 +79,10 @@ setup(
         "huggingface": hugginface,
         "catalyst": catalyst,
         "fastai": fastai,
-        "image": image,
         "pytorch_lightning": pl,
+        "sklearn": plots,
+        "image": image,
+        "plots": plots,
     },
     keywords="data-science metrics machine-learning developer-tools ai",
     python_requires=">=3.6",

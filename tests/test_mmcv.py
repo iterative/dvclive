@@ -4,6 +4,7 @@ import torch
 from mmcv.runner import build_runner
 
 import dvclive
+from dvclive.data.scalar import Scalar
 from tests.test_main import read_logs
 
 # pylint: disable=unused-argument
@@ -31,7 +32,7 @@ def test_mmcv_hook(tmp_dir, mocker):
     assert set_step.call_count == 6
     assert log.call_count == 12
 
-    logs, _ = read_logs("dvclive")
+    logs, _ = read_logs(tmp_dir / "dvclive" / Scalar.subfolder)
     assert "learning_rate" in logs
     assert "momentum" in logs
 
