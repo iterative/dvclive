@@ -16,7 +16,6 @@ class DvcLiveLogger(LightningLoggerBase):
         experiment=None,
         path: Optional[str] = None,
         resume: bool = False,
-        summary: bool = True,
     ):
 
         super().__init__()
@@ -24,7 +23,6 @@ class DvcLiveLogger(LightningLoggerBase):
         self._dvclive_init = {
             "path": path,
             "resume": resume,
-            "summary": summary,
         }
         self._experiment = experiment
         self._version = run_name

@@ -56,20 +56,18 @@ def _parse_json(path):
         return json.load(fd)
 
 
-@pytest.mark.parametrize("summary", [True, False])
-def test_logging_no_step(tmp_dir, summary):
-    dvclive = Live("logs", summary=summary)
+def test_logging_no_step(tmp_dir):
+    dvclive = Live("logs")
 
     dvclive.log("m1", 1)
 
     assert not (tmp_dir / "logs").is_dir()
     assert not (tmp_dir / "logs" / "m1.tsv").is_file()
-    assert (tmp_dir / dvclive.summary_path).is_file() == summary
+    assert (tmp_dir / dvclive.summary_path).is_file()
 
-    if summary:
-        s = _parse_json(dvclive.summary_path)
-        assert s["m1"] == 1
-        assert "step" not in s
+    s = _parse_json(dvclive.summary_path)
+    assert s["m1"] == 1
+    assert "step" not in s
 
 
 @pytest.mark.parametrize("path", ["logs", os.path.join("subdir", "logs")])
@@ -87,7 +85,7 @@ def test_logging_step(tmp_dir, path):
 
 
 def test_nested_logging(tmp_dir):
-    dvclive = Live("logs", summary=True)
+    dvclive = Live("logs")
 
     out = tmp_dir / dvclive.dir / Scalar.subfolder
 
@@ -135,11 +133,11 @@ def test_html(tmp_dir, dvc_repo, html, signal_exists, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "summary,html",
-    [(True, True), (True, False), (False, True), (False, False)],
+    "html",
+    [True, False],
 )
-def test_cleanup(tmp_dir, summary, html):
-    dvclive = Live("logs", summary=summary)
+def test_cleanup(tmp_dir, html):
+    dvclive = Live("logs")
     dvclive.log("m1", 1)
     dvclive.next_step()
 
@@ -150,14 +148,14 @@ def test_cleanup(tmp_dir, summary, html):
     (tmp_dir / "logs" / "some_user_file.txt").touch()
 
     assert (tmp_dir / dvclive.dir / Scalar.subfolder / "m1.tsv").is_file()
-    assert (tmp_dir / dvclive.summary_path).is_file() == summary
+    assert (tmp_dir / dvclive.summary_path).is_file()
     assert html_path.is_file() == html
 
-    dvclive = Live("logs", summary=summary)
+    dvclive = Live("logs")
 
     assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
     assert not (tmp_dir / dvclive.dir / Scalar.subfolder).exists()
-    assert (tmp_dir / dvclive.summary_path).is_file() == summary
+    assert not (tmp_dir / dvclive.summary_path).is_file()
     assert not (html_path).is_file()
 
 
@@ -191,13 +189,6 @@ def test_resume_on_first_init(tmp_dir):
     dvclive = Live(resume=True)
 
     assert dvclive._step == 0
-
-
-def test_resume_no_summary(tmp_dir):
-    with pytest.raises(
-        ValueError, match="`resume` can't be used without `summary`"
-    ):
-        Live(resume=True, summary=False)
 
 
 @pytest.mark.parametrize("metric", ["m1", os.path.join("train", "m1")])
@@ -248,15 +239,12 @@ def test_log_reset_with_set_step(tmp_dir):
 
 
 @pytest.mark.parametrize("html", [True, False])
-@pytest.mark.parametrize("summary", [True, False])
-def test_init_from_env(tmp_dir, summary, html, monkeypatch):
+def test_init_from_env(tmp_dir, html, monkeypatch):
     monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
-    monkeypatch.setenv(env.DVCLIVE_SUMMARY, str(int(summary)))
     monkeypatch.setenv(env.DVCLIVE_HTML, str(int(html)))
 
     dvclive = Live()
     assert dvclive._path == "logs"
-    assert dvclive._summary == summary
     assert dvclive._html == html
 
 

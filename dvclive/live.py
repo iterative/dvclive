@@ -22,21 +22,9 @@ logger = logging.getLogger(__name__)
 class Live:
     DEFAULT_DIR = "dvclive"
 
-    def __init__(
-        self, path: Optional[str] = None, resume: bool = False, **kwargs
-    ):
-        if "summary" in kwargs:
-            logger.warning(
-                "`summary` is being deprecated in 0.5.0 "
-                "and will be removed in 0.6.0. Making the "
-                "summary generation no longer optional",
-            )
-        summary = kwargs.get("summary", True)
-        if resume and not summary:
-            raise ValueError("`resume` can't be used without `summary`")
+    def __init__(self, path: Optional[str] = None, resume: bool = False):
         self._path: Optional[str] = path
         self._resume: bool = resume
-        self._summary: bool = summary
         self._html: bool = True
         self._checkpoint: bool = False
 
@@ -75,9 +63,7 @@ class Live:
             os.makedirs(self.dir, exist_ok=True)
             if self._html:
                 os.makedirs(Path(self.html_path).parent, exist_ok=True)
-        if self._summary:
-            os.makedirs(Path(self.summary_path).parent, exist_ok=True)
-            self.make_summary()
+        os.makedirs(Path(self.summary_path).parent, exist_ok=True)
 
     def init_from_env(self) -> None:
         from . import env
@@ -89,9 +75,6 @@ class Live:
 
             env_config = {
                 "_path": os.environ.get(env.DVCLIVE_PATH),
-                "_summary": bool(
-                    int(os.environ.get(env.DVCLIVE_SUMMARY, "0"))
-                ),
                 "_html": bool(int(os.environ.get(env.DVCLIVE_HTML, "0"))),
                 "_checkpoint": bool(
                     int(os.environ.get(env.DVC_CHECKPOINT, "0"))
@@ -134,8 +117,7 @@ class Live:
                 self._plots.values(),
             ):
                 data.dump(data.val, self._step)
-            if self._summary:
-                self.make_summary()
+            self.make_summary()
 
         if self._html:
             make_html()
@@ -160,8 +142,7 @@ class Live:
 
         data.dump(val, self._step)
 
-        if self._summary:
-            self.make_summary()
+        self.make_summary()
 
     def log_image(self, name: str, val):
         if not Image.could_log(val):
