@@ -43,7 +43,7 @@ tf = ["tensorflow"]
 xgb = ["xgboost"]
 lgbm = ["lightgbm"]
 hugginface = ["transformers", "datasets"]
-catalyst = ["catalyst"]
+catalyst = ["catalyst<=21.12"]
 fastai = ["fastai"]
 pl = ["pytorch_lightning"]
 
