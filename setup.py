@@ -36,6 +36,7 @@ class build_py(_build_py):
         _build_py.run(self)
 
 
+render = ["dvc_render"]
 image = ["pillow"]
 plots = ["scikit-learn"]
 mmcv = ["mmcv"]
@@ -47,7 +48,19 @@ catalyst = ["catalyst<=21.12"]
 fastai = ["fastai"]
 pl = ["pytorch_lightning<1.6"]
 
-all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai + pl + plots
+all_libs = (
+    render
+    + image
+    + mmcv
+    + tf
+    + xgb
+    + lgbm
+    + hugginface
+    + catalyst
+    + fastai
+    + pl
+    + plots
+)
 
 tests_requires = [
     "pylint==2.5.3",
@@ -69,6 +82,7 @@ setup(
     packages=find_packages(exclude="tests"),
     description="Metric logger for ML projects.",
     long_description=open("README.rst", "r", encoding="UTF-8").read(),
+    install_requires=render,
     extras_require={
         "tests": tests_requires,
         "all": all_libs,
