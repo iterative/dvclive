@@ -8,12 +8,13 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from .data import DATA_TYPES, PLOTS, Image, Scalar
-from .dvc import make_checkpoint, make_html
+from .dvc import make_checkpoint
 from .error import (
     ConfigMismatchError,
     InvalidDataTypeError,
     InvalidPlotTypeError,
 )
+from .report import html_report
 from .utils import nested_update
 
 logger = logging.getLogger(__name__)
@@ -22,16 +23,26 @@ logger = logging.getLogger(__name__)
 class Live:
     DEFAULT_DIR = "dvclive"
 
-    def __init__(self, path: Optional[str] = None, resume: bool = False):
+    def __init__(
+        self,
+        path: Optional[str] = None,
+        resume: bool = False,
+        report: Optional[str] = "html",
+    ):
+
         self._path: Optional[str] = path
         self._resume: bool = resume
-        self._html: bool = True
+        self._report: str = report
         self._checkpoint: bool = False
 
         self.init_from_env()
 
         if self._path is None:
             self._path = self.DEFAULT_DIR
+
+        if self._report is not None:
+            out = Path(self.html_path).resolve()
+            print(f"Report will be saved at {out}")
 
         self._step: Optional[int] = None
         self._scalars: Dict[str, Any] = OrderedDict()
@@ -52,18 +63,12 @@ class Live:
                 Path(self.dir) / data_type.subfolder, ignore_errors=True
             )
 
-        if os.path.exists(self.summary_path):
-            os.remove(self.summary_path)
-
-        if os.path.exists(self.html_path):
-            shutil.rmtree(Path(self.html_path).parent, ignore_errors=True)
+        for f in {self.summary_path, self.html_path}:
+            if os.path.exists(f):
+                os.remove(f)
 
     def _init_paths(self):
-        if self._step is not None:
-            os.makedirs(self.dir, exist_ok=True)
-            if self._html:
-                os.makedirs(Path(self.html_path).parent, exist_ok=True)
-        os.makedirs(Path(self.summary_path).parent, exist_ok=True)
+        os.makedirs(self.dir, exist_ok=True)
 
     def init_from_env(self) -> None:
         from . import env
@@ -75,12 +80,14 @@ class Live:
 
             env_config = {
                 "_path": os.environ.get(env.DVCLIVE_PATH),
-                "_html": bool(int(os.environ.get(env.DVCLIVE_HTML, "0"))),
                 "_checkpoint": bool(
                     int(os.environ.get(env.DVC_CHECKPOINT, "0"))
                 ),
                 "_resume": bool(int(os.environ.get(env.DVCLIVE_RESUME, "0"))),
             }
+            if not bool(int(os.environ.get(env.DVCLIVE_HTML, "0"))):
+                env_config["_report"] = None
+
             for k, v in env_config.items():
                 if getattr(self, k) != v:
                     logger.info(
@@ -102,7 +109,7 @@ class Live:
 
     @property
     def html_path(self):
-        return str(self.dir) + "_dvc_plots/index.html"
+        return os.path.join(self.dir, "report.html")
 
     def get_step(self) -> int:
         return self._step or 0
@@ -119,8 +126,7 @@ class Live:
                 data.dump(data.val, self._step)
             self.make_summary()
 
-        if self._html:
-            make_html()
+        self.make_report()
 
         if self._checkpoint:
             make_checkpoint()
@@ -179,6 +185,10 @@ class Live:
 
         with open(self.summary_path, "w") as f:
             json.dump(summary_data, f, indent=4)
+
+    def make_report(self):
+        if self._report == "html":
+            html_report(self.dir, self.summary_path, self.html_path)
 
     def read_step(self):
         if Path(self.summary_path).exists():
