@@ -1,4 +1,3 @@
-import csv
 import json
 import os
 from pathlib import Path
@@ -10,12 +9,12 @@ from dvclive import Live, env
 from dvclive.data import Scalar
 
 # pylint: disable=unused-argument
-from dvclive.dvc import SIGNAL_FILE
 from dvclive.error import (
     ConfigMismatchError,
     DataAlreadyLoggedError,
     InvalidDataTypeError,
 )
+from dvclive.utils import parse_tsv
 
 
 def read_logs(path: str):
@@ -25,7 +24,7 @@ def read_logs(path: str):
     for metric_file in path.rglob("*.tsv"):
         metric_name = str(metric_file).replace(str(path) + os.path.sep, "")
         metric_name = metric_name.replace(".tsv", "")
-        history[metric_name] = _parse_tsv(metric_file)
+        history[metric_name] = parse_tsv(metric_file)
     latest = _parse_json(str(path.parent) + ".json")
     return history, latest
 
@@ -45,12 +44,6 @@ def read_latest(path, metric_name):
     return latest["step"], latest[metric_name]
 
 
-def _parse_tsv(path):
-    with open(path, "r") as fd:
-        reader = csv.DictReader(fd, delimiter="\t")
-        return list(reader)
-
-
 def _parse_json(path):
     with open(path, "r") as fd:
         return json.load(fd)
@@ -61,7 +54,6 @@ def test_logging_no_step(tmp_dir):
 
     dvclive.log("m1", 1)
 
-    assert not (tmp_dir / "logs").is_dir()
     assert not (tmp_dir / "logs" / "m1.tsv").is_file()
     assert (tmp_dir / dvclive.summary_path).is_file()
 
@@ -108,36 +100,11 @@ def test_nested_logging(tmp_dir):
 
 
 @pytest.mark.parametrize(
-    "dvc_repo,html,signal_exists",
-    [
-        (True, False, False),
-        (True, True, True),
-        (False, True, False),
-        (False, False, False),
-    ],
-)
-def test_html(tmp_dir, dvc_repo, html, signal_exists, monkeypatch):
-    if dvc_repo:
-        from dvc.repo import Repo
-
-        Repo.init(no_scm=True)
-
-    monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
-    monkeypatch.setenv(env.DVCLIVE_HTML, str(int(html)))
-
-    dvclive = Live()
-    dvclive.log("m1", 1)
-    dvclive.next_step()
-
-    assert (tmp_dir / ".dvc" / "tmp" / SIGNAL_FILE).is_file() == signal_exists
-
-
-@pytest.mark.parametrize(
     "html",
     [True, False],
 )
 def test_cleanup(tmp_dir, html):
-    dvclive = Live("logs")
+    dvclive = Live("logs", report="html" if html else None)
     dvclive.log("m1", 1)
     dvclive.next_step()
 
@@ -245,7 +212,7 @@ def test_init_from_env(tmp_dir, html, monkeypatch):
 
     dvclive = Live()
     assert dvclive._path == "logs"
-    assert dvclive._html == html
+    assert dvclive._report == ("html" if html else None)
 
 
 def test_fail_on_conflict(tmp_dir, monkeypatch):

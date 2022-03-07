@@ -46,8 +46,22 @@ class Plot(Data):
             "DVCLive plots can only be used in no-step mode."
         )
 
+    @staticmethod
+    def get_properties():
+        raise NotImplementedError
+
 
 class Roc(Plot):
+    @staticmethod
+    def get_properties():
+        return {
+            "x": "fpr",
+            "y": "tpr",
+            "title": "Receiver operating characteristic (ROC)",
+            "x_label": "False Positive Rate",
+            "y_label": "True Positive Rate",
+        }
+
     def no_step_dump(self) -> int:
         from sklearn import metrics
 
@@ -64,6 +78,16 @@ class Roc(Plot):
 
 
 class PrecisionRecall(Plot):
+    @staticmethod
+    def get_properties():
+        return {
+            "x": "recall",
+            "y": "precision",
+            "title": "Precision-Recall Curve",
+            "x_label": "Recall",
+            "y_label": "Precision",
+        }
+
     def no_step_dump(self) -> int:
         from sklearn import metrics
 
@@ -72,7 +96,7 @@ class PrecisionRecall(Plot):
         )
 
         prc = {
-            "prc": [
+            "precision_recall": [
                 {"precision": p, "recall": r, "threshold": t}
                 for p, r, t in zip(precision, recall, prc_thresholds)
             ]
@@ -81,6 +105,16 @@ class PrecisionRecall(Plot):
 
 
 class Det(Plot):
+    @staticmethod
+    def get_properties():
+        return {
+            "x": "fpr",
+            "y": "fnr",
+            "title": "Detection error tradeoff (DET)",
+            "x_label": "False Positive Rate",
+            "y_label": "False Negative Rate",
+        }
+
     def no_step_dump(self) -> int:
         from sklearn import metrics
 
@@ -98,6 +132,17 @@ class Det(Plot):
 
 
 class ConfusionMatrix(Plot):
+    @staticmethod
+    def get_properties():
+        return {
+            "template": "confusion",
+            "x": "actual",
+            "y": "predicted",
+            "title": "Confusion Matrix",
+            "x_label": "True Label",
+            "y_label": "Predicted Label",
+        }
+
     def no_step_dump(self) -> int:
         cm = [
             {"actual": str(actual), "predicted": str(predicted)}
@@ -107,6 +152,16 @@ class ConfusionMatrix(Plot):
 
 
 class Calibration(Plot):
+    @staticmethod
+    def get_properties():
+        return {
+            "x": "prob_pred",
+            "y": "prob_true",
+            "title": "Calibration Curve",
+            "x_label": "Mean Predicted Probability",
+            "y_label": "Fraction of Positives",
+        }
+
     def no_step_dump(self) -> int:
         from sklearn import calibration
 

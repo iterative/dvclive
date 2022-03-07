@@ -1,4 +1,7 @@
+import base64
+import csv
 from collections.abc import Mapping
+from pathlib import Path
 
 
 def nested_set(d, keys, value):
@@ -26,3 +29,15 @@ def nested_update(d, u):
         else:
             d[k] = v
     return d
+
+
+def parse_tsv(path):
+    with open(path, "r") as fd:
+        reader = csv.DictReader(fd, delimiter="\t")
+        return list(reader)
+
+
+def to_base64_url(image_file):
+    image_bytes = Path(image_file).read_bytes()
+    base64_str = base64.b64encode(image_bytes).decode()
+    return f"data:image;base64,{base64_str}"
