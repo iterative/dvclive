@@ -15,3 +15,8 @@ def capture_wrap():
     sys.stderr.close = lambda *args: None
     sys.stdout.close = lambda *args: None
     yield
+
+
+@pytest.fixture(autouse=True)
+def mocked_webbrowser_open(mocker):
+    mocker.patch("webbrowser.open")
