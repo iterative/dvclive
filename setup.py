@@ -45,7 +45,7 @@ lgbm = ["lightgbm"]
 hugginface = ["transformers", "datasets"]
 catalyst = ["catalyst<=21.12"]
 fastai = ["fastai"]
-pl = ["pytorch_lightning"]
+pl = ["pytorch_lightning<1.6"]
 
 all_libs = mmcv + tf + xgb + lgbm + hugginface + catalyst + fastai + pl + plots
 
