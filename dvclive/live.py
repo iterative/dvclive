@@ -15,7 +15,7 @@ from .error import (
     InvalidPlotTypeError,
 )
 from .report import html_report
-from .utils import nested_update
+from .utils import nested_update, open_file_in_browser
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +28,14 @@ class Live:
         path: Optional[str] = None,
         resume: bool = False,
         report: Optional[str] = "html",
+        auto_open: bool = True,
     ):
 
         self._path: Optional[str] = path
         self._resume: bool = resume
         self._report: str = report
         self._checkpoint: bool = False
+        self._auto_open: bool = auto_open
 
         self.init_from_env()
 
@@ -189,6 +191,9 @@ class Live:
     def make_report(self):
         if self._report == "html":
             html_report(self.dir, self.summary_path, self.html_path)
+        if self._auto_open:
+            open_file_in_browser(self.html_path)
+            self._auto_open = False
 
     def read_step(self):
         if Path(self.summary_path).exists():
