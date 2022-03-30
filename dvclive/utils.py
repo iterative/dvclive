@@ -1,7 +1,9 @@
 import base64
 import csv
+import webbrowser
 from collections.abc import Mapping
 from pathlib import Path
+from platform import uname
 
 
 def nested_set(d, keys, value):
@@ -41,3 +43,10 @@ def to_base64_url(image_file):
     image_bytes = Path(image_file).read_bytes()
     base64_str = base64.b64encode(image_bytes).decode()
     return f"data:image;base64,{base64_str}"
+
+
+def open_file_in_browser(file) -> bool:
+    path = Path(file)
+    url = path if "Microsoft" in uname().release else path.resolve().as_uri()
+
+    return webbrowser.open(url)
