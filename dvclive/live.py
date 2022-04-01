@@ -191,9 +191,9 @@ class Live:
     def make_report(self):
         if self._report == "html":
             html_report(self.dir, self.summary_path, self.html_path)
-        if self._auto_open:
-            open_file_in_browser(self.html_path)
-            self._auto_open = False
+            if self._auto_open:
+                open_file_in_browser(self.html_path)
+                self._auto_open = False
 
     def read_step(self):
         if Path(self.summary_path).exists():
