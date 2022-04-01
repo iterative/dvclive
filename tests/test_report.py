@@ -73,3 +73,10 @@ def test_make_report_open(tmp_dir, mocker):
     live.make_report()
 
     assert not mocked_open.called
+
+    mocked_open = mocker.patch("webbrowser.open")
+    live = Live(report=None)
+    live.log("foo", 1)
+    live.next_step()
+
+    assert not mocked_open.called
