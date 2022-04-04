@@ -3,12 +3,16 @@ from typing import Dict, Optional
 from pytorch_lightning.loggers import LightningLoggerBase
 from pytorch_lightning.loggers.base import rank_zero_experiment
 from pytorch_lightning.utilities import rank_zero_only
+from pytorch_lightning.utilities.logger import _add_prefix
 from torch import is_tensor
 
 from dvclive import Live
 
 
 class DvcLiveLogger(LightningLoggerBase):
+    
+    LOGGER_JOIN_CHAR = "-"
+    
     def __init__(
         self,
         run_name: Optional[str] = "dvclive_run",
@@ -66,7 +70,7 @@ class DvcLiveLogger(LightningLoggerBase):
             rank_zero_only.rank == 0
         ), "experiment tried to log from global_rank != 0"
 
-        metrics = self._add_prefix(metrics)
+        metrics = _add_prefix(metrics, self._prefix, self.LOGGER_JOIN_CHAR)
         for metric_name, metric_val in metrics.items():
             if is_tensor(metric_val):
                 metric_val = metric_val.cpu().detach().item()
