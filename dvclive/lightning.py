@@ -10,9 +10,9 @@ from dvclive import Live
 
 
 class DvcLiveLogger(LightningLoggerBase):
-    
+
     LOGGER_JOIN_CHAR = "-"
-    
+
     def __init__(
         self,
         run_name: Optional[str] = "dvclive_run",
