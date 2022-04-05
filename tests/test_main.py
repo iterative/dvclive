@@ -212,7 +212,13 @@ def test_init_from_env(tmp_dir, html, monkeypatch):
 
     dvclive = Live()
     assert dvclive._path == "logs"
-    assert dvclive._report == ("html" if html else None)
+    if html:
+        html_path = str(dvclive.dir) + "_dvc_plots/index.html"
+        assert dvclive._report == "html"
+        assert dvclive.html_path == html_path
+    else:
+        assert dvclive._report is None
+        assert dvclive.html_path == os.path.join(dvclive.dir, "report.html")
 
 
 def test_fail_on_conflict(tmp_dir, monkeypatch):
