@@ -36,11 +36,15 @@ class Live:
         self._report: str = report
         self._checkpoint: bool = False
         self._auto_open: bool = auto_open
+        self.html_path = None
 
         self.init_from_env()
 
         if self._path is None:
             self._path = self.DEFAULT_DIR
+
+        if self.html_path is None:
+            self.html_path = os.path.join(self.dir, "report.html")
 
         if self._report is not None:
             out = Path(self.html_path).resolve()
@@ -87,8 +91,13 @@ class Live:
                 ),
                 "_resume": bool(int(os.environ.get(env.DVCLIVE_RESUME, "0"))),
             }
+
+            # Keeping backward compatibility with `live` section
             if not bool(int(os.environ.get(env.DVCLIVE_HTML, "0"))):
                 env_config["_report"] = None
+            else:
+                path = str(env_config["_path"])
+                self.html_path = path + "_dvc_plots/index.html"
 
             for k, v in env_config.items():
                 if getattr(self, k) != v:
@@ -108,10 +117,6 @@ class Live:
     @property
     def summary_path(self):
         return str(self.dir) + ".json"
-
-    @property
-    def html_path(self):
-        return os.path.join(self.dir, "report.html")
 
     def get_step(self) -> int:
         return self._step or 0
