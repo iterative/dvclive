@@ -65,13 +65,6 @@ def test_make_report_open(tmp_dir, mocker):
     live.make_report()
     live.make_report()
 
-    mocked_open.assert_called_once()
-
-    mocked_open = mocker.patch("webbrowser.open")
-    live = Live(auto_open=False)
-    live.log_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
-    live.make_report()
-
     assert not mocked_open.called
 
     mocked_open = mocker.patch("webbrowser.open")
@@ -80,3 +73,10 @@ def test_make_report_open(tmp_dir, mocker):
     live.next_step()
 
     assert not mocked_open.called
+
+    mocked_open = mocker.patch("webbrowser.open")
+    live = Live(auto_open=True)
+    live.log_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
+    live.make_report()
+
+    mocked_open.assert_called_once()

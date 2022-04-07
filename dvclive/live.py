@@ -28,7 +28,7 @@ class Live:
         path: Optional[str] = None,
         resume: bool = False,
         report: Optional[str] = "html",
-        auto_open: bool = True,
+        auto_open: bool = False,
     ):
 
         self._path: Optional[str] = path
