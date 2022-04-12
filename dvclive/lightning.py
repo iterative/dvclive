@@ -18,16 +18,12 @@ class DvcLiveLogger(LightningLoggerBase):
         run_name: Optional[str] = "dvclive_run",
         prefix="",
         experiment=None,
-        path: Optional[str] = None,
-        resume: bool = False,
+        **live_kwargs,
     ):
 
         super().__init__()
         self._prefix = prefix
-        self._dvclive_init = {
-            "path": path,
-            "resume": resume,
-        }
+        self._dvclive_init = live_kwawrgs
         self._experiment = experiment
         self._version = run_name
 
