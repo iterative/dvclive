@@ -7,6 +7,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
+from . import env
 from .data import DATA_TYPES, PLOTS, Image, Scalar
 from .dvc import make_checkpoint
 from .error import (
@@ -15,7 +16,7 @@ from .error import (
     InvalidPlotTypeError,
 )
 from .report import html_report
-from .utils import nested_update, open_file_in_browser
+from .utils import env2bool, nested_update, open_file_in_browser
 
 logger = logging.getLogger(__name__)
 
@@ -28,14 +29,12 @@ class Live:
         path: Optional[str] = None,
         resume: bool = False,
         report: Optional[str] = "html",
-        auto_open: bool = False,
     ):
 
         self._path: Optional[str] = path
         self._resume: bool = resume
         self._report: str = report
         self._checkpoint: bool = False
-        self._auto_open: bool = auto_open
         self.html_path = None
 
         self.init_from_env()
@@ -77,23 +76,19 @@ class Live:
         os.makedirs(self.dir, exist_ok=True)
 
     def init_from_env(self) -> None:
-        from . import env
+        if os.getenv(env.DVCLIVE_PATH):
 
-        if env.DVCLIVE_PATH in os.environ:
-
-            if self.dir and self.dir != os.environ[env.DVCLIVE_PATH]:
+            if self.dir and self.dir != os.getenv(env.DVCLIVE_PATH):
                 raise ConfigMismatchError(self)
 
             env_config = {
-                "_path": os.environ.get(env.DVCLIVE_PATH),
-                "_checkpoint": bool(
-                    int(os.environ.get(env.DVC_CHECKPOINT, "0"))
-                ),
-                "_resume": bool(int(os.environ.get(env.DVCLIVE_RESUME, "0"))),
+                "_path": os.getenv(env.DVCLIVE_PATH),
+                "_checkpoint": env2bool(env.DVC_CHECKPOINT),
+                "_resume": env2bool(env.DVCLIVE_RESUME),
             }
 
             # Keeping backward compatibility with `live` section
-            if not bool(int(os.environ.get(env.DVCLIVE_HTML, "0"))):
+            if not env2bool(env.DVCLIVE_HTML, "0"):
                 env_config["_report"] = None
             else:
                 path = str(env_config["_path"])
@@ -196,9 +191,8 @@ class Live:
     def make_report(self):
         if self._report == "html":
             html_report(self.dir, self.summary_path, self.html_path)
-            if self._auto_open:
+            if env2bool(env.DVCLIVE_OPEN):
                 open_file_in_browser(self.html_path)
-                self._auto_open = False
 
     def read_step(self):
         if Path(self.summary_path).exists():
