@@ -1,5 +1,7 @@
 import base64
 import csv
+import os
+import re
 import webbrowser
 from collections.abc import Mapping
 from pathlib import Path
@@ -45,8 +47,29 @@ def to_base64_url(image_file):
     return f"data:image;base64,{base64_str}"
 
 
+def run_once(f):
+    def wrapper(*args, **kwargs):
+        if not wrapper.has_run:
+            wrapper.has_run = True
+            return f(*args, **kwargs)
+
+    wrapper.has_run = False
+    return wrapper
+
+
+@run_once
 def open_file_in_browser(file) -> bool:
     path = Path(file)
     url = path if "Microsoft" in uname().release else path.resolve().as_uri()
 
     return webbrowser.open(url)
+
+
+def env2bool(var, undefined=False):
+    """
+    undefined: return value if env var is unset
+    """
+    var = os.getenv(var, None)
+    if var is None:
+        return undefined
+    return bool(re.search("1|y|yes|true", var, flags=re.I))

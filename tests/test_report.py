@@ -1,12 +1,14 @@
 # pylint: disable=unused-argument
 import os
 
+import pytest
 from PIL import Image
 
 from dvclive import Live
 from dvclive.data import Image as LiveImage
 from dvclive.data import Scalar
 from dvclive.data.plot import ConfusionMatrix, Plot
+from dvclive.env import DVCLIVE_OPEN
 from dvclive.report import (
     get_image_renderers,
     get_plot_renderers,
@@ -58,7 +60,8 @@ def test_get_renderers(tmp_dir, mocker):
     assert plot_renderers[0].properties == ConfusionMatrix.get_properties()
 
 
-def test_make_report_open(tmp_dir, mocker):
+@pytest.mark.vscode
+def test_make_report_open(tmp_dir, mocker, monkeypatch):
     mocked_open = mocker.patch("webbrowser.open")
     live = Live()
     live.log_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
@@ -67,15 +70,15 @@ def test_make_report_open(tmp_dir, mocker):
 
     assert not mocked_open.called
 
-    mocked_open = mocker.patch("webbrowser.open")
     live = Live(report=None)
     live.log("foo", 1)
     live.next_step()
 
     assert not mocked_open.called
 
-    mocked_open = mocker.patch("webbrowser.open")
-    live = Live(auto_open=True)
+    monkeypatch.setenv(DVCLIVE_OPEN, True)
+
+    live = Live()
     live.log_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
     live.make_report()
 
