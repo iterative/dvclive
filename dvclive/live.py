@@ -32,9 +32,8 @@ class Live:
     ):
 
         self._path: Optional[str] = path
-        self._resume: bool = resume
+        self._resume: bool = resume or env2bool(env.DVCLIVE_RESUME)
         self._report: str = report
-        self._checkpoint: bool = False
         self.html_path = None
 
         self.init_from_env()
@@ -83,8 +82,6 @@ class Live:
 
             env_config = {
                 "_path": os.getenv(env.DVCLIVE_PATH),
-                "_checkpoint": env2bool(env.DVC_CHECKPOINT),
-                "_resume": env2bool(env.DVCLIVE_RESUME),
             }
 
             # Keeping backward compatibility with `live` section
@@ -130,8 +127,7 @@ class Live:
 
         self.make_report()
 
-        if self._checkpoint:
-            make_checkpoint()
+        self.make_checkpoint()
 
         self._step = step
 
@@ -193,6 +189,10 @@ class Live:
             html_report(self.dir, self.summary_path, self.html_path)
             if env2bool(env.DVCLIVE_OPEN):
                 open_file_in_browser(self.html_path)
+
+    def make_checkpoint(self):
+        if env2bool(env.DVC_CHECKPOINT):
+            make_checkpoint()
 
     def read_step(self):
         if Path(self.summary_path).exists():

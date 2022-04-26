@@ -158,6 +158,13 @@ def test_resume_on_first_init(tmp_dir):
     assert dvclive._step == 0
 
 
+def test_resume_env_var(tmp_dir, monkeypatch):
+    assert not Live()._resume
+
+    monkeypatch.setenv(env.DVCLIVE_RESUME, True)
+    assert Live()._resume
+
+
 @pytest.mark.parametrize("metric", ["m1", os.path.join("train", "m1")])
 def test_require_step_update(tmp_dir, metric):
     dvclive = Live("logs")
@@ -279,3 +286,18 @@ def test_get_step_control_flow(tmp_dir):
     steps, values = read_history(out, "i")
     assert steps == list(range(10))
     assert values == [float(x) for x in range(10)]
+
+
+def test_make_checkpoint(tmp_dir, mocker, monkeypatch):
+    make_checkpoint = mocker.patch("dvclive.live.make_checkpoint")
+
+    dvclive = Live()
+    dvclive.log("foo", 1)
+    dvclive.next_step()
+    assert not make_checkpoint.called
+
+    monkeypatch.setenv(env.DVC_CHECKPOINT, True)
+    dvclive = Live()
+    dvclive.log("foo", 1)
+    dvclive.next_step()
+    assert make_checkpoint.called
