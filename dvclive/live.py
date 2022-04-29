@@ -44,10 +44,6 @@ class Live:
         if self.html_path is None:
             self.html_path = os.path.join(self.dir, "report.html")
 
-        if self._report is not None:
-            out = Path(self.html_path).resolve()
-            print(f"Report will be saved at {out}")
-
         self._step: Optional[int] = None
         self._scalars: Dict[str, Any] = OrderedDict()
         self._images: Dict[str, Any] = OrderedDict()
