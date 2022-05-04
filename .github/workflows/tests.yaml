@@ -36,6 +36,7 @@ jobs:
         auto-activate-base: true
         python-version: ${{ matrix.pyv }}
     - name: install
+      shell: bash -l {0}
       run: which pip #pip install ".[tests]"
     - name: install libomp
       # required for xgboost
