@@ -35,7 +35,7 @@ jobs:
         auto-update-conda: true
         python-version: ${{ matrix.pyv }}
     - name: install
-      run: pip install ".[tests]" --use-deprecated=legacy-resolver
+      run: pip install ".[tests]"
     - name: install libomp
       # required for xgboost
       if: runner.os == 'macOS'
