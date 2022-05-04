@@ -41,7 +41,7 @@ jobs:
       # required for xgboost
       if: runner.os == 'macOS'
       shell: bash -l {0}
-      run: conda install libomp -c conda-forge
+      run: conda install libgomp -c conda-forge
     - name: run tests
       shell: bash -l {0}
       run: pytest -v --cov dvclive --cov-report=xml
