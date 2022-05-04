@@ -33,16 +33,17 @@ jobs:
     - uses: conda-incubator/setup-miniconda@v2
       with:
         auto-update-conda: true
-        auto-activate-base: true
         python-version: ${{ matrix.pyv }}
     - name: install
       shell: bash -l {0}
-      run: which pip #pip install ".[tests]"
+      run: pip install ".[tests]"
     - name: install libomp
       # required for xgboost
       if: runner.os == 'macOS'
+      shell: bash -l {0}
       run: conda install libomp -c conda-forge
     - name: run tests
+      shell: bash -l {0}
       run: pytest -v --cov dvclive --cov-report=xml
     - name: upload coverage report
       uses: codecov/codecov-action@v1.0.13
