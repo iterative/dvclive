@@ -36,7 +36,7 @@ jobs:
         auto-activate-base: true
         python-version: ${{ matrix.pyv }}
     - name: install
-      run: pip install ".[tests]"
+      run: which pip #pip install ".[tests]"
     - name: install libomp
       # required for xgboost
       if: runner.os == 'macOS'
