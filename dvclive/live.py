@@ -18,7 +18,9 @@ from .error import (
 from .report import html_report
 from .utils import env2bool, nested_update, open_file_in_browser
 
-logger = logging.getLogger(__name__)
+logging.basicConfig()
+logger = logging.getLogger("dvclive")
+logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "INFO").upper())
 
 
 class Live:
@@ -30,7 +32,6 @@ class Live:
         resume: bool = False,
         report: Optional[str] = "html",
     ):
-
         self._path: Optional[str] = path
         self._resume: bool = resume or env2bool(env.DVCLIVE_RESUME)
         self._report: str = report
@@ -46,7 +47,7 @@ class Live:
 
         if self._report is not None:
             out = Path(self.html_path).resolve()
-            print(f"Report will be saved at {out}")
+            logger.info(f"Report path (if generated): {out}")
 
         self._step: Optional[int] = None
         self._scalars: Dict[str, Any] = OrderedDict()
@@ -57,6 +58,7 @@ class Live:
             self._step = self.read_step()
             if self._step != 0:
                 self._step += 1
+            logger.info(f"Resumed from step {self._step}")
         else:
             self._cleanup()
             self._init_paths()
@@ -130,6 +132,7 @@ class Live:
         self.make_checkpoint()
 
         self._step = step
+        logger.debug(f"Step: {self._step}")
 
     def next_step(self):
         self.set_step(self.get_step() + 1)
@@ -147,6 +150,7 @@ class Live:
         data.dump(val, self._step)
 
         self.make_summary()
+        logger.debug(f"Logged {name}: {val}")
 
     def log_image(self, name: str, val):
         if not Image.could_log(val):
@@ -159,6 +163,7 @@ class Live:
             self._images[name] = data
 
         data.dump(val, self._step)
+        logger.debug(f"Logged {name}: {val}")
 
     def log_plot(self, name, labels, predictions, **kwargs):
         val = (labels, predictions)
@@ -172,6 +177,7 @@ class Live:
             raise InvalidPlotTypeError(name)
 
         data.dump(val, self._step, **kwargs)
+        logger.debug(f"Logged {name}")
 
     def make_summary(self):
         summary_data = {}
@@ -187,6 +193,7 @@ class Live:
     def make_report(self):
         if self._report == "html":
             html_report(self.dir, self.summary_path, self.html_path)
+
             if env2bool(env.DVCLIVE_OPEN):
                 open_file_in_browser(self.html_path)
 
