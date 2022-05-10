@@ -301,3 +301,19 @@ def test_make_checkpoint(tmp_dir, mocker, monkeypatch):
     dvclive.log("foo", 1)
     dvclive.next_step()
     assert make_checkpoint.called
+
+
+def test_logger(tmp_dir, mocker, monkeypatch):
+    logger = mocker.patch("dvclive.live.logger")
+    monkeypatch.setenv(env.DVCLIVE_LOGLEVEL, "DEBUG")
+
+    live = Live()
+    msg = "Report path (if generated)"
+    assert msg in logger.info.call_args[0][0]
+    live.log("foo", 0)
+    logger.debug.assert_called_with("Logged foo: 0")
+    live.next_step()
+    logger.debug.assert_called_with("Step: 1")
+
+    live = Live(resume=True)
+    logger.info.assert_called_with("Resumed from step 0")
