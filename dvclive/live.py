@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from . import env
-from .data import DATA_TYPES, PLOTS, Image, Scalar
+from .data import DATA_TYPES, PLOTS, Image, NumpyEncoder, Scalar
 from .dvc import make_checkpoint
 from .error import (
     ConfigMismatchError,
@@ -188,7 +188,7 @@ class Live:
             summary_data = nested_update(summary_data, data.summary)
 
         with open(self.summary_path, "w") as f:
-            json.dump(summary_data, f, indent=4)
+            json.dump(summary_data, f, indent=4, cls=NumpyEncoder)
 
     def make_report(self):
         if self._report == "html":
