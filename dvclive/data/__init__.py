@@ -1,6 +1,7 @@
 from .image import Image
 from .plot import Calibration, ConfusionMatrix, Det, PrecisionRecall, Roc
 from .scalar import Scalar
+from .utils import NumpyEncoder  # noqa: F401
 
 PLOTS = {
     "calibration": Calibration,
