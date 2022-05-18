@@ -46,7 +46,7 @@ lgbm = ["lightgbm"]
 hugginface = ["transformers", "datasets"]
 catalyst = ["catalyst<=21.12"]
 fastai = ["fastai"]
-pl = ["pytorch_lightning<1.6"]
+pl = ["pytorch_lightning>=1.6"]
 
 all_libs = (
     render
