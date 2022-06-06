@@ -82,6 +82,8 @@ setup(
     packages=find_packages(exclude="tests"),
     description="Metric logger for ML projects.",
     long_description=open("README.rst", "r", encoding="UTF-8").read(),
+    license="Apache License 2.0",
+    license_files=("LICENSE",),
     install_requires=render,
     extras_require={
         "tests": tests_requires,
