@@ -48,7 +48,7 @@ def test_fastai_callback(tmp_dir, data_loader):
     assert os.path.exists("dvclive")
 
     train_path = tmp_dir / "dvclive" / Scalar.subfolder / "train"
-    valid_path = tmp_dir / "dvclive" / Scalar.subfolder / "valid"
+    valid_path = tmp_dir / "dvclive" / Scalar.subfolder / "eval"
 
     assert train_path.is_dir()
     assert valid_path.is_dir()

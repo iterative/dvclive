@@ -73,3 +73,32 @@ def env2bool(var, undefined=False):
     if var is None:
         return undefined
     return bool(re.search("1|y|yes|true", var, flags=re.I))
+
+
+def standardize_metric_name(metric_name: str, framework: str) -> str:
+    """Map framework-specific format to DVCLive standard.
+
+    Use `{split}/` as prefix in order to seperate by subfolders.
+    Use `{train|eval}` as split name.
+    """
+    if framework == "dvclive.fastai":
+        metric_name = metric_name.replace("train_", "train/")
+        metric_name = metric_name.replace("valid_", "eval/")
+
+    elif framework == "dvclive.huggingface":
+        for split in {"train", "eval"}:
+            metric_name = metric_name.replace(f"{split}_", f"{split}/")
+
+    elif framework == "dvclive.keras":
+        if "val_" in metric_name:
+            metric_name = metric_name.replace("val_", "eval/")
+        else:
+            metric_name = f"train/{metric_name}"
+
+    elif framework == "dvclive.lightning":
+        parts = metric_name.split("_")
+        if len(parts) > 2:
+            split, *rest, freq = parts
+            metric_name = f"{split}/{freq}/{'_'.join(rest)}"
+
+    return metric_name

@@ -8,6 +8,7 @@ from tensorflow.keras.models import (  # noqa pylint: disable=import-error, no-n
 )
 
 from dvclive import Live
+from dvclive.utils import standardize_metric_name
 
 
 class DvcLiveCallback(Callback):
@@ -39,7 +40,7 @@ class DvcLiveCallback(Callback):
     ):  # pylint: disable=unused-argument
         logs = logs or {}
         for metric, value in logs.items():
-            self.dvclive.log(metric, value)
+            self.dvclive.log(standardize_metric_name(metric, __name__), value)
         if self.model_file:
             if self.save_weights_only:
                 self.model.save_weights(self.model_file)

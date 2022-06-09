@@ -1,6 +1,7 @@
 from fastai.callback.core import Callback
 
 from dvclive import Live
+from dvclive.utils import standardize_metric_name
 
 
 class DvcLiveCallback(Callback):
@@ -13,8 +14,9 @@ class DvcLiveCallback(Callback):
         for key, value in zip(
             self.learn.recorder.metric_names, self.learn.recorder.log
         ):
-            key = key.replace("_", "/")
-            self.dvclive.log(f"{key}", float(value))
+            self.dvclive.log(
+                standardize_metric_name(key, __name__), float(value)
+            )
 
         if self.model_file:
             self.learn.save(self.model_file)

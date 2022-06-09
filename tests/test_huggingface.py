@@ -82,10 +82,11 @@ def test_huggingface_integration(tmp_dir, model, args, data, tokenizer):
     logs, _ = read_logs(tmp_dir / "dvclive" / Scalar.subfolder)
 
     assert len(logs) == 10
-    assert "eval_matthews_correlation" in logs
-    assert "eval_loss" in logs
+    assert os.path.join("eval", "matthews_correlation") in logs
+    assert os.path.join("eval", "loss") in logs
+    assert os.path.join("train", "loss") in logs
     assert len(logs["epoch"]) == 3
-    assert len(logs["eval_loss"]) == 2
+    assert len(logs[os.path.join("eval", "loss")]) == 2
 
 
 def test_huggingface_model_file(tmp_dir, model, args, data, tokenizer, mocker):
