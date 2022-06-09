@@ -96,6 +96,6 @@ def test_lightning_integration(tmp_dir):
     logs, _ = read_logs(tmp_dir / "logs" / Scalar.subfolder)
 
     assert len(logs) == 3
-    assert "train_loss_step" in logs
-    assert "train_loss_epoch" in logs
+    assert os.path.join("train", "epoch", "loss") in logs
+    assert os.path.join("train", "step", "loss") in logs
     assert "epoch" in logs

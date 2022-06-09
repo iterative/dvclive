@@ -6,6 +6,7 @@ from transformers import (
 )
 
 from dvclive import Live
+from dvclive.utils import standardize_metric_name
 
 
 class DvcLiveCallback(TrainerCallback):
@@ -23,7 +24,7 @@ class DvcLiveCallback(TrainerCallback):
     ):
         logs = kwargs["logs"]
         for key, value in logs.items():
-            self.dvclive.log(key, value)
+            self.dvclive.log(standardize_metric_name(key, __name__), value)
         self.dvclive.next_step()
 
     def on_epoch_end(
