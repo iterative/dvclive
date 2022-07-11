@@ -21,7 +21,7 @@ version = dvclive_version.__version__
 # `__version__` that your package can read at runtime, assuring consistency.
 #
 # References:
-#   - https://docs.python.org/3.7/distutils/extending.html
+#   - https://docs.python.org/3/distutils/extending.html
 #   - https://github.com/python/mypy
 class build_py(_build_py):
     def pin_version(self):
@@ -101,7 +101,7 @@ setup(
         "plots": plots,
     },
     keywords="data-science metrics machine-learning developer-tools ai",
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     cmdclass={"build_py": build_py},
     url="https://dvc.org/doc/dvclive",
     download_url="https://github.com/iterative/dvclive",
