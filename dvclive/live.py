@@ -15,7 +15,7 @@ from .error import (
     InvalidDataTypeError,
     InvalidPlotTypeError,
 )
-from .report import html_report
+from .report import make_report
 from .utils import env2bool, nested_update, open_file_in_browser
 
 logging.basicConfig()
@@ -30,23 +30,34 @@ class Live:
         self,
         path: Optional[str] = None,
         resume: bool = False,
-        report: Optional[str] = "html",
+        report: Optional[str] = "auto",
     ):
         self._path: Optional[str] = path
         self._resume: bool = resume or env2bool(env.DVCLIVE_RESUME)
-        self._report: str = report
-        self.html_path = None
+
+        if report == "auto":
+            if env2bool("CI"):
+                report = "md"
+            else:
+                report = "html"
+        else:
+            if report not in {None, "html", "md"}:
+                raise ValueError(
+                    "`report` can only be `None`, `auto`, `html` or `md`"
+                )
+
+        self._report: Optional[str] = report
+        self.report_path = ""
 
         self.init_from_env()
 
         if self._path is None:
             self._path = self.DEFAULT_DIR
 
-        if self.html_path is None:
-            self.html_path = os.path.join(self.dir, "report.html")
-
         if self._report is not None:
-            out = Path(self.html_path).resolve()
+            if not self.report_path:
+                self.report_path = os.path.join(self.dir, f"report.{report}")
+            out = Path(self.report_path).resolve()
             logger.info(f"Report path (if generated): {out}")
 
         self._step: Optional[int] = None
@@ -69,7 +80,7 @@ class Live:
                 Path(self.dir) / data_type.subfolder, ignore_errors=True
             )
 
-        for f in {self.summary_path, self.html_path}:
+        for f in {self.summary_path, self.report_path}:
             if os.path.exists(f):
                 os.remove(f)
 
@@ -90,8 +101,9 @@ class Live:
             if not env2bool(env.DVCLIVE_HTML, "0"):
                 env_config["_report"] = None
             else:
+                env_config["_report"] = "html"
                 path = str(env_config["_path"])
-                self.html_path = path + "_dvc_plots/index.html"
+                self.report_path = path + "_dvc_plots/index.html"
 
             for k, v in env_config.items():
                 if getattr(self, k) != v:
@@ -191,11 +203,13 @@ class Live:
             json.dump(summary_data, f, indent=4, cls=NumpyEncoder)
 
     def make_report(self):
-        if self._report == "html":
-            html_report(self.dir, self.summary_path, self.html_path)
+        if self._report is not None:
+            make_report(
+                self.dir, self.summary_path, self.report_path, self._report
+            )
 
-            if env2bool(env.DVCLIVE_OPEN):
-                open_file_in_browser(self.html_path)
+            if self._report == "html" and env2bool(env.DVCLIVE_OPEN):
+                open_file_in_browser(self.report_path)
 
     def make_checkpoint(self):
         if env2bool(env.DVC_CHECKPOINT):

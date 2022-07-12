@@ -108,7 +108,7 @@ def test_cleanup(tmp_dir, html):
     dvclive.log("m1", 1)
     dvclive.next_step()
 
-    html_path = tmp_dir / dvclive.html_path
+    html_path = tmp_dir / dvclive.report_path
     if html:
         html_path.touch()
 
@@ -222,10 +222,10 @@ def test_init_from_env(tmp_dir, html, monkeypatch):
     if html:
         html_path = str(dvclive.dir) + "_dvc_plots/index.html"
         assert dvclive._report == "html"
-        assert dvclive.html_path == html_path
+        assert dvclive.report_path == html_path
     else:
         assert dvclive._report is None
-        assert dvclive.html_path == os.path.join(dvclive.dir, "report.html")
+        assert dvclive.report_path == ""
 
 
 def test_fail_on_conflict(tmp_dir, monkeypatch):

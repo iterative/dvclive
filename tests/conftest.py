@@ -20,3 +20,8 @@ def capture_wrap():
 @pytest.fixture(autouse=True)
 def mocked_webbrowser_open(mocker):
     mocker.patch("webbrowser.open")
+
+
+@pytest.fixture(autouse=True)
+def mocked_CI(monkeypatch):
+    monkeypatch.setenv("CI", "false")
