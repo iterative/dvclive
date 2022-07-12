@@ -1,4 +1,3 @@
-import base64
 import csv
 import os
 import re
@@ -39,12 +38,6 @@ def parse_tsv(path):
     with open(path, "r") as fd:
         reader = csv.DictReader(fd, delimiter="\t")
         return list(reader)
-
-
-def to_base64_url(image_file):
-    image_bytes = Path(image_file).read_bytes()
-    base64_str = base64.b64encode(image_bytes).decode()
-    return f"data:image;base64,{base64_str}"
 
 
 def run_once(f):

@@ -11,6 +11,7 @@ from dvclive.data.plot import ConfusionMatrix, Plot
 from dvclive.env import DVCLIVE_OPEN
 from dvclive.report import (
     get_image_renderers,
+    get_metrics_renderers,
     get_plot_renderers,
     get_scalar_renderers,
 )
@@ -20,7 +21,7 @@ def test_get_renderers(tmp_dir, mocker):
     live = Live()
 
     for i in range(2):
-        live.log("foo", i)
+        live.log("foo/bar", i)
         img = Image.new("RGB", (10, 10), (i, i, i))
         live.log_image("image.png", img)
         live.next_step()
@@ -45,9 +46,21 @@ def test_get_renderers(tmp_dir, mocker):
     )
     assert len(scalar_renderers) == 1
     assert scalar_renderers[0].datapoints == [
-        {"foo": "0", "rev": "workspace", "step": "0", "timestamp": mocker.ANY},
-        {"foo": "1", "rev": "workspace", "step": "1", "timestamp": mocker.ANY},
+        {
+            "foo/bar": "0",
+            "rev": "workspace",
+            "step": "0",
+            "timestamp": mocker.ANY,
+        },
+        {
+            "foo/bar": "1",
+            "rev": "workspace",
+            "step": "1",
+            "timestamp": mocker.ANY,
+        },
     ]
+    assert scalar_renderers[0].properties["y"] == "foo/bar"
+    assert scalar_renderers[0].name == "static/foo/bar"
 
     plot_renderers = get_plot_renderers(tmp_dir / live.dir / Plot.subfolder)
     assert len(plot_renderers) == 1
@@ -58,6 +71,39 @@ def test_get_renderers(tmp_dir, mocker):
         {"actual": "1", "rev": "workspace", "predicted": "1"},
     ]
     assert plot_renderers[0].properties == ConfusionMatrix.get_properties()
+
+    metrics_renderer = get_metrics_renderers(live.summary_path)[0]
+    assert metrics_renderer.datapoints == [{"step": 1, "foo": {"bar": 1}}]
+
+
+def test_report_init(monkeypatch):
+    monkeypatch.setenv("CI", "false")
+    live = Live()
+    assert live._report == "html"
+
+    monkeypatch.setenv("CI", "true")
+    live = Live()
+    assert live._report == "md"
+
+    for report in {None, "html", "md"}:
+        live = Live(report=report)
+        assert live._report == report
+
+    with pytest.raises(ValueError):
+        Live(report="foo")
+
+
+@pytest.mark.parametrize("mode", ["html", "md"])
+def test_make_report(tmp_dir, mode):
+    live = Live(report=mode)
+    for i in range(3):
+        live.log("foobar", i)
+        live.log("foo/bar", i)
+        live.next_step()
+
+    # Format of the report is tested in `dvc-render`
+    assert (tmp_dir / live.report_path).exists()
+    assert (tmp_dir / live.dir / "static").exists() == (mode == "md")
 
 
 @pytest.mark.vscode
