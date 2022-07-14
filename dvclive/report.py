@@ -3,6 +3,7 @@ from pathlib import Path
 
 from dvc_render.html import render_html
 from dvc_render.image import ImageRenderer
+from dvc_render.table import TableRenderer
 from dvc_render.vega import VegaRenderer
 
 from dvclive.data import PLOTS, Image, Scalar
@@ -54,19 +55,15 @@ def get_plot_renderers(plots_folder):
     return renderers
 
 
-def get_metrics(dvclive_summary):
+def get_metrics_renderers(dvclive_summary):
     summary_path = Path(dvclive_summary)
     if summary_path.exists():
-        return {
-            "": {
-                "data": {
-                    summary_path.name: {
-                        "data": json.loads(summary_path.read_text())
-                    }
-                }
-            }
-        }
-    return {}
+        return [
+            TableRenderer(
+                [json.loads(summary_path.read_text())], summary_path.name
+            )
+        ]
+    return []
 
 
 def html_report(dvclive_folder, dvclive_summary, output_html_path):
@@ -75,8 +72,6 @@ def html_report(dvclive_folder, dvclive_summary, output_html_path):
     renderers.extend(get_scalar_renderers(dvclive_path / Scalar.subfolder))
     renderers.extend(get_image_renderers(dvclive_path / Image.subfolder))
     renderers.extend(get_plot_renderers(dvclive_path / Plot.subfolder))
+    renderers.extend(get_metrics_renderers(dvclive_summary))
 
-    metrics = get_metrics(dvclive_summary)
-    render_html(
-        renderers, output_html_path, metrics=metrics, refresh_seconds=5
-    )
+    render_html(renderers, output_html_path, refresh_seconds=5)
