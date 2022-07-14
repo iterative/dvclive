@@ -36,7 +36,7 @@ class build_py(_build_py):
         _build_py.run(self)
 
 
-render = ["dvc_render"]
+render = ["dvc_render[table]>=0.0.8"]
 image = ["pillow"]
 plots = ["scikit-learn"]
 mmcv = ["mmcv"]
