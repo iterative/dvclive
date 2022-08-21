@@ -21,7 +21,6 @@ jobs:
       run: ./scripts/build_package.sh
     - name: Publish packages to PyPI
       if: github.event_name == 'release'
-      uses: pypa/gh-action-pypi-publish@master
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        user: __token__
         password: ${{ secrets.PYPI_TOKEN }}
