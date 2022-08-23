@@ -86,7 +86,7 @@ def test_lightning_integration(tmp_dir):
     # init logger
     dvclive_logger = DvcLiveLogger("test_run", path="logs")
     trainer = Trainer(
-        logger=dvclive_logger, max_epochs=1, checkpoint_callback=False
+        logger=dvclive_logger, max_epochs=1, enable_checkpointing=False
     )
     trainer.fit(model)
 
