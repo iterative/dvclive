@@ -37,7 +37,7 @@ jobs:
       with:
         python-version: ${{ matrix.pyv }}
     - name: install
-      run: pip install wheel "torchmetrics<0.7.0" ".[tests]" --use-deprecated=legacy-resolver
+      run: pip install wheel ".[tests]" --use-deprecated=legacy-resolver
     - name: install libomp
       # required for xgboost
       if: runner.os == 'macOS'
