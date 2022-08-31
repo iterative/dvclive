@@ -1,3 +1,9 @@
+[build-system]
+requires = ["setuptools>=48", "setuptools_scm[toml]>=6.3.1"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
 [tool.black]
 line-length = 79
 include = '\.pyi?$'
@@ -15,3 +21,62 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.isort]
+profile = "black"
+known_first_party = ["dvclive"]
+line_length = 79
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+
+[tool.coverage.run]
+branch = true
+source = ["dvclive", "tests"]
+
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "if typing.TYPE_CHECKING:",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "raise AssertionError",
+    "@overload",
+]
+
+[tool.mypy]
+# Error output
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+show_traceback = true
+pretty = true
+check_untyped_defs = false
+# Warnings
+warn_no_return = true
+warn_redundant_casts = true
+warn_unreachable = true
+ignore_missing_imports = true
+files = ["src", "tests"]
+
+[tool.pylint.message_control]
+enable = ["c-extension-no-member", "no-else-return"]
+disable = [
+    "format", "refactoring", "spelling", "design",
+    "invalid-name", "duplicate-code", "fixme",
+    "unused-wildcard-import", "cyclic-import", "wrong-import-order",
+    "wrong-import-position", "ungrouped-imports", "multiple-imports",
+    "logging-format-interpolation", "logging-fstring-interpolation",
+    "missing-function-docstring", "missing-module-docstring",
+    "missing-class-docstring", "raise-missing-from", "import-outside-toplevel",
+]
+
+[tool.pylint.variables]
+dummy-variables-rgx = "_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_"
+ignored-argument-names = "_.*|^ignored_|^unused_|args|kwargs"
+generated-members = ["torch.*"]
