@@ -1,0 +1,16 @@
+name: Update template
+
+on:
+  schedule:
+    - cron: '5 1 * * *'  # every day at 01:05
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: iterative/py-template@main

@@ -1,0 +1,23 @@
+{
+  "template": "https://github.com/iterative/py-template",
+  "commit": "9d2e2863ebeea39f1ac27523c939fc7a6743a3b4",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "dvclive",
+      "package_name": "dvclive",
+      "friendly_name": "dvclive",
+      "author": "Paweł Redzyński",
+      "email": "pawel@iterative.ai",
+      "github_user": "iterative",
+      "version": "0.0.0",
+      "copyright_year": "2022",
+      "license": "Apache-2.0",
+      "docs": "False",
+      "short_description": "Metric logger for ML projects.",
+      "development_status": "Development Status :: 4 - Beta",
+      "_template": "https://github.com/iterative/py-template"
+    }
+  },
+  "directory": null
+}
