@@ -44,3 +44,5 @@ venv.bak/
 # Editor
 .vscode/
 .idea/
+
+/dvclive/_version.py

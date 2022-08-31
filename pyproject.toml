@@ -1,3 +1,10 @@
+[build-system]
+requires = ["setuptools>=48", "setuptools_scm[toml]>=7"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "dvclive/_version.py"
+
 [tool.black]
 line-length = 79
 include = '\.pyi?$'
