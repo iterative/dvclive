@@ -66,10 +66,6 @@ By submitting a pull request to this project, you agree to license your contribu
    :target: https://codecov.io/gh/iterative/dvclive
    :alt: Codecov
 
-.. |Donate| image:: https://img.shields.io/badge/patreon-donate-green.svg?logo=patreon
-   :target: https://www.patreon.com/DVCorg/overview
-   :alt: Donate
-
 .. |PyPI| image:: https://img.shields.io/pypi/v/dvclive.svg?label=pip&logo=PyPI&logoColor=white
    :target: https://pypi.org/project/dvclive
    :alt: PyPI
