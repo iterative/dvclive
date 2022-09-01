@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 import json
 import os
 from pathlib import Path
@@ -17,8 +18,8 @@ from dvclive.error import (
 from dvclive.utils import parse_tsv
 
 
-def read_logs(path: str):
-    path = Path(path)
+def read_logs(path_: str):
+    path = Path(path_)
     assert path.is_dir()
     history = {}
     for metric_file in path.rglob("*.tsv"):

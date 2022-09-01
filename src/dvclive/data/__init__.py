@@ -10,4 +10,4 @@ PLOTS = {
     "precision_recall": PrecisionRecall,
     "roc": Roc,
 }
-DATA_TYPES = list(PLOTS.values()) + [Scalar, Image]
+DATA_TYPES = (*PLOTS.values(), Scalar, Image)
