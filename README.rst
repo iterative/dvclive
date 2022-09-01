@@ -2,9 +2,7 @@ DVCLive
 =======
 
 
-|CI| |Coverage| |Donate|
-
-|PyPI|
+|CI| |Coverage| |PyPI|
 
 DVCLive is a Python library for logging machine learning metrics and other metadata in simple file formats, which is fully compatible with DVC.
 
@@ -67,10 +65,6 @@ By submitting a pull request to this project, you agree to license your contribu
 .. |Coverage| image:: https://codecov.io/gh/iterative/dvclive/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/iterative/dvclive
    :alt: Codecov
-
-.. |Donate| image:: https://img.shields.io/badge/patreon-donate-green.svg?logo=patreon
-   :target: https://www.patreon.com/DVCorg/overview
-   :alt: Donate
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/dvclive.svg?label=pip&logo=PyPI&logoColor=white
    :target: https://pypi.org/project/dvclive
