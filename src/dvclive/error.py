@@ -42,5 +42,5 @@ class DataAlreadyLoggedError(DvcLiveError):
         self.name = name
         self.val = step
         super().__init__(
-            f"Data '{name}' has already being logged whith step '{step}'"
+            f"Data '{name}' has already been logged with step '{step}'"
         )

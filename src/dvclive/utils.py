@@ -25,7 +25,7 @@ def nested_set(d, keys, value):
 
 
 def nested_update(d, u):
-    """Update values of a nested dictionnary of varying depth"""
+    """Update values of a nested dictionary of varying depth"""
     for k, v in u.items():
         if isinstance(v, Mapping):
             d[k] = nested_update(d.get(k, {}), v)
@@ -71,7 +71,7 @@ def env2bool(var, undefined=False):
 def standardize_metric_name(metric_name: str, framework: str) -> str:
     """Map framework-specific format to DVCLive standard.
 
-    Use `{split}/` as prefix in order to seperate by subfolders.
+    Use `{split}/` as prefix in order to separate by subfolders.
     Use `{train|eval}` as split name.
     """
     if framework == "dvclive.fastai":
