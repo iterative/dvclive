@@ -1,6 +1,6 @@
 import abc
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from dvclive.error import DataAlreadyLoggedError
 
@@ -10,12 +10,12 @@ class Data(abc.ABC):
         self.name = name
         self.output_folder: Path = Path(output_folder) / self.subfolder
         self._step: Optional[int] = None
-        self.val = None
+        self.val: Optional[List[Any]] = None
         self._step_none_logged: bool = False
-        self._dump_kwargs = None
+        self._dump_kwargs: Optional[Dict[str, Any]] = None
 
     @property
-    def step(self) -> int:
+    def step(self) -> Optional[int]:
         return self._step
 
     @step.setter
@@ -50,7 +50,8 @@ class Data(abc.ABC):
     def could_log(val: object) -> bool:
         pass
 
-    def dump(self, val, step, **kwargs):
+    def dump(self, val: List[Any], step: Optional[int], **kwargs):
+        assert val is not None
         self.val = val
         self.step = step
         self._dump_kwargs = kwargs

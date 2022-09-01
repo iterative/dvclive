@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from pytorch_lightning.loggers import LightningLoggerBase
 from pytorch_lightning.loggers.base import rank_zero_experiment
@@ -36,7 +36,7 @@ class DvcLiveLogger(LightningLoggerBase):
     def log_hyperparams(self, params, *args, **kwargs):
         pass
 
-    @property
+    @property  # type: ignore
     @rank_zero_experiment
     def experiment(self):
         r"""
@@ -60,11 +60,9 @@ class DvcLiveLogger(LightningLoggerBase):
         return self._version
 
     @rank_zero_only
-    def log_metrics(
-        self, metrics: Dict[str, float], step: Optional[int] = None
-    ):
+    def log_metrics(self, metrics: Dict[str, Any], step: Optional[int] = None):
         assert (
-            rank_zero_only.rank == 0
+            rank_zero_only.rank == 0  # type: ignore
         ), "experiment tried to log from global_rank != 0"
 
         for metric_name, metric_val in metrics.items():

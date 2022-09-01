@@ -22,7 +22,7 @@ class DvcLiveCallback(Callback):
 
     def on_train_begin(self, logs=None):  # pylint: disable=unused-argument
         if (
-            self.dvclive._resume
+            self.dvclive._resume  # pylint: disable=protected-access
             and self.model_file is not None
             and os.path.exists(self.model_file)
         ):

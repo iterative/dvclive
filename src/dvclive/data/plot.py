@@ -62,7 +62,9 @@ class Roc(Plot):
             "y_label": "True Positive Rate",
         }
 
-    def no_step_dump(self) -> int:
+    def no_step_dump(self) -> None:
+        assert self.val is not None
+
         from sklearn import metrics
 
         fpr, tpr, roc_thresholds = metrics.roc_curve(
@@ -88,7 +90,9 @@ class PrecisionRecall(Plot):
             "y_label": "Precision",
         }
 
-    def no_step_dump(self) -> int:
+    def no_step_dump(self) -> None:
+        assert self.val is not None
+
         from sklearn import metrics
 
         precision, recall, prc_thresholds = metrics.precision_recall_curve(
@@ -115,7 +119,9 @@ class Det(Plot):
             "y_label": "False Negative Rate",
         }
 
-    def no_step_dump(self) -> int:
+    def no_step_dump(self) -> None:
+        assert self.val is not None
+
         from sklearn import metrics
 
         fpr, fnr, roc_thresholds = metrics.det_curve(
@@ -143,7 +149,9 @@ class ConfusionMatrix(Plot):
             "y_label": "Predicted Label",
         }
 
-    def no_step_dump(self) -> int:
+    def no_step_dump(self) -> None:
+        assert self.val is not None
+
         cm = [
             {"actual": str(actual), "predicted": str(predicted)}
             for actual, predicted in zip(self.val[0], self.val[1])
@@ -162,7 +170,9 @@ class Calibration(Plot):
             "y_label": "Fraction of Positives",
         }
 
-    def no_step_dump(self) -> int:
+    def no_step_dump(self) -> None:
+        assert self.val is not None
+
         from sklearn import calibration
 
         prob_true, prob_pred = calibration.calibration_curve(
