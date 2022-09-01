@@ -70,7 +70,8 @@ def get_metrics_renderers(dvclive_summary):
     if summary_path.exists():
         return [
             TableRenderer(
-                [json.loads(summary_path.read_text())], summary_path.name
+                [json.loads(summary_path.read_text(encoding="utf-8"))],
+                summary_path.name,
             )
         ]
     return []

@@ -35,7 +35,7 @@ def nested_update(d, u):
 
 
 def parse_tsv(path):
-    with open(path, "r") as fd:
+    with open(path, "r", encoding="utf-8") as fd:
         reader = csv.DictReader(fd, delimiter="\t")
         return list(reader)
 

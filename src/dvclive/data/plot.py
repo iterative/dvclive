@@ -30,7 +30,7 @@ class Plot(Data):
 
     @staticmethod
     def write_json(content, output_file):
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(content, f, indent=4)
 
     def no_step_dump(self) -> None:
