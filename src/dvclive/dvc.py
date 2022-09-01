@@ -38,7 +38,7 @@ def make_checkpoint():
 
     signal_file = os.path.join(root_dir, ".dvc", "tmp", env.DVC_CHECKPOINT)
 
-    with builtins.open(signal_file, "w") as fobj:
+    with builtins.open(signal_file, "w", encoding="utf-8") as fobj:
         # NOTE: force flushing/writing empty file to disk, otherwise when
         # run in certain contexts (pytest) file may not actually be written
         fobj.write("")

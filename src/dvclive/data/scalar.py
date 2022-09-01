@@ -46,7 +46,7 @@ class Scalar(Data):
         )
 
         existed = self.output_path.exists()
-        with open(self.output_path, "a") as fobj:
+        with open(self.output_path, "a", encoding="utf-8") as fobj:
             writer = csv.DictWriter(fobj, d.keys(), delimiter="\t")
 
             if not existed:

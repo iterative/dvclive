@@ -199,7 +199,7 @@ class Live:
         for data in self._scalars.values():
             summary_data = nested_update(summary_data, data.summary)
 
-        with open(self.summary_path, "w") as f:
+        with open(self.summary_path, "w", encoding="utf-8") as f:
             json.dump(summary_data, f, indent=4, cls=NumpyEncoder)
 
     def make_report(self):
@@ -222,5 +222,5 @@ class Live:
         return 0
 
     def read_latest(self):
-        with open(self.summary_path, "r") as fobj:
+        with open(self.summary_path, "r", encoding="utf-8") as fobj:
             return json.load(fobj)

@@ -46,7 +46,7 @@ def read_latest(path, metric_name):
 
 
 def _parse_json(path):
-    with open(path, "r") as fd:
+    with open(path, "r", encoding="utf-8") as fd:
         return json.load(fd)
 
 
