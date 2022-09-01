@@ -174,7 +174,7 @@ def test_require_step_update(tmp_dir, metric):
 
     with pytest.raises(
         DataAlreadyLoggedError,
-        match="has already being logged whith step 'None'",
+        match="has already been logged with step 'None'",
     ):
         dvclive.log(metric, 2.0)
 
