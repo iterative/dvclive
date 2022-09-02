@@ -288,19 +288,20 @@ def test_get_step_control_flow(tmp_dir):
     assert values == [float(x) for x in range(10)]
 
 
-def test_make_checkpoint(tmp_dir, mocker, monkeypatch):
-    make_checkpoint = mocker.patch("dvclive.live.make_checkpoint")
+@pytest.mark.parametrize("signal", (env.DVC_CHECKPOINT, env.DVC_STUDIO_URL))
+def test_make_signal_file(tmp_dir, mocker, monkeypatch, signal):
+    make_signal_file = mocker.patch("dvclive.live.make_signal_file")
 
     dvclive = Live()
     dvclive.log("foo", 1)
     dvclive.next_step()
-    assert not make_checkpoint.called
+    assert not make_signal_file.called
 
-    monkeypatch.setenv(env.DVC_CHECKPOINT, True)
+    monkeypatch.setenv(signal, True)
     dvclive = Live()
     dvclive.log("foo", 1)
     dvclive.next_step()
-    assert make_checkpoint.called
+    make_signal_file.assert_called_with(signal)
 
 
 def test_logger(tmp_dir, mocker, monkeypatch):

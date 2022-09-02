@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional, Union
 
 from . import env
 from .data import DATA_TYPES, PLOTS, Image, NumpyEncoder, Scalar
-from .dvc import make_checkpoint
+from .dvc import make_signal_file
 from .error import (
     ConfigMismatchError,
     InvalidDataTypeError,
@@ -212,8 +212,9 @@ class Live:
                 open_file_in_browser(self.report_path)
 
     def make_checkpoint(self):
-        if env2bool(env.DVC_CHECKPOINT):
-            make_checkpoint()
+        for signal in (env.DVC_CHECKPOINT, env.DVC_STUDIO_URL):
+            if env2bool(signal):
+                make_signal_file(signal)
 
     def read_step(self):
         if Path(self.summary_path).exists():

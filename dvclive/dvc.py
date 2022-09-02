@@ -2,7 +2,7 @@ import os
 
 from . import env
 
-_CHECKPOINT_SLEEP = 0.1
+_SIGNAL_SLEEP = 0.1
 
 
 def _dvc_dir(dirname):
@@ -28,7 +28,7 @@ def _find_dvc_root(root=None):
     return None
 
 
-def make_checkpoint():
+def make_signal_file(signal=env.DVC_CHECKPOINT):
     import builtins
     from time import sleep
 
@@ -36,7 +36,7 @@ def make_checkpoint():
     if not root_dir:
         return
 
-    signal_file = os.path.join(root_dir, ".dvc", "tmp", env.DVC_CHECKPOINT)
+    signal_file = os.path.join(root_dir, ".dvc", "tmp", signal)
 
     with builtins.open(signal_file, "w") as fobj:
         # NOTE: force flushing/writing empty file to disk, otherwise when
@@ -45,4 +45,4 @@ def make_checkpoint():
         fobj.flush()
         os.fsync(fobj.fileno())
     while os.path.exists(signal_file):
-        sleep(_CHECKPOINT_SLEEP)
+        sleep(_SIGNAL_SLEEP)
