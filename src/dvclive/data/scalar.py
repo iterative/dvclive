@@ -25,9 +25,9 @@ class Scalar(Data):
 
     @property
     def output_path(self) -> Path:
-        _path = self.output_folder / self.name
+        _path = Path(f"{self.output_folder / self.name}.tsv")
         _path.parent.mkdir(exist_ok=True, parents=True)
-        return _path.with_suffix(".tsv")
+        return _path
 
     @property
     def no_step_output_path(self) -> Path:
