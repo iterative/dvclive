@@ -84,7 +84,6 @@ def make_report(dvclive_folder, dvclive_summary, output_path, mode):
     renderers.extend(get_scalar_renderers(dvclive_path / Scalar.subfolder))
     renderers.extend(get_image_renderers(dvclive_path / Image.subfolder))
     renderers.extend(get_plot_renderers(dvclive_path / Plot.subfolder))
-    renderers.extend(get_metrics_renderers(dvclive_summary))
 
     if mode == "html":
         render_html(renderers, output_path, refresh_seconds=5)
