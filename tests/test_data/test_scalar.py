@@ -23,3 +23,16 @@ def test_numpy(tmp_dir, dtype):
     tsv_file = tmp_dir / live.dir / Scalar.subfolder / "scalar.tsv"
     tsv_val = parse_tsv(tsv_file)[0]["scalar"]
     assert tsv_val == str(scalar)
+
+
+def test_name_with_dot(tmp_dir):
+    """Regression test for #284"""
+    live = Live()
+
+    live.log("scalar.foo.bar", 1.0)
+    live.next_step()
+
+    tsv_file = tmp_dir / live.dir / Scalar.subfolder / "scalar.foo.bar.tsv"
+    assert tsv_file.exists()
+    tsv_val = parse_tsv(tsv_file)[0]["scalar.foo.bar"]
+    assert tsv_val == "1.0"

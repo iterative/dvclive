@@ -10,9 +10,9 @@ class Plot(Data):
 
     @property
     def output_path(self) -> Path:
-        _path = self.output_folder / self.name
+        _path = Path(f"{self.output_folder / self.name}.json")
         _path.parent.mkdir(exist_ok=True, parents=True)
-        return _path.with_suffix(".json")
+        return _path
 
     @staticmethod
     def could_log(val: object) -> bool:
