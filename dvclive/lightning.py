@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 
-from pytorch_lightning.loggers import LightningLoggerBase
-from pytorch_lightning.loggers.base import rank_zero_experiment
+from pytorch_lightning.loggers.logger import Logger
+from pytorch_lightning.loggers.logger import rank_zero_experiment
 from pytorch_lightning.utilities import rank_zero_only
 from torch import is_tensor
 
@@ -9,7 +9,7 @@ from dvclive import Live
 from dvclive.utils import standardize_metric_name
 
 
-class DvcLiveLogger(LightningLoggerBase):
+class DvcLiveLogger(Logger):
     def __init__(
         self,
         run_name: Optional[str] = "dvclive_run",
