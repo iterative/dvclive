@@ -1,7 +1,6 @@
 from typing import Dict, Optional
 
-from pytorch_lightning.loggers.logger import Logger
-from pytorch_lightning.loggers.logger import rank_zero_experiment
+from pytorch_lightning.loggers.logger import Logger, rank_zero_experiment
 from pytorch_lightning.utilities import rank_zero_only
 from torch import is_tensor
 
