@@ -32,7 +32,7 @@ addopts = "-ra"
 
 [tool.coverage.run]
 branch = true
-source = ["dvclive", "tests"]
+source = ["src/dvclive", "tests"]
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]

@@ -7,20 +7,31 @@ from itertools import chain
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
+from ruamel.yaml.representer import RepresenterError
+
 from . import env
 from .data import DATA_TYPES, PLOTS, Image, NumpyEncoder, Scalar
 from .dvc import make_checkpoint
 from .error import (
     ConfigMismatchError,
     InvalidDataTypeError,
+    InvalidParameterTypeError,
     InvalidPlotTypeError,
+    ParameterAlreadyLoggedError,
 )
 from .report import make_report
+from .serialize import dump_yaml, load_yaml
 from .utils import env2bool, nested_update, open_file_in_browser
 
 logging.basicConfig()
 logger = logging.getLogger("dvclive")
 logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "INFO").upper())
+
+
+# Recursive type aliases are not yet supported by mypy (as of 0.971),
+# so we set type: ignore for ParamLike.
+#  See https://github.com/python/mypy/issues/731#issuecomment-1213482527
+ParamLike = Union[int, float, str, bool, Dict[str, "ParamLike"]]  # type: ignore # noqa
 
 
 class Live:
@@ -54,6 +65,8 @@ class Live:
         if self._path is None:
             self._path = self.DEFAULT_DIR
 
+        self._params_path = os.path.join(self._path, "params.yaml")
+
         if self._report is not None:
             if not self.report_path:
                 self.report_path = os.path.join(self.dir, f"report.{report}")
@@ -64,15 +77,17 @@ class Live:
         self._scalars: Dict[str, Any] = OrderedDict()
         self._images: Dict[str, Any] = OrderedDict()
         self._plots: Dict[str, Any] = OrderedDict()
+        self._params: Dict[str, Any] = OrderedDict()
 
+        self._init_paths()
         if self._resume:
+            self._read_params()
             self._step = self.read_step()
             if self._step != 0:
                 self._step += 1
             logger.info(f"Resumed from step {self._step}")
         else:
             self._cleanup()
-            self._init_paths()
 
     def _cleanup(self):
         for data_type in DATA_TYPES:
@@ -80,7 +95,7 @@ class Live:
                 Path(self.dir) / data_type.subfolder, ignore_errors=True
             )
 
-        for f in {self.summary_path, self.report_path}:
+        for f in (self.summary_path, self.report_path, self.params_path):
             if os.path.exists(f):
                 os.remove(f)
 
@@ -117,6 +132,10 @@ class Live:
         return self._path
 
     @property
+    def params_path(self):
+        return self._params_path
+
+    @property
     def exists(self):
         return os.path.isdir(self.dir)
 
@@ -130,7 +149,6 @@ class Live:
     def set_step(self, step: int) -> None:
         if self._step is None:
             self._step = 0
-            self._init_paths()
             for data in chain(
                 self._scalars.values(),
                 self._images.values(),
@@ -190,6 +208,43 @@ class Live:
 
         data.dump(val, self._step, **kwargs)
         logger.debug(f"Logged {name}")
+
+    def _read_params(self):
+        if os.path.isfile(self.params_path):
+            params = load_yaml(self.params_path)
+            self._params.update(params)
+
+    def _dump_params(self):
+        try:
+            dump_yaml(self.params_path, self._params)
+        except RepresenterError as exc:
+            raise InvalidParameterTypeError(exc.args) from exc
+
+    def log_params(self, params: Dict[str, ParamLike]):
+        """Saves the given set of parameters (dict) to yaml"""
+        if self._resume and self.get_step():
+            logger.info(
+                "Resuming previous dvclive session, not logging params."
+            )
+            return
+
+        for param_name, param_value in params.items():
+            if param_name in self._params:
+                raise ParameterAlreadyLoggedError(
+                    param_name, param_value, self._params[param_name]
+                )
+
+        self._params.update(params)
+        self._dump_params()
+        logger.debug(f"Logged {params} parameters to {self.params_path}")
+
+    def log_param(
+        self,
+        name: str,
+        val: ParamLike,
+    ):
+        """Saves the given parameter value to yaml"""
+        self.log_params({name: val})
 
     def make_summary(self):
         summary_data = {}

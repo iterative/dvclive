@@ -1,6 +1,7 @@
 # pylint: disable=protected-access
 import json
 import os
+import re
 from pathlib import Path
 
 import pytest
@@ -14,7 +15,10 @@ from dvclive.error import (
     ConfigMismatchError,
     DataAlreadyLoggedError,
     InvalidDataTypeError,
+    InvalidParameterTypeError,
+    ParameterAlreadyLoggedError,
 )
+from dvclive.serialize import load_yaml
 from dvclive.utils import parse_tsv
 
 
@@ -63,6 +67,149 @@ def test_logging_no_step(tmp_dir):
     assert "step" not in s
 
 
+@pytest.mark.parametrize(
+    "param_name,param_value",
+    [
+        ("param_string", "value"),
+        ("param_int", 42),
+        ("param_float", 42.0),
+        ("param_bool_true", True),
+        ("param_bool_false", False),
+        ("param_list", [1, 2, 3]),
+        (
+            "param_dict_simple",
+            {"str": "value", "int": 42, "bool": True, "list": [1, 2, 3]},
+        ),
+        (
+            "param_dict_nested",
+            {
+                "str": "value",
+                "int": 42,
+                "bool": True,
+                "list": [1, 2, 3],
+                "dict": {"nested-str": "value", "nested-int": 42},
+            },
+        ),
+    ],
+)
+def test_log_param(tmp_dir, param_name, param_value):
+    dvclive = Live()
+
+    dvclive.log_param(param_name, param_value)
+
+    s = load_yaml(dvclive.params_path)
+    assert s[param_name] == param_value
+
+
+def test_log_param_already_logged(tmp_dir):
+    dvclive = Live()
+
+    dvclive.log_param("param", 42)
+    with pytest.raises(
+        ParameterAlreadyLoggedError,
+        match="Parameter 'param=42' has already been logged.",
+    ):
+        dvclive.log_param("param", 42)
+
+    with pytest.raises(
+        ParameterAlreadyLoggedError,
+        match=re.escape(
+            "Parameter 'param=1' has already been logged (previous value=42)."
+        ),
+    ):
+        dvclive.log_param("param", 1)
+
+
+def test_log_params(tmp_dir):
+    dvclive = Live()
+    params = {
+        "param_string": "value",
+        "param_int": 42,
+        "param_float": 42.0,
+        "param_bool_true": True,
+        "param_bool_false": False,
+    }
+
+    dvclive.log_params(params)
+
+    s = load_yaml(dvclive.params_path)
+    assert s == params
+
+
+@pytest.mark.parametrize("resume", (False, True))
+def test_log_params_resume(tmp_dir, resume):
+    dvclive = Live(resume=resume)
+    dvclive.log_param("param", 42)
+
+    dvclive = Live(resume=resume)
+    assert ("param" in dvclive._params) == resume
+
+    if resume:
+        with pytest.raises(ParameterAlreadyLoggedError):
+            dvclive.log_param("param", 42)
+
+
+@pytest.mark.parametrize("resume", (False, True))
+def test_log_params_resume_log(tmp_dir, resume, caplog, mocker):
+    dvclive = Live(resume=resume)
+    dvclive.log_param("param", 42)
+
+    dvclive = Live(resume=resume)
+    assert ("param" in dvclive._params) == resume
+    dvclive.next_step()
+
+    if resume:
+        spy = mocker.spy(dvclive, "_dump_params")
+        dvclive.log_param("param", 42)
+        assert (
+            caplog.messages[-1]
+            == "Resuming previous dvclive session, not logging params."
+        )
+        assert not spy.called
+
+
+def test_log_params_already_logged(tmp_dir):
+    dvclive = Live()
+    params = {
+        "param_string": "string_value",
+        "param_int": 42,
+        "param_float": 42.0,
+        "param_bool_true": True,
+        "param_bool_false": False,
+    }
+
+    dvclive.log_params(params)
+    assert os.path.isfile(dvclive.params_path)
+
+    with pytest.raises(
+        ParameterAlreadyLoggedError,
+        match="Parameter 'param_string=string_value' has already been logged.",
+    ):
+
+        dvclive.log_param("param_string", "string_value")
+
+    with pytest.raises(
+        ParameterAlreadyLoggedError,
+        match=re.escape(
+            "Parameter 'param_string=other_value' has already been logged (previous value=string_value)."  # noqa
+        ),
+    ):
+
+        dvclive.log_param("param_string", "other_value")
+
+
+def test_log_param_custom_obj(tmp_dir):
+    dvclive = Live("logs")
+
+    class Dummy:
+        val = 42
+
+    param_value = Dummy()
+
+    with pytest.raises(InvalidParameterTypeError):
+        dvclive.log_param("param_complex", param_value)
+
+
 @pytest.mark.parametrize("path", ["logs", os.path.join("subdir", "logs")])
 def test_logging_step(tmp_dir, path):
     dvclive = Live(path)
@@ -72,7 +219,7 @@ def test_logging_step(tmp_dir, path):
     assert (tmp_dir / dvclive.dir / Scalar.subfolder / "m1.tsv").is_file()
     assert (tmp_dir / dvclive.summary_path).is_file()
 
-    s = _parse_json(dvclive.summary_path)
+    s = load_yaml(dvclive.summary_path)
     assert s["m1"] == 1
     assert s["step"] == 0
 
@@ -93,7 +240,7 @@ def test_nested_logging(tmp_dir):
     assert (out / "val" / "val_1" / "m1.tsv").is_file()
     assert (out / "val" / "val_1" / "m2.tsv").is_file()
 
-    summary = _parse_json(dvclive.summary_path)
+    summary = load_yaml(dvclive.summary_path)
 
     assert summary["train"]["m1"] == 1
     assert summary["val"]["val_1"]["m1"] == 1
@@ -125,6 +272,16 @@ def test_cleanup(tmp_dir, html):
     assert not (tmp_dir / dvclive.dir / Scalar.subfolder).exists()
     assert not (tmp_dir / dvclive.summary_path).is_file()
     assert not (html_path).is_file()
+
+
+def test_cleanup_params(tmp_dir):
+    dvclive = Live("logs")
+    dvclive.log_param("param", 42)
+
+    assert os.path.isfile(dvclive.params_path)
+
+    dvclive = Live("logs")
+    assert not os.path.exists(dvclive.params_path)
 
 
 @pytest.mark.parametrize(
