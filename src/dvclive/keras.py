@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from tensorflow.keras.callbacks import (  # noqa pylint: disable=import-error, no-name-in-module
     Callback,
@@ -13,12 +14,16 @@ from dvclive.utils import standardize_metric_name
 
 class DvcLiveCallback(Callback):
     def __init__(
-        self, model_file=None, save_weights_only: bool = False, **kwargs
+        self,
+        model_file=None,
+        save_weights_only: bool = False,
+        dvclive: Optional[Live] = None,
+        **kwargs
     ):
         super().__init__()
         self.model_file = model_file
         self.save_weights_only = save_weights_only
-        self.dvclive = Live(**kwargs)
+        self.dvclive = dvclive if dvclive is not None else Live(**kwargs)
 
     def on_train_begin(self, logs=None):  # pylint: disable=unused-argument
         if (
