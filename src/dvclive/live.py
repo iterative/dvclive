@@ -5,7 +5,7 @@ import shutil
 from collections import OrderedDict
 from itertools import chain
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from ruamel.yaml.representer import RepresenterError
 
@@ -31,7 +31,7 @@ logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "INFO").upper())
 # Recursive type aliases are not yet supported by mypy (as of 0.971),
 # so we set type: ignore for ParamLike.
 #  See https://github.com/python/mypy/issues/731#issuecomment-1213482527
-ParamLike = Union[int, float, str, bool, Dict[str, "ParamLike"]]  # type: ignore # noqa
+ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]  # type: ignore # noqa
 
 
 class Live:
