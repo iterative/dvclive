@@ -3,13 +3,10 @@ import os
 import pytest
 from fastai.tabular.all import (
     Categorify,
-    FillMissing,
     Normalize,
     TabularDataLoaders,
-    URLs,
     accuracy,
     tabular_learner,
-    untar_data,
 )
 
 from dvclive.data.scalar import Scalar
@@ -20,24 +17,23 @@ from dvclive.fastai import DvcLiveCallback
 
 @pytest.fixture
 def data_loader():
-    path = untar_data(URLs.ADULT_SAMPLE)
+    from pandas import DataFrame
 
-    dls = TabularDataLoaders.from_csv(
-        path / "adult.csv",
-        path=path,
-        y_names="salary",
-        cat_names=[
-            "workclass",
-            "education",
-            "marital-status",
-            "occupation",
-            "relationship",
-            "race",
-        ],
-        cont_names=["age", "fnlwgt", "education-num"],
-        procs=[Categorify, FillMissing, Normalize],
+    d = {
+        "x1": [1, 1, 0, 0, 1, 1, 0, 0],
+        "x2": [1, 0, 1, 0, 1, 0, 1, 0],
+        "y": [1, 0, 0, 1, 1, 0, 0, 1],
+    }
+    df = DataFrame(d)
+    xor_loader = TabularDataLoaders.from_df(
+        df,
+        valid_idx=[4, 5, 6, 7],
+        batch_size=2,
+        cont_names=["x1", "x2"],
+        procs=[Categorify, Normalize],
+        y_names="y",
     )
-    return dls
+    return xor_loader
 
 
 def test_fastai_callback(tmp_dir, data_loader):
