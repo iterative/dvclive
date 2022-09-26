@@ -65,8 +65,6 @@ class Live:
         if self._path is None:
             self._path = self.DEFAULT_DIR
 
-        self._params_path = os.path.join(self._path, "params.yaml")
-
         if self._report is not None:
             if not self.report_path:
                 self.report_path = os.path.join(self.dir, f"report.{report}")
@@ -133,7 +131,7 @@ class Live:
 
     @property
     def params_path(self):
-        return self._params_path
+        return os.path.join(self.dir, "params.yaml")
 
     @property
     def exists(self):
