@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Dict, Optional
 
 from tensorflow.keras.callbacks import (  # noqa pylint: disable=import-error, no-name-in-module
     Callback,
@@ -41,7 +41,7 @@ class DvcLiveCallback(Callback):
                 )
 
     def on_epoch_end(
-        self, epoch: int, logs: dict = None
+        self, epoch: int, logs: Optional[Dict] = None
     ):  # pylint: disable=unused-argument
         logs = logs or {}
         for metric, value in logs.items():

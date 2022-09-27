@@ -63,6 +63,7 @@ warn_redundant_casts = true
 warn_unreachable = true
 ignore_missing_imports = true
 files = ["src", "tests"]
+enable_recursive_aliases = true
 
 [tool.pylint.message_control]
 enable = ["c-extension-no-member", "no-else-return"]
