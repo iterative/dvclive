@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+from dvclive import Live
 from dvclive.data.scalar import Scalar
 from dvclive.keras import DvcLiveCallback
 from tests.test_main import read_logs
@@ -48,6 +49,26 @@ def test_keras_callback(tmp_dir, xor_model, capture_wrap):
 
     assert os.path.exists("dvclive")
     logs, _ = read_logs(tmp_dir / "dvclive" / Scalar.subfolder)
+
+    assert os.path.join("train", "accuracy") in logs
+    assert os.path.join("eval", "accuracy") in logs
+
+
+def test_keras_callback_pass_logger(tmp_dir, xor_model, capture_wrap):
+    model, x, y = xor_model()
+
+    logger = Live("train_logs")
+
+    model.fit(
+        x,
+        y,
+        epochs=1,
+        batch_size=1,
+        validation_split=0.2,
+        callbacks=[DvcLiveCallback(dvclive=logger)],
+    )
+    assert os.path.exists("train_logs")
+    logs, _ = read_logs(tmp_dir / "train_logs" / Scalar.subfolder)
 
     assert os.path.join("train", "accuracy") in logs
     assert os.path.join("eval", "accuracy") in logs
