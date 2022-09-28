@@ -11,7 +11,7 @@ locations = "src", "tests"
 
 @nox.session(python=["3.8", "3.9", "3.10", "3.11", "pypy3.8", "pypy3.9"])
 def tests(session: nox.Session) -> None:
-    session.install(".[tests]")
+    session.install(".[dev]")
     session.run(
         "pytest",
         "--cov",
@@ -35,7 +35,7 @@ def lint(session: nox.Session) -> None:
 @nox.session
 def safety(session: nox.Session) -> None:
     """Scan dependencies for insecure packages."""
-    session.install(".[dev]")
+    session.install(".[tests]")
     session.install("safety")
     session.run("safety", "check", "--full-report")
 
