@@ -8,9 +8,8 @@ import pytest
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
-from dvclive.data.scalar import Scalar
 from dvclive.lgbm import DvcLiveCallback
-from tests.test_main import read_logs
+from dvclive.utils import parse_scalars
 
 # pylint: disable=redefined-outer-name, unused-argument
 
@@ -38,17 +37,18 @@ def test_lgbm_integration(tmp_dir, model_params, iris_data):
     model = lgbm.LGBMClassifier()
     model.set_params(**model_params)
 
+    callback = DvcLiveCallback()
     model.fit(
         iris_data[0][0],
         iris_data[0][1],
         eval_set=(iris_data[1][0], iris_data[1][1]),
         eval_metric=["multi_logloss"],
-        callbacks=[DvcLiveCallback()],
+        callbacks=[callback],
     )
 
     assert os.path.exists("dvclive")
 
-    logs, _ = read_logs(tmp_dir / "dvclive" / Scalar.subfolder)
+    logs, _ = parse_scalars(callback.dvclive)
     assert len(logs) == 1
     assert len(list(logs.values())[0]) == 5
 

@@ -12,7 +12,7 @@ from transformers import (
 
 from dvclive.data.scalar import Scalar
 from dvclive.huggingface import DvcLiveCallback
-from tests.test_main import read_logs
+from dvclive.utils import parse_scalars
 
 # pylint: disable=redefined-outer-name, unused-argument, no-value-for-parameter
 
@@ -74,19 +74,22 @@ def test_huggingface_integration(tmp_dir, model, args, data, tokenizer):
         tokenizer=tokenizer,
         compute_metrics=compute_metrics,
     )
-    trainer.add_callback(DvcLiveCallback())
+    callback = DvcLiveCallback()
+    trainer.add_callback(callback)
     trainer.train()
 
     assert os.path.exists("dvclive")
 
-    logs, _ = read_logs(tmp_dir / "dvclive" / Scalar.subfolder)
+    logs, _ = parse_scalars(callback.dvclive)
 
     assert len(logs) == 10
-    assert os.path.join("eval", "matthews_correlation") in logs
-    assert os.path.join("eval", "loss") in logs
-    assert os.path.join("train", "loss") in logs
-    assert len(logs["epoch"]) == 3
-    assert len(logs[os.path.join("eval", "loss")]) == 2
+
+    scalars = os.path.join("dvclive", Scalar.subfolder)
+    assert os.path.join(scalars, "eval", "matthews_correlation.tsv") in logs
+    assert os.path.join(scalars, "eval", "loss.tsv") in logs
+    assert os.path.join(scalars, "train", "loss.tsv") in logs
+    assert len(logs[os.path.join(scalars, "epoch.tsv")]) == 3
+    assert len(logs[os.path.join(scalars, "eval", "loss.tsv")]) == 2
 
 
 def test_huggingface_model_file(tmp_dir, model, args, data, tokenizer, mocker):

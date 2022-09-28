@@ -5,7 +5,7 @@ import pytest
 from dvclive import Live
 from dvclive.data.scalar import Scalar
 from dvclive.keras import DvcLiveCallback
-from tests.test_main import read_logs
+from dvclive.utils import parse_scalars
 
 # pylint: disable=unused-argument, no-name-in-module, redefined-outer-name
 
@@ -38,20 +38,22 @@ def xor_model():
 def test_keras_callback(tmp_dir, xor_model, capture_wrap):
     model, x, y = xor_model()
 
+    callback = DvcLiveCallback()
     model.fit(
         x,
         y,
         epochs=1,
         batch_size=1,
         validation_split=0.2,
-        callbacks=[DvcLiveCallback()],
+        callbacks=[callback],
     )
 
     assert os.path.exists("dvclive")
-    logs, _ = read_logs(tmp_dir / "dvclive" / Scalar.subfolder)
+    logs, _ = parse_scalars(callback.dvclive)
 
-    assert os.path.join("train", "accuracy") in logs
-    assert os.path.join("eval", "accuracy") in logs
+    scalars = os.path.join("dvclive", Scalar.subfolder)
+    assert os.path.join(scalars, "train", "accuracy.tsv") in logs
+    assert os.path.join(scalars, "eval", "accuracy.tsv") in logs
 
 
 def test_keras_callback_pass_logger(tmp_dir, xor_model, capture_wrap):
@@ -67,11 +69,12 @@ def test_keras_callback_pass_logger(tmp_dir, xor_model, capture_wrap):
         validation_split=0.2,
         callbacks=[DvcLiveCallback(dvclive=logger)],
     )
-    assert os.path.exists("train_logs")
-    logs, _ = read_logs(tmp_dir / "train_logs" / Scalar.subfolder)
+    assert os.path.exists(logger.dir)
+    logs, _ = parse_scalars(logger)
 
-    assert os.path.join("train", "accuracy") in logs
-    assert os.path.join("eval", "accuracy") in logs
+    scalars = os.path.join(logger.dir, Scalar.subfolder)
+    assert os.path.join(scalars, "train", "accuracy.tsv") in logs
+    assert os.path.join(scalars, "eval", "accuracy.tsv") in logs
 
 
 @pytest.mark.parametrize("save_weights_only", (True, False))

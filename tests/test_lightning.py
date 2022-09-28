@@ -11,7 +11,7 @@ from torchvision.datasets import MNIST
 
 from dvclive.data.scalar import Scalar
 from dvclive.lightning import DvcLiveLogger
-from tests.test_main import read_logs
+from dvclive.utils import parse_scalars
 
 # pylint: disable=redefined-outer-name, unused-argument
 
@@ -93,9 +93,10 @@ def test_lightning_integration(tmp_dir):
     assert os.path.exists("logs")
     assert not os.path.exists("DvcLiveLogger")
 
-    logs, _ = read_logs(tmp_dir / "logs" / Scalar.subfolder)
+    scalars = os.path.join(dvclive_logger.experiment.dir, Scalar.subfolder)
+    logs, _ = parse_scalars(dvclive_logger.experiment)
 
     assert len(logs) == 3
-    assert os.path.join("train", "epoch", "loss") in logs
-    assert os.path.join("train", "step", "loss") in logs
-    assert "epoch" in logs
+    assert os.path.join(scalars, "train", "epoch", "loss.tsv") in logs
+    assert os.path.join(scalars, "train", "step", "loss.tsv") in logs
+    assert os.path.join(scalars, "epoch.tsv") in logs

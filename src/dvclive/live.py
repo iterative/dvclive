@@ -21,6 +21,7 @@ from .error import (
 )
 from .report import make_report
 from .serialize import dump_yaml, load_yaml
+from .studio import post_to_studio
 from .utils import env2bool, nested_update, open_file_in_browser
 
 logging.basicConfig()
@@ -44,8 +45,14 @@ class Live:
         self._path: Optional[str] = path
         self._resume: bool = resume or env2bool(env.DVCLIVE_RESUME)
 
+        self.studio_url = os.getenv(env.STUDIO_REPO_URL, None)
+        self.studio_token = os.getenv(env.STUDIO_TOKEN, None)
+        self.rev = None
+
         if report == "auto":
-            if env2bool("CI"):
+            if self.studio_url and self.studio_token:
+                report = "studio"
+            elif env2bool("CI"):
                 report = "md"
             else:
                 report = "html"
@@ -63,12 +70,6 @@ class Live:
         if self._path is None:
             self._path = self.DEFAULT_DIR
 
-        if self._report is not None:
-            if not self.report_path:
-                self.report_path = os.path.join(self.dir, f"report.{report}")
-            out = Path(self.report_path).resolve()
-            logger.info(f"Report path (if generated): {out}")
-
         self._step: Optional[int] = None
         self._scalars: Dict[str, Any] = OrderedDict()
         self._images: Dict[str, Any] = OrderedDict()
@@ -76,6 +77,13 @@ class Live:
         self._params: Dict[str, Any] = OrderedDict()
 
         self._init_paths()
+
+        if self._report in ("html", "md"):
+            if not self.report_path:
+                self.report_path = os.path.join(self.dir, f"report.{report}")
+            out = Path(self.report_path).resolve()
+            logger.info(f"Report path (if generated): {out}")
+
         if self._resume:
             self._read_params()
             self._step = self.read_step()
@@ -84,6 +92,20 @@ class Live:
             logger.info(f"Resumed from step {self._step}")
         else:
             self._cleanup()
+
+        self._latest_studio_step = self.get_step()
+
+        if self._report == "studio":
+            from scmrepo.git import Git
+
+            self.rev = Git().get_rev()
+
+            if not post_to_studio(self, "start", logger):
+                logger.warning(
+                    "`post_to_studio` `start` event failed. "
+                    "`studio` report cancelled."
+                )
+                self._report = None
 
     def _cleanup(self):
         for data_type in DATA_TYPES:
@@ -153,7 +175,16 @@ class Live:
                 data.dump(data.val, self._step)
             self.make_summary()
 
-        self.make_report()
+        if self._report == "studio":
+            if not post_to_studio(self, "data", logger):
+                logger.warning(
+                    "`post_to_studio` `data` event failed."
+                    " Data will be resent on next call."
+                )
+            else:
+                self._latest_studio_step = step
+        else:
+            self.make_report()
 
         self.make_checkpoint()
 
@@ -258,9 +289,13 @@ class Live:
             make_report(
                 self.dir, self.summary_path, self.report_path, self._report
             )
-
             if self._report == "html" and env2bool(env.DVCLIVE_OPEN):
                 open_file_in_browser(self.report_path)
+
+    def end(self):
+        if self._report == "studio":
+            if not post_to_studio(self, "done", logger):
+                logger.warning("`post_to_studio` `done` event failed.")
 
     def make_checkpoint(self):
         if env2bool(env.DVC_CHECKPOINT):
