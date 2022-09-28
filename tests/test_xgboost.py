@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import xgboost as xgb
-from funcy import first
 from sklearn import datasets
 
 from dvclive.data.scalar import Scalar
@@ -40,7 +39,7 @@ def test_xgb_integration(tmp_dir, train_params, iris_data):
 
     logs, _ = read_logs(tmp_dir / "dvclive" / Scalar.subfolder)
     assert len(logs) == 1
-    assert len(first(logs.values())) == 5
+    assert len(list(logs.values())[0]) == 5
 
 
 def test_xgb_model_file(tmp_dir, train_params, iris_data):

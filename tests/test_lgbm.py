@@ -5,7 +5,6 @@ import lightgbm as lgbm
 import numpy as np
 import pandas as pd
 import pytest
-from funcy import first
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
@@ -51,7 +50,7 @@ def test_lgbm_integration(tmp_dir, model_params, iris_data):
 
     logs, _ = read_logs(tmp_dir / "dvclive" / Scalar.subfolder)
     assert len(logs) == 1
-    assert len(first(logs.values())) == 5
+    assert len(list(logs.values())[0]) == 5
 
 
 @pytest.mark.skipif(
