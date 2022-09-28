@@ -71,7 +71,7 @@ def test_keras_callback_pass_logger(tmp_dir, xor_model, capture_wrap):
     )
     assert os.path.exists(logger.dir)
     logs, _ = parse_scalars(logger)
-    
+
     scalars = os.path.join(logger.dir, Scalar.subfolder)
     assert os.path.join(scalars, "train", "accuracy.tsv") in logs
     assert os.path.join(scalars, "eval", "accuracy.tsv") in logs
