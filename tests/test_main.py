@@ -1,16 +1,13 @@
 # pylint: disable=protected-access
-import json
+# pylint: disable=unused-argument
 import os
 import re
-from pathlib import Path
 
 import pytest
 from funcy import last
 
 from dvclive import Live, env
 from dvclive.data import Scalar
-
-# pylint: disable=unused-argument
 from dvclive.error import (
     ConfigMismatchError,
     DataAlreadyLoggedError,
@@ -19,39 +16,23 @@ from dvclive.error import (
     ParameterAlreadyLoggedError,
 )
 from dvclive.serialize import load_yaml
-from dvclive.utils import parse_tsv
+from dvclive.utils import parse_scalars
 
 
-def read_logs(path_: str):
-    path = Path(path_)
-    assert path.is_dir()
-    history = {}
-    for metric_file in path.rglob("*.tsv"):
-        metric_name = str(metric_file).replace(str(path) + os.path.sep, "")
-        metric_name = metric_name.replace(".tsv", "")
-        history[metric_name] = parse_tsv(metric_file)
-    latest = _parse_json(str(path.parent) + ".json")
-    return history, latest
-
-
-def read_history(path, metric):
-    history, _ = read_logs(path)
+def read_history(live, metric):
+    history, _ = parse_scalars(live)
     steps = []
     values = []
-    for e in history[metric]:
+    name = os.path.join(live.dir, Scalar.subfolder, f"{metric}.tsv")
+    for e in history[name]:
         steps.append(int(e["step"]))
         values.append(float(e[metric]))
     return steps, values
 
 
-def read_latest(path, metric_name):
-    _, latest = read_logs(path)
+def read_latest(live, metric_name):
+    _, latest = parse_scalars(live)
     return latest["step"], latest[metric_name]
-
-
-def _parse_json(path):
-    with open(path, "r", encoding="utf-8") as fd:
-        return json.load(fd)
 
 
 def test_logging_no_step(tmp_dir):
@@ -62,7 +43,7 @@ def test_logging_no_step(tmp_dir):
     assert not (tmp_dir / "logs" / "m1.tsv").is_file()
     assert (tmp_dir / dvclive.summary_path).is_file()
 
-    s = _parse_json(dvclive.summary_path)
+    s = load_yaml(dvclive.summary_path)
     assert s["m1"] == 1
     assert "step" not in s
 
@@ -291,14 +272,12 @@ def test_cleanup_params(tmp_dir):
 def test_continue(tmp_dir, resume, steps, metrics):
     dvclive = Live("logs")
 
-    out = tmp_dir / dvclive.dir / Scalar.subfolder
-
     for metric in [0.9, 0.8]:
         dvclive.log("metric", metric)
         dvclive.next_step()
 
-    assert read_history(out, "metric") == ([0, 1], [0.9, 0.8])
-    assert read_latest(out, "metric") == (1, 0.8)
+    assert read_history(dvclive, "metric") == ([0, 1], [0.9, 0.8])
+    assert read_latest(dvclive, "metric") == (1, 0.8)
 
     dvclive = Live("logs", resume=resume)
 
@@ -306,8 +285,8 @@ def test_continue(tmp_dir, resume, steps, metrics):
         dvclive.log("metric", new_metric)
         dvclive.next_step()
 
-    assert read_history(out, "metric") == (steps, metrics)
-    assert read_latest(out, "metric") == (last(steps), last(metrics))
+    assert read_history(dvclive, "metric") == (steps, metrics)
+    assert read_latest(dvclive, "metric") == (last(steps), last(metrics))
 
 
 def test_resume_on_first_init(tmp_dir):
@@ -339,8 +318,6 @@ def test_require_step_update(tmp_dir, metric):
 def test_custom_steps(tmp_dir):
     dvclive = Live("logs")
 
-    out = tmp_dir / dvclive.dir / Scalar.subfolder
-
     steps = [0, 62, 1000]
     metrics = [0.9, 0.8, 0.7]
 
@@ -348,13 +325,12 @@ def test_custom_steps(tmp_dir):
         dvclive.set_step(step)
         dvclive.log("m", metric)
 
-    assert read_history(out, "m") == (steps, metrics)
-    assert read_latest(out, "m") == (last(steps), last(metrics))
+    assert read_history(dvclive, "m") == (steps, metrics)
+    assert read_latest(dvclive, "m") == (last(steps), last(metrics))
 
 
 def test_log_reset_with_set_step(tmp_dir):
     dvclive = Live()
-    out = tmp_dir / dvclive.dir / Scalar.subfolder
 
     for i in range(3):
         dvclive.set_step(i)
@@ -364,10 +340,10 @@ def test_log_reset_with_set_step(tmp_dir):
         dvclive.set_step(i)
         dvclive.log("val_m", 1)
 
-    assert read_history(out, "train_m") == ([0, 1, 2], [1, 1, 1])
-    assert read_history(out, "val_m") == ([0, 1, 2], [1, 1, 1])
-    assert read_latest(out, "train_m") == (2, 1)
-    assert read_latest(out, "val_m") == (2, 1)
+    assert read_history(dvclive, "train_m") == ([0, 1, 2], [1, 1, 1])
+    assert read_history(dvclive, "val_m") == ([0, 1, 2], [1, 1, 1])
+    assert read_latest(dvclive, "train_m") == (2, 1)
+    assert read_latest(dvclive, "val_m") == (2, 1)
 
 
 @pytest.mark.parametrize("html", [True, False])
@@ -435,13 +411,11 @@ def test_get_step_custom_steps(tmp_dir):
 def test_get_step_control_flow(tmp_dir):
     dvclive = Live()
 
-    out = tmp_dir / dvclive.dir / Scalar.subfolder
-
     while dvclive.get_step() < 10:
         dvclive.log("i", dvclive.get_step())
         dvclive.next_step()
 
-    steps, values = read_history(out, "i")
+    steps, values = read_history(dvclive, "i")
     assert steps == list(range(10))
     assert values == [float(x) for x in range(10)]
 

@@ -1,4 +1,5 @@
 import csv
+import json
 import os
 import re
 import webbrowser
@@ -32,12 +33,6 @@ def nested_update(d, u):
         else:
             d[k] = v
     return d
-
-
-def parse_tsv(path):
-    with open(path, "r", encoding="utf-8") as fd:
-        reader = csv.DictReader(fd, delimiter="\t")
-        return list(reader)
 
 
 def run_once(f):
@@ -99,3 +94,26 @@ def standardize_metric_name(metric_name: str, framework: str) -> str:
             metric_name = f"{split}/{freq}/{'_'.join(rest)}"
 
     return metric_name
+
+
+def parse_tsv(path):
+    with open(path, "r", encoding="utf-8") as fd:
+        reader = csv.DictReader(fd, delimiter="\t")
+        return list(reader)
+
+
+def parse_json(path):
+    with open(path, "r", encoding="utf-8") as fd:
+        return json.load(fd)
+
+
+def parse_scalars(live):
+    from .data import Scalar
+
+    live_dir = Path(live.dir)
+    history = {}
+    for suffix in Scalar.suffixes:
+        for scalar_file in live_dir.rglob(f"*{suffix}"):
+            history[str(scalar_file)] = parse_tsv(scalar_file)
+    latest = parse_json(live.summary_path)
+    return history, latest

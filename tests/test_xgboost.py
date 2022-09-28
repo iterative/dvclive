@@ -6,9 +6,8 @@ import pytest
 import xgboost as xgb
 from sklearn import datasets
 
-from dvclive.data.scalar import Scalar
+from dvclive.utils import parse_scalars
 from dvclive.xgb import DvcLiveCallback
-from tests.test_main import read_logs
 
 # pylint: disable=redefined-outer-name, unused-argument
 
@@ -27,17 +26,18 @@ def iris_data():
 
 
 def test_xgb_integration(tmp_dir, train_params, iris_data):
+    callback = DvcLiveCallback("eval_data")
     xgb.train(
         train_params,
         iris_data,
-        callbacks=[DvcLiveCallback("eval_data")],
+        callbacks=[callback],
         num_boost_round=5,
         evals=[(iris_data, "eval_data")],
     )
 
     assert os.path.exists("dvclive")
 
-    logs, _ = read_logs(tmp_dir / "dvclive" / Scalar.subfolder)
+    logs, _ = parse_scalars(callback.dvclive)
     assert len(logs) == 1
     assert len(list(logs.values())[0]) == 5
 
