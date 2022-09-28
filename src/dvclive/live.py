@@ -27,11 +27,9 @@ logging.basicConfig()
 logger = logging.getLogger("dvclive")
 logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "INFO").upper())
 
-
-# Recursive type aliases are not yet supported by mypy (as of 0.971),
-# so we set type: ignore for ParamLike.
-#  See https://github.com/python/mypy/issues/731#issuecomment-1213482527
-ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]  # type: ignore # noqa
+ParamLike = Union[
+    int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]
+]
 
 
 class Live:
