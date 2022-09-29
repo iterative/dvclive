@@ -1,7 +1,6 @@
 # pylint: disable=protected-access
 # pylint: disable=unused-argument
 import os
-import re
 
 import pytest
 from funcy import last
@@ -13,7 +12,6 @@ from dvclive.error import (
     DataAlreadyLoggedError,
     InvalidDataTypeError,
     InvalidParameterTypeError,
-    ParameterAlreadyLoggedError,
 )
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_scalars
@@ -82,25 +80,6 @@ def test_log_param(tmp_dir, param_name, param_value):
     assert s[param_name] == param_value
 
 
-def test_log_param_already_logged(tmp_dir):
-    dvclive = Live()
-
-    dvclive.log_param("param", 42)
-    with pytest.raises(
-        ParameterAlreadyLoggedError,
-        match="Parameter 'param=42' has already been logged.",
-    ):
-        dvclive.log_param("param", 42)
-
-    with pytest.raises(
-        ParameterAlreadyLoggedError,
-        match=re.escape(
-            "Parameter 'param=1' has already been logged (previous value=42)."
-        ),
-    ):
-        dvclive.log_param("param", 1)
-
-
 def test_log_params(tmp_dir):
     dvclive = Live()
     params = {
@@ -124,59 +103,6 @@ def test_log_params_resume(tmp_dir, resume):
 
     dvclive = Live(resume=resume)
     assert ("param" in dvclive._params) == resume
-
-    if resume:
-        with pytest.raises(ParameterAlreadyLoggedError):
-            dvclive.log_param("param", 42)
-
-
-@pytest.mark.parametrize("resume", (False, True))
-def test_log_params_resume_log(tmp_dir, resume, caplog, mocker):
-    dvclive = Live(resume=resume)
-    dvclive.log_param("param", 42)
-
-    dvclive = Live(resume=resume)
-    assert ("param" in dvclive._params) == resume
-    dvclive.next_step()
-
-    if resume:
-        spy = mocker.spy(dvclive, "_dump_params")
-        dvclive.log_param("param", 42)
-        assert (
-            caplog.messages[-1]
-            == "Resuming previous dvclive session, not logging params."
-        )
-        assert not spy.called
-
-
-def test_log_params_already_logged(tmp_dir):
-    dvclive = Live()
-    params = {
-        "param_string": "string_value",
-        "param_int": 42,
-        "param_float": 42.0,
-        "param_bool_true": True,
-        "param_bool_false": False,
-    }
-
-    dvclive.log_params(params)
-    assert os.path.isfile(dvclive.params_path)
-
-    with pytest.raises(
-        ParameterAlreadyLoggedError,
-        match="Parameter 'param_string=string_value' has already been logged.",
-    ):
-
-        dvclive.log_param("param_string", "string_value")
-
-    with pytest.raises(
-        ParameterAlreadyLoggedError,
-        match=re.escape(
-            "Parameter 'param_string=other_value' has already been logged (previous value=string_value)."  # noqa
-        ),
-    ):
-
-        dvclive.log_param("param_string", "other_value")
 
 
 def test_log_param_custom_obj(tmp_dir):
