@@ -17,7 +17,6 @@ from .error import (
     InvalidDataTypeError,
     InvalidParameterTypeError,
     InvalidPlotTypeError,
-    ParameterAlreadyLoggedError,
 )
 from .report import make_report
 from .serialize import dump_yaml, load_yaml
@@ -249,18 +248,6 @@ class Live:
 
     def log_params(self, params: Dict[str, ParamLike]):
         """Saves the given set of parameters (dict) to yaml"""
-        if self._resume and self.get_step():
-            logger.info(
-                "Resuming previous dvclive session, not logging params."
-            )
-            return
-
-        for param_name, param_value in params.items():
-            if param_name in self._params:
-                raise ParameterAlreadyLoggedError(
-                    param_name, param_value, self._params[param_name]
-                )
-
         self._params.update(params)
         self._dump_params()
         logger.debug(f"Logged {params} parameters to {self.params_path}")
