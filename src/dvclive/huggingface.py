@@ -1,3 +1,5 @@
+from typing import Optional
+
 from transformers import (
     TrainerCallback,
     TrainerControl,
@@ -10,10 +12,12 @@ from dvclive.utils import standardize_metric_name
 
 
 class DvcLiveCallback(TrainerCallback):
-    def __init__(self, model_file=None, **kwargs):
+    def __init__(
+        self, model_file=None, dvclive: Optional[Live] = None, **kwargs
+    ):
         super().__init__()
         self.model_file = model_file
-        self.dvclive = Live(**kwargs)
+        self.dvclive = dvclive if dvclive is not None else Live(**kwargs)
 
     def on_log(
         self,

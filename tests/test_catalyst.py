@@ -7,6 +7,7 @@ from catalyst.utils.torch import get_available_engine
 from torch import nn, optim
 from torch.utils.data import DataLoader
 
+from dvclive import Live
 from dvclive.catalyst import DvcLiveCallback
 from dvclive.data import Scalar
 
@@ -93,3 +94,10 @@ def test_catalyst_model_file(tmp_dir, runner, loaders):
         load_best_on_end=True,
     )
     assert (tmp_dir / "model.pth").is_file()
+
+
+def test_catalyst_pass_logger():
+    logger = Live("train_logs")
+
+    assert DvcLiveCallback().dvclive is not logger
+    assert DvcLiveCallback(dvclive=logger).dvclive is logger

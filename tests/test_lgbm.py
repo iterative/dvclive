@@ -8,6 +8,7 @@ import pytest
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
+from dvclive import Live
 from dvclive.lgbm import DvcLiveCallback
 from dvclive.utils import parse_scalars
 
@@ -73,3 +74,10 @@ def test_lgbm_model_file(tmp_dir, model_params, iris_data):
     preds2 = model2.predict(iris_data[1][0])
     preds2 = np.argmax(preds2, axis=1)
     assert np.sum(np.abs(preds2 - preds)) == 0
+
+
+def test_lgbm_pass_logger():
+    logger = Live("train_logs")
+
+    assert DvcLiveCallback().dvclive is not logger
+    assert DvcLiveCallback(dvclive=logger).dvclive is logger

@@ -9,6 +9,7 @@ from fastai.tabular.all import (
     tabular_learner,
 )
 
+from dvclive import Live
 from dvclive.data.scalar import Scalar
 from dvclive.fastai import DvcLiveCallback
 
@@ -56,3 +57,10 @@ def test_fastai_model_file(tmp_dir, data_loader):
     learn.model_dir = os.path.abspath("./")
     learn.fit_one_cycle(2, cbs=[DvcLiveCallback("model")])
     assert (tmp_dir / "model.pth").is_file()
+
+
+def test_fastai_pass_logger():
+    logger = Live("train_logs")
+
+    assert DvcLiveCallback().dvclive is not logger
+    assert DvcLiveCallback(dvclive=logger).dvclive is logger
