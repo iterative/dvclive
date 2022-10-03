@@ -1,3 +1,5 @@
+from typing import Optional
+
 from catalyst import utils
 from catalyst.core.callback import Callback, CallbackOrder
 
@@ -5,10 +7,12 @@ from dvclive import Live
 
 
 class DvcLiveCallback(Callback):
-    def __init__(self, model_file=None, **kwargs):
+    def __init__(
+        self, model_file=None, dvclive: Optional[Live] = None, **kwargs
+    ):
         super().__init__(order=CallbackOrder.external)
-        self.dvclive = Live(**kwargs)
         self.model_file = model_file
+        self.dvclive = dvclive if dvclive is not None else Live(**kwargs)
 
     def on_epoch_end(self, runner) -> None:
         for loader_key, per_loader_metrics in runner.epoch_metrics.items():

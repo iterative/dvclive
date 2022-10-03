@@ -10,6 +10,7 @@ from transformers import (
     TrainingArguments,
 )
 
+from dvclive import Live
 from dvclive.data.scalar import Scalar
 from dvclive.huggingface import DvcLiveCallback
 from dvclive.utils import parse_scalars
@@ -115,3 +116,10 @@ def test_huggingface_model_file(tmp_dir, model, args, data, tokenizer, mocker):
 
     assert (model_path / "tokenizer.json").exists()
     assert tokernizer_save.call_count == 2
+
+
+def test_huggingface_pass_logger():
+    logger = Live("train_logs")
+
+    assert DvcLiveCallback().dvclive is not logger
+    assert DvcLiveCallback(dvclive=logger).dvclive is logger

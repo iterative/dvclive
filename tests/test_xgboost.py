@@ -6,6 +6,7 @@ import pytest
 import xgboost as xgb
 from sklearn import datasets
 
+from dvclive import Live
 from dvclive.utils import parse_scalars
 from dvclive.xgb import DvcLiveCallback
 
@@ -55,3 +56,10 @@ def test_xgb_model_file(tmp_dir, train_params, iris_data):
     model2 = xgb.Booster(model_file="model_xgb.json")
     preds2 = model2.predict(iris_data)
     assert np.sum(np.abs(preds2 - preds)) == 0
+
+
+def test_xgb_pass_logger():
+    logger = Live("train_logs")
+
+    assert DvcLiveCallback("eval_data").dvclive is not logger
+    assert DvcLiveCallback("eval_data", dvclive=logger).dvclive is logger

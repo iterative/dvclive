@@ -56,25 +56,11 @@ def test_keras_callback(tmp_dir, xor_model, capture_wrap):
     assert os.path.join(scalars, "eval", "accuracy.tsv") in logs
 
 
-def test_keras_callback_pass_logger(tmp_dir, xor_model, capture_wrap):
-    model, x, y = xor_model()
-
+def test_keras_callback_pass_logger():
     logger = Live("train_logs")
 
-    model.fit(
-        x,
-        y,
-        epochs=1,
-        batch_size=1,
-        validation_split=0.2,
-        callbacks=[DvcLiveCallback(dvclive=logger)],
-    )
-    assert os.path.exists(logger.dir)
-    logs, _ = parse_scalars(logger)
-
-    scalars = os.path.join(logger.dir, Scalar.subfolder)
-    assert os.path.join(scalars, "train", "accuracy.tsv") in logs
-    assert os.path.join(scalars, "eval", "accuracy.tsv") in logs
+    assert DvcLiveCallback().dvclive is not logger
+    assert DvcLiveCallback(dvclive=logger).dvclive is logger
 
 
 @pytest.mark.parametrize("save_weights_only", (True, False))

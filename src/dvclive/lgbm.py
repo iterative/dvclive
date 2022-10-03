@@ -1,11 +1,15 @@
+from typing import Optional
+
 from dvclive import Live
 
 
 class DvcLiveCallback:
-    def __init__(self, model_file=None, **kwargs):
+    def __init__(
+        self, model_file=None, dvclive: Optional[Live] = None, **kwargs
+    ):
         super().__init__()
         self.model_file = model_file
-        self.dvclive = Live(**kwargs)
+        self.dvclive = dvclive if dvclive is not None else Live(**kwargs)
 
     def __call__(self, env):
         for eval_result in env.evaluation_result_list:
