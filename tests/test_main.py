@@ -281,10 +281,10 @@ def test_init_from_env(tmp_dir, html, monkeypatch):
     assert dvclive._path == "logs"
     if html:
         html_path = str(dvclive.dir) + "_dvc_plots/index.html"
-        assert dvclive._report == "html"
+        assert dvclive.report_mode == "html"
         assert dvclive.report_path == html_path
     else:
-        assert dvclive._report is None
+        assert dvclive.report_mode is None
         assert dvclive.report_path == ""
 
 

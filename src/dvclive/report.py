@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from dvc_render.html import render_html
 from dvc_render.image import ImageRenderer
@@ -9,7 +10,11 @@ from dvc_render.vega import VegaRenderer
 
 from dvclive.data import PLOTS, Image, Scalar
 from dvclive.data.plot import Plot
+from dvclive.serialize import load_yaml
 from dvclive.utils import parse_tsv
+
+if TYPE_CHECKING:
+    from dvclive import Live
 
 
 def get_scalar_renderers(scalars_folder):
@@ -77,18 +82,31 @@ def get_metrics_renderers(dvclive_summary):
     return []
 
 
-def make_report(dvclive_folder, dvclive_summary, output_path, mode):
-    dvclive_path = Path(dvclive_folder)
+def get_params_renderers(dvclive_params):
+    params_path = Path(dvclive_params)
+    if params_path.exists():
+        return [
+            TableRenderer(
+                [load_yaml(params_path)],
+                params_path.name,
+            )
+        ]
+    return []
+
+
+def make_report(dvclive: "Live"):
+    dvclive_path = Path(dvclive.dir)
 
     renderers = []
-    renderers.extend(get_metrics_renderers(dvclive_summary))
+    renderers.extend(get_params_renderers(dvclive.params_path))
+    renderers.extend(get_metrics_renderers(dvclive.summary_path))
     renderers.extend(get_scalar_renderers(dvclive_path / Scalar.subfolder))
     renderers.extend(get_image_renderers(dvclive_path / Image.subfolder))
     renderers.extend(get_plot_renderers(dvclive_path / Plot.subfolder))
 
-    if mode == "html":
-        render_html(renderers, output_path, refresh_seconds=5)
-    elif mode == "md":
-        render_markdown(renderers, output_path)
+    if dvclive.report_mode == "html":
+        render_html(renderers, dvclive.report_path, refresh_seconds=5)
+    elif dvclive.report_mode == "md":
+        render_markdown(renderers, dvclive.report_path)
     else:
-        raise ValueError(f"Invalid `mode` {mode}.")
+        raise ValueError(f"Invalid `mode` {dvclive.report_mode}.")
