@@ -2,10 +2,11 @@ import os
 
 import numpy as np
 import pytest
-from datasets import load_dataset, load_metric
+import torch
+from torch import nn
 from transformers import (
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
+    PretrainedConfig,
+    PreTrainedModel,
     Trainer,
     TrainingArguments,
 )
@@ -17,62 +18,95 @@ from dvclive.utils import parse_scalars
 
 # pylint: disable=redefined-outer-name, unused-argument, no-value-for-parameter
 
-task = "cola"
-metric = load_metric("glue", task)
-model_checkpoint = "distilbert-base-uncased"
+
+def compute_metrics(eval_preds):
+    """https://github.com/iterative/dvclive/pull/321#issuecomment-1266916039"""
+    import time
+
+    time.sleep(time.get_clock_info("time").resolution)
+    return {"foo": 1}
 
 
-def preprocess_function(examples, tokenizer):
-    return tokenizer(examples["sentence"], truncation=True)
+# From transformers/tests/trainer
 
 
-def compute_metrics(eval_pred):
-    predictions, labels = eval_pred
-    predictions = np.argmax(predictions, axis=1)
-    return metric.compute(predictions=predictions, references=labels)
+class RegressionDataset:
+    def __init__(self, a=2, b=3, length=64, seed=42, label_names=None):
+        np.random.seed(seed)
+        self.label_names = ["labels"] if label_names is None else label_names
+        self.length = length
+        self.x = np.random.normal(size=(length,)).astype(np.float32)
+        self.ys = [
+            a * self.x + b + np.random.normal(scale=0.1, size=(length,))
+            for _ in self.label_names
+        ]
+        self.ys = [y.astype(np.float32) for y in self.ys]
+
+    def __len__(self):
+        return self.length
+
+    def __getitem__(self, i):
+        result = {name: y[i] for name, y in zip(self.label_names, self.ys)}
+        result["input_x"] = self.x[i]
+        return result
+
+
+class RegressionModelConfig(PretrainedConfig):
+    def __init__(
+        self, a=0, b=0, double_output=False, random_torch=True, **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.a = a
+        self.b = b
+        self.double_output = double_output
+        self.random_torch = random_torch
+        self.hidden_size = 1
+
+
+class RegressionPreTrainedModel(PreTrainedModel):
+    config_class = RegressionModelConfig
+    base_model_prefix = "regression"
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.a = nn.Parameter(torch.tensor(config.a).float())
+        self.b = nn.Parameter(torch.tensor(config.b).float())
+        self.double_output = config.double_output
+
+    def forward(self, input_x, labels=None, **kwargs):
+        y = input_x * self.a + self.b
+        if labels is None:
+            return (y, y) if self.double_output else (y,)
+        loss = nn.functional.mse_loss(y, labels)
+        return (loss, y, y) if self.double_output else (loss, y)
 
 
 @pytest.fixture
-def tokenizer():
-    return AutoTokenizer.from_pretrained(model_checkpoint, use_fast=True)
-
-
-@pytest.fixture
-def data(tokenizer):
-    train = load_dataset("glue", task, split="train[:100]")
-    val = load_dataset("glue", task, split="validation[:100]")
-
-    train = train.map(
-        lambda p: preprocess_function(p, tokenizer), batched=True
-    )
-    val = val.map(lambda p: preprocess_function(p, tokenizer), batched=True)
-
-    return train, val
+def data():
+    return RegressionDataset(), RegressionDataset()
 
 
 @pytest.fixture
 def model():
-    return AutoModelForSequenceClassification.from_pretrained(
-        pretrained_model_name_or_path=model_checkpoint, num_labels=2
-    )
+    config = RegressionModelConfig()
+    return RegressionPreTrainedModel(config)
 
 
 @pytest.fixture
 def args():
     return TrainingArguments(
-        "test-glue",
+        "foo",
         evaluation_strategy="epoch",
         num_train_epochs=2,
     )
 
 
-def test_huggingface_integration(tmp_dir, model, args, data, tokenizer):
+def test_huggingface_integration(tmp_dir, model, args, data):
     trainer = Trainer(
         model,
         args,
         train_dataset=data[0],
         eval_dataset=data[1],
-        tokenizer=tokenizer,
         compute_metrics=compute_metrics,
     )
     callback = DvcLiveCallback()
@@ -86,23 +120,21 @@ def test_huggingface_integration(tmp_dir, model, args, data, tokenizer):
     assert len(logs) == 10
 
     scalars = os.path.join("dvclive", Scalar.subfolder)
-    assert os.path.join(scalars, "eval", "matthews_correlation.tsv") in logs
+    assert os.path.join(scalars, "eval", "foo.tsv") in logs
     assert os.path.join(scalars, "eval", "loss.tsv") in logs
     assert os.path.join(scalars, "train", "loss.tsv") in logs
     assert len(logs[os.path.join(scalars, "epoch.tsv")]) == 3
     assert len(logs[os.path.join(scalars, "eval", "loss.tsv")]) == 2
 
 
-def test_huggingface_model_file(tmp_dir, model, args, data, tokenizer, mocker):
+def test_huggingface_model_file(tmp_dir, model, args, data, mocker):
     model_path = tmp_dir / "model_hf"
     model_save = mocker.spy(model, "save_pretrained")
-    tokernizer_save = mocker.spy(tokenizer, "save_pretrained")
     trainer = Trainer(
         model,
         args,
         train_dataset=data[0],
         eval_dataset=data[1],
-        tokenizer=tokenizer,
         compute_metrics=compute_metrics,
     )
     trainer.add_callback(DvcLiveCallback(model_file=model_path))
@@ -113,9 +145,6 @@ def test_huggingface_model_file(tmp_dir, model, args, data, tokenizer, mocker):
     assert (model_path / "pytorch_model.bin").exists()
     assert (model_path / "config.json").exists()
     assert model_save.call_count == 2
-
-    assert (model_path / "tokenizer.json").exists()
-    assert tokernizer_save.call_count == 2
 
 
 def test_huggingface_pass_logger():
