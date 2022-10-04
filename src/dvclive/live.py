@@ -61,7 +61,7 @@ class Live:
                     "`report` can only be `None`, `auto`, `html` or `md`"
                 )
 
-        self._report: Optional[str] = report
+        self.report_mode: Optional[str] = report
         self.report_path = ""
 
         self.init_from_env()
@@ -77,7 +77,7 @@ class Live:
 
         self._init_paths()
 
-        if self._report in ("html", "md"):
+        if self.report_mode in ("html", "md"):
             if not self.report_path:
                 self.report_path = os.path.join(self.dir, f"report.{report}")
             out = Path(self.report_path).resolve()
@@ -94,7 +94,7 @@ class Live:
 
         self._latest_studio_step = self.get_step()
 
-        if self._report == "studio":
+        if self.report_mode == "studio":
             from scmrepo.git import Git
 
             self.rev = Git().get_rev()
@@ -104,7 +104,7 @@ class Live:
                     "`post_to_studio` `start` event failed. "
                     "`studio` report cancelled."
                 )
-                self._report = None
+                self.report_mode = None
 
     def _cleanup(self):
         for data_type in DATA_TYPES:
@@ -131,9 +131,9 @@ class Live:
 
             # Keeping backward compatibility with `live` section
             if not env2bool(env.DVCLIVE_HTML, "0"):
-                env_config["_report"] = None
+                env_config["report_mode"] = None
             else:
-                env_config["_report"] = "html"
+                env_config["report_mode"] = "html"
                 path = str(env_config["_path"])
                 self.report_path = path + "_dvc_plots/index.html"
 
@@ -174,7 +174,7 @@ class Live:
                 data.dump(data.val, self._step)
             self.make_summary()
 
-        if self._report == "studio":
+        if self.report_mode == "studio":
             if not post_to_studio(self, "data", logger):
                 logger.warning(
                     "`post_to_studio` `data` event failed."
@@ -272,15 +272,13 @@ class Live:
             json.dump(summary_data, f, indent=4, cls=NumpyEncoder)
 
     def make_report(self):
-        if self._report is not None:
-            make_report(
-                self.dir, self.summary_path, self.report_path, self._report
-            )
-            if self._report == "html" and env2bool(env.DVCLIVE_OPEN):
+        if self.report_mode is not None:
+            make_report(self)
+            if self.report_mode == "html" and env2bool(env.DVCLIVE_OPEN):
                 open_file_in_browser(self.report_path)
 
     def end(self):
-        if self._report == "studio":
+        if self.report_mode == "studio":
             if not post_to_studio(self, "done", logger):
                 logger.warning("`post_to_studio` `done` event failed.")
 

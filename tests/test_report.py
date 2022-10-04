@@ -12,6 +12,7 @@ from dvclive.env import DVCLIVE_OPEN
 from dvclive.report import (
     get_image_renderers,
     get_metrics_renderers,
+    get_params_renderers,
     get_plot_renderers,
     get_scalar_renderers,
 )
@@ -19,6 +20,9 @@ from dvclive.report import (
 
 def test_get_renderers(tmp_dir, mocker):
     live = Live()
+
+    live.log_param("string", "goo")
+    live.log_param("number", 2)
 
     for i in range(2):
         live.log("foo/bar", i)
@@ -75,19 +79,22 @@ def test_get_renderers(tmp_dir, mocker):
     metrics_renderer = get_metrics_renderers(live.summary_path)[0]
     assert metrics_renderer.datapoints == [{"step": 1, "foo": {"bar": 1}}]
 
+    params_renderer = get_params_renderers(live.params_path)[0]
+    assert params_renderer.datapoints == [{"string": "goo", "number": 2}]
+
 
 def test_report_init(monkeypatch):
     monkeypatch.setenv("CI", "false")
     live = Live()
-    assert live._report == "html"
+    assert live.report_mode == "html"
 
     monkeypatch.setenv("CI", "true")
     live = Live()
-    assert live._report == "md"
+    assert live.report_mode == "md"
 
     for report in {None, "html", "md"}:
         live = Live(report=report)
-        assert live._report == report
+        assert live.report_mode == report
 
     with pytest.raises(ValueError):
         Live(report="foo")
