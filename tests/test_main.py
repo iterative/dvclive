@@ -6,7 +6,7 @@ import pytest
 from funcy import last
 
 from dvclive import Live, env
-from dvclive.data import Scalar
+from dvclive.data import Metric
 from dvclive.error import (
     ConfigMismatchError,
     DataAlreadyLoggedError,
@@ -14,14 +14,14 @@ from dvclive.error import (
     InvalidParameterTypeError,
 )
 from dvclive.serialize import load_yaml
-from dvclive.utils import parse_scalars
+from dvclive.utils import parse_metrics
 
 
 def read_history(live, metric):
-    history, _ = parse_scalars(live)
+    history, _ = parse_metrics(live)
     steps = []
     values = []
-    name = os.path.join(live.dir, Scalar.subfolder, f"{metric}.tsv")
+    name = os.path.join(live.plots_path, Metric.subfolder, f"{metric}.tsv")
     for e in history[name]:
         steps.append(int(e["step"]))
         values.append(float(e[metric]))
@@ -29,7 +29,7 @@ def read_history(live, metric):
 
 
 def read_latest(live, metric_name):
-    _, latest = parse_scalars(live)
+    _, latest = parse_metrics(live)
     return latest["step"], latest[metric_name]
 
 
@@ -39,9 +39,9 @@ def test_logging_no_step(tmp_dir):
     dvclive.log("m1", 1)
 
     assert not (tmp_dir / "logs" / "m1.tsv").is_file()
-    assert (tmp_dir / dvclive.summary_path).is_file()
+    assert (tmp_dir / dvclive.metrics_path).is_file()
 
-    s = load_yaml(dvclive.summary_path)
+    s = load_yaml(dvclive.metrics_path)
     assert s["m1"] == 1
     assert "step" not in s
 
@@ -123,10 +123,12 @@ def test_logging_step(tmp_dir, path):
     dvclive.log("m1", 1)
     dvclive.next_step()
     assert (tmp_dir / dvclive.dir).is_dir()
-    assert (tmp_dir / dvclive.dir / Scalar.subfolder / "m1.tsv").is_file()
-    assert (tmp_dir / dvclive.summary_path).is_file()
+    assert (
+        tmp_dir / dvclive.plots_path / Metric.subfolder / "m1.tsv"
+    ).is_file()
+    assert (tmp_dir / dvclive.metrics_path).is_file()
 
-    s = load_yaml(dvclive.summary_path)
+    s = load_yaml(dvclive.metrics_path)
     assert s["m1"] == 1
     assert s["step"] == 0
 
@@ -134,7 +136,7 @@ def test_logging_step(tmp_dir, path):
 def test_nested_logging(tmp_dir):
     dvclive = Live("logs")
 
-    out = tmp_dir / dvclive.dir / Scalar.subfolder
+    out = tmp_dir / dvclive.plots_path / Metric.subfolder
 
     dvclive.log("train/m1", 1)
     dvclive.log("val/val_1/m1", 1)
@@ -147,7 +149,7 @@ def test_nested_logging(tmp_dir):
     assert (out / "val" / "val_1" / "m1.tsv").is_file()
     assert (out / "val" / "val_1" / "m2.tsv").is_file()
 
-    summary = load_yaml(dvclive.summary_path)
+    summary = load_yaml(dvclive.metrics_path)
 
     assert summary["train"]["m1"] == 1
     assert summary["val"]["val_1"]["m1"] == 1
@@ -169,15 +171,17 @@ def test_cleanup(tmp_dir, html):
 
     (tmp_dir / "logs" / "some_user_file.txt").touch()
 
-    assert (tmp_dir / dvclive.dir / Scalar.subfolder / "m1.tsv").is_file()
-    assert (tmp_dir / dvclive.summary_path).is_file()
+    assert (
+        tmp_dir / dvclive.plots_path / Metric.subfolder / "m1.tsv"
+    ).is_file()
+    assert (tmp_dir / dvclive.metrics_path).is_file()
     assert html_path.is_file() == html
 
     dvclive = Live("logs")
 
     assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
-    assert not (tmp_dir / dvclive.dir / Scalar.subfolder).exists()
-    assert not (tmp_dir / dvclive.summary_path).is_file()
+    assert not (tmp_dir / dvclive.plots_path / Metric.subfolder).exists()
+    assert not (tmp_dir / dvclive.metrics_path).is_file()
     assert not (html_path).is_file()
 
 

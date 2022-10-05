@@ -6,7 +6,7 @@ from .base import Data
 
 class Plot(Data):
     suffixes = [".json"]
-    subfolder = "plots"
+    subfolder = "data_series"
 
     @property
     def output_path(self) -> Path:

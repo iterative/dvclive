@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Union
 from ruamel.yaml.representer import RepresenterError
 
 from . import env
-from .data import DATA_TYPES, PLOTS, Image, NumpyEncoder, Scalar
+from .data import DATA_TYPES, PLOTS, Image, Metric, NumpyEncoder
 from .dvc import make_checkpoint
 from .error import (
     ConfigMismatchError,
@@ -109,10 +109,10 @@ class Live:
     def _cleanup(self):
         for data_type in DATA_TYPES:
             shutil.rmtree(
-                Path(self.dir) / data_type.subfolder, ignore_errors=True
+                Path(self.plots_path) / data_type.subfolder, ignore_errors=True
             )
 
-        for f in (self.summary_path, self.report_path, self.params_path):
+        for f in (self.metrics_path, self.report_path, self.params_path):
             if os.path.exists(f):
                 os.remove(f)
 
@@ -153,12 +153,12 @@ class Live:
         return os.path.join(self.dir, "params.yaml")
 
     @property
-    def exists(self):
-        return os.path.isdir(self.dir)
+    def metrics_path(self):
+        return os.path.join(self.dir, "metrics.json")
 
     @property
-    def summary_path(self):
-        return str(self.dir) + ".json"
+    def plots_path(self):
+        return os.path.join(self.dir, "plots")
 
     def get_step(self) -> int:
         return self._step or 0
@@ -194,13 +194,13 @@ class Live:
         self.set_step(self.get_step() + 1)
 
     def log(self, name: str, val: Union[int, float]):
-        if not Scalar.could_log(val):
+        if not Metric.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 
         if name in self._scalars:
             data = self._scalars[name]
         else:
-            data = Scalar(name, self.dir)
+            data = Metric(name, self.plots_path)
             self._scalars[name] = data
 
         data.dump(val, self._step)
@@ -215,7 +215,7 @@ class Live:
         if name in self._images:
             data = self._images[name]
         else:
-            data = Image(name, self.dir)
+            data = Image(name, self.plots_path)
             self._images[name] = data
 
         data.dump(val, self._step)
@@ -227,7 +227,7 @@ class Live:
         if name in self._plots:
             data = self._plots[name]
         elif name in PLOTS and PLOTS[name].could_log(val):
-            data = PLOTS[name](name, self.dir)
+            data = PLOTS[name](name, self.plots_path)
             self._plots[name] = data
         else:
             raise InvalidPlotTypeError(name)
@@ -268,7 +268,7 @@ class Live:
         for data in self._scalars.values():
             summary_data = nested_update(summary_data, data.summary)
 
-        with open(self.summary_path, "w", encoding="utf-8") as f:
+        with open(self.metrics_path, "w", encoding="utf-8") as f:
             json.dump(summary_data, f, indent=4, cls=NumpyEncoder)
 
     def make_report(self):
@@ -287,11 +287,11 @@ class Live:
             make_checkpoint()
 
     def read_step(self):
-        if Path(self.summary_path).exists():
+        if Path(self.metrics_path).exists():
             latest = self.read_latest()
             return latest.get("step", 0)
         return 0
 
     def read_latest(self):
-        with open(self.summary_path, "r", encoding="utf-8") as fobj:
+        with open(self.metrics_path, "r", encoding="utf-8") as fobj:
             return json.load(fobj)

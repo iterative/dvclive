@@ -12,9 +12,9 @@ from transformers import (
 )
 
 from dvclive import Live
-from dvclive.data.scalar import Scalar
+from dvclive.data.metric import Metric
 from dvclive.huggingface import DvcLiveCallback
-from dvclive.utils import parse_scalars
+from dvclive.utils import parse_metrics
 
 # pylint: disable=redefined-outer-name, unused-argument, no-value-for-parameter
 
@@ -113,13 +113,14 @@ def test_huggingface_integration(tmp_dir, model, args, data):
     trainer.add_callback(callback)
     trainer.train()
 
-    assert os.path.exists("dvclive")
+    live = callback.dvclive
+    assert os.path.exists(live.dir)
 
-    logs, _ = parse_scalars(callback.dvclive)
+    logs, _ = parse_metrics(live)
 
     assert len(logs) == 10
 
-    scalars = os.path.join("dvclive", Scalar.subfolder)
+    scalars = os.path.join(live.plots_path, Metric.subfolder)
     assert os.path.join(scalars, "eval", "foo.tsv") in logs
     assert os.path.join(scalars, "eval", "loss.tsv") in logs
     assert os.path.join(scalars, "train", "loss.tsv") in logs

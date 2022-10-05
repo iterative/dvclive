@@ -3,9 +3,9 @@ import os
 import pytest
 
 from dvclive import Live
-from dvclive.data.scalar import Scalar
+from dvclive.data.metric import Metric
 from dvclive.keras import DvcLiveCallback
-from dvclive.utils import parse_scalars
+from dvclive.utils import parse_metrics
 
 # pylint: disable=unused-argument, no-name-in-module, redefined-outer-name
 
@@ -49,9 +49,9 @@ def test_keras_callback(tmp_dir, xor_model, capture_wrap):
     )
 
     assert os.path.exists("dvclive")
-    logs, _ = parse_scalars(callback.dvclive)
+    logs, _ = parse_metrics(callback.dvclive)
 
-    scalars = os.path.join("dvclive", Scalar.subfolder)
+    scalars = os.path.join(callback.dvclive.plots_path, Metric.subfolder)
     assert os.path.join(scalars, "train", "accuracy.tsv") in logs
     assert os.path.join(scalars, "eval", "accuracy.tsv") in logs
 
