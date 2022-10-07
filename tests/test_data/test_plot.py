@@ -34,7 +34,7 @@ def test_log_calibration_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
     spy = mocker.spy(calibration, "calibration_curve")
 
-    live.log_plot("calibration", y_true, y_score)
+    live.log_sklearn_plot("calibration", y_true, y_score)
 
     spy.assert_called_once_with(y_true, y_score)
 
@@ -49,7 +49,7 @@ def test_log_det_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
     spy = mocker.spy(metrics, "det_curve")
 
-    live.log_plot("det", y_true, y_score)
+    live.log_sklearn_plot("det", y_true, y_score)
 
     spy.assert_called_once_with(y_true, y_score)
     assert (out / "det.json").exists()
@@ -63,7 +63,7 @@ def test_log_roc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
     spy = mocker.spy(metrics, "roc_curve")
 
-    live.log_plot("roc", y_true, y_score)
+    live.log_sklearn_plot("roc", y_true, y_score)
 
     spy.assert_called_once_with(y_true, y_score)
     assert (out / "roc.json").exists()
@@ -77,7 +77,7 @@ def test_log_prc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
     spy = mocker.spy(metrics, "precision_recall_curve")
 
-    live.log_plot("precision_recall", y_true, y_score)
+    live.log_sklearn_plot("precision_recall", y_true, y_score)
 
     spy.assert_called_once_with(y_true, y_score)
     assert (out / "precision_recall.json").exists()
@@ -89,7 +89,7 @@ def test_log_confusion_matrix(tmp_dir, y_true_y_pred_y_score, mocker):
 
     y_true, y_pred, _ = y_true_y_pred_y_score
 
-    live.log_plot("confusion_matrix", y_true, y_pred)
+    live.log_sklearn_plot("confusion_matrix", y_true, y_pred)
 
     cm = json.loads((out / "confusion_matrix.json").read_text())
 
@@ -105,7 +105,7 @@ def test_step_exception(tmp_dir, y_true_y_pred_y_score):
 
     y_true, y_pred, _ = y_true_y_pred_y_score
 
-    live.log_plot("confusion_matrix", y_true, y_pred)
+    live.log_sklearn_plot("confusion_matrix", y_true, y_pred)
     assert (out / "confusion_matrix.json").exists()
 
     with pytest.raises(NotImplementedError):
@@ -119,7 +119,7 @@ def test_dump_kwargs(tmp_dir, y_true_y_pred_y_score, mocker):
 
     spy = mocker.spy(metrics, "roc_curve")
 
-    live.log_plot("roc", y_true, y_score, drop_intermediate=True)
+    live.log_sklearn_plot("roc", y_true, y_score, drop_intermediate=True)
 
     spy.assert_called_once_with(y_true, y_score, drop_intermediate=True)
 
@@ -130,7 +130,7 @@ def test_cleanup(tmp_dir, y_true_y_pred_y_score):
 
     y_true, y_pred, _ = y_true_y_pred_y_score
 
-    live.log_plot("confusion_matrix", y_true, y_pred)
+    live.log_sklearn_plot("confusion_matrix", y_true, y_pred)
 
     assert (out / "confusion_matrix.json").exists()
 

@@ -221,7 +221,7 @@ class Live:
         data.dump(val, self._step)
         logger.debug(f"Logged {name}: {val}")
 
-    def log_plot(self, name, labels, predictions, **kwargs):
+    def log_sklearn_plot(self, name, labels, predictions, **kwargs):
         val = (labels, predictions)
 
         if name in self._plots:
