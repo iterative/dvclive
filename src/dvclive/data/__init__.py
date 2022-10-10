@@ -1,6 +1,6 @@
 from .image import Image
 from .metric import Metric
-from .plot import Calibration, ConfusionMatrix, Det, PrecisionRecall, Roc
+from .sklearn import Calibration, ConfusionMatrix, Det, PrecisionRecall, Roc
 from .utils import NumpyEncoder  # noqa: F401
 
 PLOTS = {

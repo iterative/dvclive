@@ -7,7 +7,7 @@ from PIL import Image
 from dvclive import Live
 from dvclive.data import Image as LiveImage
 from dvclive.data import Metric
-from dvclive.data.plot import ConfusionMatrix, Plot
+from dvclive.data.sklearn import ConfusionMatrix, SKLearn
 from dvclive.env import DVCLIVE_OPEN
 from dvclive.report import (
     get_image_renderers,
@@ -67,7 +67,7 @@ def test_get_renderers(tmp_dir, mocker):
     assert scalar_renderers[0].name == "static/foo/bar"
 
     plot_renderers = get_plot_renderers(
-        tmp_dir / live.plots_path / Plot.subfolder
+        tmp_dir / live.plots_path / SKLearn.subfolder
     )
     assert len(plot_renderers) == 1
     assert plot_renderers[0].datapoints == [
