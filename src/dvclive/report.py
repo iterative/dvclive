@@ -9,7 +9,7 @@ from dvc_render.table import TableRenderer
 from dvc_render.vega import VegaRenderer
 
 from dvclive.data import PLOTS, Image, Metric
-from dvclive.data.sklearn import SKLearn
+from dvclive.data.sklearn_plot import SKLearnPlot
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_tsv
 
@@ -57,7 +57,7 @@ def get_image_renderers(images_folder):
 
 def get_plot_renderers(plots_folder):
     renderers = []
-    for suffix in SKLearn.suffixes:
+    for suffix in SKLearnPlot.suffixes:
         for file in Path(plots_folder).rglob(f"*{suffix}"):
             name = file.stem
             data = json.loads(file.read_text())
@@ -102,7 +102,7 @@ def make_report(dvclive: "Live"):
     renderers.extend(get_metrics_renderers(dvclive.metrics_path))
     renderers.extend(get_scalar_renderers(plots_path / Metric.subfolder))
     renderers.extend(get_image_renderers(plots_path / Image.subfolder))
-    renderers.extend(get_plot_renderers(plots_path / SKLearn.subfolder))
+    renderers.extend(get_plot_renderers(plots_path / SKLearnPlot.subfolder))
 
     if dvclive.report_mode == "html":
         render_html(renderers, dvclive.report_path, refresh_seconds=5)

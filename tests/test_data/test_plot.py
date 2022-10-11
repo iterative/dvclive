@@ -4,7 +4,7 @@ import pytest
 from sklearn import calibration, metrics
 
 from dvclive import Live
-from dvclive.data.sklearn import SKLearn
+from dvclive.data.sklearn_plot import SKLearnPlot
 
 # pylint: disable=redefined-outer-name, unused-argument
 
@@ -28,7 +28,7 @@ def y_true_y_pred_y_score():
 
 def test_log_calibration_curve(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearn.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, _, y_score = y_true_y_pred_y_score
 
@@ -43,7 +43,7 @@ def test_log_calibration_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_log_det_curve(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearn.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, _, y_score = y_true_y_pred_y_score
 
@@ -57,7 +57,7 @@ def test_log_det_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_log_roc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearn.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, _, y_score = y_true_y_pred_y_score
 
@@ -71,7 +71,7 @@ def test_log_roc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_log_prc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearn.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, _, y_score = y_true_y_pred_y_score
 
@@ -85,7 +85,7 @@ def test_log_prc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_log_confusion_matrix(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearn.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, y_pred, _ = y_true_y_pred_y_score
 
@@ -101,7 +101,7 @@ def test_log_confusion_matrix(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_step_exception(tmp_dir, y_true_y_pred_y_score):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearn.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, y_pred, _ = y_true_y_pred_y_score
 
@@ -126,7 +126,7 @@ def test_dump_kwargs(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_cleanup(tmp_dir, y_true_y_pred_y_score):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearn.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, y_pred, _ = y_true_y_pred_y_score
 
@@ -136,4 +136,4 @@ def test_cleanup(tmp_dir, y_true_y_pred_y_score):
 
     Live()
 
-    assert not (tmp_dir / live.plots_path / SKLearn.subfolder).exists()
+    assert not (tmp_dir / live.plots_path / SKLearnPlot.subfolder).exists()
