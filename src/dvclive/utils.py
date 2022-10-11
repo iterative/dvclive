@@ -97,13 +97,13 @@ def standardize_metric_name(metric_name: str, framework: str) -> str:
 
 
 def parse_tsv(path):
-    with open(path, "r", encoding="utf-8") as fd:
+    with open(path, encoding="utf-8") as fd:
         reader = csv.DictReader(fd, delimiter="\t")
         return list(reader)
 
 
 def parse_json(path):
-    with open(path, "r", encoding="utf-8") as fd:
+    with open(path, encoding="utf-8") as fd:
         return json.load(fd)
 
 
