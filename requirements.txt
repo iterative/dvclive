@@ -1,0 +1,3 @@
+# for faster CI runs, we don't want heavier wheels with CUDA
+--extra-index-url https://download.pytorch.org/whl/cpu
+-e ".[dev]"

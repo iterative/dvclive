@@ -33,6 +33,8 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.pyv }}
+          cache: 'pip'
+          cache-dependency-path: 'setup.cfg'
 
       - name: Upgrade pip and nox
         run: |
@@ -48,13 +50,13 @@ jobs:
           brew install ninja libomp
           brew pin libomp
       - name: Lint code and check dependencies
-        run: nox -s lint safety
+        run: nox -s lint safety --verbose
 
       - name: Run tests
-        run: nox -s tests-${{ matrix.nox_pyv || matrix.pyv }} -- --cov-report=xml
+        run: nox -s tests-${{ matrix.nox_pyv || matrix.pyv }} --verbose -- --cov-report=xml
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v3.1.1
 
       - name: Build package
-        run: nox -s build
+        run: nox -s build --verbose
