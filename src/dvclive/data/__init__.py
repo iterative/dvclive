@@ -1,6 +1,12 @@
 from .image import Image
-from .plot import Calibration, ConfusionMatrix, Det, PrecisionRecall, Roc
-from .scalar import Scalar
+from .metric import Metric
+from .sklearn_plot import (
+    Calibration,
+    ConfusionMatrix,
+    Det,
+    PrecisionRecall,
+    Roc,
+)
 from .utils import NumpyEncoder  # noqa: F401
 
 PLOTS = {
@@ -10,4 +16,4 @@ PLOTS = {
     "precision_recall": PrecisionRecall,
     "roc": Roc,
 }
-DATA_TYPES = (*PLOTS.values(), Scalar, Image)
+DATA_TYPES = (*PLOTS.values(), Metric, Image)

@@ -4,7 +4,7 @@ import pytest
 from sklearn import calibration, metrics
 
 from dvclive import Live
-from dvclive.data.plot import Plot
+from dvclive.data.sklearn_plot import SKLearnPlot
 
 # pylint: disable=redefined-outer-name, unused-argument
 
@@ -28,13 +28,13 @@ def y_true_y_pred_y_score():
 
 def test_log_calibration_curve(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.dir / Plot.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, _, y_score = y_true_y_pred_y_score
 
     spy = mocker.spy(calibration, "calibration_curve")
 
-    live.log_plot("calibration", y_true, y_score)
+    live.log_sklearn_plot("calibration", y_true, y_score)
 
     spy.assert_called_once_with(y_true, y_score)
 
@@ -43,13 +43,13 @@ def test_log_calibration_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_log_det_curve(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.dir / Plot.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, _, y_score = y_true_y_pred_y_score
 
     spy = mocker.spy(metrics, "det_curve")
 
-    live.log_plot("det", y_true, y_score)
+    live.log_sklearn_plot("det", y_true, y_score)
 
     spy.assert_called_once_with(y_true, y_score)
     assert (out / "det.json").exists()
@@ -57,13 +57,13 @@ def test_log_det_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_log_roc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.dir / Plot.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, _, y_score = y_true_y_pred_y_score
 
     spy = mocker.spy(metrics, "roc_curve")
 
-    live.log_plot("roc", y_true, y_score)
+    live.log_sklearn_plot("roc", y_true, y_score)
 
     spy.assert_called_once_with(y_true, y_score)
     assert (out / "roc.json").exists()
@@ -71,13 +71,13 @@ def test_log_roc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_log_prc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.dir / Plot.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, _, y_score = y_true_y_pred_y_score
 
     spy = mocker.spy(metrics, "precision_recall_curve")
 
-    live.log_plot("precision_recall", y_true, y_score)
+    live.log_sklearn_plot("precision_recall", y_true, y_score)
 
     spy.assert_called_once_with(y_true, y_score)
     assert (out / "precision_recall.json").exists()
@@ -85,11 +85,11 @@ def test_log_prc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_log_confusion_matrix(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.dir / Plot.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, y_pred, _ = y_true_y_pred_y_score
 
-    live.log_plot("confusion_matrix", y_true, y_pred)
+    live.log_sklearn_plot("confusion_matrix", y_true, y_pred)
 
     cm = json.loads((out / "confusion_matrix.json").read_text())
 
@@ -101,11 +101,11 @@ def test_log_confusion_matrix(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_step_exception(tmp_dir, y_true_y_pred_y_score):
     live = Live()
-    out = tmp_dir / live.dir / Plot.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, y_pred, _ = y_true_y_pred_y_score
 
-    live.log_plot("confusion_matrix", y_true, y_pred)
+    live.log_sklearn_plot("confusion_matrix", y_true, y_pred)
     assert (out / "confusion_matrix.json").exists()
 
     with pytest.raises(NotImplementedError):
@@ -119,21 +119,21 @@ def test_dump_kwargs(tmp_dir, y_true_y_pred_y_score, mocker):
 
     spy = mocker.spy(metrics, "roc_curve")
 
-    live.log_plot("roc", y_true, y_score, drop_intermediate=True)
+    live.log_sklearn_plot("roc", y_true, y_score, drop_intermediate=True)
 
     spy.assert_called_once_with(y_true, y_score, drop_intermediate=True)
 
 
 def test_cleanup(tmp_dir, y_true_y_pred_y_score):
     live = Live()
-    out = tmp_dir / live.dir / Plot.subfolder
+    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
 
     y_true, y_pred, _ = y_true_y_pred_y_score
 
-    live.log_plot("confusion_matrix", y_true, y_pred)
+    live.log_sklearn_plot("confusion_matrix", y_true, y_pred)
 
     assert (out / "confusion_matrix.json").exists()
 
     Live()
 
-    assert not (tmp_dir / live.dir / Plot.subfolder).exists()
+    assert not (tmp_dir / live.plots_path / SKLearnPlot.subfolder).exists()

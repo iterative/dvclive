@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 
 from dvclive import Live
 from dvclive.lgbm import DvcLiveCallback
-from dvclive.utils import parse_scalars
+from dvclive.utils import parse_metrics
 
 # pylint: disable=redefined-outer-name, unused-argument
 
@@ -49,7 +49,7 @@ def test_lgbm_integration(tmp_dir, model_params, iris_data):
 
     assert os.path.exists("dvclive")
 
-    logs, _ = parse_scalars(callback.dvclive)
+    logs, _ = parse_metrics(callback.dvclive)
     assert len(logs) == 1
     assert len(list(logs.values())[0]) == 5
 

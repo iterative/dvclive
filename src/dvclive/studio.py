@@ -1,7 +1,7 @@
 from os import getenv
 
 from dvclive.env import STUDIO_ENDPOINT
-from dvclive.utils import parse_scalars
+from dvclive.utils import parse_metrics
 
 
 def _get_unsent_datapoints(plot, latest_step):
@@ -28,14 +28,14 @@ def _to_dvc_format(plots):
 
 
 def _get_updates(live):
-    plots, metrics = parse_scalars(live)
+    plots, metrics = parse_metrics(live)
     latest_step = live._latest_studio_step  # pylint: disable=protected-access
 
     for name, plot in plots.items():
         datapoints = _get_unsent_datapoints(plot, latest_step)
         plots[name] = _cast_to_numbers(datapoints)
 
-    metrics = {live.summary_path: {"data": metrics}}
+    metrics = {live.metrics_path: {"data": metrics}}
     plots = _to_dvc_format(plots)
     return metrics, plots
 

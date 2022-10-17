@@ -10,9 +10,9 @@ from .base import Data
 from .utils import NUMPY_SCALARS
 
 
-class Scalar(Data):
+class Metric(Data):
     suffixes = [".csv", ".tsv"]
-    subfolder = "scalars"
+    subfolder = "metrics"
 
     @staticmethod
     def could_log(val: object) -> bool:

@@ -8,8 +8,8 @@ from dvc_render.markdown import render_markdown
 from dvc_render.table import TableRenderer
 from dvc_render.vega import VegaRenderer
 
-from dvclive.data import PLOTS, Image, Scalar
-from dvclive.data.plot import Plot
+from dvclive.data import PLOTS, Image, Metric
+from dvclive.data.sklearn_plot import SKLearnPlot
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_tsv
 
@@ -17,20 +17,20 @@ if TYPE_CHECKING:
     from dvclive import Live
 
 
-def get_scalar_renderers(scalars_folder):
+def get_scalar_renderers(metrics_path):
     renderers = []
-    for suffix in Scalar.suffixes:
-        for file in Path(scalars_folder).rglob(f"*{suffix}"):
+    for suffix in Metric.suffixes:
+        for file in metrics_path.rglob(f"*{suffix}"):
             data = parse_tsv(file)
             for row in data:
                 row["rev"] = "workspace"
 
-            y = file.relative_to(scalars_folder).with_suffix("")
+            y = file.relative_to(metrics_path).with_suffix("")
             y = y.as_posix()
 
-            name = file.relative_to(scalars_folder.parent).with_suffix("")
+            name = file.relative_to(metrics_path.parent).with_suffix("")
             name = name.as_posix()
-            name = name.replace(scalars_folder.name, "static")
+            name = name.replace(metrics_path.name, "static")
 
             properties = {"x": "step", "y": y}
             renderers.append(VegaRenderer(data, name, **properties))
@@ -57,7 +57,7 @@ def get_image_renderers(images_folder):
 
 def get_plot_renderers(plots_folder):
     renderers = []
-    for suffix in Plot.suffixes:
+    for suffix in SKLearnPlot.suffixes:
         for file in Path(plots_folder).rglob(f"*{suffix}"):
             name = file.stem
             data = json.loads(file.read_text())
@@ -71,12 +71,12 @@ def get_plot_renderers(plots_folder):
 
 
 def get_metrics_renderers(dvclive_summary):
-    summary_path = Path(dvclive_summary)
-    if summary_path.exists():
+    metrics_path = Path(dvclive_summary)
+    if metrics_path.exists():
         return [
             TableRenderer(
-                [json.loads(summary_path.read_text(encoding="utf-8"))],
-                summary_path.name,
+                [json.loads(metrics_path.read_text(encoding="utf-8"))],
+                metrics_path.name,
             )
         ]
     return []
@@ -95,14 +95,14 @@ def get_params_renderers(dvclive_params):
 
 
 def make_report(dvclive: "Live"):
-    dvclive_path = Path(dvclive.dir)
+    plots_path = Path(dvclive.plots_path)
 
     renderers = []
     renderers.extend(get_params_renderers(dvclive.params_path))
-    renderers.extend(get_metrics_renderers(dvclive.summary_path))
-    renderers.extend(get_scalar_renderers(dvclive_path / Scalar.subfolder))
-    renderers.extend(get_image_renderers(dvclive_path / Image.subfolder))
-    renderers.extend(get_plot_renderers(dvclive_path / Plot.subfolder))
+    renderers.extend(get_metrics_renderers(dvclive.metrics_path))
+    renderers.extend(get_scalar_renderers(plots_path / Metric.subfolder))
+    renderers.extend(get_image_renderers(plots_path / Image.subfolder))
+    renderers.extend(get_plot_renderers(plots_path / SKLearnPlot.subfolder))
 
     if dvclive.report_mode == "html":
         render_html(renderers, dvclive.report_path, refresh_seconds=5)
