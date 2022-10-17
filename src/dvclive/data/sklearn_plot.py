@@ -4,9 +4,9 @@ from pathlib import Path
 from .base import Data
 
 
-class Plot(Data):
+class SKLearnPlot(Data):
     suffixes = [".json"]
-    subfolder = "plots"
+    subfolder = "sklearn"
 
     @property
     def output_path(self) -> Path:
@@ -51,7 +51,7 @@ class Plot(Data):
         raise NotImplementedError
 
 
-class Roc(Plot):
+class Roc(SKLearnPlot):
     @staticmethod
     def get_properties():
         return {
@@ -79,7 +79,7 @@ class Roc(Plot):
         self.write_json(roc, self.output_path)
 
 
-class PrecisionRecall(Plot):
+class PrecisionRecall(SKLearnPlot):
     @staticmethod
     def get_properties():
         return {
@@ -108,7 +108,7 @@ class PrecisionRecall(Plot):
         self.write_json(prc, self.output_path)
 
 
-class Det(Plot):
+class Det(SKLearnPlot):
     @staticmethod
     def get_properties():
         return {
@@ -137,7 +137,7 @@ class Det(Plot):
         self.write_json(det, self.output_path)
 
 
-class ConfusionMatrix(Plot):
+class ConfusionMatrix(SKLearnPlot):
     @staticmethod
     def get_properties():
         return {
@@ -159,7 +159,7 @@ class ConfusionMatrix(Plot):
         self.write_json(cm, self.output_path)
 
 
-class Calibration(Plot):
+class Calibration(SKLearnPlot):
     @staticmethod
     def get_properties():
         return {

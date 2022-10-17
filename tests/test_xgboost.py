@@ -7,7 +7,7 @@ import xgboost as xgb
 from sklearn import datasets
 
 from dvclive import Live
-from dvclive.utils import parse_scalars
+from dvclive.utils import parse_metrics
 from dvclive.xgb import DvcLiveCallback
 
 # pylint: disable=redefined-outer-name, unused-argument
@@ -38,7 +38,7 @@ def test_xgb_integration(tmp_dir, train_params, iris_data):
 
     assert os.path.exists("dvclive")
 
-    logs, _ = parse_scalars(callback.dvclive)
+    logs, _ = parse_metrics(callback.dvclive)
     assert len(logs) == 1
     assert len(list(logs.values())[0]) == 5
 

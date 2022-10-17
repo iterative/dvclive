@@ -8,9 +8,9 @@ from torch.nn import functional as F
 from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 
-from dvclive.data.scalar import Scalar
+from dvclive.data.metric import Metric
 from dvclive.lightning import DvcLiveLogger
-from dvclive.utils import parse_scalars
+from dvclive.utils import parse_metrics
 
 # pylint: disable=redefined-outer-name, unused-argument
 
@@ -100,8 +100,10 @@ def test_lightning_integration(tmp_dir):
     assert os.path.exists("logs")
     assert not os.path.exists("DvcLiveLogger")
 
-    scalars = os.path.join(dvclive_logger.experiment.dir, Scalar.subfolder)
-    logs, _ = parse_scalars(dvclive_logger.experiment)
+    scalars = os.path.join(
+        dvclive_logger.experiment.plots_path, Metric.subfolder
+    )
+    logs, _ = parse_metrics(dvclive_logger.experiment)
 
     assert len(logs) == 3
     assert os.path.join(scalars, "train", "epoch", "loss.tsv") in logs
