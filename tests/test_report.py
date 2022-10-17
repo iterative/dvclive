@@ -6,8 +6,8 @@ from PIL import Image
 
 from dvclive import Live
 from dvclive.data import Image as LiveImage
-from dvclive.data import Scalar
-from dvclive.data.plot import ConfusionMatrix, Plot
+from dvclive.data import Metric
+from dvclive.data.sklearn_plot import ConfusionMatrix, SKLearnPlot
 from dvclive.env import DVCLIVE_OPEN
 from dvclive.report import (
     get_image_renderers,
@@ -31,10 +31,10 @@ def test_get_renderers(tmp_dir, mocker):
         live.next_step()
 
     live.set_step(None)
-    live.log_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
+    live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
 
     image_renderers = get_image_renderers(
-        tmp_dir / live.dir / LiveImage.subfolder
+        tmp_dir / live.plots_path / LiveImage.subfolder
     )
     assert len(image_renderers) == 2
     image_renderers = sorted(
@@ -46,7 +46,7 @@ def test_get_renderers(tmp_dir, mocker):
         ]
 
     scalar_renderers = get_scalar_renderers(
-        tmp_dir / live.dir / Scalar.subfolder
+        tmp_dir / live.plots_path / Metric.subfolder
     )
     assert len(scalar_renderers) == 1
     assert scalar_renderers[0].datapoints == [
@@ -66,7 +66,9 @@ def test_get_renderers(tmp_dir, mocker):
     assert scalar_renderers[0].properties["y"] == "foo/bar"
     assert scalar_renderers[0].name == "static/foo/bar"
 
-    plot_renderers = get_plot_renderers(tmp_dir / live.dir / Plot.subfolder)
+    plot_renderers = get_plot_renderers(
+        tmp_dir / live.plots_path / SKLearnPlot.subfolder
+    )
     assert len(plot_renderers) == 1
     assert plot_renderers[0].datapoints == [
         {"actual": "0", "rev": "workspace", "predicted": "1"},
@@ -76,7 +78,7 @@ def test_get_renderers(tmp_dir, mocker):
     ]
     assert plot_renderers[0].properties == ConfusionMatrix.get_properties()
 
-    metrics_renderer = get_metrics_renderers(live.summary_path)[0]
+    metrics_renderer = get_metrics_renderers(live.metrics_path)[0]
     assert metrics_renderer.datapoints == [{"step": 1, "foo": {"bar": 1}}]
 
     params_renderer = get_params_renderers(live.params_path)[0]
@@ -101,7 +103,7 @@ def test_report_init(monkeypatch):
 
 
 @pytest.mark.parametrize("mode", ["html", "md"])
-def test_make_report(tmp_dir, mode):
+def test_make_report(tmp_dir, mode, mocker):
     live = Live(report=mode)
     for i in range(3):
         live.log("foobar", i)
@@ -117,7 +119,7 @@ def test_make_report(tmp_dir, mode):
 def test_make_report_open(tmp_dir, mocker, monkeypatch):
     mocked_open = mocker.patch("webbrowser.open")
     live = Live()
-    live.log_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
+    live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
     live.make_report()
     live.make_report()
 
@@ -132,7 +134,7 @@ def test_make_report_open(tmp_dir, mocker, monkeypatch):
     monkeypatch.setenv(DVCLIVE_OPEN, True)
 
     live = Live()
-    live.log_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
+    live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
     live.make_report()
 
     mocked_open.assert_called_once()
