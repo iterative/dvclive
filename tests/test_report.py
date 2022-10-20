@@ -83,7 +83,7 @@ def test_get_renderers(tmp_dir, mocker):
     assert params_renderer.datapoints == [{"string": "goo", "number": 2}]
 
 
-def test_report_init(monkeypatch):
+def test_report_init(monkeypatch, mocker):
     monkeypatch.setenv("CI", "false")
     live = Live()
     assert live.report_mode == "html"
@@ -91,6 +91,10 @@ def test_report_init(monkeypatch):
     monkeypatch.setenv("CI", "true")
     live = Live()
     assert live.report_mode == "md"
+
+    mocker.patch("dvclive.live.matplotlib_installed", return_value=False)
+    live = Live()
+    assert live.report_mode == "html"
 
     for report in {None, "html", "md"}:
         live = Live(report=report)
