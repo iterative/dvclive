@@ -21,7 +21,12 @@ from .error import (
 from .report import make_report
 from .serialize import dump_yaml, load_yaml
 from .studio import post_to_studio
-from .utils import env2bool, nested_update, open_file_in_browser
+from .utils import (
+    env2bool,
+    matplotlib_installed,
+    nested_update,
+    open_file_in_browser,
+)
 
 logging.basicConfig()
 logger = logging.getLogger("dvclive")
@@ -51,7 +56,7 @@ class Live:
         if report == "auto":
             if self.studio_url and self.studio_token:
                 report = "studio"
-            elif env2bool("CI"):
+            elif env2bool("CI") and matplotlib_installed():
                 report = "md"
             else:
                 report = "html"
