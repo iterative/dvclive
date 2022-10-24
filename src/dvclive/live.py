@@ -298,5 +298,5 @@ class Live:
         return 0
 
     def read_latest(self):
-        with open(self.summary_path, encoding="utf-8") as fobj:
+        with open(self.metrics_path, encoding="utf-8") as fobj:
             return json.load(fobj)
