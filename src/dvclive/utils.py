@@ -23,6 +23,7 @@ def nested_set(d, keys, value):
     for key in keys[:-1]:
         d = d.setdefault(key, {})
     d[keys[-1]] = value
+    return d
 
 
 def nested_update(d, u):
@@ -108,7 +109,7 @@ def parse_json(path):
 
 
 def parse_metrics(live):
-    from .data import Metric
+    from .plots import Metric
 
     plots_path = Path(live.plots_path)
     history = {}
