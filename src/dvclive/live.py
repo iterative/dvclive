@@ -221,13 +221,14 @@ class Live:
         data.dump(val, self._step)
         logger.debug(f"Logged {name}: {val}")
 
-    def log_sklearn_plot(self, name, labels, predictions, **kwargs):
+    def log_sklearn_plot(self, kind, labels, predictions, name=None, **kwargs):
         val = (labels, predictions)
 
+        name = name or kind
         if name in self._plots:
             data = self._plots[name]
-        elif name in PLOTS and PLOTS[name].could_log(val):
-            data = PLOTS[name](name, self.plots_path)
+        elif kind in PLOTS and PLOTS[kind].could_log(val):
+            data = PLOTS[kind](name, self.plots_path)
             self._plots[name] = data
         else:
             raise InvalidPlotTypeError(name)
