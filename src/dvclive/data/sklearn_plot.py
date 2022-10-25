@@ -10,7 +10,8 @@ class SKLearnPlot(Data):
 
     @property
     def output_path(self) -> Path:
-        _path = Path(f"{self.output_folder / self.name}.json")
+        _name = self.name.replace(".json", "")
+        _path = Path(f"{self.output_folder / _name}.json")
         _path.parent.mkdir(exist_ok=True, parents=True)
         return _path
 
