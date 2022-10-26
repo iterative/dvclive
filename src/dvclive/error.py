@@ -1,22 +1,8 @@
-import os
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from .live import Live
+from typing import Any
 
 
 class DvcLiveError(Exception):
     pass
-
-
-class ConfigMismatchError(DvcLiveError):
-    def __init__(self, ml: "Live"):
-        from . import env
-
-        super().__init__(
-            f"Dvclive initialized in '{ml.dir}' conflicts "
-            f"with '{os.environ[env.DVCLIVE_PATH]}' provided by DVC."
-        )
 
 
 class InvalidDataTypeError(DvcLiveError):
