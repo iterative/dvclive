@@ -103,16 +103,18 @@ def test_report_init(monkeypatch):
 
 
 @pytest.mark.parametrize("mode", ["html", "md"])
-def test_make_report(tmp_dir, mode, mocker):
+def test_make_report(tmp_dir, mode):
+    last_report = ""
     live = Live(report=mode)
     for i in range(3):
         live.log("foobar", i)
         live.log("foo/bar", i)
+        live.make_report()
         live.next_step()
-
-    # Format of the report is tested in `dvc-render`
-    assert (tmp_dir / live.report_path).exists()
-    assert (tmp_dir / live.dir / "static").exists() == (mode == "md")
+        assert (tmp_dir / live.report_path).exists()
+        current_report = (tmp_dir / live.report_path).read_text()
+        assert last_report != current_report
+        last_report = current_report
 
 
 @pytest.mark.vscode
