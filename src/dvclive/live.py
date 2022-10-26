@@ -13,7 +13,6 @@ from . import env
 from .data import DATA_TYPES, PLOTS, Image, Metric, NumpyEncoder
 from .dvc import make_checkpoint
 from .error import (
-    ConfigMismatchError,
     InvalidDataTypeError,
     InvalidParameterTypeError,
     InvalidPlotTypeError,
@@ -38,15 +37,13 @@ ParamLike = Union[
 
 
 class Live:
-    DEFAULT_DIR = "dvclive"
-
     def __init__(
         self,
-        path: Optional[str] = None,
+        path: str = "dvclive",
         resume: bool = False,
         report: Optional[str] = "auto",
     ):
-        self._path: Optional[str] = path
+        self._path: str = path
         self._resume: bool = resume or env2bool(env.DVCLIVE_RESUME)
 
         self.studio_url = os.getenv(env.STUDIO_REPO_URL, None)
@@ -68,11 +65,6 @@ class Live:
 
         self.report_mode: Optional[str] = report
         self.report_path = ""
-
-        self.init_from_env()
-
-        if self._path is None:
-            self._path = self.DEFAULT_DIR
 
         self._step: Optional[int] = None
         self._scalars: Dict[str, Any] = OrderedDict()
@@ -123,31 +115,6 @@ class Live:
 
     def _init_paths(self):
         os.makedirs(self.dir, exist_ok=True)
-
-    def init_from_env(self) -> None:
-        if os.getenv(env.DVCLIVE_PATH):
-
-            if self.dir and self.dir != os.getenv(env.DVCLIVE_PATH):
-                raise ConfigMismatchError(self)
-
-            env_config = {
-                "_path": os.getenv(env.DVCLIVE_PATH),
-            }
-
-            # Keeping backward compatibility with `live` section
-            if not env2bool(env.DVCLIVE_HTML, "0"):
-                env_config["report_mode"] = None
-            else:
-                env_config["report_mode"] = "html"
-                path = str(env_config["_path"])
-                self.report_path = path + "_dvc_plots/index.html"
-
-            for k, v in env_config.items():
-                if getattr(self, k) != v:
-                    logger.info(
-                        f"Overriding {k} with value provided by DVC: {v}"
-                    )
-                    setattr(self, k, v)
 
     @property
     def dir(self):

@@ -8,7 +8,6 @@ from funcy import last
 from dvclive import Live, env
 from dvclive.data import Metric
 from dvclive.error import (
-    ConfigMismatchError,
     DataAlreadyLoggedError,
     InvalidDataTypeError,
     InvalidParameterTypeError,
@@ -274,29 +273,6 @@ def test_log_reset_with_set_step(tmp_dir):
     assert read_history(dvclive, "val_m") == ([0, 1, 2], [1, 1, 1])
     assert read_latest(dvclive, "train_m") == (2, 1)
     assert read_latest(dvclive, "val_m") == (2, 1)
-
-
-@pytest.mark.parametrize("html", [True, False])
-def test_init_from_env(tmp_dir, html, monkeypatch):
-    monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
-    monkeypatch.setenv(env.DVCLIVE_HTML, str(int(html)))
-
-    dvclive = Live()
-    assert dvclive._path == "logs"
-    if html:
-        html_path = str(dvclive.dir) + "_dvc_plots/index.html"
-        assert dvclive.report_mode == "html"
-        assert dvclive.report_path == html_path
-    else:
-        assert dvclive.report_mode is None
-        assert dvclive.report_path == ""
-
-
-def test_fail_on_conflict(tmp_dir, monkeypatch):
-    monkeypatch.setenv(env.DVCLIVE_PATH, "logs")
-
-    with pytest.raises(ConfigMismatchError):
-        Live("dvclive")
 
 
 @pytest.mark.parametrize("invalid_type", [{0: 1}, [0, 1], "foo", (0, 1)])
