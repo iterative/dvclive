@@ -398,3 +398,37 @@ def test_context_manager(tmp_dir):
     assert not log_file.exists()
     report_file = tmp_dir / live.report_file
     assert report_file.exists()
+
+
+@pytest.mark.parametrize("dvc_root", [True, False])
+@pytest.mark.parametrize("set_env", [True, False])
+def test_create_checkpoint_file(
+    tmp_dir, monkeypatch, dvc_root, set_env, mocker
+):
+    if dvc_root:
+        (tmp_dir / ".dvc" / "tmp").mkdir(parents=True)
+    if set_env:
+        monkeypatch.setenv(env.DVC_CHECKPOINT, "1")
+
+    dvclive = Live()
+
+    native_exists = os.path.exists
+
+    def checkpoint_never_exists(path):
+        # we need that to avoid waiting for dvc process to remove file
+        if path.endswith(env.DVC_CHECKPOINT):
+            return False
+
+        return native_exists(path)
+
+    with mocker.patch(
+        "dvclive.dvc.os.path.exists", side_effect=checkpoint_never_exists
+    ):
+        dvclive.make_checkpoint()
+
+    if dvc_root and set_env:
+        assert native_exists(os.path.join(".dvc", "tmp", env.DVC_CHECKPOINT))
+    else:
+        assert not native_exists(
+            os.path.join(".dvc", "tmp", env.DVC_CHECKPOINT)
+        )
