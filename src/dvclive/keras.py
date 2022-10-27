@@ -51,4 +51,5 @@ class DvcLiveCallback(Callback):
                 self.model.save_weights(self.model_file)
             else:
                 self.model.save(self.model_file)
+        self.dvclive.make_report()
         self.dvclive.next_step()

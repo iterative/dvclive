@@ -19,5 +19,5 @@ class DvcLiveCallback:
 
         if self.model_file:
             env.model.save_model(self.model_file)
-
+        self.dvclive.make_report()
         self.dvclive.next_step()

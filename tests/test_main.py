@@ -326,21 +326,6 @@ def test_get_step_control_flow(tmp_dir):
     assert values == [float(x) for x in range(10)]
 
 
-def test_make_checkpoint(tmp_dir, mocker, monkeypatch):
-    make_checkpoint = mocker.patch("dvclive.live.make_checkpoint")
-
-    dvclive = Live()
-    dvclive.log("foo", 1)
-    dvclive.next_step()
-    assert not make_checkpoint.called
-
-    monkeypatch.setenv(env.DVC_CHECKPOINT, True)
-    dvclive = Live()
-    dvclive.log("foo", 1)
-    dvclive.next_step()
-    assert make_checkpoint.called
-
-
 def test_logger(tmp_dir, mocker, monkeypatch):
     logger = mocker.patch("dvclive.live.logger")
     monkeypatch.setenv(env.DVCLIVE_LOGLEVEL, "DEBUG")
