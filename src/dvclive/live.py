@@ -154,10 +154,6 @@ class Live:
                 )
             else:
                 self._latest_studio_step = step
-        else:
-            self.make_report()
-
-        self.make_checkpoint()
 
         self._step = step
         logger.debug(f"Step: {self._step}")
