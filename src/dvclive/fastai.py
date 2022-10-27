@@ -24,4 +24,5 @@ class DvcLiveCallback(Callback):
 
         if self.model_file:
             self.learn.save(self.model_file)
+        self.dvclive.make_report()
         self.dvclive.next_step()

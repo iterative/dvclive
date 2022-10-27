@@ -69,4 +69,5 @@ class DvcLiveLogger(Logger):
                 metric_val = metric_val.cpu().detach().item()
             metric_name = standardize_metric_name(metric_name, __name__)
             self.experiment.log(name=metric_name, val=metric_val)
+        self.experiment.make_report()
         self.experiment.next_step()
