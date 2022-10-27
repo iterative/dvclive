@@ -22,7 +22,7 @@ class DvcLiveCallback(TrainingCallback):
         for key, values in evals_log[self._metric_data].items():
             if values:
                 latest_metric = values[-1]
-            self.dvclive.log(key, latest_metric)
+            self.dvclive.log_metric(key, latest_metric)
         if self.model_file:
             model.save_model(self.model_file)
         self.dvclive.make_report()

@@ -153,7 +153,7 @@ class Live:
     def next_step(self):
         self.set_step(self.get_step() + 1)
 
-    def log(self, name: str, val: Union[int, float]):
+    def log_metric(self, name: str, val: Union[int, float]):
         if not Metric.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 

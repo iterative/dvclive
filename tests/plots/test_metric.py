@@ -15,7 +15,7 @@ def test_numpy(tmp_dir, dtype):
     scalar = np.random.rand(1).astype(dtype)[0]
     live = Live()
 
-    live.log("scalar", scalar)
+    live.log_metric("scalar", scalar)
     live.next_step()
 
     parsed = json.loads((tmp_dir / live.metrics_path).read_text())
@@ -29,7 +29,7 @@ def test_name_with_dot(tmp_dir):
     """Regression test for #284"""
     live = Live()
 
-    live.log("scalar.foo.bar", 1.0)
+    live.log_metric("scalar.foo.bar", 1.0)
     live.next_step()
 
     tsv_file = (
