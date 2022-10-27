@@ -14,12 +14,12 @@ class InvalidDataTypeError(DvcLiveError):
 
 class InvalidPlotTypeError(DvcLiveError):
     def __init__(self, name):
-        from .data import PLOTS
+        from .plots import SKLEARN_PLOTS
 
         self.name = name
         super().__init__(
             f"Plot type '{name}' is not supported."
-            f"\nSupported types are: {list(PLOTS)}"
+            f"\nSupported types are: {list(SKLEARN_PLOTS)}"
         )
 
 

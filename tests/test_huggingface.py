@@ -12,8 +12,8 @@ from transformers import (
 )
 
 from dvclive import Live
-from dvclive.data.metric import Metric
 from dvclive.huggingface import DvcLiveCallback
+from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
 
 # pylint: disable=redefined-outer-name, unused-argument, no-value-for-parameter

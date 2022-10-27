@@ -1,5 +1,6 @@
-import json
 from pathlib import Path
+
+from dvclive.serialize import dump_json
 
 from .base import Data
 
@@ -21,32 +22,6 @@ class SKLearnPlot(Data):
             return True
         return False
 
-    @property
-    def no_step_output_path(self) -> Path:
-        return super().no_step_output_path.with_suffix(".json")
-
-    @property
-    def summary(self):
-        return {}
-
-    @staticmethod
-    def write_json(content, output_file):
-        with open(output_file, "w", encoding="utf-8") as f:
-            json.dump(content, f, indent=4)
-
-    def no_step_dump(self) -> None:
-        raise NotImplementedError
-
-    def first_step_dump(self) -> None:
-        raise NotImplementedError(
-            "DVCLive plots can only be used in no-step mode."
-        )
-
-    def step_dump(self) -> None:
-        raise NotImplementedError(
-            "DVCLive plots can only be used in no-step mode."
-        )
-
     @staticmethod
     def get_properties():
         raise NotImplementedError
@@ -63,13 +38,11 @@ class Roc(SKLearnPlot):
             "y_label": "True Positive Rate",
         }
 
-    def no_step_dump(self) -> None:
-        assert self.val is not None
-
+    def dump(self, val, **kwargs) -> None:
         from sklearn import metrics
 
         fpr, tpr, roc_thresholds = metrics.roc_curve(
-            y_true=self.val[0], y_score=self.val[1], **self._dump_kwargs
+            y_true=val[0], y_score=val[1], **kwargs
         )
         roc = {
             "roc": [
@@ -77,7 +50,7 @@ class Roc(SKLearnPlot):
                 for fp, tp, t in zip(fpr, tpr, roc_thresholds)
             ]
         }
-        self.write_json(roc, self.output_path)
+        dump_json(roc, self.output_path)
 
 
 class PrecisionRecall(SKLearnPlot):
@@ -91,13 +64,11 @@ class PrecisionRecall(SKLearnPlot):
             "y_label": "Precision",
         }
 
-    def no_step_dump(self) -> None:
-        assert self.val is not None
-
+    def dump(self, val, **kwargs) -> None:
         from sklearn import metrics
 
         precision, recall, prc_thresholds = metrics.precision_recall_curve(
-            y_true=self.val[0], probas_pred=self.val[1], **self._dump_kwargs
+            y_true=val[0], probas_pred=val[1], **kwargs
         )
 
         prc = {
@@ -106,7 +77,7 @@ class PrecisionRecall(SKLearnPlot):
                 for p, r, t in zip(precision, recall, prc_thresholds)
             ]
         }
-        self.write_json(prc, self.output_path)
+        dump_json(prc, self.output_path)
 
 
 class Det(SKLearnPlot):
@@ -120,13 +91,11 @@ class Det(SKLearnPlot):
             "y_label": "False Negative Rate",
         }
 
-    def no_step_dump(self) -> None:
-        assert self.val is not None
-
+    def dump(self, val, **kwargs) -> None:
         from sklearn import metrics
 
         fpr, fnr, roc_thresholds = metrics.det_curve(
-            y_true=self.val[0], y_score=self.val[1], **self._dump_kwargs
+            y_true=val[0], y_score=val[1], **kwargs
         )
 
         det = {
@@ -135,7 +104,7 @@ class Det(SKLearnPlot):
                 for fp, fn, t in zip(fpr, fnr, roc_thresholds)
             ]
         }
-        self.write_json(det, self.output_path)
+        dump_json(det, self.output_path)
 
 
 class ConfusionMatrix(SKLearnPlot):
@@ -150,14 +119,12 @@ class ConfusionMatrix(SKLearnPlot):
             "y_label": "Predicted Label",
         }
 
-    def no_step_dump(self) -> None:
-        assert self.val is not None
-
+    def dump(self, val, **kwargs) -> None:
         cm = [
             {"actual": str(actual), "predicted": str(predicted)}
-            for actual, predicted in zip(self.val[0], self.val[1])
+            for actual, predicted in zip(val[0], val[1])
         ]
-        self.write_json(cm, self.output_path)
+        dump_json(cm, self.output_path)
 
 
 class Calibration(SKLearnPlot):
@@ -171,19 +138,17 @@ class Calibration(SKLearnPlot):
             "y_label": "Fraction of Positives",
         }
 
-    def no_step_dump(self) -> None:
-        assert self.val is not None
-
+    def dump(self, val, **kwargs) -> None:
         from sklearn import calibration
 
         prob_true, prob_pred = calibration.calibration_curve(
-            y_true=self.val[0], y_prob=self.val[1], **self._dump_kwargs
+            y_true=val[0], y_prob=val[1], **kwargs
         )
 
-        calibration = {
+        _calibration = {
             "calibration": [
                 {"prob_true": pt, "prob_pred": pp}
                 for pt, pp in zip(prob_true, prob_pred)
             ]
         }
-        self.write_json(calibration, self.output_path)
+        dump_json(_calibration, self.output_path)

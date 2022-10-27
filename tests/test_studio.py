@@ -5,7 +5,7 @@ import os
 import pytest
 
 from dvclive import Live, env
-from dvclive.data import Metric
+from dvclive.plots import Metric
 
 
 @pytest.mark.studio
