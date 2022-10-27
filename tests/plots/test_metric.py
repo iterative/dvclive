@@ -5,8 +5,8 @@ import pytest
 
 # pylint: disable=unused-argument
 from dvclive import Live
-from dvclive.data.metric import Metric
-from dvclive.data.utils import NUMPY_INTS, NUMPY_SCALARS
+from dvclive.plots.metric import Metric
+from dvclive.plots.utils import NUMPY_INTS, NUMPY_SCALARS
 from dvclive.utils import parse_tsv
 
 

@@ -11,8 +11,8 @@ from fastai.tabular.all import (
 )
 
 from dvclive import Live
-from dvclive.data.metric import Metric
 from dvclive.fastai import DvcLiveCallback
+from dvclive.plots.metric import Metric
 
 # pylint: disable=redefined-outer-name, unused-argument
 

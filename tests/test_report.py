@@ -5,10 +5,10 @@ import pytest
 from PIL import Image
 
 from dvclive import Live
-from dvclive.data import Image as LiveImage
-from dvclive.data import Metric
-from dvclive.data.sklearn_plot import ConfusionMatrix, SKLearnPlot
 from dvclive.env import DVCLIVE_OPEN
+from dvclive.plots import Image as LiveImage
+from dvclive.plots import Metric
+from dvclive.plots.sklearn import ConfusionMatrix, SKLearnPlot
 from dvclive.report import (
     get_image_renderers,
     get_metrics_renderers,
@@ -30,20 +30,18 @@ def test_get_renderers(tmp_dir, mocker):
         live.log_image("image.png", img)
         live.next_step()
 
-    live.set_step(None)
     live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
 
     image_renderers = get_image_renderers(
         tmp_dir / live.plots_path / LiveImage.subfolder
     )
-    assert len(image_renderers) == 2
-    image_renderers = sorted(
-        image_renderers, key=lambda x: x.datapoints[0]["rev"]
-    )
-    for n, renderer in enumerate(image_renderers):
-        assert renderer.datapoints == [
-            {"src": mocker.ANY, "rev": os.path.join(str(n), "image.png")}
-        ]
+    assert len(image_renderers) == 1
+    assert image_renderers[0].datapoints == [
+        {
+            "src": os.path.join("plots", LiveImage.subfolder, "image.png"),
+            "rev": "image.png",
+        }
+    ]
 
     scalar_renderers = get_scalar_renderers(
         tmp_dir / live.plots_path / Metric.subfolder

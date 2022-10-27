@@ -4,7 +4,7 @@ import pytest
 from sklearn import calibration, metrics
 
 from dvclive import Live
-from dvclive.data.sklearn_plot import SKLearnPlot
+from dvclive.plots.sklearn import SKLearnPlot
 
 # pylint: disable=redefined-outer-name, unused-argument
 
@@ -99,19 +99,6 @@ def test_log_confusion_matrix(tmp_dir, y_true_y_pred_y_score, mocker):
     assert cm[0]["predicted"] == str(y_pred[0])
 
 
-def test_step_exception(tmp_dir, y_true_y_pred_y_score):
-    live = Live()
-    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
-
-    y_true, y_pred, _ = y_true_y_pred_y_score
-
-    live.log_sklearn_plot("confusion_matrix", y_true, y_pred)
-    assert (out / "confusion_matrix.json").exists()
-
-    with pytest.raises(NotImplementedError):
-        live.next_step()
-
-
 def test_dump_kwargs(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
 
@@ -122,6 +109,22 @@ def test_dump_kwargs(tmp_dir, y_true_y_pred_y_score, mocker):
     live.log_sklearn_plot("roc", y_true, y_score, drop_intermediate=True)
 
     spy.assert_called_once_with(y_true, y_score, drop_intermediate=True)
+
+
+def test_override_on_step(tmp_dir):
+    live = Live()
+
+    live.log_sklearn_plot("confusion_matrix", [0, 0], [0, 0])
+    live.next_step()
+    live.log_sklearn_plot("confusion_matrix", [0, 0], [1, 1])
+
+    plot_path = tmp_dir / live.plots_path / SKLearnPlot.subfolder
+    plot_path = plot_path / "confusion_matrix.json"
+
+    assert json.loads(plot_path.read_text()) == [
+        {"actual": "0", "predicted": "1"},
+        {"actual": "0", "predicted": "1"},
+    ]
 
 
 def test_cleanup(tmp_dir, y_true_y_pred_y_score):
