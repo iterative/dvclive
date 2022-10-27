@@ -1,17 +1,18 @@
 # pylint: disable=protected-access
 # pylint: disable=unused-argument
+import json
 import os
 
 import pytest
 from funcy import last
 
 from dvclive import Live, env
-from dvclive.data import Metric
 from dvclive.error import (
     DataAlreadyLoggedError,
     InvalidDataTypeError,
     InvalidParameterTypeError,
 )
+from dvclive.plots import Metric
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
 
@@ -239,7 +240,7 @@ def test_require_step_update(tmp_dir, metric):
 
     with pytest.raises(
         DataAlreadyLoggedError,
-        match="has already been logged with step 'None'",
+        match="has already been logged with step '0'",
     ):
         dvclive.log(metric, 2.0)
 
@@ -340,3 +341,17 @@ def test_logger(tmp_dir, mocker, monkeypatch):
 
     live = Live(resume=True)
     logger.info.assert_called_with("Resumed from step 0")
+
+
+def test_make_summary_without_calling_log(tmp_dir):
+    dvclive = Live()
+
+    dvclive.summary["foo"] = 1.0
+    dvclive.make_summary()
+
+    assert json.loads((tmp_dir / dvclive.metrics_path).read_text()) == {
+        # no `step`
+        "foo": 1.0
+    }
+    log_file = tmp_dir / dvclive.plots_path / Metric.subfolder / "foo.tsv"
+    assert not log_file.exists()

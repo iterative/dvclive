@@ -7,7 +7,7 @@ from catalyst import dl
 
 from dvclive import Live
 from dvclive.catalyst import DvcLiveCallback
-from dvclive.data import Metric
+from dvclive.plots import Metric
 
 # pylint: disable=redefined-outer-name, unused-argument
 

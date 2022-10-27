@@ -29,22 +29,11 @@ class Metric(Data):
         _path.parent.mkdir(exist_ok=True, parents=True)
         return _path
 
-    @property
-    def no_step_output_path(self) -> Path:
-        return self.output_path
-
-    def first_step_dump(self) -> None:
-        self.step_dump()
-
-    def no_step_dump(self) -> None:
-        pass
-
-    def step_dump(self) -> None:
+    def dump(self, val, **kwargs) -> None:
         ts = int(time.time() * 1000)
         d = OrderedDict(
-            [("timestamp", ts), ("step", self.step), (self.name, self.val)]
+            [("timestamp", ts), ("step", self.step), (self.name, val)]
         )
-
         existed = self.output_path.exists()
         with open(self.output_path, "a", encoding="utf-8", newline="") as fobj:
             writer = csv.DictWriter(
@@ -52,11 +41,9 @@ class Metric(Data):
             )
             if not existed:
                 writer.writeheader()
-
             writer.writerow(d)
 
-    @property
-    def summary(self):
+    def to_summary(self, val):
         d = {}
-        nested_set(d, os.path.normpath(self.name).split(os.path.sep), self.val)
+        nested_set(d, os.path.normpath(self.name).split(os.path.sep), val)
         return d

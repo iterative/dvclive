@@ -8,8 +8,8 @@ from dvc_render.markdown import render_markdown
 from dvc_render.table import TableRenderer
 from dvc_render.vega import VegaRenderer
 
-from dvclive.data import PLOTS, Image, Metric
-from dvclive.data.sklearn_plot import SKLearnPlot
+from dvclive.plots import SKLEARN_PLOTS, Image, Metric
+from dvclive.plots.sklearn import SKLearnPlot
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_tsv
 
@@ -38,12 +38,12 @@ def get_scalar_renderers(metrics_path):
 
 
 def get_image_renderers(images_folder):
-    dvclive_path = images_folder.parent
+    plots_path = images_folder.parent.parent
     renderers = []
     for suffix in Image.suffixes:
         all_images = Path(images_folder).rglob(f"*{suffix}")
         for file in sorted(all_images):
-            src = str(file.relative_to(dvclive_path))
+            src = str(file.relative_to(plots_path))
             name = str(file.relative_to(images_folder))
             data = [
                 {
@@ -65,7 +65,7 @@ def get_plot_renderers(plots_folder):
                 data = data[name]
             for row in data:
                 row["rev"] = "workspace"
-            properties = PLOTS[name].get_properties()
+            properties = SKLEARN_PLOTS[name].get_properties()
             renderers.append(VegaRenderer(data, name, **properties))
     return renderers
 

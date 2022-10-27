@@ -2,23 +2,21 @@ import json
 import logging
 import os
 import shutil
-from collections import OrderedDict
-from itertools import chain
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from ruamel.yaml.representer import RepresenterError
 
 from . import env
-from .data import DATA_TYPES, PLOTS, Image, Metric, NumpyEncoder
 from .dvc import make_checkpoint
 from .error import (
     InvalidDataTypeError,
     InvalidParameterTypeError,
     InvalidPlotTypeError,
 )
+from .plots import PLOT_TYPES, SKLEARN_PLOTS, Image, Metric, NumpyEncoder
 from .report import make_report
-from .serialize import dump_yaml, load_yaml
+from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import post_to_studio
 from .utils import (
     env2bool,
@@ -66,11 +64,12 @@ class Live:
         self.report_mode: Optional[str] = report
         self.report_path = ""
 
+        self.summary: Dict[str, Any] = {}
         self._step: Optional[int] = None
-        self._scalars: Dict[str, Any] = OrderedDict()
-        self._images: Dict[str, Any] = OrderedDict()
-        self._plots: Dict[str, Any] = OrderedDict()
-        self._params: Dict[str, Any] = OrderedDict()
+        self._metrics: Dict[str, Any] = {}
+        self._images: Dict[str, Any] = {}
+        self._plots: Dict[str, Any] = {}
+        self._params: Dict[str, Any] = {}
 
         self._init_paths()
 
@@ -90,7 +89,6 @@ class Live:
             self._cleanup()
 
         self._latest_studio_step = self.get_step()
-
         if self.report_mode == "studio":
             from scmrepo.git import Git
 
@@ -104,9 +102,9 @@ class Live:
                 self.report_mode = None
 
     def _cleanup(self):
-        for data_type in DATA_TYPES:
+        for plot_type in PLOT_TYPES:
             shutil.rmtree(
-                Path(self.plots_path) / data_type.subfolder, ignore_errors=True
+                Path(self.plots_path) / plot_type.subfolder, ignore_errors=True
             )
 
         for f in (self.metrics_path, self.report_path, self.params_path):
@@ -138,12 +136,6 @@ class Live:
     def set_step(self, step: int) -> None:
         if self._step is None:
             self._step = 0
-            for data in chain(
-                self._scalars.values(),
-                self._images.values(),
-                self._plots.values(),
-            ):
-                data.dump(data.val, self._step)
             self.make_summary()
 
         if self.report_mode == "studio":
@@ -165,14 +157,16 @@ class Live:
         if not Metric.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 
-        if name in self._scalars:
-            data = self._scalars[name]
+        if name in self._metrics:
+            data = self._metrics[name]
         else:
             data = Metric(name, self.plots_path)
-            self._scalars[name] = data
+            self._metrics[name] = data
 
-        data.dump(val, self._step)
+        data.step = self.get_step()
+        data.dump(val)
 
+        self.summary = nested_update(self.summary, data.to_summary(val))
         self.make_summary()
         logger.debug(f"Logged {name}: {val}")
 
@@ -186,7 +180,8 @@ class Live:
             data = Image(name, self.plots_path)
             self._images[name] = data
 
-        data.dump(val, self._step)
+        data.step = self.get_step()
+        data.dump(val)
         logger.debug(f"Logged {name}: {val}")
 
     def log_sklearn_plot(self, kind, labels, predictions, name=None, **kwargs):
@@ -195,13 +190,14 @@ class Live:
         name = name or kind
         if name in self._plots:
             data = self._plots[name]
-        elif kind in PLOTS and PLOTS[kind].could_log(val):
-            data = PLOTS[kind](name, self.plots_path)
+        elif kind in SKLEARN_PLOTS and SKLEARN_PLOTS[kind].could_log(val):
+            data = SKLEARN_PLOTS[kind](name, self.plots_path)
             self._plots[name] = data
         else:
             raise InvalidPlotTypeError(name)
 
-        data.dump(val, self._step, **kwargs)
+        data.step = self.get_step()
+        data.dump(val, **kwargs)
         logger.debug(f"Logged {name}")
 
     def _read_params(self):
@@ -211,7 +207,7 @@ class Live:
 
     def _dump_params(self):
         try:
-            dump_yaml(self.params_path, self._params)
+            dump_yaml(self._params, self.params_path)
         except RepresenterError as exc:
             raise InvalidParameterTypeError(exc.args) from exc
 
@@ -230,15 +226,9 @@ class Live:
         self.log_params({name: val})
 
     def make_summary(self):
-        summary_data = {}
         if self._step is not None:
-            summary_data["step"] = self.get_step()
-
-        for data in self._scalars.values():
-            summary_data = nested_update(summary_data, data.summary)
-
-        with open(self.metrics_path, "w", encoding="utf-8") as f:
-            json.dump(summary_data, f, indent=4, cls=NumpyEncoder)
+            self.summary["step"] = self.get_step()
+        dump_json(self.summary, self.metrics_path, cls=NumpyEncoder)
 
     def make_report(self):
         if self.report_mode is not None:
