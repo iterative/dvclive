@@ -8,8 +8,8 @@ from torch.nn import functional as F
 from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 
-from dvclive.data.metric import Metric
 from dvclive.lightning import DvcLiveLogger
+from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
 
 # pylint: disable=redefined-outer-name, unused-argument

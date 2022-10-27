@@ -3,8 +3,8 @@ import os
 import pytest
 
 from dvclive import Live
-from dvclive.data.metric import Metric
 from dvclive.keras import DvcLiveCallback
+from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
 
 # pylint: disable=unused-argument, no-name-in-module, redefined-outer-name
