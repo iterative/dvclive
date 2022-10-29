@@ -62,7 +62,7 @@ To install the development version, run:
 
 .. code-block:: bash
 
-   pip install git+git://github.com/iterative/dvclive
+   pip install git+https://github.com/iterative/dvclive
 
 Comparison to related technologies
 ----------------------------------
