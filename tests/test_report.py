@@ -33,7 +33,7 @@ def test_get_renderers(tmp_dir, mocker):
     live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
 
     image_renderers = get_image_renderers(
-        tmp_dir / live.plots_path / LiveImage.subfolder
+        tmp_dir / live.plots_dir / LiveImage.subfolder
     )
     assert len(image_renderers) == 1
     assert image_renderers[0].datapoints == [
@@ -44,7 +44,7 @@ def test_get_renderers(tmp_dir, mocker):
     ]
 
     scalar_renderers = get_scalar_renderers(
-        tmp_dir / live.plots_path / Metric.subfolder
+        tmp_dir / live.plots_dir / Metric.subfolder
     )
     assert len(scalar_renderers) == 1
     assert scalar_renderers[0].datapoints == [
@@ -65,7 +65,7 @@ def test_get_renderers(tmp_dir, mocker):
     assert scalar_renderers[0].name == "static/foo/bar"
 
     plot_renderers = get_plot_renderers(
-        tmp_dir / live.plots_path / SKLearnPlot.subfolder
+        tmp_dir / live.plots_dir / SKLearnPlot.subfolder
     )
     assert len(plot_renderers) == 1
     assert plot_renderers[0].datapoints == [
@@ -76,10 +76,10 @@ def test_get_renderers(tmp_dir, mocker):
     ]
     assert plot_renderers[0].properties == ConfusionMatrix.get_properties()
 
-    metrics_renderer = get_metrics_renderers(live.metrics_path)[0]
+    metrics_renderer = get_metrics_renderers(live.metrics_file)[0]
     assert metrics_renderer.datapoints == [{"step": 1, "foo": {"bar": 1}}]
 
-    params_renderer = get_params_renderers(live.params_path)[0]
+    params_renderer = get_params_renderers(live.params_file)[0]
     assert params_renderer.datapoints == [{"string": "goo", "number": 2}]
 
 
@@ -113,8 +113,8 @@ def test_make_report(tmp_dir, mode):
         live.log("foo/bar", i)
         live.make_report()
         live.next_step()
-        assert (tmp_dir / live.report_path).exists()
-        current_report = (tmp_dir / live.report_path).read_text()
+        assert (tmp_dir / live.report_file).exists()
+        current_report = (tmp_dir / live.report_file).read_text()
         assert last_report != current_report
         last_report = current_report
 

@@ -28,7 +28,7 @@ def y_true_y_pred_y_score():
 
 def test_log_calibration_curve(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
+    out = tmp_dir / live.plots_dir / SKLearnPlot.subfolder
 
     y_true, _, y_score = y_true_y_pred_y_score
 
@@ -43,7 +43,7 @@ def test_log_calibration_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_log_det_curve(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
+    out = tmp_dir / live.plots_dir / SKLearnPlot.subfolder
 
     y_true, _, y_score = y_true_y_pred_y_score
 
@@ -57,7 +57,7 @@ def test_log_det_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_log_roc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
+    out = tmp_dir / live.plots_dir / SKLearnPlot.subfolder
 
     y_true, _, y_score = y_true_y_pred_y_score
 
@@ -71,7 +71,7 @@ def test_log_roc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_log_prc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
+    out = tmp_dir / live.plots_dir / SKLearnPlot.subfolder
 
     y_true, _, y_score = y_true_y_pred_y_score
 
@@ -85,7 +85,7 @@ def test_log_prc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
 def test_log_confusion_matrix(tmp_dir, y_true_y_pred_y_score, mocker):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
+    out = tmp_dir / live.plots_dir / SKLearnPlot.subfolder
 
     y_true, y_pred, _ = y_true_y_pred_y_score
 
@@ -118,7 +118,7 @@ def test_override_on_step(tmp_dir):
     live.next_step()
     live.log_sklearn_plot("confusion_matrix", [0, 0], [1, 1])
 
-    plot_path = tmp_dir / live.plots_path / SKLearnPlot.subfolder
+    plot_path = tmp_dir / live.plots_dir / SKLearnPlot.subfolder
     plot_path = plot_path / "confusion_matrix.json"
 
     assert json.loads(plot_path.read_text()) == [
@@ -129,7 +129,7 @@ def test_override_on_step(tmp_dir):
 
 def test_cleanup(tmp_dir, y_true_y_pred_y_score):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
+    out = tmp_dir / live.plots_dir / SKLearnPlot.subfolder
 
     y_true, y_pred, _ = y_true_y_pred_y_score
 
@@ -139,12 +139,12 @@ def test_cleanup(tmp_dir, y_true_y_pred_y_score):
 
     Live()
 
-    assert not (tmp_dir / live.plots_path / SKLearnPlot.subfolder).exists()
+    assert not (tmp_dir / live.plots_dir / SKLearnPlot.subfolder).exists()
 
 
 def test_custom_name(tmp_dir, y_true_y_pred_y_score):
     live = Live()
-    out = tmp_dir / live.plots_path / SKLearnPlot.subfolder
+    out = tmp_dir / live.plots_dir / SKLearnPlot.subfolder
 
     y_true, y_pred, _ = y_true_y_pred_y_score
 

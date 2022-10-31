@@ -120,7 +120,7 @@ def test_huggingface_integration(tmp_dir, model, args, data):
 
     assert len(logs) == 10
 
-    scalars = os.path.join(live.plots_path, Metric.subfolder)
+    scalars = os.path.join(live.plots_dir, Metric.subfolder)
     assert os.path.join(scalars, "eval", "foo.tsv") in logs
     assert os.path.join(scalars, "eval", "loss.tsv") in logs
     assert os.path.join(scalars, "train", "loss.tsv") in logs

@@ -37,11 +37,11 @@ ParamLike = Union[
 class Live:
     def __init__(
         self,
-        path: str = "dvclive",
+        dir: str = "dvclive",  # noqa pylint: disable=redefined-builtin
         resume: bool = False,
         report: Optional[str] = "auto",
     ):
-        self._path: str = path
+        self._dir: str = dir
         self._resume: bool = resume or env2bool(env.DVCLIVE_RESUME)
 
         self.studio_url = os.getenv(env.STUDIO_REPO_URL, None)
@@ -62,7 +62,7 @@ class Live:
                 )
 
         self.report_mode: Optional[str] = report
-        self.report_path = ""
+        self.report_file = ""
 
         self.summary: Dict[str, Any] = {}
         self._step: Optional[int] = None
@@ -74,10 +74,10 @@ class Live:
         self._init_paths()
 
         if self.report_mode in ("html", "md"):
-            if not self.report_path:
-                self.report_path = os.path.join(self.dir, f"report.{report}")
-            out = Path(self.report_path).resolve()
-            logger.info(f"Report path (if generated): {out}")
+            if not self.report_file:
+                self.report_file = os.path.join(self.dir, f"report.{report}")
+            out = Path(self.report_file).resolve()
+            logger.info(f"Report file (if generated): {out}")
 
         if self._resume:
             self._read_params()
@@ -104,10 +104,10 @@ class Live:
     def _cleanup(self):
         for plot_type in PLOT_TYPES:
             shutil.rmtree(
-                Path(self.plots_path) / plot_type.subfolder, ignore_errors=True
+                Path(self.plots_dir) / plot_type.subfolder, ignore_errors=True
             )
 
-        for f in (self.metrics_path, self.report_path, self.params_path):
+        for f in (self.metrics_file, self.report_file, self.params_file):
             if os.path.exists(f):
                 os.remove(f)
 
@@ -116,18 +116,18 @@ class Live:
 
     @property
     def dir(self):
-        return self._path
+        return self._dir
 
     @property
-    def params_path(self):
+    def params_file(self):
         return os.path.join(self.dir, "params.yaml")
 
     @property
-    def metrics_path(self):
+    def metrics_file(self):
         return os.path.join(self.dir, "metrics.json")
 
     @property
-    def plots_path(self):
+    def plots_dir(self):
         return os.path.join(self.dir, "plots")
 
     def get_step(self) -> int:
@@ -160,7 +160,7 @@ class Live:
         if name in self._metrics:
             data = self._metrics[name]
         else:
-            data = Metric(name, self.plots_path)
+            data = Metric(name, self.plots_dir)
             self._metrics[name] = data
 
         data.step = self.get_step()
@@ -177,7 +177,7 @@ class Live:
         if name in self._images:
             data = self._images[name]
         else:
-            data = Image(name, self.plots_path)
+            data = Image(name, self.plots_dir)
             self._images[name] = data
 
         data.step = self.get_step()
@@ -191,7 +191,7 @@ class Live:
         if name in self._plots:
             data = self._plots[name]
         elif kind in SKLEARN_PLOTS and SKLEARN_PLOTS[kind].could_log(val):
-            data = SKLEARN_PLOTS[kind](name, self.plots_path)
+            data = SKLEARN_PLOTS[kind](name, self.plots_dir)
             self._plots[name] = data
         else:
             raise InvalidPlotTypeError(name)
@@ -201,13 +201,13 @@ class Live:
         logger.debug(f"Logged {name}")
 
     def _read_params(self):
-        if os.path.isfile(self.params_path):
-            params = load_yaml(self.params_path)
+        if os.path.isfile(self.params_file):
+            params = load_yaml(self.params_file)
             self._params.update(params)
 
     def _dump_params(self):
         try:
-            dump_yaml(self._params, self.params_path)
+            dump_yaml(self._params, self.params_file)
         except RepresenterError as exc:
             raise InvalidParameterTypeError(exc.args) from exc
 
@@ -215,7 +215,7 @@ class Live:
         """Saves the given set of parameters (dict) to yaml"""
         self._params.update(params)
         self._dump_params()
-        logger.debug(f"Logged {params} parameters to {self.params_path}")
+        logger.debug(f"Logged {params} parameters to {self.params_file}")
 
     def log_param(
         self,
@@ -228,13 +228,13 @@ class Live:
     def make_summary(self):
         if self._step is not None:
             self.summary["step"] = self.get_step()
-        dump_json(self.summary, self.metrics_path, cls=NumpyEncoder)
+        dump_json(self.summary, self.metrics_file, cls=NumpyEncoder)
 
     def make_report(self):
         if self.report_mode is not None:
             make_report(self)
             if self.report_mode == "html" and env2bool(env.DVCLIVE_OPEN):
-                open_file_in_browser(self.report_path)
+                open_file_in_browser(self.report_file)
 
     def end(self):
         if self.report_mode == "studio":
@@ -246,11 +246,11 @@ class Live:
             make_checkpoint()
 
     def read_step(self):
-        if Path(self.metrics_path).exists():
+        if Path(self.metrics_file).exists():
             latest = self.read_latest()
             return latest.get("step", 0)
         return 0
 
     def read_latest(self):
-        with open(self.metrics_path, encoding="utf-8") as fobj:
+        with open(self.metrics_file, encoding="utf-8") as fobj:
             return json.load(fobj)
