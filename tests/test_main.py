@@ -21,7 +21,7 @@ def read_history(live, metric):
     history, _ = parse_metrics(live)
     steps = []
     values = []
-    name = os.path.join(live.plots_path, Metric.subfolder, f"{metric}.tsv")
+    name = os.path.join(live.plots_dir, Metric.subfolder, f"{metric}.tsv")
     for e in history[name]:
         steps.append(int(e["step"]))
         values.append(float(e[metric]))
@@ -39,9 +39,9 @@ def test_logging_no_step(tmp_dir):
     dvclive.log("m1", 1)
 
     assert not (tmp_dir / "logs" / "m1.tsv").is_file()
-    assert (tmp_dir / dvclive.metrics_path).is_file()
+    assert (tmp_dir / dvclive.metrics_file).is_file()
 
-    s = load_yaml(dvclive.metrics_path)
+    s = load_yaml(dvclive.metrics_file)
     assert s["m1"] == 1
     assert "step" not in s
 
@@ -76,7 +76,7 @@ def test_log_param(tmp_dir, param_name, param_value):
 
     dvclive.log_param(param_name, param_value)
 
-    s = load_yaml(dvclive.params_path)
+    s = load_yaml(dvclive.params_file)
     assert s[param_name] == param_value
 
 
@@ -92,7 +92,7 @@ def test_log_params(tmp_dir):
 
     dvclive.log_params(params)
 
-    s = load_yaml(dvclive.params_path)
+    s = load_yaml(dvclive.params_file)
     assert s == params
 
 
@@ -124,11 +124,11 @@ def test_logging_step(tmp_dir, path):
     dvclive.next_step()
     assert (tmp_dir / dvclive.dir).is_dir()
     assert (
-        tmp_dir / dvclive.plots_path / Metric.subfolder / "m1.tsv"
+        tmp_dir / dvclive.plots_dir / Metric.subfolder / "m1.tsv"
     ).is_file()
-    assert (tmp_dir / dvclive.metrics_path).is_file()
+    assert (tmp_dir / dvclive.metrics_file).is_file()
 
-    s = load_yaml(dvclive.metrics_path)
+    s = load_yaml(dvclive.metrics_file)
     assert s["m1"] == 1
     assert s["step"] == 0
 
@@ -136,7 +136,7 @@ def test_logging_step(tmp_dir, path):
 def test_nested_logging(tmp_dir):
     dvclive = Live("logs")
 
-    out = tmp_dir / dvclive.plots_path / Metric.subfolder
+    out = tmp_dir / dvclive.plots_dir / Metric.subfolder
 
     dvclive.log("train/m1", 1)
     dvclive.log("val/val_1/m1", 1)
@@ -149,7 +149,7 @@ def test_nested_logging(tmp_dir):
     assert (out / "val" / "val_1" / "m1.tsv").is_file()
     assert (out / "val" / "val_1" / "m2.tsv").is_file()
 
-    summary = load_yaml(dvclive.metrics_path)
+    summary = load_yaml(dvclive.metrics_file)
 
     assert summary["train"]["m1"] == 1
     assert summary["val"]["val_1"]["m1"] == 1
@@ -165,23 +165,23 @@ def test_cleanup(tmp_dir, html):
     dvclive.log("m1", 1)
     dvclive.next_step()
 
-    html_path = tmp_dir / dvclive.report_path
+    html_path = tmp_dir / dvclive.report_file
     if html:
         html_path.touch()
 
     (tmp_dir / "logs" / "some_user_file.txt").touch()
 
     assert (
-        tmp_dir / dvclive.plots_path / Metric.subfolder / "m1.tsv"
+        tmp_dir / dvclive.plots_dir / Metric.subfolder / "m1.tsv"
     ).is_file()
-    assert (tmp_dir / dvclive.metrics_path).is_file()
+    assert (tmp_dir / dvclive.metrics_file).is_file()
     assert html_path.is_file() == html
 
     dvclive = Live("logs")
 
     assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
-    assert not (tmp_dir / dvclive.plots_path / Metric.subfolder).exists()
-    assert not (tmp_dir / dvclive.metrics_path).is_file()
+    assert not (tmp_dir / dvclive.plots_dir / Metric.subfolder).exists()
+    assert not (tmp_dir / dvclive.metrics_file).is_file()
     assert not (html_path).is_file()
 
 
@@ -189,10 +189,10 @@ def test_cleanup_params(tmp_dir):
     dvclive = Live("logs")
     dvclive.log_param("param", 42)
 
-    assert os.path.isfile(dvclive.params_path)
+    assert os.path.isfile(dvclive.params_file)
 
     dvclive = Live("logs")
-    assert not os.path.exists(dvclive.params_path)
+    assert not os.path.exists(dvclive.params_file)
 
 
 @pytest.mark.parametrize(
@@ -332,7 +332,7 @@ def test_logger(tmp_dir, mocker, monkeypatch):
     monkeypatch.setenv(env.DVCLIVE_LOGLEVEL, "DEBUG")
 
     live = Live()
-    msg = "Report path (if generated)"
+    msg = "Report file (if generated)"
     assert msg in logger.info.call_args[0][0]
     live.log("foo", 0)
     logger.debug.assert_called_with("Logged foo: 0")
@@ -349,9 +349,9 @@ def test_make_summary_without_calling_log(tmp_dir):
     dvclive.summary["foo"] = 1.0
     dvclive.make_summary()
 
-    assert json.loads((tmp_dir / dvclive.metrics_path).read_text()) == {
+    assert json.loads((tmp_dir / dvclive.metrics_file).read_text()) == {
         # no `step`
         "foo": 1.0
     }
-    log_file = tmp_dir / dvclive.plots_path / Metric.subfolder / "foo.tsv"
+    log_file = tmp_dir / dvclive.plots_dir / Metric.subfolder / "foo.tsv"
     assert not log_file.exists()

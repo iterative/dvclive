@@ -14,14 +14,14 @@ class DvcLiveLogger(Logger):
         run_name: Optional[str] = "dvclive_run",
         prefix="",
         experiment=None,
-        path: Optional[str] = None,
+        dir: Optional[str] = None,  # noqa pylint: disable=redefined-builtin
         resume: bool = False,
     ):
 
         super().__init__()
         self._prefix = prefix
         self._dvclive_init = {
-            "path": path,
+            "dir": dir,
             "resume": resume,
         }
         self._experiment = experiment

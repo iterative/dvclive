@@ -51,7 +51,7 @@ def test_keras_callback(tmp_dir, xor_model, capture_wrap):
     assert os.path.exists("dvclive")
     logs, _ = parse_metrics(callback.dvclive)
 
-    scalars = os.path.join(callback.dvclive.plots_path, Metric.subfolder)
+    scalars = os.path.join(callback.dvclive.plots_dir, Metric.subfolder)
     assert os.path.join(scalars, "train", "accuracy.tsv") in logs
     assert os.path.join(scalars, "eval", "accuracy.tsv") in logs
 
