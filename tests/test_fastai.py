@@ -11,7 +11,7 @@ from fastai.tabular.all import (
 )
 
 from dvclive import Live
-from dvclive.fastai import DvcLiveCallback
+from dvclive.fastai import DVCLiveCallback
 from dvclive.plots.metric import Metric
 
 # pylint: disable=redefined-outer-name, unused-argument
@@ -42,8 +42,8 @@ def test_fastai_callback(tmp_dir, data_loader):
     learn = tabular_learner(data_loader, metrics=accuracy)
     learn.remove_cb(ProgressCallback)
     learn.model_dir = os.path.abspath("./")
-    callback = DvcLiveCallback("model")
-    live = callback.dvclive
+    callback = DVCLiveCallback("model")
+    live = callback.live
     learn.fit_one_cycle(2, cbs=[callback])
 
     assert os.path.exists(live.dir)
@@ -61,12 +61,12 @@ def test_fastai_model_file(tmp_dir, data_loader):
     learn = tabular_learner(data_loader, metrics=accuracy)
     learn.remove_cb(ProgressCallback)
     learn.model_dir = os.path.abspath("./")
-    learn.fit_one_cycle(2, cbs=[DvcLiveCallback("model")])
+    learn.fit_one_cycle(2, cbs=[DVCLiveCallback("model")])
     assert (tmp_dir / "model.pth").is_file()
 
 
 def test_fastai_pass_logger():
     logger = Live("train_logs")
 
-    assert DvcLiveCallback().dvclive is not logger
-    assert DvcLiveCallback(dvclive=logger).dvclive is logger
+    assert DVCLiveCallback().live is not logger
+    assert DVCLiveCallback(live=logger).live is logger

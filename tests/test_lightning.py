@@ -8,7 +8,7 @@ from torch.nn import functional as F
 from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 
-from dvclive.lightning import DvcLiveLogger
+from dvclive.lightning import DVCLiveLogger
 from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
 
@@ -88,7 +88,7 @@ def test_lightning_integration(tmp_dir):
     # init model
     model = LitXOR()
     # init logger
-    dvclive_logger = DvcLiveLogger("test_run", dir="logs")
+    dvclive_logger = DVCLiveLogger("test_run", dir="logs")
     trainer = Trainer(
         logger=dvclive_logger,
         max_epochs=2,
