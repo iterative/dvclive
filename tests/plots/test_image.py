@@ -13,7 +13,7 @@ def test_PIL(tmp_dir):
     live.log_image("image.png", img)
 
     assert (
-        tmp_dir / live.plots_path / LiveImage.subfolder / "image.png"
+        tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png"
     ).exists()
 
 
@@ -31,7 +31,7 @@ def test_numpy(tmp_dir, shape):
     live.log_image("image.png", img)
 
     assert (
-        tmp_dir / live.plots_path / LiveImage.subfolder / "image.png"
+        tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png"
     ).exists()
 
 
@@ -46,7 +46,7 @@ def test_override_on_step(tmp_dir):
     ones = np.ones((2, 2, 3), np.uint8)
     live.log_image("image.png", ones)
 
-    img_path = tmp_dir / live.plots_path / LiveImage.subfolder / "image.png"
+    img_path = tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png"
     assert np.array_equal(np.array(Image.open(img_path)), ones)
 
 
@@ -56,9 +56,9 @@ def test_cleanup(tmp_dir):
     live.log_image("image.png", img)
 
     assert (
-        tmp_dir / live.plots_path / LiveImage.subfolder / "image.png"
+        tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png"
     ).exists()
 
     Live()
 
-    assert not (tmp_dir / live.plots_path / LiveImage.subfolder).exists()
+    assert not (tmp_dir / live.plots_dir / LiveImage.subfolder).exists()

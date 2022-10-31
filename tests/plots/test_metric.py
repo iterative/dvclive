@@ -18,9 +18,9 @@ def test_numpy(tmp_dir, dtype):
     live.log("scalar", scalar)
     live.next_step()
 
-    parsed = json.loads((tmp_dir / live.metrics_path).read_text())
+    parsed = json.loads((tmp_dir / live.metrics_file).read_text())
     assert isinstance(parsed["scalar"], int if dtype in NUMPY_INTS else float)
-    tsv_file = tmp_dir / live.plots_path / Metric.subfolder / "scalar.tsv"
+    tsv_file = tmp_dir / live.plots_dir / Metric.subfolder / "scalar.tsv"
     tsv_val = parse_tsv(tsv_file)[0]["scalar"]
     assert tsv_val == str(scalar)
 
@@ -33,7 +33,7 @@ def test_name_with_dot(tmp_dir):
     live.next_step()
 
     tsv_file = (
-        tmp_dir / live.plots_path / Metric.subfolder / "scalar.foo.bar.tsv"
+        tmp_dir / live.plots_dir / Metric.subfolder / "scalar.foo.bar.tsv"
     )
     assert tsv_file.exists()
     tsv_val = parse_tsv(tsv_file)[0]["scalar.foo.bar"]

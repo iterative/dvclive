@@ -88,7 +88,7 @@ def test_lightning_integration(tmp_dir):
     # init model
     model = LitXOR()
     # init logger
-    dvclive_logger = DvcLiveLogger("test_run", path="logs")
+    dvclive_logger = DvcLiveLogger("test_run", dir="logs")
     trainer = Trainer(
         logger=dvclive_logger,
         max_epochs=2,
@@ -101,7 +101,7 @@ def test_lightning_integration(tmp_dir):
     assert not os.path.exists("DvcLiveLogger")
 
     scalars = os.path.join(
-        dvclive_logger.experiment.plots_path, Metric.subfolder
+        dvclive_logger.experiment.plots_dir, Metric.subfolder
     )
     logs, _ = parse_metrics(dvclive_logger.experiment)
 
