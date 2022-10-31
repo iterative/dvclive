@@ -45,7 +45,9 @@ class DvcLiveCallback(Callback):
     ):  # pylint: disable=unused-argument
         logs = logs or {}
         for metric, value in logs.items():
-            self.dvclive.log(standardize_metric_name(metric, __name__), value)
+            self.dvclive.log_metric(
+                standardize_metric_name(metric, __name__), value
+            )
         if self.model_file:
             if self.save_weights_only:
                 self.model.save_weights(self.model_file)
