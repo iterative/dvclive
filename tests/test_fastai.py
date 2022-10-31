@@ -48,7 +48,7 @@ def test_fastai_callback(tmp_dir, data_loader):
 
     assert os.path.exists(live.dir)
 
-    metrics_path = tmp_dir / live.plots_path / Metric.subfolder
+    metrics_path = tmp_dir / live.plots_dir / Metric.subfolder
     train_path = metrics_path / "train"
     valid_path = metrics_path / "eval"
 

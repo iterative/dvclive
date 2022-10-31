@@ -20,7 +20,7 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
 
     live = Live()
 
-    scalar_path = os.path.join(live.plots_path, Metric.subfolder, "foo.tsv")
+    scalar_path = os.path.join(live.plots_dir, Metric.subfolder, "foo.tsv")
 
     mocked_post.assert_called_with(
         "https://0.0.0.0",
@@ -47,7 +47,7 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
             "repo_url": "STUDIO_REPO_URL",
             "rev": mocker.ANY,
             "step": 0,
-            "metrics": {live.metrics_path: {"data": {"step": 0, "foo": 1}}},
+            "metrics": {live.metrics_file: {"data": {"step": 0, "foo": 1}}},
             "plots": {
                 scalar_path: {
                     "data": [{"timestamp": mocker.ANY, "step": 0, "foo": 1.0}]
@@ -72,7 +72,7 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
             "repo_url": "STUDIO_REPO_URL",
             "rev": mocker.ANY,
             "step": 1,
-            "metrics": {live.metrics_path: {"data": {"step": 1, "foo": 2}}},
+            "metrics": {live.metrics_file: {"data": {"step": 1, "foo": 2}}},
             "plots": {
                 scalar_path: {
                     "data": [{"timestamp": mocker.ANY, "step": 1, "foo": 2.0}]
@@ -117,7 +117,7 @@ def test_post_to_studio_failed_data_request(tmp_dir, mocker, monkeypatch):
 
     live = Live()
 
-    scalar_path = os.path.join(live.plots_path, Metric.subfolder, "foo.tsv")
+    scalar_path = os.path.join(live.plots_dir, Metric.subfolder, "foo.tsv")
 
     error_response = mocker.MagicMock()
     error_response.status_code = 400
@@ -135,7 +135,7 @@ def test_post_to_studio_failed_data_request(tmp_dir, mocker, monkeypatch):
             "repo_url": "STUDIO_REPO_URL",
             "rev": mocker.ANY,
             "step": 1,
-            "metrics": {live.metrics_path: {"data": {"step": 1, "foo": 2}}},
+            "metrics": {live.metrics_file: {"data": {"step": 1, "foo": 2}}},
             "plots": {
                 scalar_path: {
                     "data": [

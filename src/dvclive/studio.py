@@ -35,7 +35,7 @@ def _get_updates(live):
         datapoints = _get_unsent_datapoints(plot, latest_step)
         plots[name] = _cast_to_numbers(datapoints)
 
-    metrics = {live.metrics_path: {"data": metrics}}
+    metrics = {live.metrics_file: {"data": metrics}}
     plots = _to_dvc_format(plots)
     return metrics, plots
 

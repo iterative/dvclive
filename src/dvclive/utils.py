@@ -111,12 +111,12 @@ def parse_json(path):
 def parse_metrics(live):
     from .plots import Metric
 
-    plots_path = Path(live.plots_path)
+    plots_path = Path(live.plots_dir)
     history = {}
     for suffix in Metric.suffixes:
         for scalar_file in plots_path.rglob(f"*{suffix}"):
             history[str(scalar_file)] = parse_tsv(scalar_file)
-    latest = parse_json(live.metrics_path)
+    latest = parse_json(live.metrics_file)
     return history, latest
 
 

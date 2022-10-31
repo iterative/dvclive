@@ -95,18 +95,18 @@ def get_params_renderers(dvclive_params):
 
 
 def make_report(dvclive: "Live"):
-    plots_path = Path(dvclive.plots_path)
+    plots_path = Path(dvclive.plots_dir)
 
     renderers = []
-    renderers.extend(get_params_renderers(dvclive.params_path))
-    renderers.extend(get_metrics_renderers(dvclive.metrics_path))
+    renderers.extend(get_params_renderers(dvclive.params_file))
+    renderers.extend(get_metrics_renderers(dvclive.metrics_file))
     renderers.extend(get_scalar_renderers(plots_path / Metric.subfolder))
     renderers.extend(get_image_renderers(plots_path / Image.subfolder))
     renderers.extend(get_plot_renderers(plots_path / SKLearnPlot.subfolder))
 
     if dvclive.report_mode == "html":
-        render_html(renderers, dvclive.report_path, refresh_seconds=5)
+        render_html(renderers, dvclive.report_file, refresh_seconds=5)
     elif dvclive.report_mode == "md":
-        render_markdown(renderers, dvclive.report_path)
+        render_markdown(renderers, dvclive.report_file)
     else:
         raise ValueError(f"Invalid `mode` {dvclive.report_mode}.")
