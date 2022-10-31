@@ -118,3 +118,12 @@ def parse_metrics(live):
             history[str(scalar_file)] = parse_tsv(scalar_file)
     latest = parse_json(live.metrics_path)
     return history, latest
+
+
+def matplotlib_installed() -> bool:
+    # noqa pylint: disable=unused-import
+    try:
+        import matplotlib  # noqa: F401
+    except ImportError:
+        return False
+    return True
