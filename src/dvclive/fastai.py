@@ -18,7 +18,7 @@ class DvcLiveCallback(Callback):
         for key, value in zip(
             self.learn.recorder.metric_names, self.learn.recorder.log
         ):
-            self.dvclive.log(
+            self.dvclive.log_metric(
                 standardize_metric_name(key, __name__), float(value)
             )
 

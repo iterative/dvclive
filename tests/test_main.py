@@ -36,7 +36,7 @@ def read_latest(live, metric_name):
 def test_logging_no_step(tmp_dir):
     dvclive = Live("logs")
 
-    dvclive.log("m1", 1)
+    dvclive.log_metric("m1", 1)
 
     assert not (tmp_dir / "logs" / "m1.tsv").is_file()
     assert (tmp_dir / dvclive.metrics_file).is_file()
@@ -120,7 +120,7 @@ def test_log_param_custom_obj(tmp_dir):
 @pytest.mark.parametrize("path", ["logs", os.path.join("subdir", "logs")])
 def test_logging_step(tmp_dir, path):
     dvclive = Live(path)
-    dvclive.log("m1", 1)
+    dvclive.log_metric("m1", 1)
     dvclive.next_step()
     assert (tmp_dir / dvclive.dir).is_dir()
     assert (
@@ -138,9 +138,9 @@ def test_nested_logging(tmp_dir):
 
     out = tmp_dir / dvclive.plots_dir / Metric.subfolder
 
-    dvclive.log("train/m1", 1)
-    dvclive.log("val/val_1/m1", 1)
-    dvclive.log("val/val_1/m2", 1)
+    dvclive.log_metric("train/m1", 1)
+    dvclive.log_metric("val/val_1/m1", 1)
+    dvclive.log_metric("val/val_1/m2", 1)
 
     dvclive.next_step()
 
@@ -162,7 +162,7 @@ def test_nested_logging(tmp_dir):
 )
 def test_cleanup(tmp_dir, html):
     dvclive = Live("logs", report="html" if html else None)
-    dvclive.log("m1", 1)
+    dvclive.log_metric("m1", 1)
     dvclive.next_step()
 
     html_path = tmp_dir / dvclive.report_file
@@ -203,7 +203,7 @@ def test_continue(tmp_dir, resume, steps, metrics):
     dvclive = Live("logs")
 
     for metric in [0.9, 0.8]:
-        dvclive.log("metric", metric)
+        dvclive.log_metric("metric", metric)
         dvclive.next_step()
 
     assert read_history(dvclive, "metric") == ([0, 1], [0.9, 0.8])
@@ -212,7 +212,7 @@ def test_continue(tmp_dir, resume, steps, metrics):
     dvclive = Live("logs", resume=resume)
 
     for new_metric in [0.7, 0.6]:
-        dvclive.log("metric", new_metric)
+        dvclive.log_metric("metric", new_metric)
         dvclive.next_step()
 
     assert read_history(dvclive, "metric") == (steps, metrics)
@@ -236,13 +236,13 @@ def test_resume_env_var(tmp_dir, monkeypatch):
 def test_require_step_update(tmp_dir, metric):
     dvclive = Live("logs")
 
-    dvclive.log(metric, 1.0)
+    dvclive.log_metric(metric, 1.0)
 
     with pytest.raises(
         DataAlreadyLoggedError,
         match="has already been logged with step '0'",
     ):
-        dvclive.log(metric, 2.0)
+        dvclive.log_metric(metric, 2.0)
 
 
 def test_custom_steps(tmp_dir):
@@ -253,7 +253,7 @@ def test_custom_steps(tmp_dir):
 
     for step, metric in zip(steps, metrics):
         dvclive.set_step(step)
-        dvclive.log("m", metric)
+        dvclive.log_metric("m", metric)
 
     assert read_history(dvclive, "m") == (steps, metrics)
     assert read_latest(dvclive, "m") == (last(steps), last(metrics))
@@ -264,11 +264,11 @@ def test_log_reset_with_set_step(tmp_dir):
 
     for i in range(3):
         dvclive.set_step(i)
-        dvclive.log("train_m", 1)
+        dvclive.log_metric("train_m", 1)
 
     for i in range(3):
         dvclive.set_step(i)
-        dvclive.log("val_m", 1)
+        dvclive.log_metric("val_m", 1)
 
     assert read_history(dvclive, "train_m") == ([0, 1, 2], [1, 1, 1])
     assert read_history(dvclive, "val_m") == ([0, 1, 2], [1, 1, 1])
@@ -284,14 +284,14 @@ def test_invalid_metric_type(tmp_dir, invalid_type):
         InvalidDataTypeError,
         match=f"Data 'm' has not supported type {type(invalid_type)}",
     ):
-        dvclive.log("m", invalid_type)
+        dvclive.log_metric("m", invalid_type)
 
 
 def test_get_step_resume(tmp_dir):
     dvclive = Live()
 
     for metric in [0.9, 0.8]:
-        dvclive.log("metric", metric)
+        dvclive.log_metric("metric", metric)
         dvclive.next_step()
 
     assert dvclive.get_step() == 2
@@ -311,7 +311,7 @@ def test_get_step_custom_steps(tmp_dir):
 
     for step, metric in zip(steps, metrics):
         dvclive.set_step(step)
-        dvclive.log("x", metric)
+        dvclive.log_metric("x", metric)
         assert dvclive.get_step() == step
 
 
@@ -319,7 +319,7 @@ def test_get_step_control_flow(tmp_dir):
     dvclive = Live()
 
     while dvclive.get_step() < 10:
-        dvclive.log("i", dvclive.get_step())
+        dvclive.log_metric("i", dvclive.get_step())
         dvclive.next_step()
 
     steps, values = read_history(dvclive, "i")
@@ -334,7 +334,7 @@ def test_logger(tmp_dir, mocker, monkeypatch):
     live = Live()
     msg = "Report file (if generated)"
     assert msg in logger.info.call_args[0][0]
-    live.log("foo", 0)
+    live.log_metric("foo", 0)
     logger.debug.assert_called_with("Logged foo: 0")
     live.next_step()
     logger.debug.assert_called_with("Step: 1")

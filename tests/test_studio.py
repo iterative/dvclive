@@ -37,7 +37,7 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
         timeout=5,
     )
 
-    live.log("foo", 1)
+    live.log_metric("foo", 1)
 
     live.next_step()
     mocked_post.assert_called_with(
@@ -62,7 +62,7 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
         timeout=5,
     )
 
-    live.log("foo", 2)
+    live.log_metric("foo", 2)
 
     live.next_step()
     mocked_post.assert_called_with(
@@ -122,11 +122,11 @@ def test_post_to_studio_failed_data_request(tmp_dir, mocker, monkeypatch):
     error_response = mocker.MagicMock()
     error_response.status_code = 400
     mocker.patch("requests.post", return_value=error_response)
-    live.log("foo", 1)
+    live.log_metric("foo", 1)
     live.next_step()
 
     mocked_post = mocker.patch("requests.post", return_value=valid_response)
-    live.log("foo", 2)
+    live.log_metric("foo", 2)
     live.next_step()
     mocked_post.assert_called_with(
         "https://0.0.0.0",
@@ -168,10 +168,10 @@ def test_post_to_studio_failed_start_request(tmp_dir, mocker, monkeypatch):
 
     live = Live()
 
-    live.log("foo", 1)
+    live.log_metric("foo", 1)
     live.next_step()
 
-    live.log("foo", 2)
+    live.log_metric("foo", 2)
     live.next_step()
 
     assert mocked_post.call_count == 1

@@ -28,7 +28,9 @@ class DvcLiveCallback(TrainerCallback):
     ):
         logs = kwargs["logs"]
         for key, value in logs.items():
-            self.dvclive.log(standardize_metric_name(key, __name__), value)
+            self.dvclive.log_metric(
+                standardize_metric_name(key, __name__), value
+            )
         self.dvclive.make_report()
         self.dvclive.next_step()
 

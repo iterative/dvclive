@@ -25,7 +25,7 @@ def test_get_renderers(tmp_dir, mocker):
     live.log_param("number", 2)
 
     for i in range(2):
-        live.log("foo/bar", i)
+        live.log_metric("foo/bar", i)
         img = Image.new("RGB", (10, 10), (i, i, i))
         live.log_image("image.png", img)
         live.next_step()
@@ -109,8 +109,8 @@ def test_make_report(tmp_dir, mode):
     last_report = ""
     live = Live(report=mode)
     for i in range(3):
-        live.log("foobar", i)
-        live.log("foo/bar", i)
+        live.log_metric("foobar", i)
+        live.log_metric("foo/bar", i)
         live.make_report()
         live.next_step()
         assert (tmp_dir / live.report_file).exists()
@@ -130,7 +130,7 @@ def test_make_report_open(tmp_dir, mocker, monkeypatch):
     assert not mocked_open.called
 
     live = Live(report=None)
-    live.log("foo", 1)
+    live.log_metric("foo", 1)
     live.next_step()
 
     assert not mocked_open.called
