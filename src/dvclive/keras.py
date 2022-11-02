@@ -12,22 +12,22 @@ from dvclive import Live
 from dvclive.utils import standardize_metric_name
 
 
-class DvcLiveCallback(Callback):
+class DVCLiveCallback(Callback):
     def __init__(
         self,
         model_file=None,
         save_weights_only: bool = False,
-        dvclive: Optional[Live] = None,
+        live: Optional[Live] = None,
         **kwargs
     ):
         super().__init__()
         self.model_file = model_file
         self.save_weights_only = save_weights_only
-        self.dvclive = dvclive if dvclive is not None else Live(**kwargs)
+        self.live = live if live is not None else Live(**kwargs)
 
     def on_train_begin(self, logs=None):  # pylint: disable=unused-argument
         if (
-            self.dvclive._resume  # pylint: disable=protected-access
+            self.live._resume  # pylint: disable=protected-access
             and self.model_file is not None
             and os.path.exists(self.model_file)
         ):
@@ -45,7 +45,7 @@ class DvcLiveCallback(Callback):
     ):  # pylint: disable=unused-argument
         logs = logs or {}
         for metric, value in logs.items():
-            self.dvclive.log_metric(
+            self.live.log_metric(
                 standardize_metric_name(metric, __name__), value
             )
         if self.model_file:
@@ -53,5 +53,5 @@ class DvcLiveCallback(Callback):
                 self.model.save_weights(self.model_file)
             else:
                 self.model.save(self.model_file)
-        self.dvclive.make_report()
-        self.dvclive.next_step()
+        self.live.make_report()
+        self.live.next_step()

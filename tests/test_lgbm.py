@@ -9,7 +9,7 @@ from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
 from dvclive import Live
-from dvclive.lgbm import DvcLiveCallback
+from dvclive.lgbm import DVCLiveCallback
 from dvclive.utils import parse_metrics
 
 # pylint: disable=redefined-outer-name, unused-argument
@@ -38,7 +38,7 @@ def test_lgbm_integration(tmp_dir, model_params, iris_data):
     model = lgbm.LGBMClassifier()
     model.set_params(**model_params)
 
-    callback = DvcLiveCallback()
+    callback = DVCLiveCallback()
     model.fit(
         iris_data[0][0],
         iris_data[0][1],
@@ -49,7 +49,7 @@ def test_lgbm_integration(tmp_dir, model_params, iris_data):
 
     assert os.path.exists("dvclive")
 
-    logs, _ = parse_metrics(callback.dvclive)
+    logs, _ = parse_metrics(callback.live)
     assert len(logs) == 1
     assert len(list(logs.values())[0]) == 5
 
@@ -66,7 +66,7 @@ def test_lgbm_model_file(tmp_dir, model_params, iris_data):
         iris_data[0][1],
         eval_set=(iris_data[1][0], iris_data[1][1]),
         eval_metric=["multi_logloss"],
-        callbacks=[DvcLiveCallback("lgbm_model")],
+        callbacks=[DVCLiveCallback("lgbm_model")],
     )
 
     preds = model.predict(iris_data[1][0])
@@ -79,5 +79,5 @@ def test_lgbm_model_file(tmp_dir, model_params, iris_data):
 def test_lgbm_pass_logger():
     logger = Live("train_logs")
 
-    assert DvcLiveCallback().dvclive is not logger
-    assert DvcLiveCallback(dvclive=logger).dvclive is logger
+    assert DVCLiveCallback().live is not logger
+    assert DVCLiveCallback(live=logger).live is logger

@@ -6,7 +6,7 @@ import torch
 from catalyst import dl
 
 from dvclive import Live
-from dvclive.catalyst import DvcLiveCallback
+from dvclive.catalyst import DVCLiveCallback
 from dvclive.plots import Metric
 
 # pylint: disable=redefined-outer-name, unused-argument
@@ -55,7 +55,7 @@ def test_catalyst_callback(tmp_dir, runner, runner_params):
         num_epochs=2,
         callbacks=[
             dl.AccuracyCallback(input_key="logits", target_key="targets"),
-            DvcLiveCallback(),
+            DVCLiveCallback(),
         ],
         logdir="./logs",
         valid_loader="valid",
@@ -82,7 +82,7 @@ def test_catalyst_model_file(tmp_dir, runner, runner_params):
         num_epochs=2,
         callbacks=[
             dl.AccuracyCallback(input_key="logits", target_key="targets"),
-            DvcLiveCallback("model.pth"),
+            DVCLiveCallback("model.pth"),
         ],
         logdir="./logs",
         valid_loader="valid",
@@ -97,5 +97,5 @@ def test_catalyst_model_file(tmp_dir, runner, runner_params):
 def test_catalyst_pass_logger():
     logger = Live("train_logs")
 
-    assert DvcLiveCallback().dvclive is not logger
-    assert DvcLiveCallback(dvclive=logger).dvclive is logger
+    assert DVCLiveCallback().live is not logger
+    assert DVCLiveCallback(live=logger).live is logger

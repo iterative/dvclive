@@ -8,7 +8,7 @@ from dvclive import Live
 from dvclive.utils import standardize_metric_name
 
 
-class DvcLiveLogger(Logger):
+class DVCLiveLogger(Logger):
     def __init__(
         self,
         run_name: Optional[str] = "dvclive_run",
@@ -20,7 +20,7 @@ class DvcLiveLogger(Logger):
 
         super().__init__()
         self._prefix = prefix
-        self._dvclive_init = {
+        self._live_init = {
             "dir": dir,
             "resume": resume,
         }
@@ -50,7 +50,7 @@ class DvcLiveLogger(Logger):
             assert (
                 rank_zero_only.rank == 0
             ), "tried to init log dirs in non global_rank=0"
-            self._experiment = Live(**self._dvclive_init)
+            self._experiment = Live(**self._live_init)
 
         return self._experiment
 
