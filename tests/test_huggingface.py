@@ -12,7 +12,7 @@ from transformers import (
 )
 
 from dvclive import Live
-from dvclive.huggingface import DvcLiveCallback
+from dvclive.huggingface import DVCLiveCallback
 from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
 
@@ -109,11 +109,11 @@ def test_huggingface_integration(tmp_dir, model, args, data):
         eval_dataset=data[1],
         compute_metrics=compute_metrics,
     )
-    callback = DvcLiveCallback()
+    callback = DVCLiveCallback()
     trainer.add_callback(callback)
     trainer.train()
 
-    live = callback.dvclive
+    live = callback.live
     assert os.path.exists(live.dir)
 
     logs, _ = parse_metrics(live)
@@ -138,7 +138,7 @@ def test_huggingface_model_file(tmp_dir, model, args, data, mocker):
         eval_dataset=data[1],
         compute_metrics=compute_metrics,
     )
-    trainer.add_callback(DvcLiveCallback(model_file=model_path))
+    trainer.add_callback(DVCLiveCallback(model_file=model_path))
     trainer.train()
 
     assert model_path.is_dir()
@@ -151,5 +151,5 @@ def test_huggingface_model_file(tmp_dir, model, args, data, mocker):
 def test_huggingface_pass_logger():
     logger = Live("train_logs")
 
-    assert DvcLiveCallback().dvclive is not logger
-    assert DvcLiveCallback(dvclive=logger).dvclive is logger
+    assert DVCLiveCallback().live is not logger
+    assert DVCLiveCallback(live=logger).live is logger

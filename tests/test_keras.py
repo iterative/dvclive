@@ -3,7 +3,7 @@ import os
 import pytest
 
 from dvclive import Live
-from dvclive.keras import DvcLiveCallback
+from dvclive.keras import DVCLiveCallback
 from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
 
@@ -38,7 +38,7 @@ def xor_model():
 def test_keras_callback(tmp_dir, xor_model, capture_wrap):
     model, x, y = xor_model()
 
-    callback = DvcLiveCallback()
+    callback = DVCLiveCallback()
     model.fit(
         x,
         y,
@@ -49,9 +49,9 @@ def test_keras_callback(tmp_dir, xor_model, capture_wrap):
     )
 
     assert os.path.exists("dvclive")
-    logs, _ = parse_metrics(callback.dvclive)
+    logs, _ = parse_metrics(callback.live)
 
-    scalars = os.path.join(callback.dvclive.plots_dir, Metric.subfolder)
+    scalars = os.path.join(callback.live.plots_dir, Metric.subfolder)
     assert os.path.join(scalars, "train", "accuracy.tsv") in logs
     assert os.path.join(scalars, "eval", "accuracy.tsv") in logs
 
@@ -59,8 +59,8 @@ def test_keras_callback(tmp_dir, xor_model, capture_wrap):
 def test_keras_callback_pass_logger():
     logger = Live("train_logs")
 
-    assert DvcLiveCallback().dvclive is not logger
-    assert DvcLiveCallback(dvclive=logger).dvclive is logger
+    assert DVCLiveCallback().live is not logger
+    assert DVCLiveCallback(live=logger).live is logger
 
 
 @pytest.mark.parametrize("save_weights_only", (True, False))
@@ -77,7 +77,7 @@ def test_keras_model_file(
         epochs=1,
         batch_size=1,
         callbacks=[
-            DvcLiveCallback(
+            DVCLiveCallback(
                 model_file="model.h5", save_weights_only=save_weights_only
             )
         ],
@@ -108,7 +108,7 @@ def test_keras_load_model_on_resume(
         epochs=1,
         batch_size=1,
         callbacks=[
-            DvcLiveCallback(
+            DVCLiveCallback(
                 model_file="model.h5",
                 save_weights_only=save_weights_only,
                 resume=True,
@@ -133,7 +133,7 @@ def test_keras_no_resume_skip_load(tmp_dir, xor_model, mocker, capture_wrap):
         epochs=1,
         batch_size=1,
         callbacks=[
-            DvcLiveCallback(
+            DVCLiveCallback(
                 model_file="model.h5",
                 save_weights_only=True,
                 resume=False,
@@ -157,7 +157,7 @@ def test_keras_no_existing_model_file_skip_load(
         epochs=1,
         batch_size=1,
         callbacks=[
-            DvcLiveCallback(
+            DVCLiveCallback(
                 model_file="model.h5",
                 save_weights_only=True,
                 resume=True,
@@ -183,7 +183,7 @@ def test_keras_None_model_file_skip_load(
         epochs=1,
         batch_size=1,
         callbacks=[
-            DvcLiveCallback(
+            DVCLiveCallback(
                 save_weights_only=True,
                 resume=True,
             )
