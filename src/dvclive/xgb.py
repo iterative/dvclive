@@ -5,25 +5,25 @@ from xgboost.callback import TrainingCallback
 from dvclive import Live
 
 
-class DvcLiveCallback(TrainingCallback):
+class DVCLiveCallback(TrainingCallback):
     def __init__(
         self,
         metric_data,
         model_file=None,
-        dvclive: Optional[Live] = None,
+        live: Optional[Live] = None,
         **kwargs
     ):
         super().__init__()
         self._metric_data = metric_data
         self.model_file = model_file
-        self.dvclive = dvclive if dvclive is not None else Live(**kwargs)
+        self.live = live if live is not None else Live(**kwargs)
 
     def after_iteration(self, model, epoch, evals_log):
         for key, values in evals_log[self._metric_data].items():
             if values:
                 latest_metric = values[-1]
-            self.dvclive.log_metric(key, latest_metric)
+            self.live.log_metric(key, latest_metric)
         if self.model_file:
             model.save_model(self.model_file)
-        self.dvclive.make_report()
-        self.dvclive.next_step()
+        self.live.make_report()
+        self.live.next_step()

@@ -11,13 +11,11 @@ from dvclive import Live
 from dvclive.utils import standardize_metric_name
 
 
-class DvcLiveCallback(TrainerCallback):
-    def __init__(
-        self, model_file=None, dvclive: Optional[Live] = None, **kwargs
-    ):
+class DVCLiveCallback(TrainerCallback):
+    def __init__(self, model_file=None, live: Optional[Live] = None, **kwargs):
         super().__init__()
         self.model_file = model_file
-        self.dvclive = dvclive if dvclive is not None else Live(**kwargs)
+        self.live = live if live is not None else Live(**kwargs)
 
     def on_log(
         self,
@@ -28,11 +26,9 @@ class DvcLiveCallback(TrainerCallback):
     ):
         logs = kwargs["logs"]
         for key, value in logs.items():
-            self.dvclive.log_metric(
-                standardize_metric_name(key, __name__), value
-            )
-        self.dvclive.make_report()
-        self.dvclive.next_step()
+            self.live.log_metric(standardize_metric_name(key, __name__), value)
+        self.live.make_report()
+        self.live.next_step()
 
     def on_epoch_end(
         self,
