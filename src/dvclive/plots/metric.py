@@ -1,7 +1,6 @@
 import csv
 import os
 import time
-from collections import OrderedDict
 from pathlib import Path
 
 from dvclive.utils import nested_set
@@ -30,16 +29,18 @@ class Metric(Data):
         return _path
 
     def dump(self, val, **kwargs) -> None:
-        ts = int(time.time() * 1000)
-        d = OrderedDict(
-            [("timestamp", ts), ("step", self.step), (self.name, val)]
-        )
+        row = {}
+        if kwargs.get("timestamp", False):
+            row["timestamp"] = int(time.time() * 1000)
+        row["step"] = self.step
+        row[self.name] = val
+
         existed = self.output_path.exists()
         with open(self.output_path, "a", encoding="utf-8") as fobj:
-            writer = csv.DictWriter(fobj, d.keys(), delimiter="\t")
+            writer = csv.DictWriter(fobj, row.keys(), delimiter="\t")
             if not existed:
                 writer.writeheader()
-            writer.writerow(d)
+            writer.writerow(row)
 
     def to_summary(self, val):
         d = {}

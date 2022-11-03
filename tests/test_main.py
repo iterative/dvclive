@@ -355,3 +355,14 @@ def test_make_summary_without_calling_log(tmp_dir):
     }
     log_file = tmp_dir / dvclive.plots_dir / Metric.subfolder / "foo.tsv"
     assert not log_file.exists()
+
+
+@pytest.mark.parametrize("timestamp", (True, False))
+def test_log_metric_timestamp(timestamp):
+    live = Live()
+    live.log_metric("foo", 1.0, timestamp=timestamp)
+    live.next_step()
+
+    history, _ = parse_metrics(live)
+    logged = next(iter(history.values()))
+    assert ("timestamp" in logged[0]) == timestamp
