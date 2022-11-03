@@ -52,13 +52,11 @@ def test_get_renderers(tmp_dir, mocker):
             "foo/bar": "0",
             "rev": "workspace",
             "step": "0",
-            "timestamp": mocker.ANY,
         },
         {
             "foo/bar": "1",
             "rev": "workspace",
             "step": "1",
-            "timestamp": mocker.ANY,
         },
     ]
     assert scalar_renderers[0].properties["y"] == "foo/bar"
