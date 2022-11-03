@@ -88,7 +88,7 @@ class Live:
         else:
             self._cleanup()
 
-        self._latest_studio_step = self.get_step()
+        self._latest_studio_step = self.get_step() if resume else -1
         if self.report_mode == "studio":
             from scmrepo.git import Git
 
@@ -134,23 +134,16 @@ class Live:
         return self._step or 0
 
     def set_step(self, step: int) -> None:
-        if self._step is None:
-            self._step = 0
-            self.make_summary()
-
-        if self.report_mode == "studio":
-            if not post_to_studio(self, "data", logger):
-                logger.warning(
-                    "`post_to_studio` `data` event failed."
-                    " Data will be resent on next call."
-                )
-            else:
-                self._latest_studio_step = step
-
         self._step = step
         logger.debug(f"Step: {self._step}")
 
     def next_step(self):
+        if self._step is None:
+            self._step = 0
+
+        self.make_summary()
+        self.make_report()
+        self.make_checkpoint()
         self.set_step(self.get_step() + 1)
 
     def log_metric(
@@ -169,7 +162,6 @@ class Live:
         data.dump(val, timestamp=timestamp)
 
         self.summary = nested_update(self.summary, data.to_summary(val))
-        self.make_summary()
         logger.debug(f"Logged {name}: {val}")
 
     def log_image(self, name: str, val):
@@ -233,12 +225,21 @@ class Live:
         dump_json(self.summary, self.metrics_file, cls=NumpyEncoder)
 
     def make_report(self):
-        if self.report_mode is not None:
+        if self.report_mode == "studio":
+            if not post_to_studio(self, "data", logger):
+                logger.warning(
+                    "`post_to_studio` `data` event failed."
+                    " Data will be resent on next call."
+                )
+            else:
+                self._latest_studio_step = self.get_step()
+        elif self.report_mode is not None:
             make_report(self)
             if self.report_mode == "html" and env2bool(env.DVCLIVE_OPEN):
                 open_file_in_browser(self.report_file)
 
     def end(self):
+        self.make_summary()
         if self.report_mode == "studio":
             if not post_to_studio(self, "done", logger):
                 logger.warning("`post_to_studio` `done` event failed.")

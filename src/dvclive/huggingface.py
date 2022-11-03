@@ -27,7 +27,6 @@ class DVCLiveCallback(TrainerCallback):
         logs = kwargs["logs"]
         for key, value in logs.items():
             self.live.log_metric(standardize_metric_name(key, __name__), value)
-        self.live.make_report()
         self.live.next_step()
 
     def on_epoch_end(
