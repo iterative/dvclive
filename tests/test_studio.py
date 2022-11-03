@@ -48,11 +48,7 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
             "rev": mocker.ANY,
             "step": 0,
             "metrics": {live.metrics_file: {"data": {"step": 0, "foo": 1}}},
-            "plots": {
-                scalar_path: {
-                    "data": [{"timestamp": mocker.ANY, "step": 0, "foo": 1.0}]
-                }
-            },
+            "plots": {scalar_path: {"data": [{"step": 0, "foo": 1.0}]}},
             "client": "dvclive",
         },
         headers={
@@ -73,11 +69,7 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
             "rev": mocker.ANY,
             "step": 1,
             "metrics": {live.metrics_file: {"data": {"step": 1, "foo": 2}}},
-            "plots": {
-                scalar_path: {
-                    "data": [{"timestamp": mocker.ANY, "step": 1, "foo": 2.0}]
-                }
-            },
+            "plots": {scalar_path: {"data": [{"step": 1, "foo": 2.0}]}},
             "client": "dvclive",
         },
         headers={
@@ -139,8 +131,8 @@ def test_post_to_studio_failed_data_request(tmp_dir, mocker, monkeypatch):
             "plots": {
                 scalar_path: {
                     "data": [
-                        {"timestamp": mocker.ANY, "step": 0, "foo": 1.0},
-                        {"timestamp": mocker.ANY, "step": 1, "foo": 2.0},
+                        {"step": 0, "foo": 1.0},
+                        {"step": 1, "foo": 2.0},
                     ]
                 }
             },

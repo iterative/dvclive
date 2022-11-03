@@ -153,7 +153,9 @@ class Live:
     def next_step(self):
         self.set_step(self.get_step() + 1)
 
-    def log_metric(self, name: str, val: Union[int, float]):
+    def log_metric(
+        self, name: str, val: Union[int, float], timestamp: bool = False
+    ):
         if not Metric.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 
@@ -164,7 +166,7 @@ class Live:
             self._metrics[name] = data
 
         data.step = self.get_step()
-        data.dump(val)
+        data.dump(val, timestamp=timestamp)
 
         self.summary = nested_update(self.summary, data.to_summary(val))
         self.make_summary()
