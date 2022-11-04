@@ -5,7 +5,7 @@ from dvclive.utils import parse_metrics
 
 
 def _get_unsent_datapoints(plot, latest_step):
-    return [x for x in plot if int(x["step"]) >= latest_step]
+    return [x for x in plot if int(x["step"]) > latest_step]
 
 
 def _cast_to_numbers(datapoints):

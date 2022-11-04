@@ -26,5 +26,4 @@ class DVCLiveCallback(Callback):
                 scheduler=runner.scheduler,
             )
             utils.save_checkpoint(checkpoint, self.model_file)
-        self.live.make_report()
         self.live.next_step()
