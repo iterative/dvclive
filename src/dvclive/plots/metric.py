@@ -38,7 +38,7 @@ class Metric(Data):
         existed = self.output_path.exists()
         with open(self.output_path, "a", encoding="utf-8", newline="") as fobj:
             writer = csv.DictWriter(
-                fobj, d.keys(), delimiter="\t", lineterminator="\n"
+                fobj, row.keys(), delimiter="\t", lineterminator="\n"
             )
             if not existed:
                 writer.writeheader()
