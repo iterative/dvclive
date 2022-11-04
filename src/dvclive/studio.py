@@ -55,7 +55,7 @@ def post_to_studio(live, event_type, logger) -> bool:
         metrics, plots = _get_updates(live)
         data["metrics"] = metrics
         data["plots"] = plots
-        data["step"] = live.get_step()
+        data["step"] = live.step
 
     logger.debug(f"post_to_studio `{event_type=}`")
 
