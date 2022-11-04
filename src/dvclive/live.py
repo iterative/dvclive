@@ -243,6 +243,8 @@ class Live:
         if self.report_mode == "studio":
             if not post_to_studio(self, "done", logger):
                 logger.warning("`post_to_studio` `done` event failed.")
+        else:
+            self.make_report()
 
     def make_checkpoint(self):
         if env2bool(env.DVC_CHECKPOINT):
@@ -257,3 +259,9 @@ class Live:
     def read_latest(self):
         with open(self.metrics_file, encoding="utf-8") as fobj:
             return json.load(fobj)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.end()

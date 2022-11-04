@@ -384,3 +384,17 @@ def test_make_summary_is_called_on_end(tmp_dir):
     }
     log_file = tmp_dir / live.plots_dir / Metric.subfolder / "foo.tsv"
     assert not log_file.exists()
+
+
+def test_context_manager(tmp_dir):
+    with Live() as live:
+        live.summary["foo"] = 1.0
+
+    assert json.loads((tmp_dir / live.metrics_file).read_text()) == {
+        # no `step`
+        "foo": 1.0
+    }
+    log_file = tmp_dir / live.plots_dir / Metric.subfolder / "foo.tsv"
+    assert not log_file.exists()
+    report_file = tmp_dir / live.report_file
+    assert report_file.exists()
