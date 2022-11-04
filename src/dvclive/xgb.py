@@ -25,5 +25,4 @@ class DVCLiveCallback(TrainingCallback):
             self.live.log_metric(key, latest_metric)
         if self.model_file:
             model.save_model(self.model_file)
-        self.live.make_report()
         self.live.next_step()

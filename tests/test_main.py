@@ -37,6 +37,7 @@ def test_logging_no_step(tmp_dir):
     dvclive = Live("logs")
 
     dvclive.log_metric("m1", 1)
+    dvclive.make_summary()
 
     assert not (tmp_dir / "logs" / "m1.tsv").is_file()
     assert (tmp_dir / dvclive.metrics_file).is_file()
@@ -254,6 +255,7 @@ def test_custom_steps(tmp_dir):
     for step, metric in zip(steps, metrics):
         dvclive.set_step(step)
         dvclive.log_metric("m", metric)
+        dvclive.make_summary()
 
     assert read_history(dvclive, "m") == (steps, metrics)
     assert read_latest(dvclive, "m") == (last(steps), last(metrics))
@@ -265,10 +267,12 @@ def test_log_reset_with_set_step(tmp_dir):
     for i in range(3):
         dvclive.set_step(i)
         dvclive.log_metric("train_m", 1)
+        dvclive.make_summary()
 
     for i in range(3):
         dvclive.set_step(i)
         dvclive.log_metric("val_m", 1)
+        dvclive.make_summary()
 
     assert read_history(dvclive, "train_m") == ([0, 1, 2], [1, 1, 1])
     assert read_history(dvclive, "val_m") == ([0, 1, 2], [1, 1, 1])
@@ -366,3 +370,17 @@ def test_log_metric_timestamp(timestamp):
     history, _ = parse_metrics(live)
     logged = next(iter(history.values()))
     assert ("timestamp" in logged[0]) == timestamp
+
+
+def test_make_summary_is_called_on_end(tmp_dir):
+    live = Live()
+
+    live.summary["foo"] = 1.0
+    live.end()
+
+    assert json.loads((tmp_dir / live.metrics_file).read_text()) == {
+        # no `step`
+        "foo": 1.0
+    }
+    log_file = tmp_dir / live.plots_dir / Metric.subfolder / "foo.tsv"
+    assert not log_file.exists()
