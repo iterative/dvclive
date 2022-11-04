@@ -88,7 +88,7 @@ class Live:
         else:
             self._cleanup()
 
-        self._latest_studio_step = self.get_step() if resume else -1
+        self._latest_studio_step = self.step if resume else -1
         if self.report_mode == "studio":
             from scmrepo.git import Git
 
@@ -130,12 +130,14 @@ class Live:
     def plots_dir(self):
         return os.path.join(self.dir, "plots")
 
-    def get_step(self) -> int:
+    @property
+    def step(self) -> int:
         return self._step or 0
 
-    def set_step(self, step: int) -> None:
-        self._step = step
-        logger.debug(f"Step: {self._step}")
+    @step.setter
+    def step(self, value: int) -> None:
+        self._step = value
+        logger.debug(f"Step: {self.step}")
 
     def next_step(self):
         if self._step is None:
@@ -144,7 +146,7 @@ class Live:
         self.make_summary()
         self.make_report()
         self.make_checkpoint()
-        self.set_step(self.get_step() + 1)
+        self.step += 1
 
     def log_metric(
         self, name: str, val: Union[int, float], timestamp: bool = False
@@ -158,7 +160,7 @@ class Live:
             data = Metric(name, self.plots_dir)
             self._metrics[name] = data
 
-        data.step = self.get_step()
+        data.step = self.step
         data.dump(val, timestamp=timestamp)
 
         self.summary = nested_update(self.summary, data.to_summary(val))
@@ -174,7 +176,7 @@ class Live:
             data = Image(name, self.plots_dir)
             self._images[name] = data
 
-        data.step = self.get_step()
+        data.step = self.step
         data.dump(val)
         logger.debug(f"Logged {name}: {val}")
 
@@ -190,7 +192,7 @@ class Live:
         else:
             raise InvalidPlotTypeError(name)
 
-        data.step = self.get_step()
+        data.step = self.step
         data.dump(val, **kwargs)
         logger.debug(f"Logged {name}")
 
@@ -221,7 +223,7 @@ class Live:
 
     def make_summary(self):
         if self._step is not None:
-            self.summary["step"] = self.get_step()
+            self.summary["step"] = self.step
         dump_json(self.summary, self.metrics_file, cls=NumpyEncoder)
 
     def make_report(self):
@@ -232,7 +234,7 @@ class Live:
                     " Data will be resent on next call."
                 )
             else:
-                self._latest_studio_step = self.get_step()
+                self._latest_studio_step = self.step
         elif self.report_mode is not None:
             make_report(self)
             if self.report_mode == "html" and env2bool(env.DVCLIVE_OPEN):
