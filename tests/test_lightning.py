@@ -109,3 +109,18 @@ def test_lightning_integration(tmp_dir):
     assert os.path.join(scalars, "train", "epoch", "loss.tsv") in logs
     assert os.path.join(scalars, "train", "step", "loss.tsv") in logs
     assert os.path.join(scalars, "epoch.tsv") in logs
+
+
+def test_lightning_default_dir(tmp_dir):
+    model = LitXOR()
+    # If `dir` is not provided handle it properly, use default value
+    dvclive_logger = DVCLiveLogger("test_run")
+    trainer = Trainer(
+        logger=dvclive_logger,
+        max_epochs=2,
+        enable_checkpointing=False,
+        log_every_n_steps=1,
+    )
+    trainer.fit(model)
+
+    assert os.path.exists("dvclive")

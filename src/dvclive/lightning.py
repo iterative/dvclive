@@ -20,10 +20,9 @@ class DVCLiveLogger(Logger):
 
         super().__init__()
         self._prefix = prefix
-        self._live_init = {
-            "dir": dir,
-            "resume": resume,
-        }
+        self._live_init: Dict[str, Any] = {"resume": resume}
+        if dir is not None:
+            self._live_init["dir"] = dir
         self._experiment = experiment
         self._version = run_name
 
