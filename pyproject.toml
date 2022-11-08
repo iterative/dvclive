@@ -81,3 +81,10 @@ disable = [
 dummy-variables-rgx = "_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_"
 ignored-argument-names = "_.*|^ignored_|^unused_|args|kwargs"
 generated-members = ["torch.*"]
+
+[tool.codespell]
+ignore-words-list = "fpr"
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101"]
