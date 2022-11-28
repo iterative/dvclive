@@ -16,11 +16,15 @@ class DVCLiveLogger(Logger):
         experiment=None,
         dir: Optional[str] = None,  # noqa pylint: disable=redefined-builtin
         resume: bool = False,
+        report: Optional[str] = "auto"
     ):
 
         super().__init__()
         self._prefix = prefix
-        self._live_init: Dict[str, Any] = {"resume": resume}
+        self._live_init: Dict[str, Any] = {
+                "resume": resume,
+                "report": report
+        }
         if dir is not None:
             self._live_init["dir"] = dir
         self._experiment = experiment
