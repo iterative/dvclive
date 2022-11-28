@@ -54,3 +54,8 @@ class DVCLiveCallback(Callback):
             else:
                 self.model.save(self.model_file)
         self.live.next_step()
+
+    def on_train_end(
+        self, logs: Optional[Dict] = None
+    ):  # pylint: disable=unused-argument
+        self.live.end()

@@ -26,3 +26,7 @@ class DVCLiveCallback(TrainingCallback):
         if self.model_file:
             model.save_model(self.model_file)
         self.live.next_step()
+
+    def after_training(self, model):
+        self.live.end()
+        return model

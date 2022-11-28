@@ -84,11 +84,13 @@ class LitXOR(LightningModule):
         pass
 
 
-def test_lightning_integration(tmp_dir):
+def test_lightning_integration(tmp_dir, mocker):
     # init model
     model = LitXOR()
     # init logger
     dvclive_logger = DVCLiveLogger("test_run", dir="logs")
+    live = dvclive_logger.experiment
+    spy = mocker.spy(live, "end")
     trainer = Trainer(
         logger=dvclive_logger,
         max_epochs=2,
@@ -96,6 +98,7 @@ def test_lightning_integration(tmp_dir):
         log_every_n_steps=1,
     )
     trainer.fit(model)
+    spy.assert_called_once()
 
     assert os.path.exists("logs")
     assert not os.path.exists("DvcLiveLogger")

@@ -23,3 +23,6 @@ class DVCLiveCallback(Callback):
         if self.model_file:
             self.learn.save(self.model_file)
         self.live.next_step()
+
+    def after_fit(self):
+        self.live.end()

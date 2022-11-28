@@ -49,13 +49,17 @@ def runner_params():
     }
 
 
-def test_catalyst_callback(tmp_dir, runner, runner_params):
+def test_catalyst_callback(tmp_dir, runner, runner_params, mocker):
+    callback = DVCLiveCallback()
+    live = callback.live
+    spy = mocker.spy(live, "end")
+
     runner.train(
         **runner_params,
         num_epochs=2,
         callbacks=[
             dl.AccuracyCallback(input_key="logits", target_key="targets"),
-            DVCLiveCallback(),
+            callback,
         ],
         logdir="./logs",
         valid_loader="valid",
@@ -64,6 +68,7 @@ def test_catalyst_callback(tmp_dir, runner, runner_params):
         verbose=True,
         load_best_on_end=True,
     )
+    spy.assert_called_once()
 
     assert os.path.exists("dvclive")
 

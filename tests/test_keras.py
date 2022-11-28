@@ -35,10 +35,12 @@ def xor_model():
     yield make
 
 
-def test_keras_callback(tmp_dir, xor_model, capture_wrap):
+def test_keras_callback(tmp_dir, xor_model, capture_wrap, mocker):
     model, x, y = xor_model()
 
     callback = DVCLiveCallback()
+    live = callback.live
+    spy = mocker.spy(live, "end")
     model.fit(
         x,
         y,
@@ -47,6 +49,7 @@ def test_keras_callback(tmp_dir, xor_model, capture_wrap):
         validation_split=0.2,
         callbacks=[callback],
     )
+    spy.assert_called_once()
 
     assert os.path.exists("dvclive")
     logs, _ = parse_metrics(callback.live)

@@ -38,13 +38,16 @@ def data_loader():
     return xor_loader
 
 
-def test_fastai_callback(tmp_dir, data_loader):
+def test_fastai_callback(tmp_dir, data_loader, mocker):
     learn = tabular_learner(data_loader, metrics=accuracy)
     learn.remove_cb(ProgressCallback)
     learn.model_dir = os.path.abspath("./")
     callback = DVCLiveCallback("model")
     live = callback.live
+
+    spy = mocker.spy(live, "end")
     learn.fit_one_cycle(2, cbs=[callback])
+    spy.assert_called_once()
 
     assert os.path.exists(live.dir)
 

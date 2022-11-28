@@ -27,3 +27,6 @@ class DVCLiveCallback(Callback):
             )
             utils.save_checkpoint(checkpoint, self.model_file)
         self.live.next_step()
+
+    def on_experiment_end(self, runner):  # pylint: disable=unused-argument
+        self.live.end()
