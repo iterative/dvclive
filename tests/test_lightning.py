@@ -127,3 +127,19 @@ def test_lightning_default_dir(tmp_dir):
     trainer.fit(model)
 
     assert os.path.exists("dvclive")
+
+
+def test_lightning_kwargs(tmp_dir):
+    model = LitXOR()
+    # Handle kwargs passed to Live.
+    dvclive_logger = DVCLiveLogger(dir="dir", report="md")
+    trainer = Trainer(
+        logger=dvclive_logger,
+        max_epochs=2,
+        enable_checkpointing=False,
+        log_every_n_steps=1,
+    )
+    trainer.fit(model)
+
+    assert os.path.exists("dir")
+    assert os.path.exists("dir/report.md")
