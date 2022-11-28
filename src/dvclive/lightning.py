@@ -69,3 +69,7 @@ class DVCLiveLogger(Logger):
             metric_name = standardize_metric_name(metric_name, __name__)
             self.experiment.log_metric(name=metric_name, val=metric_val)
         self.experiment.next_step()
+
+    @rank_zero_only
+    def finalize(self, status: str) -> None:
+        self.experiment.end()

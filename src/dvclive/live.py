@@ -43,7 +43,7 @@ class Live:
     ):
         self._dir: str = dir
         self._resume: bool = resume or env2bool(env.DVCLIVE_RESUME)
-
+        self._ended: bool = False
         self.studio_url = os.getenv(env.STUDIO_REPO_URL, None)
         self.studio_token = os.getenv(env.STUDIO_TOKEN, None)
         self.rev = None
@@ -243,8 +243,10 @@ class Live:
     def end(self):
         self.make_summary()
         if self.report_mode == "studio":
-            if not post_to_studio(self, "done", logger):
-                logger.warning("`post_to_studio` `done` event failed.")
+            if not self._ended:
+                if not post_to_studio(self, "done", logger):
+                    logger.warning("`post_to_studio` `done` event failed.")
+                self._ended = True
         else:
             self.make_report()
 

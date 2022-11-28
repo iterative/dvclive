@@ -42,3 +42,12 @@ class DVCLiveCallback(TrainerCallback):
             tokenizer = kwargs.get("tokenizer")
             if tokenizer:
                 tokenizer.save_pretrained(self.model_file)
+
+    def on_train_end(
+        self,
+        args: TrainingArguments,
+        state: TrainerState,
+        control: TrainerControl,
+        **kwargs
+    ):
+        self.live.end()

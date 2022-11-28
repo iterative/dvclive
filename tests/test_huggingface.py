@@ -101,7 +101,7 @@ def args():
     )
 
 
-def test_huggingface_integration(tmp_dir, model, args, data):
+def test_huggingface_integration(tmp_dir, model, args, data, mocker):
     trainer = Trainer(
         model,
         args,
@@ -110,8 +110,11 @@ def test_huggingface_integration(tmp_dir, model, args, data):
         compute_metrics=compute_metrics,
     )
     callback = DVCLiveCallback()
+    live = callback.live
+    spy = mocker.spy(live, "end")
     trainer.add_callback(callback)
     trainer.train()
+    spy.assert_called_once()
 
     live = callback.live
     assert os.path.exists(live.dir)

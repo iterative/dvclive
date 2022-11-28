@@ -26,8 +26,10 @@ def iris_data():
     return xgb.DMatrix(x, y)
 
 
-def test_xgb_integration(tmp_dir, train_params, iris_data):
+def test_xgb_integration(tmp_dir, train_params, iris_data, mocker):
     callback = DVCLiveCallback("eval_data")
+    live = callback.live
+    spy = mocker.spy(live, "end")
     xgb.train(
         train_params,
         iris_data,
@@ -35,6 +37,7 @@ def test_xgb_integration(tmp_dir, train_params, iris_data):
         num_boost_round=5,
         evals=[(iris_data, "eval_data")],
     )
+    spy.assert_called_once()
 
     assert os.path.exists("dvclive")
 
