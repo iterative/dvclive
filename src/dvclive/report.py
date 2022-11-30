@@ -17,6 +17,9 @@ if TYPE_CHECKING:
     from dvclive import Live
 
 
+# noqa pylint: disable=protected-access
+
+
 def get_scalar_renderers(metrics_path):
     renderers = []
     for suffix in Metric.suffixes:
@@ -55,17 +58,33 @@ def get_image_renderers(images_folder):
     return renderers
 
 
-def get_plot_renderers(plots_folder):
+def get_plot_renderers(plots_folder, live):
     renderers = []
     for suffix in SKLearnPlot.suffixes:
         for file in Path(plots_folder).rglob(f"*{suffix}"):
-            name = file.stem
+            name = file.relative_to(plots_folder).with_suffix("").as_posix()
+            properties = {}
+
+            if name in SKLEARN_PLOTS:
+                properties = SKLEARN_PLOTS[name].get_properties()
+                data_field = name
+            else:
+                # Plot with custom name
+                logged_plot = live._plots[name]
+                for default_name, plot_class in SKLEARN_PLOTS.items():
+                    if isinstance(logged_plot, plot_class):
+                        properties = plot_class.get_properties()
+                        data_field = default_name
+                        break
+
             data = json.loads(file.read_text())
-            if name in data:
-                data = data[name]
+
+            if data_field in data:
+                data = data[data_field]
+
             for row in data:
                 row["rev"] = "workspace"
-            properties = SKLEARN_PLOTS[name].get_properties()
+
             renderers.append(VegaRenderer(data, name, **properties))
     return renderers
 
@@ -94,19 +113,21 @@ def get_params_renderers(dvclive_params):
     return []
 
 
-def make_report(dvclive: "Live"):
-    plots_path = Path(dvclive.plots_dir)
+def make_report(live: "Live"):
+    plots_path = Path(live.plots_dir)
 
     renderers = []
-    renderers.extend(get_params_renderers(dvclive.params_file))
-    renderers.extend(get_metrics_renderers(dvclive.metrics_file))
+    renderers.extend(get_params_renderers(live.params_file))
+    renderers.extend(get_metrics_renderers(live.metrics_file))
     renderers.extend(get_scalar_renderers(plots_path / Metric.subfolder))
     renderers.extend(get_image_renderers(plots_path / Image.subfolder))
-    renderers.extend(get_plot_renderers(plots_path / SKLearnPlot.subfolder))
+    renderers.extend(
+        get_plot_renderers(plots_path / SKLearnPlot.subfolder, live)
+    )
 
-    if dvclive.report_mode == "html":
-        render_html(renderers, dvclive.report_file, refresh_seconds=5)
-    elif dvclive.report_mode == "md":
-        render_markdown(renderers, dvclive.report_file)
+    if live.report_mode == "html":
+        render_html(renderers, live.report_file, refresh_seconds=5)
+    elif live.report_mode == "md":
+        render_markdown(renderers, live.report_file)
     else:
-        raise ValueError(f"Invalid `mode` {dvclive.report_mode}.")
+        raise ValueError(f"Invalid `mode` {live.report_mode}.")

@@ -8,7 +8,7 @@ from dvclive import Live
 from dvclive.env import DVCLIVE_OPEN
 from dvclive.plots import Image as LiveImage
 from dvclive.plots import Metric
-from dvclive.plots.sklearn import ConfusionMatrix, SKLearnPlot
+from dvclive.plots.sklearn import ConfusionMatrix, Roc, SKLearnPlot
 from dvclive.report import (
     get_image_renderers,
     get_metrics_renderers,
@@ -31,6 +31,12 @@ def test_get_renderers(tmp_dir, mocker):
         live.next_step()
 
     live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
+    live.log_sklearn_plot(
+        "confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1], name="train/cm"
+    )
+    live.log_sklearn_plot(
+        "roc", [0, 0, 1, 1], [1, 0.1, 0, 1], name="roc_curve"
+    )
 
     image_renderers = get_image_renderers(
         tmp_dir / live.plots_dir / LiveImage.subfolder
@@ -63,16 +69,27 @@ def test_get_renderers(tmp_dir, mocker):
     assert scalar_renderers[0].name == "static/foo/bar"
 
     plot_renderers = get_plot_renderers(
-        tmp_dir / live.plots_dir / SKLearnPlot.subfolder
+        tmp_dir / live.plots_dir / SKLearnPlot.subfolder, live
     )
-    assert len(plot_renderers) == 1
-    assert plot_renderers[0].datapoints == [
-        {"actual": "0", "rev": "workspace", "predicted": "1"},
-        {"actual": "0", "rev": "workspace", "predicted": "0"},
-        {"actual": "1", "rev": "workspace", "predicted": "0"},
-        {"actual": "1", "rev": "workspace", "predicted": "1"},
-    ]
-    assert plot_renderers[0].properties == ConfusionMatrix.get_properties()
+    assert len(plot_renderers) == 3
+    for plot_renderer in plot_renderers:
+        if plot_renderer.name == "roc_curve":
+            assert plot_renderer.datapoints == [
+                {"fpr": 0.0, "rev": "workspace", "threshold": 2.0, "tpr": 0.0},
+                {"fpr": 0.5, "rev": "workspace", "threshold": 1.0, "tpr": 0.5},
+                {"fpr": 1.0, "rev": "workspace", "threshold": 0.1, "tpr": 0.5},
+                {"fpr": 1.0, "rev": "workspace", "threshold": 0.0, "tpr": 1.0},
+            ]
+            assert plot_renderer.properties == Roc.get_properties()
+
+        else:
+            assert plot_renderer.datapoints == [
+                {"actual": "0", "rev": "workspace", "predicted": "1"},
+                {"actual": "0", "rev": "workspace", "predicted": "0"},
+                {"actual": "1", "rev": "workspace", "predicted": "0"},
+                {"actual": "1", "rev": "workspace", "predicted": "1"},
+            ]
+            assert plot_renderer.properties == ConfusionMatrix.get_properties()
 
     metrics_renderer = get_metrics_renderers(live.metrics_file)[0]
     assert metrics_renderer.datapoints == [{"step": 1, "foo": {"bar": 1}}]
