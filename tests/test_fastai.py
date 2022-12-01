@@ -41,8 +41,7 @@ def data_loader():
 def test_fastai_callback(tmp_dir, data_loader, mocker):
     learn = tabular_learner(data_loader, metrics=accuracy)
     learn.remove_cb(ProgressCallback)
-    learn.model_dir = os.path.abspath("./")
-    callback = DVCLiveCallback("model")
+    callback = DVCLiveCallback()
     live = callback.live
 
     spy = mocker.spy(live, "end")
@@ -58,14 +57,17 @@ def test_fastai_callback(tmp_dir, data_loader, mocker):
     assert train_path.is_dir()
     assert valid_path.is_dir()
     assert (metrics_path / "accuracy.tsv").exists()
+    assert not (metrics_path / "epoch.tsv").exists()
 
 
-def test_fastai_model_file(tmp_dir, data_loader):
+def test_fastai_model_file(tmp_dir, data_loader, mocker):
     learn = tabular_learner(data_loader, metrics=accuracy)
     learn.remove_cb(ProgressCallback)
     learn.model_dir = os.path.abspath("./")
-    learn.fit_one_cycle(2, cbs=[DVCLiveCallback("model")])
+    save = mocker.spy(learn, "save")
+    learn.fit_one_cycle(2, cbs=[DVCLiveCallback("model", with_opt=True)])
     assert (tmp_dir / "model.pth").is_file()
+    save.assert_called_with("model", with_opt=True)
 
 
 def test_fastai_pass_logger():
@@ -73,3 +75,20 @@ def test_fastai_pass_logger():
 
     assert DVCLiveCallback().live is not logger
     assert DVCLiveCallback(live=logger).live is logger
+
+
+def test_fast_ai_resume(tmp_dir, data_loader, mocker):
+    learn = tabular_learner(data_loader, metrics=accuracy)
+    learn.remove_cb(ProgressCallback)
+    callback = DVCLiveCallback()
+    live = callback.live
+
+    spy = mocker.spy(live, "next_step")
+    learn.fit_one_cycle(2, cbs=[callback])
+    assert spy.call_count == 2
+
+    callback = DVCLiveCallback(resume=True)
+    live = callback.live
+    spy = mocker.spy(live, "next_step")
+    learn.fit_one_cycle(3, cbs=[callback], start_epoch=live.step - 1)
+    assert spy.call_count == 1
