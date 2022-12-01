@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 from os import getenv
 
 from dvclive.env import STUDIO_ENDPOINT
@@ -46,8 +47,8 @@ def post_to_studio(live, event_type, logger) -> bool:
 
     data = {
         "type": event_type,
-        "repo_url": live.studio_url,
-        "rev": live.rev,
+        "repo_url": live._studio_url,
+        "rev": live._baseline_rev,
         "client": "dvclive",
     }
 
@@ -65,7 +66,7 @@ def post_to_studio(live, event_type, logger) -> bool:
             json=data,
             headers={
                 "Content-type": "application/json",
-                "Authorization": f"token {live.studio_token}",
+                "Authorization": f"token {live._studio_token}",
             },
             timeout=5,
         )

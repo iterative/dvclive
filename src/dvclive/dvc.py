@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 import logging
 import os
 from random import choice
@@ -104,7 +105,5 @@ def make_dvcyaml(live):
             "metrics": [os.path.relpath(live.metrics_file, live.dir)],
             "params": [os.path.relpath(live.params_file, live.dir)],
             "plots": [os.path.relpath(live.plots_dir, live.dir)],
-            # TODO: Should not be needed in the near future.
-            "stages": {"empty": {"cmd": "empty"}},
         }
         dump_yaml(dvcyaml, live.dvc_file)

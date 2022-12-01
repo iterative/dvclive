@@ -1,9 +1,12 @@
+# pylint: disable=unused-argument,protected-access
+import pytest
 from dvc.repo import Repo
 from dvc.repo.experiments.exceptions import ExperimentExistsError
 from scmrepo.git import Git
 
 from dvclive import Live
 from dvclive.dvc import get_dvc_repo, make_dvcyaml, random_exp_name
+from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME
 from dvclive.serialize import load_yaml
 
 
@@ -22,7 +25,6 @@ def test_make_dvcyaml(tmp_dir):
         "metrics": ["metrics.json"],
         "params": ["params.yaml"],
         "plots": ["plots"],
-        "stages": {"empty": {"cmd": "empty"}},
     }
 
 
@@ -61,3 +63,31 @@ def test_random_exp_name(mocker):
         name = random_exp_name(dvc_repo, "bar")
         assert name == "0-0"
         assert validate.n_calls == 4
+
+
+@pytest.mark.parametrize("save", [True, False])
+def test_exp_save_on_end(tmp_dir, mocker, save):
+    dvc_repo = mocker.MagicMock()
+    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
+        live = Live(save_dvc_exp=save)
+        live.end()
+    if save:
+        dvc_repo.experiments.save.assert_called_with(
+            name=live._exp_name, include_untracked=live.dir
+        )
+    else:
+        dvc_repo.assert_not_called()
+
+
+def test_exp_save_skip_on_env_vars(tmp_dir, monkeypatch, mocker):
+    monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
+    monkeypatch.setenv(DVC_EXP_NAME, "bar")
+
+    with mocker.patch("dvclive.live.get_dvc_repo", return_value=None):
+        live = Live(save_dvc_exp=True)
+        live.end()
+
+    assert live._dvc_repo is None
+    assert live._baseline_rev == "foo"
+    assert live._exp_name == "bar"
+    assert live._inside_dvc_exp

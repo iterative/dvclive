@@ -101,19 +101,19 @@ def test_get_renderers(tmp_dir, mocker):
 def test_report_init(monkeypatch, mocker):
     monkeypatch.setenv("CI", "false")
     live = Live()
-    assert live.report_mode == "html"
+    assert live._report_mode == "html"
 
     monkeypatch.setenv("CI", "true")
     live = Live()
-    assert live.report_mode == "md"
+    assert live._report_mode == "md"
 
     mocker.patch("dvclive.live.matplotlib_installed", return_value=False)
     live = Live()
-    assert live.report_mode == "html"
+    assert live._report_mode == "html"
 
     for report in {None, "html", "md"}:
         live = Live(report=report)
-        assert live.report_mode == report
+        assert live._report_mode == report
 
     with pytest.raises(ValueError):
         Live(report="foo")
