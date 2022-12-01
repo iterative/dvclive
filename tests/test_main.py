@@ -166,7 +166,7 @@ def test_cleanup(tmp_dir, html):
     dvclive.log_metric("m1", 1)
     dvclive.next_step()
 
-    html_path = tmp_dir / dvclive.report_file
+    html_path = tmp_dir / dvclive.dir / "report.html"
     if html:
         html_path.touch()
 
@@ -336,15 +336,13 @@ def test_logger(tmp_dir, mocker, monkeypatch):
     monkeypatch.setenv(env.DVCLIVE_LOGLEVEL, "DEBUG")
 
     live = Live()
-    msg = "Report file (if generated)"
-    assert msg in logger.info.call_args[0][0]
     live.log_metric("foo", 0)
     logger.debug.assert_called_with("Logged foo: 0")
     live.next_step()
     logger.debug.assert_called_with("Step: 1")
 
     live = Live(resume=True)
-    logger.info.assert_called_with("Resumed from step 0")
+    logger.debug.assert_called_with("self._step=0")
 
 
 def test_make_summary_without_calling_log(tmp_dir):

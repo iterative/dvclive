@@ -125,9 +125,9 @@ def make_report(live: "Live"):
         get_plot_renderers(plots_path / SKLearnPlot.subfolder, live)
     )
 
-    if live.report_mode == "html":
+    if live._report_mode == "html":
         render_html(renderers, live.report_file, refresh_seconds=5)
-    elif live.report_mode == "md":
+    elif live._report_mode == "md":
         render_markdown(renderers, live.report_file)
     else:
-        raise ValueError(f"Invalid `mode` {live.report_mode}.")
+        raise ValueError(f"Invalid `mode` {live._report_mode}.")

@@ -17,11 +17,16 @@ class DVCLiveLogger(Logger):
         dir: Optional[str] = None,  # noqa pylint: disable=redefined-builtin
         resume: bool = False,
         report: Optional[str] = "auto",
+        save_dvc_exp: bool = False,
     ):
 
         super().__init__()
         self._prefix = prefix
-        self._live_init: Dict[str, Any] = {"resume": resume, "report": report}
+        self._live_init: Dict[str, Any] = {
+            "resume": resume,
+            "report": report,
+            "save_dvc_exp": save_dvc_exp,
+        }
         if dir is not None:
             self._live_init["dir"] = dir
         self._experiment = experiment

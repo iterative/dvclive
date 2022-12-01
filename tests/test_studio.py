@@ -8,9 +8,8 @@ from dvclive import Live, env
 from dvclive.plots import Metric
 
 
-@pytest.mark.studio
 def test_post_to_studio(tmp_dir, mocker, monkeypatch):
-    mocker.patch("scmrepo.git.Git")
+    mocker.patch("dvclive.live.get_dvc_repo")
     mocked_response = mocker.MagicMock()
     mocked_response.status_code = 200
     mocked_post = mocker.patch("requests.post", return_value=mocked_response)
@@ -96,10 +95,8 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
     )
 
 
-@pytest.mark.studio
 def test_post_to_studio_failed_data_request(tmp_dir, mocker, monkeypatch):
-    mocker.patch("scmrepo.git.Git")
-
+    mocker.patch("dvclive.live.get_dvc_repo")
     valid_response = mocker.MagicMock()
     valid_response.status_code = 200
     mocker.patch("requests.post", return_value=valid_response)
@@ -146,10 +143,8 @@ def test_post_to_studio_failed_data_request(tmp_dir, mocker, monkeypatch):
     )
 
 
-@pytest.mark.studio
 def test_post_to_studio_failed_start_request(tmp_dir, mocker, monkeypatch):
-    mocker.patch("scmrepo.git.Git")
-
+    mocker.patch("dvclive.live.get_dvc_repo")
     mocked_response = mocker.MagicMock()
     mocked_response.status_code = 400
     mocked_post = mocker.patch("requests.post", return_value=mocked_response)
@@ -169,10 +164,8 @@ def test_post_to_studio_failed_start_request(tmp_dir, mocker, monkeypatch):
     assert mocked_post.call_count == 1
 
 
-@pytest.mark.studio
 def test_post_to_studio_end_only_once(tmp_dir, mocker, monkeypatch):
-    mocker.patch("scmrepo.git.Git")
-
+    mocker.patch("dvclive.live.get_dvc_repo")
     valid_response = mocker.MagicMock()
     valid_response.status_code = 200
     mocked_post = mocker.patch("requests.post", return_value=valid_response)
@@ -187,3 +180,23 @@ def test_post_to_studio_end_only_once(tmp_dir, mocker, monkeypatch):
     assert mocked_post.call_count == 3
     live.end()
     assert mocked_post.call_count == 3
+
+
+@pytest.mark.studio
+def test_post_to_studio_skip_on_env_var(tmp_dir, mocker, monkeypatch):
+    mocker.patch("dvclive.live.get_dvc_repo")
+    valid_response = mocker.MagicMock()
+    valid_response.status_code = 200
+    mocked_post = mocker.patch("requests.post", return_value=valid_response)
+    monkeypatch.setenv(env.STUDIO_ENDPOINT, "https://0.0.0.0")
+    monkeypatch.setenv(env.STUDIO_REPO_URL, "STUDIO_REPO_URL")
+    monkeypatch.setenv(env.STUDIO_TOKEN, "STUDIO_TOKEN")
+
+    monkeypatch.setenv(env.DVC_EXP_BASELINE_REV, "foo")
+    monkeypatch.setenv(env.DVC_EXP_NAME, "bar")
+
+    with Live() as live:
+        live.log_metric("foo", 1)
+        live.next_step()
+
+    assert mocked_post.call_count == 1
