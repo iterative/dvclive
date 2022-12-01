@@ -72,6 +72,8 @@ class DVCLiveLogger(Logger):
         for metric_name, metric_val in metrics.items():
             if is_tensor(metric_val):
                 metric_val = metric_val.cpu().detach().item()
+            if metric_name == "epoch":
+                continue
             metric_name = standardize_metric_name(metric_name, __name__)
             self.experiment.log_metric(name=metric_name, val=metric_val)
         self.experiment.next_step()

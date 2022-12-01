@@ -26,6 +26,8 @@ class DVCLiveCallback(TrainerCallback):
     ):
         logs = kwargs["logs"]
         for key, value in logs.items():
+            if key == "epoch" or "runtime" in key or "per_second" in key:
+                continue
             self.live.log_metric(standardize_metric_name(key, __name__), value)
         self.live.next_step()
 

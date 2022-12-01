@@ -108,10 +108,10 @@ def test_lightning_integration(tmp_dir, mocker):
     )
     logs, _ = parse_metrics(dvclive_logger.experiment)
 
-    assert len(logs) == 3
+    assert len(logs) == 2
     assert os.path.join(scalars, "train", "epoch", "loss.tsv") in logs
     assert os.path.join(scalars, "train", "step", "loss.tsv") in logs
-    assert os.path.join(scalars, "epoch.tsv") in logs
+    assert not os.path.join(scalars, "epoch.tsv") in logs
 
 
 def test_lightning_default_dir(tmp_dir):

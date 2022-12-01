@@ -14,6 +14,8 @@ class DVCLiveCallback(Callback):
 
     def on_epoch_end(self, runner) -> None:
         for loader_key, per_loader_metrics in runner.epoch_metrics.items():
+            if "_epoch_" in loader_key:
+                continue
             for key, value in per_loader_metrics.items():
                 key = key.replace("/", "_")
                 self.live.log_metric(f"{loader_key}/{key}", float(value))

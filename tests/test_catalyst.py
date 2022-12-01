@@ -75,6 +75,8 @@ def test_catalyst_callback(tmp_dir, runner, runner_params, mocker):
     train_path = tmp_dir / "dvclive" / "plots" / Metric.subfolder / "train"
     valid_path = tmp_dir / "dvclive" / "plots" / Metric.subfolder / "valid"
 
+    epoch = tmp_dir / "dvclive" / "plots" / Metric.subfolder / "_epoch_"
+    assert not epoch.exists()
     assert train_path.is_dir()
     assert valid_path.is_dir()
     assert any("accuracy" in x.name for x in train_path.iterdir())

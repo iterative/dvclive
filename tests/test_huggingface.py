@@ -121,13 +121,13 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker):
 
     logs, _ = parse_metrics(live)
 
-    assert len(logs) == 10
+    assert len(logs) == 3
 
     scalars = os.path.join(live.plots_dir, Metric.subfolder)
+    assert not os.path.join(scalars, "epoch.tsv") in logs
     assert os.path.join(scalars, "eval", "foo.tsv") in logs
     assert os.path.join(scalars, "eval", "loss.tsv") in logs
     assert os.path.join(scalars, "train", "loss.tsv") in logs
-    assert len(logs[os.path.join(scalars, "epoch.tsv")]) == 3
     assert len(logs[os.path.join(scalars, "eval", "loss.tsv")]) == 2
 
 
