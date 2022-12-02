@@ -100,14 +100,17 @@ class Live:
             self._exp_name = os.getenv(env.DVC_EXP_NAME, "")
             self._inside_dvc_exp = True
         elif self._save_dvc_exp:
-            # `Python Only` execution
-            # TODO: How to handle `dvc repro` execution?
             if self._dvc_repo is not None:
-                self._baseline_rev = self._dvc_repo.scm.get_rev()
-                self._exp_name = random_exp_name(
-                    self._dvc_repo, self._baseline_rev
-                )
-                make_dvcyaml(self)
+                if self._dvc_repo.index.stages:
+                    # `dvc repro` execution: skip
+                    self._save_dvc_exp = False
+                else:
+                    # `DVCLive Only` execution
+                    self._baseline_rev = self._dvc_repo.scm.get_rev()
+                    self._exp_name = random_exp_name(
+                        self._dvc_repo, self._baseline_rev
+                    )
+                    make_dvcyaml(self)
 
     def _init_studio(self):
         if not self._dvc_repo:
