@@ -1,3 +1,4 @@
+import json
 import os
 
 import torch
@@ -143,3 +144,20 @@ def test_lightning_kwargs(tmp_dir):
 
     assert os.path.exists("dir")
     assert os.path.exists("dir/report.md")
+
+def test_lightning_steps(tmp_dir):
+    model = LitXOR()
+    # Handle kwargs passed to Live.
+    dvclive_logger = DVCLiveLogger(dir="logs")
+    trainer = Trainer(
+        logger=dvclive_logger,
+        max_epochs=2,
+        enable_checkpointing=False,
+        log_every_n_steps=2,
+    )
+    trainer.fit(model)
+
+    with open("logs/metrics.json") as f:
+        metrics = json.load(f)
+        assert(metrics["step"] == 8)
+        assert(metrics["epoch"] == 1)
