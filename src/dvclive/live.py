@@ -94,6 +94,7 @@ class Live:
 
     def _init_dvc(self):
         self._dvc_repo = get_dvc_repo()
+        make_dvcyaml(self)
         if os.getenv(env.DVC_EXP_BASELINE_REV, None):
             # `dvc exp` execution
             self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV, "")
@@ -110,7 +111,6 @@ class Live:
                     self._exp_name = random_exp_name(
                         self._dvc_repo, self._baseline_rev
                     )
-                    make_dvcyaml(self)
 
     def _init_studio(self):
         if not self._dvc_repo:
