@@ -78,7 +78,7 @@ class DVCLiveLogger(Logger):
             try:
                 self.experiment.log_metric(name=metric_name, val=metric_val)
             except DataAlreadyLoggedError:
-                pass # Logs repeat info at end of epochs.
+                pass  # Logs repeat info at end of epochs.
         self.experiment.next_step()
 
     @rank_zero_only

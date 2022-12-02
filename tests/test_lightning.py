@@ -145,6 +145,7 @@ def test_lightning_kwargs(tmp_dir):
     assert os.path.exists("dir")
     assert os.path.exists("dir/report.md")
 
+
 def test_lightning_steps(tmp_dir):
     model = LitXOR()
     # Handle kwargs passed to Live.
@@ -159,5 +160,5 @@ def test_lightning_steps(tmp_dir):
 
     with open("logs/metrics.json") as f:
         metrics = json.load(f)
-        assert(metrics["step"] == 8)
-        assert(metrics["epoch"] == 1)
+        assert metrics["step"] == 8
+        assert metrics["epoch"] == 1
