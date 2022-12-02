@@ -100,10 +100,11 @@ def random_exp_name(dvc_repo, baseline_rev):
 
 
 def make_dvcyaml(live):
-    if not os.path.exists(live.dvc_file):
-        dvcyaml = {
-            "metrics": [os.path.relpath(live.metrics_file, live.dir)],
-            "params": [os.path.relpath(live.params_file, live.dir)],
-            "plots": [os.path.relpath(live.plots_dir, live.dir)],
-        }
-        dump_yaml(dvcyaml, live.dvc_file)
+    dvcyaml = {}
+    if live._params:
+        dvcyaml["params"] = [os.path.relpath(live.params_file, live.dir)]
+    if live._metrics:
+        dvcyaml["metrics"] = [os.path.relpath(live.metrics_file, live.dir)]
+    if live._metrics or live._plots or live._images:
+        dvcyaml["plots"] = [os.path.relpath(live.plots_dir, live.dir)]
+    dump_yaml(dvcyaml, live.dvc_file)

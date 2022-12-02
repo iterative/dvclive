@@ -88,7 +88,8 @@ class Live:
                 Path(self.plots_dir) / plot_type.subfolder, ignore_errors=True
             )
 
-        for f in (self.metrics_file, self.report_file, self.params_file):
+        for f in (self.metrics_file, self.report_file, self.params_file,
+                  self.dvc_file):
             if f and os.path.exists(f):
                 os.remove(f)
 
@@ -110,7 +111,6 @@ class Live:
                     self._exp_name = random_exp_name(
                         self._dvc_repo, self._baseline_rev
                     )
-                    make_dvcyaml(self)
 
     def _init_studio(self):
         if not self._dvc_repo:
@@ -189,6 +189,7 @@ class Live:
             self._step = 0
 
         self.make_summary()
+        make_dvcyaml(self)
         self.make_report()
         self.make_checkpoint()
         self.step += 1
@@ -292,6 +293,7 @@ class Live:
 
     def end(self):
         self.make_summary()
+        make_dvcyaml(self)
         if self._studio_url and self._studio_token:
             if "done" not in self._studio_events_to_skip:
                 if not post_to_studio(self, "done", logger):
