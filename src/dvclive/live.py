@@ -88,8 +88,12 @@ class Live:
                 Path(self.plots_dir) / plot_type.subfolder, ignore_errors=True
             )
 
-        for f in (self.metrics_file, self.report_file, self.params_file,
-                  self.dvc_file):
+        for f in (
+            self.metrics_file,
+            self.report_file,
+            self.params_file,
+            self.dvc_file,
+        ):
             if f and os.path.exists(f):
                 os.remove(f)
 
