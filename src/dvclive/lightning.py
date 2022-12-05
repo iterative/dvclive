@@ -39,7 +39,7 @@ class DVCLiveLogger(Logger):
 
     @rank_zero_only
     def log_hyperparams(self, params, *args, **kwargs):
-        pass
+        self.experiment.log_params(params)
 
     @property  # type: ignore
     @rank_zero_experiment
