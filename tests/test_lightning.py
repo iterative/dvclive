@@ -143,3 +143,28 @@ def test_lightning_kwargs(tmp_dir):
 
     assert os.path.exists("dir")
     assert os.path.exists("dir/report.md")
+
+
+def test_lightning_steps(tmp_dir):
+    model = LitXOR()
+    # Handle kwargs passed to Live.
+    dvclive_logger = DVCLiveLogger(dir="logs")
+    trainer = Trainer(
+        logger=dvclive_logger,
+        max_epochs=2,
+        enable_checkpointing=False,
+        log_every_n_steps=2,
+    )
+    trainer.fit(model)
+
+    history, latest = parse_metrics(dvclive_logger.experiment)
+    assert latest["step"] == 8
+    assert latest["epoch"] == 1
+
+    scalars = os.path.join(
+        dvclive_logger.experiment.plots_dir, Metric.subfolder
+    )
+    epoch_loss = history[os.path.join(scalars, "train", "epoch", "loss.tsv")]
+    step_loss = history[os.path.join(scalars, "train", "step", "loss.tsv")]
+    assert len(epoch_loss) == 2
+    assert len(step_loss) == 4
