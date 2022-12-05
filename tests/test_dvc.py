@@ -24,7 +24,6 @@ def test_make_dvcyaml(tmp_dir):
     assert load_yaml(live.dvc_file) == {}
 
     live = Live()
-    make_dvcyaml(live)
     live.log_param("foo", 1)
     live.next_step()
 
