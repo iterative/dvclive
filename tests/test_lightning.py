@@ -1,4 +1,3 @@
-import json
 import os
 
 import torch
@@ -158,7 +157,14 @@ def test_lightning_steps(tmp_dir):
     )
     trainer.fit(model)
 
-    with open("logs/metrics.json") as f:
-        metrics = json.load(f)
-        assert metrics["step"] == 8
-        assert metrics["epoch"] == 1
+    history, latest = parse_metrics(dvclive_logger.experiment)
+    assert latest["step"] == 8
+    assert latest["epoch"] == 1
+
+    scalars = os.path.join(
+        dvclive_logger.experiment.plots_dir, Metric.subfolder
+    )
+    epoch_loss = history[os.path.join(scalars, "train", "epoch", "loss.tsv")]
+    step_loss = history[os.path.join(scalars, "train", "step", "loss.tsv")]
+    assert len(epoch_loss) == 2
+    assert len(step_loss) == 4
