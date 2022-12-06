@@ -21,6 +21,19 @@ def test_make_dvcyaml(tmp_dir):
     live = Live()
     make_dvcyaml(live)
 
+    assert load_yaml(live.dvc_file) == {}
+
+    live = Live()
+    live.log_param("foo", 1)
+    live.next_step()
+
+    assert load_yaml(live.dvc_file) == {
+        "params": ["params.yaml"],
+    }
+
+    live.log_metric("bar", 2)
+    live.end()
+
     assert load_yaml(live.dvc_file) == {
         "metrics": ["metrics.json"],
         "params": ["params.yaml"],
@@ -83,7 +96,6 @@ def test_exp_save_on_end(tmp_dir, mocker, save):
         assert live._baseline_rev is None
         assert live._exp_name is None
         dvc_repo.experiments.save.assert_not_called()
-        assert not (tmp_dir / live.dvc_file).exists()
 
 
 def test_exp_save_skip_on_env_vars(tmp_dir, monkeypatch, mocker):
@@ -111,4 +123,3 @@ def test_exp_save_skip_on_dvc_repro(tmp_dir, mocker):
         live.end()
 
     dvc_repo.experiments.save.assert_not_called()
-    assert not (tmp_dir / live.dvc_file).exists()
