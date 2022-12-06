@@ -3,9 +3,9 @@ from typing import Any, Dict, Optional
 from pytorch_lightning.loggers.logger import Logger, rank_zero_experiment
 from pytorch_lightning.utilities import rank_zero_only
 from pytorch_lightning.utilities.logger import (
-        _convert_params,
-        _sanitize_params,
-        _sanitize_callable_params,
+    _convert_params,
+    _sanitize_callable_params,
+    _sanitize_params,
 )
 from torch import is_tensor
 
