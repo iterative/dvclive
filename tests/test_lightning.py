@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from dvclive.lightning import DVCLiveLogger
 from dvclive.plots.metric import Metric
+from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
 
 # pylint: disable=redefined-outer-name, unused-argument
@@ -30,11 +31,13 @@ class XORDataset(Dataset):
 
 
 class LitXOR(LightningModule):
-    def __init__(self):
+    def __init__(self, latent_dims=4):
         super().__init__()
 
-        self.layer_1 = nn.Linear(2, 4)
-        self.layer_2 = nn.Linear(4, 2)
+        self.save_hyperparameters()
+
+        self.layer_1 = nn.Linear(2, latent_dims)
+        self.layer_2 = nn.Linear(latent_dims, 2)
 
     def forward(self, *args, **kwargs):
         x = args[0]
@@ -112,6 +115,10 @@ def test_lightning_integration(tmp_dir, mocker):
     assert os.path.join(scalars, "train", "epoch", "loss.tsv") in logs
     assert os.path.join(scalars, "train", "step", "loss.tsv") in logs
     assert os.path.join(scalars, "epoch.tsv") in logs
+
+    params_file = dvclive_logger.experiment.params_file
+    assert os.path.exists(params_file)
+    assert load_yaml(params_file) == {"latent_dims": 4}
 
 
 def test_lightning_default_dir(tmp_dir):
