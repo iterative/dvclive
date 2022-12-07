@@ -2,6 +2,11 @@ from typing import Any, Dict, Optional
 
 from pytorch_lightning.loggers.logger import Logger, rank_zero_experiment
 from pytorch_lightning.utilities import rank_zero_only
+from pytorch_lightning.utilities.logger import (
+    _convert_params,
+    _sanitize_callable_params,
+    _sanitize_params,
+)
 from torch import is_tensor
 
 from dvclive import Live
@@ -39,7 +44,10 @@ class DVCLiveLogger(Logger):
 
     @rank_zero_only
     def log_hyperparams(self, params, *args, **kwargs):
-        pass
+        params = _convert_params(params)
+        params = _sanitize_callable_params(params)
+        params = _sanitize_params(params)
+        self.experiment.log_params(params)
 
     @property  # type: ignore
     @rank_zero_experiment
