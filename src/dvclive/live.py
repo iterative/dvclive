@@ -271,8 +271,8 @@ class Live:
         """Saves the given parameter value to yaml"""
         self.log_params({name: val})
 
-    def make_summary(self):
-        if self._step is not None:
+    def make_summary(self, update_step: bool = True):
+        if self._step is not None and update_step:
             self.summary["step"] = self.step
         dump_json(self.summary, self.metrics_file, cls=NumpyEncoder)
 
@@ -296,7 +296,7 @@ class Live:
                 open_file_in_browser(self.report_file)
 
     def end(self):
-        self.make_summary()
+        self.make_summary(update_step=False)
         make_dvcyaml(self)
         if self._studio_url and self._studio_token:
             if "done" not in self._studio_events_to_skip:

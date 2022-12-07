@@ -90,5 +90,5 @@ def test_fast_ai_resume(tmp_dir, data_loader, mocker):
     callback = DVCLiveCallback(resume=True)
     live = callback.live
     spy = mocker.spy(live, "next_step")
-    learn.fit_one_cycle(3, cbs=[callback], start_epoch=live.step - 1)
+    learn.fit_one_cycle(3, cbs=[callback], start_epoch=live.step)
     assert spy.call_count == 1

@@ -165,7 +165,7 @@ def test_lightning_steps(tmp_dir):
     trainer.fit(model)
 
     history, latest = parse_metrics(dvclive_logger.experiment)
-    assert latest["step"] == 8
+    assert latest["step"] == 7
     assert latest["epoch"] == 1
 
     scalars = os.path.join(
