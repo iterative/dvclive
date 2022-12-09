@@ -1,7 +1,10 @@
 # pylint: disable=unused-argument,protected-access
+import os
+
 import pytest
 from dvc.repo import Repo
 from dvc.repo.experiments.exceptions import ExperimentExistsError
+from PIL import Image
 from scmrepo.git import Git
 
 from dvclive import Live
@@ -37,7 +40,46 @@ def test_make_dvcyaml(tmp_dir):
     assert load_yaml(live.dvc_file) == {
         "metrics": ["metrics.json"],
         "params": ["params.yaml"],
-        "plots": ["plots"],
+        "plots": [os.path.join("plots", "metrics")],
+    }
+
+
+def test_make_dvcyaml_all_plots(tmp_dir):
+    with Live() as live:
+        live.log_param("foo", 1)
+        live.log_metric("bar", 2)
+        live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
+        live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
+        live.log_sklearn_plot(
+            "roc", [0, 0, 1, 1], [0.0, 0.5, 0.5, 0.0], "custom_name_roc"
+        )
+
+    assert load_yaml(live.dvc_file) == {
+        "metrics": ["metrics.json"],
+        "params": ["params.yaml"],
+        "plots": [
+            os.path.join("plots", "metrics"),
+            os.path.join("plots", "images"),
+            {
+                os.path.join("plots", "sklearn", "confusion_matrix.json"): {
+                    "template": "confusion",
+                    "x": "actual",
+                    "y": "predicted",
+                    "title": "Confusion Matrix",
+                    "x_label": "True Label",
+                    "y_label": "Predicted Label",
+                },
+            },
+            {
+                os.path.join("plots", "sklearn", "custom_name_roc.json"): {
+                    "x": "fpr",
+                    "y": "tpr",
+                    "title": "Receiver operating characteristic (ROC)",
+                    "x_label": "False Positive Rate",
+                    "y_label": "True Positive Rate",
+                }
+            },
+        ],
     }
 
 
