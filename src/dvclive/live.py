@@ -238,7 +238,7 @@ class Live:
             data = self._plots[name]
         elif kind in SKLEARN_PLOTS and SKLEARN_PLOTS[kind].could_log(val):
             data = SKLEARN_PLOTS[kind](name, self.plots_dir)
-            self._plots[name] = data
+            self._plots[data.name] = data
         else:
             raise InvalidPlotTypeError(name)
 
