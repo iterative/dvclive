@@ -8,7 +8,14 @@ from typing import Any, Dict, List, Optional, Set, Union
 from ruamel.yaml.representer import RepresenterError
 
 from . import env
-from .dvc import get_dvc_repo, make_checkpoint, make_dvcyaml, random_exp_name
+from .dvc import (
+    get_dvc_repo,
+    make_checkpoint,
+    make_dvcyaml,
+    mark_dvclive_only_ended,
+    mark_dvclive_only_started,
+    random_exp_name,
+)
 from .error import (
     InvalidDataTypeError,
     InvalidParameterTypeError,
@@ -115,6 +122,7 @@ class Live:
                     self._exp_name = random_exp_name(
                         self._dvc_repo, self._baseline_rev
                     )
+                    mark_dvclive_only_started()
 
     def _init_studio(self):
         if not self._dvc_repo:
@@ -314,6 +322,7 @@ class Live:
             self._dvc_repo.experiments.save(
                 name=self._exp_name, include_untracked=self.dir
             )
+            mark_dvclive_only_ended()
 
     def make_checkpoint(self):
         if env2bool(env.DVC_CHECKPOINT):

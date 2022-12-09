@@ -443,3 +443,30 @@ def test_create_checkpoint_file(
         assert not native_exists(
             os.path.join(".dvc", "tmp", env.DVC_CHECKPOINT)
         )
+
+
+@pytest.mark.vscode
+@pytest.mark.parametrize("dvc_root", [True, False])
+def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
+    signal_file = os.path.join(
+        tmp_dir, ".dvc", "tmp", "exps", "run", "DVCLIVE_ONLY"
+    )
+
+    if dvc_root:
+        (tmp_dir / ".dvc").mkdir(parents=True)
+
+    assert not os.path.exists(signal_file)
+
+    dvc_repo = mocker.MagicMock()
+    dvc_repo.index.stages = []
+    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
+        dvclive = Live(save_dvc_exp=True)
+
+    if dvc_root:
+        assert os.path.exists(signal_file)
+    else:
+        assert not os.path.exists(signal_file)
+
+    dvclive.end()
+
+    assert not os.path.exists(signal_file)
