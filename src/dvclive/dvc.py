@@ -4,6 +4,7 @@ import os
 from random import choice
 
 from dvclive import env
+from dvclive.plots import Image, Metric
 from dvclive.serialize import dump_yaml
 
 logging.basicConfig()
@@ -59,13 +60,11 @@ def make_checkpoint():
 def get_dvc_repo():
     # noqa pylint: disable=unused-import
     try:
-        import dvc  # noqa: F401
+        from dvc.exceptions import NotDvcRepoError
+        from dvc.repo import Repo
+        from dvc.scm import SCMError
     except ImportError:
         return None
-
-    from dvc.exceptions import NotDvcRepoError
-    from dvc.repo import Repo
-    from dvc.scm import SCMError
 
     try:
         return Repo()
@@ -105,6 +104,24 @@ def make_dvcyaml(live):
         dvcyaml["params"] = [os.path.relpath(live.params_file, live.dir)]
     if live._metrics:
         dvcyaml["metrics"] = [os.path.relpath(live.metrics_file, live.dir)]
-    if live._metrics or live._plots or live._images:
-        dvcyaml["plots"] = [os.path.relpath(live.plots_dir, live.dir)]
+    plots = []
+    if live._metrics:
+        plots.append(
+            os.path.relpath(
+                os.path.join(live.plots_dir, Metric.subfolder), live.dir
+            )
+        )
+    if live._images:
+        plots.append(
+            os.path.relpath(
+                os.path.join(live.plots_dir, Image.subfolder), live.dir
+            )
+        )
+    if live._plots:
+        for plot in live._plots.values():
+            plot_path = os.path.relpath(plot.output_path, live.dir)
+            plots.append({plot_path: plot.get_properties()})
+    if plots:
+        dvcyaml["plots"] = plots
+
     dump_yaml(dvcyaml, live.dvc_file)
