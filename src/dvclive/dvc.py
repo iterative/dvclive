@@ -18,6 +18,15 @@ def _dvc_dir(dirname):
     return os.path.join(dirname, ".dvc")
 
 
+def _dvc_exps_run_dir(dirname: str) -> str:
+    return os.path.join(dirname, ".dvc", "tmp", "exps", "run")
+
+
+def _dvclive_only_signal_file(root_dir: str) -> str:
+    dvc_exps_run_dir = _dvc_exps_run_dir(root_dir)
+    return os.path.join(dvc_exps_run_dir, "DVCLIVE_ONLY")
+
+
 def _find_dvc_root(root=None):
     if not root:
         root = os.getcwd()
@@ -37,8 +46,18 @@ def _find_dvc_root(root=None):
     return None
 
 
-def make_checkpoint():
+def _write_file(file: str):
     import builtins
+
+    with builtins.open(file, "w", encoding="utf-8") as fobj:
+        # NOTE: force flushing/writing empty file to disk, otherwise when
+        # run in certain contexts (pytest) file may not actually be written
+        fobj.write("")
+        fobj.flush()
+        os.fsync(fobj.fileno())
+
+
+def make_checkpoint():
     from time import sleep
 
     root_dir = _find_dvc_root()
@@ -47,12 +66,8 @@ def make_checkpoint():
 
     signal_file = os.path.join(root_dir, ".dvc", "tmp", env.DVC_CHECKPOINT)
 
-    with builtins.open(signal_file, "w", encoding="utf-8") as fobj:
-        # NOTE: force flushing/writing empty file to disk, otherwise when
-        # run in certain contexts (pytest) file may not actually be written
-        fobj.write("")
-        fobj.flush()
-        os.fsync(fobj.fileno())
+    _write_file(signal_file)
+
     while os.path.exists(signal_file):
         sleep(_CHECKPOINT_SLEEP)
 
@@ -125,3 +140,33 @@ def make_dvcyaml(live):
         dvcyaml["plots"] = plots
 
     dump_yaml(dvcyaml, live.dvc_file)
+
+
+def mark_dvclive_only_started():
+    """
+    Signal DVC VS Code extension that
+    an experiment is running in the workspace.
+    """
+    root_dir = _find_dvc_root()
+    if not root_dir:
+        return
+
+    exp_run_dir = _dvc_exps_run_dir(root_dir)
+    os.makedirs(exp_run_dir, exist_ok=True)
+
+    signal_file = _dvclive_only_signal_file(root_dir)
+
+    _write_file(signal_file)
+
+
+def mark_dvclive_only_ended():
+    root_dir = _find_dvc_root()
+    if not root_dir:
+        return
+
+    signal_file = _dvclive_only_signal_file(root_dir)
+
+    if not os.path.exists(signal_file):
+        return
+
+    os.remove(signal_file)
