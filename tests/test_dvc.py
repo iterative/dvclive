@@ -123,3 +123,17 @@ def test_exp_save_skip_on_dvc_repro(tmp_dir, mocker):
         live.end()
 
     dvc_repo.experiments.save.assert_not_called()
+
+
+def test_make_dvcyaml_skip_on_plot_definition(tmp_dir, mocker):
+    dvc_repo = mocker.MagicMock()
+    plot = mocker.MagicMock()
+    plot.fs_path = tmp_dir / "dvclive" / "plots" / "metrics" / "foo.tsv"
+    dvc_repo.index.plots = [plot]
+
+    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
+        live = Live()
+        live.log_metric("foo", 1)
+        live.next_step()
+
+    assert not (tmp_dir / live.dvc_file).exists()

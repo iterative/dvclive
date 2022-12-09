@@ -100,6 +100,12 @@ def random_exp_name(dvc_repo, baseline_rev):
 
 
 def make_dvcyaml(live):
+    if live._dvc_repo is not None:
+        abs_plots_dir = os.path.abspath(live.plots_dir)
+        for plot in live._dvc_repo.index.plots:
+            if str(plot.fs_path).startswith(abs_plots_dir):
+                return
+
     dvcyaml = {}
     if live._params:
         dvcyaml["params"] = [os.path.relpath(live.params_file, live.dir)]
