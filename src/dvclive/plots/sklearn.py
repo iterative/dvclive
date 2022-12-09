@@ -9,10 +9,13 @@ class SKLearnPlot(Data):
     suffixes = [".json"]
     subfolder = "sklearn"
 
+    def __init__(self, name: str, output_folder: str) -> None:
+        super().__init__(name, output_folder)
+        self.name = self.name.replace(".json", "")
+
     @property
     def output_path(self) -> Path:
-        _name = self.name.replace(".json", "")
-        _path = Path(f"{self.output_folder / _name}.json")
+        _path = Path(f"{self.output_folder / self.name}.json")
         _path.parent.mkdir(exist_ok=True, parents=True)
         return _path
 
