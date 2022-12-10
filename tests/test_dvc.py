@@ -36,6 +36,7 @@ def test_make_dvcyaml_param(tmp_dir):
         "params": ["params.yaml"],
     }
 
+
 def test_make_dvcyaml_metrics(tmp_dir):
     live = Live()
     live.log_metric("bar", 2)
@@ -173,6 +174,7 @@ def test_exp_save_skip_on_dvc_repro(tmp_dir, mocker):
     dvc_repo.experiments.save.assert_not_called()
     assert not (tmp_dir / live.dvc_file).exists()
 
+
 @pytest.mark.parametrize("save", [True, False])
 def test_dvcyaml_on_next_step(tmp_dir, mocker, save):
     dvc_repo = mocker.MagicMock()
@@ -184,5 +186,3 @@ def test_dvcyaml_on_next_step(tmp_dir, mocker, save):
         assert (tmp_dir / live.dvc_file).exists()
     else:
         assert not (tmp_dir / live.dvc_file).exists()
-
-
