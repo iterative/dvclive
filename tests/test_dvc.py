@@ -1,7 +1,10 @@
 # pylint: disable=unused-argument,protected-access
+import os
+
 import pytest
 from dvc.repo import Repo
 from dvc.repo.experiments.exceptions import ExperimentExistsError
+from PIL import Image
 from scmrepo.git import Git
 
 from dvclive import Live
@@ -17,27 +20,71 @@ def test_get_dvc_repo(tmp_dir):
     assert isinstance(get_dvc_repo(), Repo)
 
 
-def test_make_dvcyaml(tmp_dir):
+def test_make_dvcyaml_empty(tmp_dir):
     live = Live()
     make_dvcyaml(live)
 
     assert load_yaml(live.dvc_file) == {}
 
+
+def test_make_dvcyaml_param(tmp_dir):
     live = Live()
     live.log_param("foo", 1)
-    live.next_step()
+    make_dvcyaml(live)
 
     assert load_yaml(live.dvc_file) == {
         "params": ["params.yaml"],
     }
 
+
+def test_make_dvcyaml_metrics(tmp_dir):
+    live = Live()
     live.log_metric("bar", 2)
-    live.end()
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == {
+        "metrics": ["metrics.json"],
+        "plots": [os.path.join("plots", "metrics")],
+    }
+
+
+def test_make_dvcyaml_all_plots(tmp_dir):
+    live = Live()
+    live.log_param("foo", 1)
+    live.log_metric("bar", 2)
+    live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
+    live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
+    live.log_sklearn_plot(
+        "roc", [0, 0, 1, 1], [0.0, 0.5, 0.5, 0.0], "custom_name_roc"
+    )
+    make_dvcyaml(live)
 
     assert load_yaml(live.dvc_file) == {
         "metrics": ["metrics.json"],
         "params": ["params.yaml"],
-        "plots": ["plots"],
+        "plots": [
+            os.path.join("plots", "metrics"),
+            os.path.join("plots", "images"),
+            {
+                os.path.join("plots", "sklearn", "confusion_matrix.json"): {
+                    "template": "confusion",
+                    "x": "actual",
+                    "y": "predicted",
+                    "title": "Confusion Matrix",
+                    "x_label": "True Label",
+                    "y_label": "Predicted Label",
+                },
+            },
+            {
+                os.path.join("plots", "sklearn", "custom_name_roc.json"): {
+                    "x": "fpr",
+                    "y": "tpr",
+                    "title": "Receiver operating characteristic (ROC)",
+                    "x_label": "False Positive Rate",
+                    "y_label": "True Positive Rate",
+                }
+            },
+        ],
     }
 
 
@@ -96,6 +143,7 @@ def test_exp_save_on_end(tmp_dir, mocker, save):
         assert live._baseline_rev is None
         assert live._exp_name is None
         dvc_repo.experiments.save.assert_not_called()
+        assert not (tmp_dir / live.dvc_file).exists()
 
 
 def test_exp_save_skip_on_env_vars(tmp_dir, monkeypatch, mocker):
@@ -110,6 +158,7 @@ def test_exp_save_skip_on_env_vars(tmp_dir, monkeypatch, mocker):
     assert live._baseline_rev == "foo"
     assert live._exp_name == "bar"
     assert live._inside_dvc_exp
+    assert not (tmp_dir / live.dvc_file).exists()
 
 
 def test_exp_save_skip_on_dvc_repro(tmp_dir, mocker):
@@ -123,3 +172,17 @@ def test_exp_save_skip_on_dvc_repro(tmp_dir, mocker):
         live.end()
 
     dvc_repo.experiments.save.assert_not_called()
+    assert not (tmp_dir / live.dvc_file).exists()
+
+
+@pytest.mark.parametrize("save", [True, False])
+def test_dvcyaml_on_next_step(tmp_dir, mocker, save):
+    dvc_repo = mocker.MagicMock()
+    dvc_repo.index.stages = []
+    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
+        live = Live(save_dvc_exp=save)
+        live.next_step()
+    if save:
+        assert (tmp_dir / live.dvc_file).exists()
+    else:
+        assert not (tmp_dir / live.dvc_file).exists()

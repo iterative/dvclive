@@ -201,7 +201,14 @@ class Live:
             self._step = 0
 
         self.make_summary()
-        make_dvcyaml(self)
+
+        if (
+            self._dvc_repo is not None
+            and not self._inside_dvc_exp
+            and self._save_dvc_exp
+        ):
+            make_dvcyaml(self)
+
         self.make_report()
         self.make_checkpoint()
         self.step += 1
@@ -246,7 +253,7 @@ class Live:
             data = self._plots[name]
         elif kind in SKLEARN_PLOTS and SKLEARN_PLOTS[kind].could_log(val):
             data = SKLEARN_PLOTS[kind](name, self.plots_dir)
-            self._plots[name] = data
+            self._plots[data.name] = data
         else:
             raise InvalidPlotTypeError(name)
 
@@ -305,7 +312,6 @@ class Live:
 
     def end(self):
         self.make_summary(update_step=False)
-        make_dvcyaml(self)
         if self._studio_url and self._studio_token:
             if "done" not in self._studio_events_to_skip:
                 if not post_to_studio(self, "done", logger):
@@ -319,6 +325,7 @@ class Live:
             and not self._inside_dvc_exp
             and self._save_dvc_exp
         ):
+            make_dvcyaml(self)
             self._dvc_repo.experiments.save(
                 name=self._exp_name, include_untracked=self.dir
             )
