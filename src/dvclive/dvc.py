@@ -46,13 +46,13 @@ def _find_dvc_root(root=None):
     return None
 
 
-def _write_file(file: str):
+def _write_file(file: str, contents=""):
     import builtins
 
     with builtins.open(file, "w", encoding="utf-8") as fobj:
         # NOTE: force flushing/writing empty file to disk, otherwise when
         # run in certain contexts (pytest) file may not actually be written
-        fobj.write("")
+        fobj.write(str(contents))
         fobj.flush()
         os.fsync(fobj.fileno())
 
@@ -156,7 +156,7 @@ def mark_dvclive_only_started():
 
     signal_file = _dvclive_only_signal_file(root_dir)
 
-    _write_file(signal_file)
+    _write_file(signal_file, os.getpid())
 
 
 def mark_dvclive_only_ended():
