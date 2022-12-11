@@ -451,6 +451,7 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
     signal_file = os.path.join(
         tmp_dir, ".dvc", "tmp", "exps", "run", "DVCLIVE_ONLY"
     )
+    test_pid = 12345
 
     if dvc_root:
         (tmp_dir / ".dvc").mkdir(parents=True)
@@ -459,11 +460,16 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
 
     dvc_repo = mocker.MagicMock()
     dvc_repo.index.stages = []
-    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
+    with mocker.patch(
+        "dvclive.live.get_dvc_repo", return_value=dvc_repo
+    ), mocker.patch("dvclive.live.os.getpid", return_value=test_pid):
         dvclive = Live(save_dvc_exp=True)
 
     if dvc_root:
         assert os.path.exists(signal_file)
+        with open(signal_file, encoding="utf-8") as f:
+            assert f.read() == str(test_pid)
+
     else:
         assert not os.path.exists(signal_file)
 
