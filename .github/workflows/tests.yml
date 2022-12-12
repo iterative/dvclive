@@ -34,6 +34,7 @@ jobs:
         with:
           python-version: ${{ matrix.pyv }}
           cache: 'pip'
+          cache-dependency-path: setup.cfg
 
       - name: Upgrade pip and nox
         run: |
