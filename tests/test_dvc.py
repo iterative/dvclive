@@ -3,12 +3,11 @@ import os
 
 import pytest
 from dvc.repo import Repo
-from dvc.repo.experiments.exceptions import ExperimentExistsError
 from PIL import Image
 from scmrepo.git import Git
 
 from dvclive import Live
-from dvclive.dvc import get_dvc_repo, make_dvcyaml, random_exp_name
+from dvclive.dvc import get_dvc_repo, make_dvcyaml
 from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME
 from dvclive.serialize import load_yaml
 
@@ -88,47 +87,12 @@ def test_make_dvcyaml_all_plots(tmp_dir):
     }
 
 
-def test_random_exp_name(mocker):
-    dvc_repo = mocker.MagicMock()
-
-    class Validate:
-        exists = set()
-        n_calls = 0
-
-        def __call__(self, exp_ref):
-            self.n_calls += 1
-            exp_ref = str(exp_ref)
-            if exp_ref not in self.exists:
-                self.exists.add(exp_ref)
-            else:
-                raise ExperimentExistsError(exp_ref)
-
-    validate = Validate()
-    dvc_repo.experiments._validate_new_ref.side_effect = validate
-
-    with mocker.patch(
-        "dvclive.dvc.choice", side_effect=[0, 0, 0, 0, 1, 1, 0, 0]
-    ):
-        name = random_exp_name(dvc_repo, "foo")
-        assert name == "0-0"
-        assert validate.n_calls == 1
-
-        # First try fails with exists error
-        # So 2 calls are needed
-        name = random_exp_name(dvc_repo, "foo")
-        assert name == "1-1"
-        assert validate.n_calls == 3
-
-        # Doesn't fail because has a different baseline_rev
-        name = random_exp_name(dvc_repo, "bar")
-        assert name == "0-0"
-        assert validate.n_calls == 4
-
-
 @pytest.mark.parametrize("save", [True, False])
 def test_exp_save_on_end(tmp_dir, mocker, save):
     dvc_repo = mocker.MagicMock()
     dvc_repo.index.stages = []
+    dvc_repo.scm.get_rev.return_value = "current_rev"
+    dvc_repo.scm.get_ref.return_value = None
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
         live = Live(save_dvc_exp=save)
         live.end()
@@ -179,6 +143,8 @@ def test_exp_save_skip_on_dvc_repro(tmp_dir, mocker):
 def test_dvcyaml_on_next_step(tmp_dir, mocker, save):
     dvc_repo = mocker.MagicMock()
     dvc_repo.index.stages = []
+    dvc_repo.scm.get_rev.return_value = "current_rev"
+    dvc_repo.scm.get_ref.return_value = None
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
         live = Live(save_dvc_exp=save)
         live.next_step()

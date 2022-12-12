@@ -10,11 +10,11 @@ from ruamel.yaml.representer import RepresenterError
 from . import env
 from .dvc import (
     get_dvc_repo,
+    get_random_exp_name,
     make_checkpoint,
     make_dvcyaml,
     mark_dvclive_only_ended,
     mark_dvclive_only_started,
-    random_exp_name,
 )
 from .error import (
     InvalidDataTypeError,
@@ -122,8 +122,8 @@ class Live:
                     self._save_dvc_exp = False
                 else:
                     # `DVCLive Only` execution
-                    self._exp_name = random_exp_name(
-                        self._dvc_repo, self._baseline_rev
+                    self._exp_name = get_random_exp_name(
+                        self._dvc_repo.scm, self._baseline_rev
                     )
                     mark_dvclive_only_started()
 

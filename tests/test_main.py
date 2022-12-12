@@ -361,7 +361,7 @@ def test_make_summary_without_calling_log(tmp_dir):
 
 
 @pytest.mark.parametrize("timestamp", (True, False))
-def test_log_metric_timestamp(timestamp):
+def test_log_metric_timestamp(tmp_dir, timestamp):
     live = Live()
     live.log_metric("foo", 1.0, timestamp=timestamp)
     live.next_step()
@@ -460,6 +460,8 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
 
     dvc_repo = mocker.MagicMock()
     dvc_repo.index.stages = []
+    dvc_repo.scm.get_rev.return_value = "current_rev"
+    dvc_repo.scm.get_ref.return_value = None
     with mocker.patch(
         "dvclive.live.get_dvc_repo", return_value=dvc_repo
     ), mocker.patch("dvclive.live.os.getpid", return_value=test_pid):
