@@ -15,7 +15,9 @@ from dvclive.studio import (
 
 
 def test_post_to_studio(tmp_dir, mocker, monkeypatch):
-    mocker.patch("dvclive.live.get_dvc_repo")
+    dvc_repo = mocker.MagicMock()
+    dvc_repo.scm.get_rev.return_value = "current_rev"
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
     mocked_response = mocker.MagicMock()
     mocked_response.status_code = 200
     mocked_post = mocker.patch("requests.post", return_value=mocked_response)
@@ -32,7 +34,7 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
         json={
             "type": "start",
             "repo_url": "STUDIO_REPO_URL",
-            "rev": mocker.ANY,
+            "rev": "current_rev",
             "client": "dvclive",
         },
         headers={
@@ -50,7 +52,7 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
         json={
             "type": "data",
             "repo_url": "STUDIO_REPO_URL",
-            "rev": mocker.ANY,
+            "rev": "current_rev",
             "step": 0,
             "metrics": {live.metrics_file: {"data": {"step": 0, "foo": 1}}},
             "plots": {scalar_path: {"data": [{"step": 0, "foo": 1.0}]}},
@@ -71,7 +73,7 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
         json={
             "type": "data",
             "repo_url": "STUDIO_REPO_URL",
-            "rev": mocker.ANY,
+            "rev": "current_rev",
             "step": 1,
             "metrics": {live.metrics_file: {"data": {"step": 1, "foo": 2}}},
             "plots": {scalar_path: {"data": [{"step": 1, "foo": 2.0}]}},
