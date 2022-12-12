@@ -17,7 +17,7 @@ from .error import (
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, Image, Metric, NumpyEncoder
 from .report import make_report
 from .serialize import dump_json, dump_yaml, load_yaml
-from .studio import post_to_studio
+from .studio import get_studio_repo_url, post_to_studio
 from .utils import (
     env2bool,
     matplotlib_installed,
@@ -122,6 +122,10 @@ class Live:
             return
 
         self._studio_url = os.getenv(env.STUDIO_REPO_URL, None)
+        if self._studio_url is None:
+            self._studio_url = get_studio_repo_url(
+                self._dvc_repo.scm.gitpython.repo
+            )
         self._studio_token = os.getenv(env.STUDIO_TOKEN, None)
 
         if self._studio_url and self._studio_token:
@@ -131,7 +135,7 @@ class Live:
                 )
                 self._studio_events_to_skip.add("start")
                 self._studio_events_to_skip.add("done")
-            elif not post_to_studio(self, "start", logger):
+            elif not post_to_studio(self, "start"):
                 logger.warning(
                     "`post_to_studio` `start` event failed. "
                     "`studio` report cancelled."
@@ -282,7 +286,7 @@ class Live:
             and self._studio_token
             and "data" not in self._studio_events_to_skip
         ):
-            if not post_to_studio(self, "data", logger):
+            if not post_to_studio(self, "data"):
                 logger.warning(
                     "`post_to_studio` `data` event failed."
                     " Data will be resent on next call."
@@ -300,7 +304,7 @@ class Live:
         make_dvcyaml(self)
         if self._studio_url and self._studio_token:
             if "done" not in self._studio_events_to_skip:
-                if not post_to_studio(self, "done", logger):
+                if not post_to_studio(self, "done"):
                     logger.warning("`post_to_studio` `done` event failed.")
                 self._studio_events_to_skip.add("done")
         else:

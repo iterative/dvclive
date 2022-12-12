@@ -1,8 +1,11 @@
 # pylint: disable=protected-access
+import logging
 from os import getenv
 
 from dvclive.env import STUDIO_ENDPOINT
 from dvclive.utils import parse_metrics
+
+logger = logging.getLogger(__name__)
 
 
 def _get_unsent_datapoints(plot, latest_step):
@@ -41,7 +44,7 @@ def _get_updates(live):
     return metrics, plots
 
 
-def post_to_studio(live, event_type, logger) -> bool:
+def post_to_studio(live, event_type) -> bool:
     import requests
     from requests.exceptions import RequestException
 
@@ -81,3 +84,57 @@ def post_to_studio(live, event_type, logger) -> bool:
     )
 
     return response.status_code == 200
+
+
+def _get_remote_url(git_repo):
+    remote_name = git_repo.active_branch.tracking_branch().remote_name
+    return git_repo.remotes[remote_name].url
+
+
+VALID_PREFIXES = ("https://", "git@")
+VALID_PROVIDERS = ("github.com", "gitlab.com", "bitbucket.org")
+VALID_URLS = [
+    f"{prefix}{provider}"
+    for prefix in VALID_PREFIXES
+    for provider in VALID_PROVIDERS
+]
+
+
+def _convert_to_studio_url(remote_url):
+    studio_url = ""
+    for prefix in VALID_PREFIXES:
+        for provider in VALID_PROVIDERS:
+            if remote_url.startswith(f"{prefix}{provider}"):
+                repo = remote_url.split(provider)[-1]
+                repo = repo.rstrip(".git")
+                repo = repo.lstrip("/")
+                repo = repo.lstrip(":")
+                studio_url = f"{provider.split('.')[0]}:{repo}"
+    if not studio_url:
+        raise ValueError
+    return studio_url
+
+
+def get_studio_repo_url(git_repo) -> str:
+    from git.exc import GitError
+
+    studio_url = ""
+    try:
+        remote_url = _get_remote_url(git_repo)
+        studio_url = _convert_to_studio_url(remote_url)
+    except GitError:
+        logger.warning(
+            "Tried to find remote url for the active branch but failed.\n"
+        )
+    except ValueError:
+        logger.warning(
+            "Found invalid remote url for the active branch.\n"
+            f" Supported urls must start with any of {VALID_URLS}"
+        )
+    finally:
+        if not studio_url:
+            logger.warning(
+                "You can try manually setting the Studio repo url using the"
+                " environment variable `STUDIO_REPO_URL`."
+            )
+        return studio_url  # noqa: B012  # pylint:disable=lost-exception
