@@ -84,10 +84,6 @@ def get_dvc_repo():
     try:
         return Repo()
     except (NotDvcRepoError, SCMError):
-        logger.warning(
-            "Can't save experiment without a DVC Repo."
-            "\nYou can create a DVC Repo by calling `dvc init`."
-        )
         return None
 
 

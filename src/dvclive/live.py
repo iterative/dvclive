@@ -126,8 +126,17 @@ class Live:
                         self._dvc_repo.scm, self._baseline_rev
                     )
                     mark_dvclive_only_started()
+            else:
+                logger.warning(
+                    "Can't save experiment without a DVC Repo."
+                    "\nYou can create a DVC Repo by calling `dvc init`."
+                )
 
     def _init_studio(self):
+        self._studio_token = os.getenv(env.STUDIO_TOKEN, None)
+        if not self._studio_token:
+            return
+
         if not self._dvc_repo:
             logger.warning("`studio` report can't be used without a DVC Repo.")
             return
@@ -137,7 +146,6 @@ class Live:
             self._studio_url = get_studio_repo_url(
                 self._dvc_repo.scm.gitpython.repo
             )
-        self._studio_token = os.getenv(env.STUDIO_TOKEN, None)
 
         if self._studio_url and self._studio_token:
             if self._inside_dvc_exp:
