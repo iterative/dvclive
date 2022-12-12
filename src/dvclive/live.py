@@ -99,6 +99,10 @@ class Live:
 
     def _init_dvc(self):
         self._dvc_repo = get_dvc_repo()
+
+        if self._dvc_repo is not None:
+            self._baseline_rev = self._dvc_repo.scm.get_rev()
+
         if os.getenv(env.DVC_EXP_BASELINE_REV, None):
             # `dvc exp` execution
             self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV, "")
@@ -111,7 +115,6 @@ class Live:
                     self._save_dvc_exp = False
                 else:
                     # `DVCLive Only` execution
-                    self._baseline_rev = self._dvc_repo.scm.get_rev()
                     self._exp_name = random_exp_name(
                         self._dvc_repo, self._baseline_rev
                     )

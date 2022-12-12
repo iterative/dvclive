@@ -140,7 +140,7 @@ def test_exp_save_on_end(tmp_dir, mocker, save):
         )
         assert (tmp_dir / live.dvc_file).exists()
     else:
-        assert live._baseline_rev is None
+        assert live._baseline_rev is not None
         assert live._exp_name is None
         dvc_repo.experiments.save.assert_not_called()
         assert not (tmp_dir / live.dvc_file).exists()
@@ -167,7 +167,7 @@ def test_exp_save_skip_on_dvc_repro(tmp_dir, mocker):
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
         live = Live(save_dvc_exp=True)
         assert not live._save_dvc_exp
-        assert live._baseline_rev is None
+        assert live._baseline_rev is not None
         assert live._exp_name is None
         live.end()
 
