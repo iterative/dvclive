@@ -87,8 +87,7 @@ def post_to_studio(live, event_type) -> bool:
 
 
 def _get_remote_url(git_repo):
-    remote_name = git_repo.active_branch.tracking_branch().remote_name
-    return git_repo.remotes[remote_name].url
+    return git_repo.git.ls_remote("--get-url")
 
 
 VALID_PREFIXES = ("https://", "git@")
