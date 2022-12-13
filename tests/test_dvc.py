@@ -100,7 +100,7 @@ def test_exp_save_on_end(tmp_dir, mocker, save):
         assert live._baseline_rev is not None
         assert live._exp_name is not None
         dvc_repo.experiments.save.assert_called_with(
-            name=live._exp_name, include_untracked=live.dir
+            name=live._exp_name, include_untracked=live.dir, force=True
         )
         assert (tmp_dir / live.dvc_file).exists()
     else:
@@ -127,7 +127,11 @@ def test_exp_save_skip_on_env_vars(tmp_dir, monkeypatch, mocker):
 
 def test_exp_save_skip_on_dvc_repro(tmp_dir, mocker):
     dvc_repo = mocker.MagicMock()
-    dvc_repo.index.stages = ["foo", "bar"]
+    dvc_stage = mocker.MagicMock()
+    dvc_stage.is_data_source = False
+    dvc_file = mocker.MagicMock()
+    dvc_file.is_data_source = False
+    dvc_repo.index.stages = [dvc_stage, dvc_file]
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
         live = Live(save_dvc_exp=True)
         assert not live._save_dvc_exp
@@ -152,3 +156,20 @@ def test_dvcyaml_on_next_step(tmp_dir, mocker, save):
         assert (tmp_dir / live.dvc_file).exists()
     else:
         assert not (tmp_dir / live.dvc_file).exists()
+
+
+def test_exp_save_with_dvc_files(tmp_dir, mocker):
+    dvc_repo = mocker.MagicMock()
+    dvc_file = mocker.MagicMock()
+    dvc_file.is_data_source = True
+    dvc_repo.index.stages = [dvc_file]
+    dvc_repo.scm.get_rev.return_value = "current_rev"
+    dvc_repo.scm.get_ref.return_value = None
+
+    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
+        live = Live(save_dvc_exp=True)
+        live.end()
+
+    dvc_repo.experiments.save.assert_called_with(
+        name=live._exp_name, include_untracked=live.dir, force=True
+    )
