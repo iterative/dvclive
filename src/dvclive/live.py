@@ -115,10 +115,21 @@ class Live:
             self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV, "")
             self._exp_name = os.getenv(env.DVC_EXP_NAME, "")
             self._inside_dvc_exp = True
+            if self._save_dvc_exp:
+                logger.warning(
+                    "Ignoring `_save_dvc_exp` because `dvc exp run` is being"
+                    " used."
+                )
         elif self._save_dvc_exp:
             if self._dvc_repo is not None:
-                if self._dvc_repo.index.stages:
-                    # `dvc repro` execution: skip
+                if any(
+                    not stage.is_data_source
+                    for stage in self._dvc_repo.index.stages
+                ):
+                    logger.warning(
+                        "Ignoring `_save_dvc_exp` because there is an existing"
+                        " `dvc.yaml` file."
+                    )
                     self._save_dvc_exp = False
                 else:
                     # `DVCLive Only` execution
@@ -342,7 +353,7 @@ class Live:
         ):
             make_dvcyaml(self)
             self._dvc_repo.experiments.save(
-                name=self._exp_name, include_untracked=self.dir
+                name=self._exp_name, include_untracked=self.dir, force=True
             )
             mark_dvclive_only_ended()
 
