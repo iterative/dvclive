@@ -1,6 +1,4 @@
 # pylint: disable=unused-argument,protected-access
-import os
-
 import pytest
 from dvc.repo import Repo
 from PIL import Image
@@ -43,7 +41,7 @@ def test_make_dvcyaml_metrics(tmp_dir):
 
     assert load_yaml(live.dvc_file) == {
         "metrics": ["metrics.json"],
-        "plots": [os.path.join("plots", "metrics")],
+        "plots": ["plots/metrics"],
     }
 
 
@@ -62,10 +60,10 @@ def test_make_dvcyaml_all_plots(tmp_dir):
         "metrics": ["metrics.json"],
         "params": ["params.yaml"],
         "plots": [
-            os.path.join("plots", "metrics"),
-            os.path.join("plots", "images"),
+            "plots/metrics",
+            "plots/images",
             {
-                os.path.join("plots", "sklearn", "confusion_matrix.json"): {
+                "plots/sklearn/confusion_matrix.json": {
                     "template": "confusion",
                     "x": "actual",
                     "y": "predicted",
@@ -75,7 +73,7 @@ def test_make_dvcyaml_all_plots(tmp_dir):
                 },
             },
             {
-                os.path.join("plots", "sklearn", "custom_name_roc.json"): {
+                "plots/sklearn/custom_name_roc.json": {
                     "x": "fpr",
                     "y": "tpr",
                     "title": "Receiver operating characteristic (ROC)",
