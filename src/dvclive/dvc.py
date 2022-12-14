@@ -2,6 +2,7 @@
 import logging
 import os
 import random
+from pathlib import Path
 
 from dvclive import env
 from dvclive.plots import Image, Metric
@@ -94,22 +95,17 @@ def make_dvcyaml(live):
     if live._metrics:
         dvcyaml["metrics"] = [os.path.relpath(live.metrics_file, live.dir)]
     plots = []
+    plots_path = Path(live.plots_dir)
     if live._metrics:
-        plots.append(
-            os.path.relpath(
-                os.path.join(live.plots_dir, Metric.subfolder), live.dir
-            )
-        )
+        metrics_path = (plots_path / Metric.subfolder).relative_to(live.dir)
+        plots.append(metrics_path.as_posix())
     if live._images:
-        plots.append(
-            os.path.relpath(
-                os.path.join(live.plots_dir, Image.subfolder), live.dir
-            )
-        )
+        images_path = (plots_path / Image.subfolder).relative_to(live.dir)
+        plots.append(images_path.as_posix())
     if live._plots:
         for plot in live._plots.values():
-            plot_path = os.path.relpath(plot.output_path, live.dir)
-            plots.append({plot_path: plot.get_properties()})
+            plot_path = plot.output_path.relative_to(live.dir)
+            plots.append({plot_path.as_posix(): plot.get_properties()})
     if plots:
         dvcyaml["plots"] = plots
 
