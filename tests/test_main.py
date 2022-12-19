@@ -4,7 +4,6 @@ import json
 import os
 
 import pytest
-from funcy import last
 
 from dvclive import Live, env
 from dvclive.error import (
@@ -218,7 +217,7 @@ def test_continue(tmp_dir, resume, steps, metrics):
         dvclive.next_step()
 
     assert read_history(dvclive, "metric") == (steps, metrics)
-    assert read_latest(dvclive, "metric") == (last(steps), last(metrics))
+    assert read_latest(dvclive, "metric") == (steps[-1], metrics[-1])
 
 
 def test_resume_on_first_init(tmp_dir):
@@ -259,7 +258,7 @@ def test_custom_steps(tmp_dir):
         dvclive.make_summary()
 
     assert read_history(dvclive, "m") == (steps, metrics)
-    assert read_latest(dvclive, "m") == (last(steps), last(metrics))
+    assert read_latest(dvclive, "m") == (steps[-1], metrics[-1])
 
 
 def test_log_reset_with_set_step(tmp_dir):
