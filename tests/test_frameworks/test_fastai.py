@@ -48,7 +48,12 @@ def test_fastai_callback(tmp_dir, data_loader, mocker):
     learn.fit_one_cycle(2, cbs=[callback])
     spy.assert_called_once()
 
-    assert os.path.exists(live.dir)
+    assert (tmp_dir / live.dir).exists()
+    assert (tmp_dir / live.params_file).exists()
+    assert (tmp_dir / live.params_file).read_text() == (
+        "model: TabularModel\nbatch_size: 2\nbatch_per_epoch: 2\nfrozen: false"
+        "\nfrozen_idx: 0\ntransforms: None\n"
+    )
 
     metrics_path = tmp_dir / live.plots_dir / Metric.subfolder
     train_path = metrics_path / "train"
