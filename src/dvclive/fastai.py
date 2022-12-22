@@ -30,7 +30,7 @@ class DVCLiveCallback(Callback):
         model_file: Optional[str] = None,
         with_opt: bool = False,
         live: Optional[Live] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.model_file = model_file
@@ -38,7 +38,22 @@ class DVCLiveCallback(Callback):
         self.live = live if live is not None else Live(**kwargs)
         self.freeze_stage_ended = False
 
+    def before_fit(self):
+        if hasattr(self, "lr_finder") or hasattr(self, "gather_preds"):
+            return
+        params = {
+            "model": type(self.learn.model).__qualname__,
+            "batch_size": getattr(self.dls, "bs", None),
+            "batch_per_epoch": len(getattr(self.dls, "train", [])),
+            "frozen": bool(getattr(self.opt, "frozen_idx", -1)),
+            "frozen_idx": getattr(self.opt, "frozen_idx", -1),
+            "transforms": f"{getattr(self.dls, 'tfms', None)}",
+        }
+        self.live.log_params(params)
+
     def after_epoch(self):
+        if hasattr(self, "lr_finder") or hasattr(self, "gather_preds"):
+            return
         logged_metrics = False
         for key, value in zip(
             self.learn.recorder.metric_names, self.learn.recorder.log
