@@ -1,9 +1,27 @@
+import inspect
 from typing import Optional
 
 from fastai.callback.core import Callback
 
 from dvclive import Live
 from dvclive.utils import standardize_metric_name
+
+
+def _inside_fine_tune():
+    """
+    Hack to find out if fastai is calling `after_fit` at the end of the
+    "freeze" stage part of `learn.fine_tune` .
+    """
+    fine_tune = False
+    fit_one_cycle = False
+    for frame in inspect.stack():
+        if frame.function == "fine_tune":
+            fine_tune = True
+        if frame.function == "fit_one_cycle":
+            fit_one_cycle = True
+        if fine_tune and fit_one_cycle:
+            return True
+    return False
 
 
 class DVCLiveCallback(Callback):
@@ -18,6 +36,7 @@ class DVCLiveCallback(Callback):
         self.model_file = model_file
         self.with_opt = with_opt
         self.live = live if live is not None else Live(**kwargs)
+        self.freeze_stage_ended = False
 
     def after_epoch(self):
         logged_metrics = False
@@ -39,4 +58,9 @@ class DVCLiveCallback(Callback):
             self.live.next_step()
 
     def after_fit(self):
-        self.live.end()
+        if hasattr(self, "lr_finder") or hasattr(self, "gather_preds"):
+            return
+        if _inside_fine_tune() and not self.freeze_stage_ended:
+            self.freeze_stage_ended = True
+        else:
+            self.live.end()

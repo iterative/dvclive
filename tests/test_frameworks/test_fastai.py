@@ -84,11 +84,30 @@ def test_fast_ai_resume(tmp_dir, data_loader, mocker):
     live = callback.live
 
     spy = mocker.spy(live, "next_step")
+    end = mocker.spy(live, "end")
     learn.fit_one_cycle(2, cbs=[callback])
     assert spy.call_count == 2
+    assert end.call_count == 1
 
     callback = DVCLiveCallback(resume=True)
     live = callback.live
     spy = mocker.spy(live, "next_step")
     learn.fit_one_cycle(3, cbs=[callback], start_epoch=live.step)
     assert spy.call_count == 1
+
+
+def test_fast_ai_avoid_unnecessary_end_calls(tmp_dir, data_loader, mocker):
+    """
+    `after_fit` might be called from different points and not all mean that the
+    training has ended.
+    """
+    learn = tabular_learner(data_loader, metrics=accuracy)
+    learn.remove_cb(ProgressCallback)
+    callback = DVCLiveCallback()
+    live = callback.live
+
+    end = mocker.spy(live, "end")
+    after_fit = mocker.spy(callback, "after_fit")
+    learn.fine_tune(2, cbs=[callback])
+    assert end.call_count == 1
+    assert after_fit.call_count == 2
