@@ -1,6 +1,8 @@
 # pylint: disable=protected-access
 import logging
+import os
 
+from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
 
 logger = logging.getLogger(__name__)
@@ -38,5 +40,12 @@ def get_studio_updates(live):
         plots[name] = _cast_to_numbers(datapoints)
 
     metrics = {live.metrics_file: {"data": metrics}}
+
+    if os.path.isfile(live.params_file):
+        params = {live.params_file: load_yaml(live.params_file)}
+    else:
+        params = {}
+
     plots = _to_dvc_format(plots)
-    return metrics, plots
+
+    return metrics, params, plots

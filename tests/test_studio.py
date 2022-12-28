@@ -26,7 +26,7 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
     monkeypatch.setenv(STUDIO_TOKEN, "STUDIO_TOKEN")
 
     live = Live()
-
+    live.log_param("fooparam", 1)
     scalar_path = os.path.join(live.plots_dir, Metric.subfolder, "foo.tsv")
 
     mocked_post.assert_called_with(
@@ -57,6 +57,7 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
             "name": "dvclive-exp",
             "step": 0,
             "metrics": {live.metrics_file: {"data": {"step": 0, "foo": 1}}},
+            "params": {live.params_file: {"fooparam": 1}},
             "plots": {scalar_path: {"data": [{"step": 0, "foo": 1.0}]}},
             "client": "dvclive",
         },
@@ -79,6 +80,7 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
             "name": "dvclive-exp",
             "step": 1,
             "metrics": {live.metrics_file: {"data": {"step": 1, "foo": 2}}},
+            "params": {live.params_file: {"fooparam": 1}},
             "plots": {scalar_path: {"data": [{"step": 1, "foo": 2.0}]}},
             "client": "dvclive",
         },
