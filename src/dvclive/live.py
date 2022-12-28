@@ -326,7 +326,7 @@ class Live:
         if "data" not in self._studio_events_to_skip:
             response = False
             if post_live_metrics is not None:
-                metrics, plots = get_studio_updates(self)
+                metrics, params, plots = get_studio_updates(self)
                 response = post_live_metrics(
                     "data",
                     self._baseline_rev,
@@ -334,6 +334,7 @@ class Live:
                     "dvclive",
                     step=self.step,
                     metrics=metrics,
+                    params=params,
                     plots=plots,
                 )
             if not response:
