@@ -33,9 +33,11 @@ from .utils import (
 )
 
 try:
+    from dvc_studio_client.env import STUDIO_TOKEN
     from dvc_studio_client.post_live_metrics import post_live_metrics
 except ImportError:
     post_live_metrics = None
+    STUDIO_TOKEN = None
 
 logging.basicConfig()
 logger = logging.getLogger("dvclive")
@@ -149,6 +151,14 @@ class Live:
                 )
 
     def _init_studio(self):
+        if post_live_metrics is not None:
+            if not os.getenv(STUDIO_TOKEN, None):
+                logger.debug("Skipping `studio` report.")
+                self._studio_events_to_skip.add("start")
+                self._studio_events_to_skip.add("data")
+                self._studio_events_to_skip.add("done")
+                return
+
         if not self._dvc_repo:
             logger.debug("`studio` report can't be used without a DVC Repo.")
             self._studio_events_to_skip.add("start")
