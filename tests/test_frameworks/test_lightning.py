@@ -1,7 +1,7 @@
 import os
 
 import torch
-from pytorch_lightning.core.lightning import LightningModule
+from pytorch_lightning import LightningModule
 from pytorch_lightning.trainer import Trainer
 from torch import nn
 from torch.nn import functional as F
