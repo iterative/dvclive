@@ -33,7 +33,7 @@ class Metric(Data):
         if kwargs.get("timestamp", False):
             row["timestamp"] = int(time.time() * 1000)
         row["step"] = self.step
-        row[self.name] = val
+        row[os.path.basename(self.name)] = val
 
         existed = self.output_path.exists()
         with open(self.output_path, "a", encoding="utf-8", newline="") as fobj:

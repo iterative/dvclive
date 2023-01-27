@@ -96,7 +96,7 @@ def standardize_metric_name(metric_name: str, framework: str) -> str:
 def parse_tsv(path):
     with open(path, encoding="utf-8", newline="") as fd:
         reader = csv.DictReader(fd, delimiter="\t")
-        return list(reader)
+        return reader
 
 
 def parse_json(path):
@@ -111,7 +111,13 @@ def parse_metrics(live):
     history = {}
     for suffix in Metric.suffixes:
         for scalar_file in plots_path.rglob(f"*{suffix}"):
-            history[str(scalar_file)] = parse_tsv(scalar_file)
+            history[src(scalar_file)] = []
+            name = str(scalar_file.with_suffix("")).removeprefix(plots_path)
+            short_name = os.path.basename(name)
+            for row in parse_tsv(scalar_file):
+                row[name] = row[short_name]
+                del row[short_name]
+                history[src(scalar_file)].append(row)
     latest = parse_json(live.metrics_file)
     return history, latest
 
