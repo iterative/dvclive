@@ -60,9 +60,7 @@ class DVCLiveCallback(Callback):
         ):
             if key == "epoch":
                 continue
-            self.live.log_metric(
-                standardize_metric_name(key, __name__), float(value)
-            )
+            self.live.log_metric(standardize_metric_name(key, __name__), float(value))
             logged_metrics = True
 
         # When resuming (i.e. passing `start_epoch` to learner)

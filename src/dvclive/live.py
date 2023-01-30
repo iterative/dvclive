@@ -16,21 +16,12 @@ from .dvc import (
     mark_dvclive_only_ended,
     mark_dvclive_only_started,
 )
-from .error import (
-    InvalidDataTypeError,
-    InvalidParameterTypeError,
-    InvalidPlotTypeError,
-)
+from .error import InvalidDataTypeError, InvalidParameterTypeError, InvalidPlotTypeError
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, Image, Metric, NumpyEncoder
 from .report import make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_studio_updates
-from .utils import (
-    env2bool,
-    matplotlib_installed,
-    nested_update,
-    open_file_in_browser,
-)
+from .utils import env2bool, matplotlib_installed, nested_update, open_file_in_browser
 
 try:
     from dvc_studio_client.env import STUDIO_TOKEN
@@ -43,9 +34,7 @@ logging.basicConfig()
 logger = logging.getLogger("dvclive")
 logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "INFO").upper())
 
-ParamLike = Union[
-    int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]
-]
+ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
 
 
 class Live:
@@ -124,14 +113,12 @@ class Live:
             self._inside_dvc_exp = True
             if self._save_dvc_exp:
                 logger.warning(
-                    "Ignoring `_save_dvc_exp` because `dvc exp run` is being"
-                    " used."
+                    "Ignoring `_save_dvc_exp` because `dvc exp run` is being" " used."
                 )
         elif self._save_dvc_exp:
             if self._dvc_repo is not None:
                 if any(
-                    not stage.is_data_source
-                    for stage in self._dvc_repo.index.stages
+                    not stage.is_data_source for stage in self._dvc_repo.index.stages
                 ):
                     logger.warning(
                         "Ignoring `_save_dvc_exp` because there is an existing"
@@ -197,9 +184,7 @@ class Live:
             else:
                 self._report_mode = "html"
         elif self._report_mode not in {None, "html", "md"}:
-            raise ValueError(
-                "`report` can only be `None`, `auto`, `html` or `md`"
-            )
+            raise ValueError("`report` can only be `None`, `auto`, `html` or `md`")
         logger.debug(f"{self._report_mode=}")
 
     @property
@@ -254,9 +239,7 @@ class Live:
         self.make_checkpoint()
         self.step += 1
 
-    def log_metric(
-        self, name: str, val: Union[int, float], timestamp: bool = False
-    ):
+    def log_metric(self, name: str, val: Union[int, float], timestamp: bool = False):
         if not Metric.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 

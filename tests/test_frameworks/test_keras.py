@@ -26,9 +26,7 @@ def xor_model():
         model.add(Dense(1))
         model.add(Activation("sigmoid"))
 
-        model.compile(
-            loss="binary_crossentropy", optimizer="sgd", metrics=["accuracy"]
-        )
+        model.compile(loss="binary_crossentropy", optimizer="sgd", metrics=["accuracy"])
 
         return model, x, y
 
@@ -67,9 +65,7 @@ def test_keras_callback_pass_logger():
 
 
 @pytest.mark.parametrize("save_weights_only", (True, False))
-def test_keras_model_file(
-    tmp_dir, xor_model, mocker, save_weights_only, capture_wrap
-):
+def test_keras_model_file(tmp_dir, xor_model, mocker, save_weights_only, capture_wrap):
     model, x, y = xor_model()
     save = mocker.spy(model, "save")
     save_weights = mocker.spy(model, "save_weights")
@@ -80,9 +76,7 @@ def test_keras_model_file(
         epochs=1,
         batch_size=1,
         callbacks=[
-            DVCLiveCallback(
-                model_file="model.h5", save_weights_only=save_weights_only
-            )
+            DVCLiveCallback(model_file="model.h5", save_weights_only=save_weights_only)
         ],
     )
     assert save.call_count != save_weights_only
@@ -171,9 +165,7 @@ def test_keras_no_existing_model_file_skip_load(
     assert load_weights.call_count == 0
 
 
-def test_keras_None_model_file_skip_load(
-    tmp_dir, xor_model, mocker, capture_wrap
-):
+def test_keras_None_model_file_skip_load(tmp_dir, xor_model, mocker, capture_wrap):
     model, x, y = xor_model()
 
     model.save_weights("model.h5")

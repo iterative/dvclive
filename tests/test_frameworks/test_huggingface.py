@@ -4,12 +4,7 @@ import numpy as np
 import pytest
 import torch
 from torch import nn
-from transformers import (
-    PretrainedConfig,
-    PreTrainedModel,
-    Trainer,
-    TrainingArguments,
-)
+from transformers import PretrainedConfig, PreTrainedModel, Trainer, TrainingArguments
 
 from dvclive import Live
 from dvclive.huggingface import DVCLiveCallback
@@ -52,9 +47,7 @@ class RegressionDataset:
 
 
 class RegressionModelConfig(PretrainedConfig):
-    def __init__(
-        self, a=0, b=0, double_output=False, random_torch=True, **kwargs
-    ):
+    def __init__(self, a=0, b=0, double_output=False, random_torch=True, **kwargs):
         super().__init__(**kwargs)
         self.a = a
         self.b = b

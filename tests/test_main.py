@@ -123,9 +123,7 @@ def test_logging_step(tmp_dir, path):
     dvclive.log_metric("m1", 1)
     dvclive.next_step()
     assert (tmp_dir / dvclive.dir).is_dir()
-    assert (
-        tmp_dir / dvclive.plots_dir / Metric.subfolder / "m1.tsv"
-    ).is_file()
+    assert (tmp_dir / dvclive.plots_dir / Metric.subfolder / "m1.tsv").is_file()
     assert (tmp_dir / dvclive.metrics_file).is_file()
 
     s = load_yaml(dvclive.metrics_file)
@@ -171,9 +169,7 @@ def test_cleanup(tmp_dir, html):
 
     (tmp_dir / "logs" / "some_user_file.txt").touch()
 
-    assert (
-        tmp_dir / dvclive.plots_dir / Metric.subfolder / "m1.tsv"
-    ).is_file()
+    assert (tmp_dir / dvclive.plots_dir / Metric.subfolder / "m1.tsv").is_file()
     assert (tmp_dir / dvclive.metrics_file).is_file()
     assert html_path.is_file() == html
 
@@ -413,9 +409,7 @@ def test_context_manager(tmp_dir):
 
 @pytest.mark.parametrize("dvc_root", [True, False])
 @pytest.mark.parametrize("set_env", [True, False])
-def test_create_checkpoint_file(
-    tmp_dir, monkeypatch, dvc_root, set_env, mocker
-):
+def test_create_checkpoint_file(tmp_dir, monkeypatch, dvc_root, set_env, mocker):
     if dvc_root:
         (tmp_dir / ".dvc" / "tmp").mkdir(parents=True)
     if set_env:
@@ -440,17 +434,13 @@ def test_create_checkpoint_file(
     if dvc_root and set_env:
         assert native_exists(os.path.join(".dvc", "tmp", env.DVC_CHECKPOINT))
     else:
-        assert not native_exists(
-            os.path.join(".dvc", "tmp", env.DVC_CHECKPOINT)
-        )
+        assert not native_exists(os.path.join(".dvc", "tmp", env.DVC_CHECKPOINT))
 
 
 @pytest.mark.vscode
 @pytest.mark.parametrize("dvc_root", [True, False])
 def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
-    signal_file = os.path.join(
-        tmp_dir, ".dvc", "tmp", "exps", "run", "DVCLIVE_ONLY"
-    )
+    signal_file = os.path.join(tmp_dir, ".dvc", "tmp", "exps", "run", "DVCLIVE_ONLY")
     test_pid = 12345
 
     if dvc_root:
@@ -462,9 +452,9 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
     dvc_repo.index.stages = []
     dvc_repo.scm.get_rev.return_value = "current_rev"
     dvc_repo.scm.get_ref.return_value = None
-    with mocker.patch(
-        "dvclive.live.get_dvc_repo", return_value=dvc_repo
-    ), mocker.patch("dvclive.live.os.getpid", return_value=test_pid):
+    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo), mocker.patch(
+        "dvclive.live.os.getpid", return_value=test_pid
+    ):
         dvclive = Live(save_dvc_exp=True)
 
     if dvc_root:

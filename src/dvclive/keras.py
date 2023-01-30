@@ -36,8 +36,10 @@ class DVCLiveCallback(Callback):
                     self.model_file
                 )
             else:
-                self.model = load_model(  # noqa pylint: disable=attribute-defined-outside-init
-                    self.model_file
+                self.model = (
+                    load_model(  # noqa pylint: disable=attribute-defined-outside-init
+                        self.model_file
+                    )
                 )
 
     def on_epoch_end(
@@ -45,9 +47,7 @@ class DVCLiveCallback(Callback):
     ):  # pylint: disable=unused-argument
         logs = logs or {}
         for metric, value in logs.items():
-            self.live.log_metric(
-                standardize_metric_name(metric, __name__), value
-            )
+            self.live.log_metric(standardize_metric_name(metric, __name__), value)
         if self.model_file:
             if self.save_weights_only:
                 self.model.save_weights(self.model_file)

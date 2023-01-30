@@ -7,11 +7,7 @@ from dvclive import Live
 
 class DVCLiveCallback(TrainingCallback):
     def __init__(
-        self,
-        metric_data,
-        model_file=None,
-        live: Optional[Live] = None,
-        **kwargs
+        self, metric_data, model_file=None, live: Optional[Live] = None, **kwargs
     ):
         super().__init__()
         self._metric_data = metric_data

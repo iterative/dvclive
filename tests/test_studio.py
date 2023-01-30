@@ -3,11 +3,7 @@
 import os
 
 import pytest
-from dvc_studio_client.env import (
-    STUDIO_ENDPOINT,
-    STUDIO_REPO_URL,
-    STUDIO_TOKEN,
-)
+from dvc_studio_client.env import STUDIO_ENDPOINT, STUDIO_REPO_URL, STUDIO_TOKEN
 
 from dvclive import Live
 from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME
@@ -231,9 +227,7 @@ def test_post_to_studio_skip_if_no_token(tmp_dir, mocker, monkeypatch):
     dvc_repo.scm.get_rev.return_value = "f" * 40
     mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
 
-    mocked_post = mocker.patch(
-        "dvclive.live.post_live_metrics", return_value=None
-    )
+    mocked_post = mocker.patch("dvclive.live.post_live_metrics", return_value=None)
 
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
