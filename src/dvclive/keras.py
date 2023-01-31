@@ -37,9 +37,7 @@ class DVCLiveCallback(Callback):
                 )
             else:
                 self.model = (  # noqa pylint: disable=attribute-defined-outside-init
-                    load_model(  
-                        self.model_file
-                    )
+                    load_model(self.model_file)
                 )
 
     def on_epoch_end(
