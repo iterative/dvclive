@@ -257,7 +257,6 @@ def test_post_to_studio_include_prefix_if_needed(tmp_dir, mocker, monkeypatch):
     # Create dvclive/dvc.yaml
     live = Live("custom_dir", save_dvc_exp=True)
     live.log_metric("foo", 1)
-    print("NEXT STEP")
     live.next_step()
 
     scalar_path = os.path.join(live.plots_dir, Metric.subfolder, "foo.tsv")
