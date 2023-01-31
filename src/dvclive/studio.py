@@ -38,9 +38,7 @@ def get_studio_updates(live):
     if os.path.isfile(live.dvc_file):
         # Add prefix to match DVC's `repo.plos.show`.
         # See https://github.com/iterative/studio/issues/4981
-        plots = {
-            f"{live.dvc_file}::{name}": plot for name, plot in plots.items()
-        }
+        plots = {f"{live.dvc_file}::{name}": plot for name, plot in plots.items()}
     for name, plot in plots.items():
         datapoints = _get_unsent_datapoints(plot, latest_step)
         plots[name] = _cast_to_numbers(datapoints)
