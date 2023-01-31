@@ -36,8 +36,8 @@ class DVCLiveCallback(Callback):
                     self.model_file
                 )
             else:
-                self.model = (
-                    load_model(  # noqa pylint: disable=attribute-defined-outside-init
+                self.model = (  # noqa pylint: disable=attribute-defined-outside-init
+                    load_model(  
                         self.model_file
                     )
                 )

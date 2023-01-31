@@ -113,8 +113,7 @@ class Live:
             self._inside_dvc_exp = True
             if self._save_dvc_exp:
                 logger.warning(
-                    "Ignoring `_save_dvc_exp` because `dvc exp run` is being" " used."
-                )
+                    "Ignoring `_save_dvc_exp` because `dvc exp run` is running")
         elif self._save_dvc_exp:
             if self._dvc_repo is not None:
                 if any(
