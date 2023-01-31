@@ -237,3 +237,46 @@ def test_post_to_studio_skip_if_no_token(tmp_dir, mocker, monkeypatch):
         live.next_step()
 
     assert mocked_post.call_count == 0
+
+
+def test_post_to_studio_include_prefix_if_needed(tmp_dir, mocker, monkeypatch):
+    dvc_repo = mocker.MagicMock()
+    dvc_repo.scm.get_rev.return_value = "f" * 40
+    dvc_repo.index.stages = []
+    dvc_repo.scm.get_ref.return_value = None
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
+
+    mocked_response = mocker.MagicMock()
+    mocked_response.status_code = 200
+    mocked_post = mocker.patch("requests.post", return_value=mocked_response)
+
+    monkeypatch.setenv(STUDIO_ENDPOINT, "https://0.0.0.0")
+    monkeypatch.setenv(STUDIO_REPO_URL, "STUDIO_REPO_URL")
+    monkeypatch.setenv(STUDIO_TOKEN, "STUDIO_TOKEN")
+
+    # Create dvclive/dvc.yaml
+    live = Live("custom_dir", save_dvc_exp=True)
+    live.log_metric("foo", 1)
+    print("NEXT STEP")
+    live.next_step()
+
+    scalar_path = os.path.join(live.plots_dir, Metric.subfolder, "foo.tsv")
+    scalar_name = f"{live.dvc_file}::{scalar_path}"
+    mocked_post.assert_called_with(
+        "https://0.0.0.0",
+        json={
+            "type": "data",
+            "repo_url": "STUDIO_REPO_URL",
+            "baseline_sha": "f" * 40,
+            "name": live._exp_name,
+            "step": 0,
+            "metrics": {live.metrics_file: {"data": {"step": 0, "foo": 1}}},
+            "plots": {scalar_name: {"data": [{"step": 0, "foo": 1.0}]}},
+            "client": "dvclive",
+        },
+        headers={
+            "Authorization": "token STUDIO_TOKEN",
+            "Content-type": "application/json",
+        },
+        timeout=5,
+    )
