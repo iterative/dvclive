@@ -96,7 +96,6 @@ class Live:
             self.metrics_file,
             self.report_file,
             self.params_file,
-            self.dvc_file,
         ):
             if f and os.path.exists(f):
                 os.remove(f)
