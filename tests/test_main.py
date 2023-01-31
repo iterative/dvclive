@@ -407,6 +407,14 @@ def test_context_manager(tmp_dir):
     assert report_file.exists()
 
 
+def test_context_manager_skips_end_calls(tmp_dir):
+    with Live() as live:
+        live.summary["foo"] = 1.0
+        live.end()
+        assert not (tmp_dir / live.metrics_file).exists()
+    assert (tmp_dir / live.metrics_file).exists()
+
+
 @pytest.mark.parametrize("dvc_root", [True, False])
 @pytest.mark.parametrize("set_env", [True, False])
 def test_create_checkpoint_file(tmp_dir, monkeypatch, dvc_root, set_env, mocker):

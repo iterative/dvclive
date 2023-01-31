@@ -55,6 +55,7 @@ class Live:
         self._images: Dict[str, Any] = {}
         self._params: Dict[str, Any] = {}
         self._plots: Dict[str, Any] = {}
+        self._inside_with = False
 
         os.makedirs(self.dir, exist_ok=True)
 
@@ -344,6 +345,9 @@ class Live:
                 open_file_in_browser(self.report_file)
 
     def end(self):
+        if self._inside_with:
+            # Prevent `live.end` calls inside context manager
+            return
         self.make_summary(update_step=False)
         if "done" not in self._studio_events_to_skip:
             response = False
@@ -392,7 +396,9 @@ class Live:
             return json.load(fobj)
 
     def __enter__(self):
+        self._inside_with = True
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self._inside_with = False
         self.end()
