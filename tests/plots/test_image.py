@@ -12,9 +12,7 @@ def test_PIL(tmp_dir):
     img = Image.new("RGB", (10, 10), (250, 250, 250))
     live.log_image("image.png", img)
 
-    assert (
-        tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png"
-    ).exists()
+    assert (tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png").exists()
 
 
 def test_invalid_extension(tmp_dir):
@@ -30,9 +28,7 @@ def test_numpy(tmp_dir, shape):
     img = np.ones(shape, np.uint8) * 255
     live.log_image("image.png", img)
 
-    assert (
-        tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png"
-    ).exists()
+    assert (tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png").exists()
 
 
 def test_override_on_step(tmp_dir):
@@ -55,9 +51,7 @@ def test_cleanup(tmp_dir):
     img = np.ones((10, 10, 3), np.uint8)
     live.log_image("image.png", img)
 
-    assert (
-        tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png"
-    ).exists()
+    assert (tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png").exists()
 
     Live()
 

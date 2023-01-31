@@ -32,9 +32,7 @@ def test_name_with_dot(tmp_dir):
     live.log_metric("scalar.foo.bar", 1.0)
     live.next_step()
 
-    tsv_file = (
-        tmp_dir / live.plots_dir / Metric.subfolder / "scalar.foo.bar.tsv"
-    )
+    tsv_file = tmp_dir / live.plots_dir / Metric.subfolder / "scalar.foo.bar.tsv"
     assert tsv_file.exists()
     tsv_val = parse_tsv(tsv_file)[0]["scalar.foo.bar"]
     assert tsv_val == "1.0"

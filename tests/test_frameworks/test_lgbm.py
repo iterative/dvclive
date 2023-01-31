@@ -31,9 +31,7 @@ def iris_data():
     return (x_train, y_train), (x_test, y_test)
 
 
-@pytest.mark.skipif(
-    platform == "darwin", reason="LIBOMP Segmentation fault on MacOS"
-)
+@pytest.mark.skipif(platform == "darwin", reason="LIBOMP Segmentation fault on MacOS")
 def test_lgbm_integration(tmp_dir, model_params, iris_data):
     model = lgbm.LGBMClassifier()
     model.set_params(**model_params)
@@ -54,9 +52,7 @@ def test_lgbm_integration(tmp_dir, model_params, iris_data):
     assert len(list(logs.values())[0]) == 5
 
 
-@pytest.mark.skipif(
-    platform == "darwin", reason="LIBOMP Segmentation fault on MacOS"
-)
+@pytest.mark.skipif(platform == "darwin", reason="LIBOMP Segmentation fault on MacOS")
 def test_lgbm_model_file(tmp_dir, model_params, iris_data):
     model = lgbm.LGBMClassifier()
     model.set_params(**model_params)

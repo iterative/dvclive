@@ -106,9 +106,7 @@ def test_lightning_integration(tmp_dir, mocker):
     assert os.path.exists("logs")
     assert not os.path.exists("DvcLiveLogger")
 
-    scalars = os.path.join(
-        dvclive_logger.experiment.plots_dir, Metric.subfolder
-    )
+    scalars = os.path.join(dvclive_logger.experiment.plots_dir, Metric.subfolder)
     logs, _ = parse_metrics(dvclive_logger.experiment)
 
     assert len(logs) == 3
@@ -168,9 +166,7 @@ def test_lightning_steps(tmp_dir):
     assert latest["step"] == 7
     assert latest["epoch"] == 1
 
-    scalars = os.path.join(
-        dvclive_logger.experiment.plots_dir, Metric.subfolder
-    )
+    scalars = os.path.join(dvclive_logger.experiment.plots_dir, Metric.subfolder)
     epoch_loss = history[os.path.join(scalars, "train", "epoch", "loss.tsv")]
     step_loss = history[os.path.join(scalars, "train", "step", "loss.tsv")]
     assert len(epoch_loss) == 2
