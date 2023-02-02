@@ -111,15 +111,12 @@ def parse_metrics(live):
     history = {}
     for suffix in Metric.suffixes:
         for scalar_file in metrics_path.rglob(f"*{suffix}"):
-            history[str(scalar_file)] = parse_scalar_history(metrics_path,
-                                                             scalar_file)
+            history[str(scalar_file)] = parse_scalar_history(metrics_path, scalar_file)
     latest = parse_json(live.metrics_file)
     return history, latest
 
 
 def parse_scalar_history(metrics_path, scalar_file):
-    from .plots import Metric
-
     name = scalar_file.relative_to(metrics_path).with_suffix("")
     short_name = name.name
     name = name.as_posix()
