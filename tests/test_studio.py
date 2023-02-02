@@ -54,7 +54,9 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
             "step": 0,
             "metrics": {live.metrics_file: {"data": {"step": 0, "foo": 1}}},
             "params": {live.params_file: {"fooparam": 1}},
-            "plots": {scalar_path: {"data": [{"step": 0, "foo": 1.0}]}},
+            "plots": {
+                f"{live.dvc_file}::{scalar_path}": {"data": [{"step": 0, "foo": 1.0}]}
+            },
             "client": "dvclive",
         },
         headers={
@@ -77,7 +79,9 @@ def test_post_to_studio(tmp_dir, mocker, monkeypatch):
             "step": 1,
             "metrics": {live.metrics_file: {"data": {"step": 1, "foo": 2}}},
             "params": {live.params_file: {"fooparam": 1}},
-            "plots": {scalar_path: {"data": [{"step": 1, "foo": 2.0}]}},
+            "plots": {
+                f"{live.dvc_file}::{scalar_path}": {"data": [{"step": 1, "foo": 2.0}]}
+            },
             "client": "dvclive",
         },
         headers={
@@ -139,7 +143,7 @@ def test_post_to_studio_failed_data_request(tmp_dir, mocker, monkeypatch):
             "step": 1,
             "metrics": {live.metrics_file: {"data": {"step": 1, "foo": 2}}},
             "plots": {
-                scalar_path: {
+                f"{live.dvc_file}::{scalar_path}": {
                     "data": [
                         {"step": 0, "foo": 1.0},
                         {"step": 1, "foo": 2.0},
@@ -260,7 +264,7 @@ def test_post_to_studio_include_prefix_if_needed(tmp_dir, mocker, monkeypatch):
     live.next_step()
 
     scalar_path = os.path.join(live.plots_dir, Metric.subfolder, "foo.tsv")
-    scalar_name = f"{live.dvc_file}::{scalar_path}"
+    scalar_name = scalar_path
     mocked_post.assert_called_with(
         "https://0.0.0.0",
         json={
@@ -270,7 +274,9 @@ def test_post_to_studio_include_prefix_if_needed(tmp_dir, mocker, monkeypatch):
             "name": live._exp_name,
             "step": 0,
             "metrics": {live.metrics_file: {"data": {"step": 0, "foo": 1}}},
-            "plots": {scalar_name: {"data": [{"step": 0, "foo": 1.0}]}},
+            "plots": {
+                f"{live.dvc_file}::{scalar_name}": {"data": [{"step": 0, "foo": 1.0}]}
+            },
             "client": "dvclive",
         },
         headers={
