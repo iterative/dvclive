@@ -34,6 +34,7 @@ class Roc(SKLearnPlot):
     @staticmethod
     def get_properties():
         return {
+            "template": "simple",
             "x": "fpr",
             "y": "tpr",
             "title": "Receiver operating characteristic (ROC)",
@@ -60,6 +61,7 @@ class PrecisionRecall(SKLearnPlot):
     @staticmethod
     def get_properties():
         return {
+            "template": "simple",
             "x": "recall",
             "y": "precision",
             "title": "Precision-Recall Curve",
@@ -87,6 +89,7 @@ class Det(SKLearnPlot):
     @staticmethod
     def get_properties():
         return {
+            "template": "simple",
             "x": "fpr",
             "y": "fnr",
             "title": "Detection error tradeoff (DET)",
@@ -134,6 +137,7 @@ class Calibration(SKLearnPlot):
     @staticmethod
     def get_properties():
         return {
+            "template": "simple",
             "x": "prob_pred",
             "y": "prob_true",
             "title": "Calibration Curve",
