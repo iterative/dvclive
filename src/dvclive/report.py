@@ -11,7 +11,7 @@ from dvc_render.vega import VegaRenderer
 from dvclive.plots import SKLEARN_PLOTS, Image, Metric
 from dvclive.plots.sklearn import SKLearnPlot
 from dvclive.serialize import load_yaml
-from dvclive.utils import parse_tsv
+from dvclive.utils import parse_scalar_history
 
 if TYPE_CHECKING:
     from dvclive import Live
@@ -24,12 +24,12 @@ def get_scalar_renderers(metrics_path):
     renderers = []
     for suffix in Metric.suffixes:
         for file in metrics_path.rglob(f"*{suffix}"):
-            data = parse_tsv(file)
-            for row in data:
-                row["rev"] = "workspace"
-
             y = file.relative_to(metrics_path).with_suffix("")
             y = y.as_posix()
+
+            data = parse_scalar_history(metrics_path, file)
+            for row in data:
+                row["rev"] = "workspace"
 
             name = file.relative_to(metrics_path.parent).with_suffix("")
             name = name.as_posix()

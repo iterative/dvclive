@@ -9,7 +9,7 @@ from dvclive import Live, env
 from dvclive.error import InvalidDataTypeError, InvalidParameterTypeError
 from dvclive.plots import Metric
 from dvclive.serialize import load_yaml
-from dvclive.utils import parse_metrics
+from dvclive.utils import parse_metrics, parse_tsv
 
 
 def read_history(live, metric):
@@ -142,6 +142,10 @@ def test_nested_logging(tmp_dir):
     assert (out / "train" / "m1.tsv").is_file()
     assert (out / "val" / "val_1" / "m1.tsv").is_file()
     assert (out / "val" / "val_1" / "m2.tsv").is_file()
+
+    assert "m1" in parse_tsv(out / "train" / "m1.tsv")[0]
+    assert "m1" in parse_tsv(out / "val" / "val_1" / "m1.tsv")[0]
+    assert "m2" in parse_tsv(out / "val" / "val_1" / "m2.tsv")[0]
 
     summary = load_yaml(dvclive.metrics_file)
 

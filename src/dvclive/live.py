@@ -44,6 +44,7 @@ class Live:
         resume: bool = False,
         report: Optional[str] = "auto",
         save_dvc_exp: bool = False,
+        dvcyaml: bool = True,
     ):
         self.summary: Dict[str, Any] = {}
 
@@ -56,6 +57,7 @@ class Live:
         self._params: Dict[str, Any] = {}
         self._plots: Dict[str, Any] = {}
         self._inside_with = False
+        self._dvcyaml = dvcyaml
 
         os.makedirs(self.dir, exist_ok=True)
 
@@ -96,7 +98,6 @@ class Live:
             self.metrics_file,
             self.report_file,
             self.params_file,
-            self.dvc_file,
         ):
             if f and os.path.exists(f):
                 os.remove(f)
@@ -228,14 +229,7 @@ class Live:
             self._step = 0
 
         self.make_summary()
-
-        if (
-            self._dvc_repo is not None
-            and not self._inside_dvc_exp
-            and self._save_dvc_exp
-        ):
-            make_dvcyaml(self)
-
+        self.make_dvcyaml()
         self.make_report()
         self.make_checkpoint()
         self.step += 1
@@ -344,11 +338,17 @@ class Live:
             if self._report_mode == "html" and env2bool(env.DVCLIVE_OPEN):
                 open_file_in_browser(self.report_file)
 
+    def make_dvcyaml(self):
+        if self._dvcyaml:
+            make_dvcyaml(self)
+
     def end(self):
         if self._inside_with:
             # Prevent `live.end` calls inside context manager
             return
         self.make_summary(update_step=False)
+        self.make_dvcyaml()
+
         if "done" not in self._studio_events_to_skip:
             response = False
             if post_live_metrics is not None:
@@ -375,7 +375,6 @@ class Live:
             and not self._inside_dvc_exp
             and self._save_dvc_exp
         ):
-            make_dvcyaml(self)
             self._experiment_rev = self._dvc_repo.experiments.save(
                 name=self._exp_name, include_untracked=self.dir, force=True
             )
