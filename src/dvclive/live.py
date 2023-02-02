@@ -44,6 +44,7 @@ class Live:
         resume: bool = False,
         report: Optional[str] = "auto",
         save_dvc_exp: bool = False,
+        make_dvcyaml: bool = True
     ):
         self.summary: Dict[str, Any] = {}
 
@@ -56,6 +57,7 @@ class Live:
         self._params: Dict[str, Any] = {}
         self._plots: Dict[str, Any] = {}
         self._inside_with = False
+        self._make_dvcyaml = make_dvcyaml
 
         os.makedirs(self.dir, exist_ok=True)
 
@@ -229,11 +231,7 @@ class Live:
 
         self.make_summary()
 
-        if (
-            self._dvc_repo is not None
-            and not self._inside_dvc_exp
-            and self._save_dvc_exp
-        ):
+        if self._make_dvcyaml:
             make_dvcyaml(self)
 
         self.make_report()
@@ -349,6 +347,10 @@ class Live:
             # Prevent `live.end` calls inside context manager
             return
         self.make_summary(update_step=False)
+
+        if self._make_dvcyaml:
+            make_dvcyaml(self)
+
         if "done" not in self._studio_events_to_skip:
             response = False
             if post_live_metrics is not None:
@@ -375,7 +377,6 @@ class Live:
             and not self._inside_dvc_exp
             and self._save_dvc_exp
         ):
-            make_dvcyaml(self)
             self._experiment_rev = self._dvc_repo.experiments.save(
                 name=self._exp_name, include_untracked=self.dir, force=True
             )
