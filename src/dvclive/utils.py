@@ -49,11 +49,7 @@ def run_once(f):
 @run_once
 def open_file_in_browser(file) -> bool:
     path = Path(file)
-    url = (
-        str(path)
-        if "Microsoft" in uname().release
-        else path.resolve().as_uri()
-    )
+    url = str(path) if "Microsoft" in uname().release else path.resolve().as_uri()
 
     return webbrowser.open(url)
 

@@ -41,9 +41,7 @@ def test_get_renderers(tmp_dir, mocker):
         }
     ]
 
-    scalar_renderers = get_scalar_renderers(
-        tmp_dir / live.plots_dir / Metric.subfolder
-    )
+    scalar_renderers = get_scalar_renderers(tmp_dir / live.plots_dir / Metric.subfolder)
     assert len(scalar_renderers) == 1
     assert scalar_renderers[0].datapoints == [
         {
@@ -136,9 +134,7 @@ def test_get_plot_renderers(tmp_dir, mocker):
         live.log_sklearn_plot(
             "confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1], name="train/cm"
         )
-        live.log_sklearn_plot(
-            "roc", [0, 0, 1, 1], [1, 0.1, 0, 1], name="roc_curve"
-        )
+        live.log_sklearn_plot("roc", [0, 0, 1, 1], [1, 0.1, 0, 1], name="roc_curve")
         live.log_sklearn_plot(
             "roc", [0, 0, 1, 1], [1, 0.1, 0, 1], name="other_roc.json"
         )

@@ -51,9 +51,7 @@ def test_make_dvcyaml_all_plots(tmp_dir):
     live.log_metric("bar", 2)
     live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
     live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
-    live.log_sklearn_plot(
-        "roc", [0, 0, 1, 1], [0.0, 0.5, 0.5, 0.0], "custom_name_roc"
-    )
+    live.log_sklearn_plot("roc", [0, 0, 1, 1], [0.0, 0.5, 0.5, 0.0], "custom_name_roc")
     make_dvcyaml(live)
 
     assert load_yaml(live.dvc_file) == {

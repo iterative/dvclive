@@ -121,9 +121,7 @@ def make_report(live: "Live"):
     renderers.extend(get_metrics_renderers(live.metrics_file))
     renderers.extend(get_scalar_renderers(plots_path / Metric.subfolder))
     renderers.extend(get_image_renderers(plots_path / Image.subfolder))
-    renderers.extend(
-        get_plot_renderers(plots_path / SKLearnPlot.subfolder, live)
-    )
+    renderers.extend(get_plot_renderers(plots_path / SKLearnPlot.subfolder, live))
 
     if live._report_mode == "html":
         render_html(renderers, live.report_file, refresh_seconds=5)
