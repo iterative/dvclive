@@ -11,7 +11,7 @@ from dvc_render.vega import VegaRenderer
 from dvclive.plots import SKLEARN_PLOTS, Image, Metric
 from dvclive.plots.sklearn import SKLearnPlot
 from dvclive.serialize import load_yaml
-from dvclive.utils import parse_scalar_history, parse_tsv
+from dvclive.utils import parse_scalar_history
 
 if TYPE_CHECKING:
     from dvclive import Live
