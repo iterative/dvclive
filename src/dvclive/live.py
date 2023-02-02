@@ -44,7 +44,7 @@ class Live:
         resume: bool = False,
         report: Optional[str] = "auto",
         save_dvc_exp: bool = False,
-        dvcyaml: bool = True
+        dvcyaml: bool = True,
     ):
         self.summary: Dict[str, Any] = {}
 
@@ -232,7 +232,7 @@ class Live:
         self.make_summary()
 
         if self._dvcyaml:
-            make_dvcyaml(self)
+            self.make_dvcyaml()
 
         self.make_report()
         self.make_checkpoint()
@@ -342,6 +342,9 @@ class Live:
             if self._report_mode == "html" and env2bool(env.DVCLIVE_OPEN):
                 open_file_in_browser(self.report_file)
 
+    def make_dvcyaml(self):
+        make_dvcyaml(self)
+
     def end(self):
         if self._inside_with:
             # Prevent `live.end` calls inside context manager
@@ -349,7 +352,7 @@ class Live:
         self.make_summary(update_step=False)
 
         if self._dvcyaml:
-            make_dvcyaml(self)
+            self.make_dvcyaml()
 
         if "done" not in self._studio_events_to_skip:
             response = False
