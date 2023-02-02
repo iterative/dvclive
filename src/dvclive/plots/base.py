@@ -1,8 +1,6 @@
 import abc
 from pathlib import Path
 
-from dvclive.error import DataAlreadyLoggedError
-
 
 class Data(abc.ABC):
     def __init__(self, name: str, output_folder: str) -> None:
@@ -16,8 +14,6 @@ class Data(abc.ABC):
 
     @step.setter
     def step(self, val: int) -> None:
-        if val == self._step:
-            raise DataAlreadyLoggedError(self.name, val)
         self._step = val
 
     @property
