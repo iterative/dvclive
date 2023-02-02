@@ -6,11 +6,7 @@ import os
 import pytest
 
 from dvclive import Live, env
-from dvclive.error import (
-    DataAlreadyLoggedError,
-    InvalidDataTypeError,
-    InvalidParameterTypeError,
-)
+from dvclive.error import InvalidDataTypeError, InvalidParameterTypeError
 from dvclive.plots import Metric
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics, parse_tsv
@@ -231,19 +227,6 @@ def test_resume_env_var(tmp_dir, monkeypatch):
 
     monkeypatch.setenv(env.DVCLIVE_RESUME, True)
     assert Live()._resume
-
-
-@pytest.mark.parametrize("metric", ["m1", os.path.join("train", "m1")])
-def test_require_step_update(tmp_dir, metric):
-    dvclive = Live("logs")
-
-    dvclive.log_metric(metric, 1.0)
-
-    with pytest.raises(
-        DataAlreadyLoggedError,
-        match="has already been logged with step '0'",
-    ):
-        dvclive.log_metric(metric, 2.0)
 
 
 def test_custom_steps(tmp_dir):
