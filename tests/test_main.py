@@ -178,7 +178,6 @@ def test_cleanup(tmp_dir, html):
     assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
     assert not (tmp_dir / dvclive.plots_dir / Metric.subfolder).exists()
     assert not (tmp_dir / dvclive.metrics_file).is_file()
-    assert not (tmp_dir / dvclive.dvc_file).is_file()
     assert not (html_path).is_file()
 
 
@@ -471,3 +470,34 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
     dvclive.end()
 
     assert not os.path.exists(signal_file)
+
+
+@pytest.mark.parametrize(
+    "dvcyaml",
+    [True, False],
+)
+def test_dvcyaml(tmp_dir, dvcyaml):
+    dvclive = Live("logs", dvcyaml=dvcyaml)
+    dvclive.log_metric("m1", 1)
+    dvclive.next_step()
+
+    dvcyaml_path = tmp_dir / dvclive.dir / "dvc.yaml"
+
+    if dvcyaml:
+        assert dvcyaml_path.is_file()
+    else:
+        assert not dvcyaml_path.is_file()
+
+
+@pytest.mark.parametrize(
+    "dvcyaml",
+    [True, False],
+)
+def test_make_dvcyaml(tmp_dir, dvcyaml):
+    dvclive = Live("logs", dvcyaml=dvcyaml)
+    dvclive.log_metric("m1", 1)
+    dvclive.make_dvcyaml()
+
+    dvcyaml_path = tmp_dir / dvclive.dir / "dvc.yaml"
+
+    assert dvcyaml_path.is_file()
