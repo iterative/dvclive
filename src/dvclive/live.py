@@ -44,7 +44,7 @@ class Live:
         resume: bool = False,
         report: Optional[str] = "auto",
         save_dvc_exp: bool = False,
-        make_dvcyaml: bool = True
+        dvcyaml: bool = True
     ):
         self.summary: Dict[str, Any] = {}
 
@@ -57,7 +57,7 @@ class Live:
         self._params: Dict[str, Any] = {}
         self._plots: Dict[str, Any] = {}
         self._inside_with = False
-        self._make_dvcyaml = make_dvcyaml
+        self._dvcyaml = dvcyaml
 
         os.makedirs(self.dir, exist_ok=True)
 
@@ -231,7 +231,7 @@ class Live:
 
         self.make_summary()
 
-        if self._make_dvcyaml:
+        if self._dvcyaml:
             make_dvcyaml(self)
 
         self.make_report()
@@ -348,7 +348,7 @@ class Live:
             return
         self.make_summary(update_step=False)
 
-        if self._make_dvcyaml:
+        if self._dvcyaml:
             make_dvcyaml(self)
 
         if "done" not in self._studio_events_to_skip:
