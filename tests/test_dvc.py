@@ -72,6 +72,7 @@ def test_make_dvcyaml_all_plots(tmp_dir):
             },
             {
                 "plots/sklearn/custom_name_roc.json": {
+                    "template": "simple",
                     "x": "fpr",
                     "y": "tpr",
                     "title": "Receiver operating characteristic (ROC)",
