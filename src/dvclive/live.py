@@ -230,10 +230,7 @@ class Live:
             self._step = 0
 
         self.make_summary()
-
-        if self._dvcyaml:
-            self.make_dvcyaml()
-
+        self.make_dvcyaml()
         self.make_report()
         self.make_checkpoint()
         self.step += 1
@@ -343,16 +340,15 @@ class Live:
                 open_file_in_browser(self.report_file)
 
     def make_dvcyaml(self):
-        make_dvcyaml(self)
+        if self._dvcyaml:
+            make_dvcyaml(self)
 
     def end(self):
         if self._inside_with:
             # Prevent `live.end` calls inside context manager
             return
         self.make_summary(update_step=False)
-
-        if self._dvcyaml:
-            self.make_dvcyaml()
+        self.make_dvcyaml()
 
         if "done" not in self._studio_events_to_skip:
             response = False
