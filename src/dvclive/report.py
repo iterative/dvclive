@@ -30,9 +30,10 @@ def get_scalar_renderers(metrics_path):
 
             name = file.relative_to(metrics_path.parent).with_suffix("")
             name = name.as_posix()
+            title = name.replace(metrics_path.name, "").strip("/")
             name = name.replace(metrics_path.name, "static")
 
-            properties = {"x": "step", "y": file.stem}
+            properties = {"x": "step", "y": file.stem, "title": title}
             renderers.append(VegaRenderer(data, name, **properties))
     return renderers
 
