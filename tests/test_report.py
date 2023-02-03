@@ -56,6 +56,7 @@ def test_get_renderers(tmp_dir, mocker):
         },
     ]
     assert scalar_renderers[0].properties["y"] == "bar"
+    assert scalar_renderers[0].properties["title"] == "foo/bar"
     assert scalar_renderers[0].name == "static/foo/bar"
 
     metrics_renderer = get_metrics_renderers(live.metrics_file)[0]
