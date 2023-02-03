@@ -119,7 +119,7 @@ class Live:
                 )
         elif self._save_dvc_exp:
             if self._dvc_repo is not None:
-                # `DVCLive Only` execution
+                # `DVCLive Only` or `dvc repro` execution
                 self._exp_name = get_random_exp_name(
                     self._dvc_repo.scm, self._baseline_rev
                 )
