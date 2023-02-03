@@ -119,20 +119,11 @@ class Live:
                 )
         elif self._save_dvc_exp:
             if self._dvc_repo is not None:
-                if any(
-                    not stage.is_data_source for stage in self._dvc_repo.index.stages
-                ):
-                    logger.warning(
-                        "Ignoring `_save_dvc_exp` because there is an existing"
-                        " `dvc.yaml` file."
-                    )
-                    self._save_dvc_exp = False
-                else:
-                    # `DVCLive Only` execution
-                    self._exp_name = get_random_exp_name(
-                        self._dvc_repo.scm, self._baseline_rev
-                    )
-                    mark_dvclive_only_started()
+                # `DVCLive Only` or `dvc repro` execution
+                self._exp_name = get_random_exp_name(
+                    self._dvc_repo.scm, self._baseline_rev
+                )
+                mark_dvclive_only_started()
             else:
                 logger.warning(
                     "Can't save experiment without a DVC Repo."
