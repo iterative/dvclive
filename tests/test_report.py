@@ -45,17 +45,17 @@ def test_get_renderers(tmp_dir, mocker):
     assert len(scalar_renderers) == 1
     assert scalar_renderers[0].datapoints == [
         {
-            "foo/bar": "0",
+            "bar": "0",
             "rev": "workspace",
             "step": "0",
         },
         {
-            "foo/bar": "1",
+            "bar": "1",
             "rev": "workspace",
             "step": "1",
         },
     ]
-    assert scalar_renderers[0].properties["y"] == "foo/bar"
+    assert scalar_renderers[0].properties["y"] == "bar"
     assert scalar_renderers[0].name == "static/foo/bar"
 
     metrics_renderer = get_metrics_renderers(live.metrics_file)[0]

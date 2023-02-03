@@ -111,22 +111,9 @@ def parse_metrics(live):
     history = {}
     for suffix in Metric.suffixes:
         for scalar_file in metrics_path.rglob(f"*{suffix}"):
-            history[str(scalar_file)] = parse_scalar_history(metrics_path, scalar_file)
+            history[str(scalar_file)] = parse_tsv(scalar_file)
     latest = parse_json(live.metrics_file)
     return history, latest
-
-
-def parse_scalar_history(metrics_path, scalar_file):
-    name = scalar_file.relative_to(metrics_path).with_suffix("")
-    short_name = name.name
-    name = name.as_posix()
-    history = []
-    for row in parse_tsv(scalar_file):
-        if name != short_name:
-            row[name] = row[short_name]
-            del row[short_name]
-        history.append(row)
-    return history
 
 
 def matplotlib_installed() -> bool:
