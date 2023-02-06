@@ -23,6 +23,7 @@ class DVCLiveLogger(Logger):
         resume: bool = False,
         report: Optional[str] = "auto",
         save_dvc_exp: bool = False,
+        dvcyaml: bool = True,
     ):
 
         super().__init__()
@@ -31,6 +32,7 @@ class DVCLiveLogger(Logger):
             "resume": resume,
             "report": report,
             "save_dvc_exp": save_dvc_exp,
+            "dvcyaml": dvcyaml,
         }
         if dir is not None:
             self._live_init["dir"] = dir
