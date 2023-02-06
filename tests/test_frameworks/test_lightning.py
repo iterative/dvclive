@@ -50,7 +50,6 @@ class LitXOR(LightningModule):
         return x
 
     def train_loader(self):
-
         dataset = XORDataset()
         loader = DataLoader(dataset, batch_size=1)
         return loader

@@ -25,7 +25,6 @@ class DVCLiveLogger(Logger):
         save_dvc_exp: bool = False,
         dvcyaml: bool = True,
     ):
-
         super().__init__()
         self._prefix = prefix
         self._live_init: Dict[str, Any] = {
