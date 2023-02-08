@@ -37,6 +37,8 @@ class DVCLiveLogger(Logger):
             self._live_init["dir"] = dir
         self._experiment = experiment
         self._version = run_name
+        # Force Live instantiation
+        self.experiment  # noqa pylint: disable=pointless-statement
 
     @property
     def name(self):

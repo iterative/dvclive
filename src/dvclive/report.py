@@ -20,6 +20,13 @@ if TYPE_CHECKING:
 # noqa pylint: disable=protected-access
 
 
+BLANK_NOTEBOOK_REPORT = """
+<div style="width: 100%;height: 700px;text-align: center">
+DVCLive Report
+</div>
+"""
+
+
 def get_scalar_renderers(metrics_path):
     renderers = []
     for suffix in Metric.suffixes:
@@ -123,6 +130,12 @@ def make_report(live: "Live"):
 
     if live._report_mode == "html":
         render_html(renderers, live.report_file, refresh_seconds=5)
+    elif live._report_mode == "notebook":
+        from IPython.display import IFrame
+
+        render_html(renderers, live.report_file)
+        if live._report_notebook is not None:
+            live._report_notebook.update(IFrame(live.report_file, "100%", 700))
     elif live._report_mode == "md":
         render_markdown(renderers, live.report_file)
     else:

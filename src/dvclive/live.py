@@ -18,10 +18,16 @@ from .dvc import (
 )
 from .error import InvalidDataTypeError, InvalidParameterTypeError, InvalidPlotTypeError
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, Image, Metric, NumpyEncoder
-from .report import make_report
+from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_studio_updates
-from .utils import env2bool, matplotlib_installed, nested_update, open_file_in_browser
+from .utils import (
+    env2bool,
+    inside_notebook,
+    matplotlib_installed,
+    nested_update,
+    open_file_in_browser,
+)
 
 try:
     from dvc_studio_client.env import STUDIO_TOKEN
@@ -62,6 +68,7 @@ class Live:
         os.makedirs(self.dir, exist_ok=True)
 
         self._report_mode: Optional[str] = report
+        self._report_notebook = None
         self._init_report()
 
         if self._resume:
@@ -176,8 +183,20 @@ class Live:
                 self._report_mode = "md"
             else:
                 self._report_mode = "html"
-        elif self._report_mode not in {None, "html", "md"}:
-            raise ValueError("`report` can only be `None`, `auto`, `html` or `md`")
+        elif self._report_mode == "notebook":
+            if inside_notebook():
+                from IPython.display import HTML, display
+
+                self._report_mode = "notebook"
+                self._report_notebook = display(
+                    HTML(BLANK_NOTEBOOK_REPORT), display_id=True
+                )
+            else:
+                self._report_mode = "html"
+        elif self._report_mode not in {None, "html", "notebook", "md"}:
+            raise ValueError(
+                "`report` can only be `None`, `auto`, `html`, `notebook` or `md`"
+            )
         logger.debug(f"{self._report_mode=}")
 
     @property
@@ -202,8 +221,12 @@ class Live:
 
     @property
     def report_file(self) -> Optional[str]:
-        if self._report_mode in ("html", "md"):
-            return os.path.join(self.dir, f"report.{self._report_mode}")
+        if self._report_mode in ("html", "md", "notebook"):
+            if self._report_mode == "notebook":
+                suffix = "html"
+            else:
+                suffix = self._report_mode
+            return os.path.join(self.dir, f"report.{suffix}")
         return None
 
     @property

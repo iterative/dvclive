@@ -2,6 +2,7 @@
 import os
 
 import pytest
+from IPython import display
 from PIL import Image
 
 from dvclive import Live
@@ -167,3 +168,27 @@ def test_get_plot_renderers(tmp_dir, mocker):
             {"actual": "1", "rev": "workspace", "predicted": "1"},
         ]
         assert plot_renderer.properties == ConfusionMatrix.get_properties()
+
+
+def test_report_auto_doesnt_set_notebook(tmp_dir, mocker):
+    mocker.patch("dvclive.live.inside_notebook", return_value=True)
+    live = Live()
+    assert live._report_mode != "notebook"
+
+
+def test_report_notebook_fallsback_to_html(tmp_dir, mocker):
+    mocker.patch("dvclive.live.inside_notebook", return_value=False)
+    spy = mocker.spy(display, "display")
+    live = Live(report="notebook")
+    assert live._report_mode == "html"
+    assert not spy.called
+
+
+def test_report_notebook(tmp_dir, mocker):
+    mocker.patch("dvclive.live.inside_notebook", return_value=True)
+    mocked_display = mocker.MagicMock()
+    mocker.patch("IPython.display.display", return_value=mocked_display)
+    live = Live(report="notebook")
+    assert live._report_mode == "notebook"
+    live.make_report()
+    assert mocked_display.update.called
