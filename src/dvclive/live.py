@@ -74,6 +74,7 @@ class Live:
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
         self._dvc_repo = None
+        self._include_untracked: List[str] = []
         self._init_dvc()
 
         self._latest_studio_step = self.step if resume else -1
@@ -124,6 +125,7 @@ class Live:
                     self._dvc_repo.scm, self._baseline_rev
                 )
                 mark_dvclive_only_started()
+                self._include_untracked.append(self.dir)
             else:
                 logger.warning(
                     "Can't save experiment without a DVC Repo."
@@ -299,6 +301,19 @@ class Live:
         """Saves the given parameter value to yaml"""
         self.log_params({name: val})
 
+    def log_artifact(
+        self,
+        path: str,
+    ):
+        """Saves the given parameter value to yaml"""
+        if self._dvc_repo is not None and not self._inside_dvc_exp:
+            dvc_file = self._dvc_repo.add(path)[0].addressing
+            if self._save_dvc_exp:
+                self._include_untracked.append(dvc_file)
+                self._include_untracked.append(
+                    str(Path(dvc_file).parent / ".gitignore")
+                )
+
     def make_summary(self, update_step: bool = True):
         if self._step is not None and update_step:
             self.summary["step"] = self.step
@@ -371,7 +386,9 @@ class Live:
             and self._save_dvc_exp
         ):
             self._experiment_rev = self._dvc_repo.experiments.save(
-                name=self._exp_name, include_untracked=self.dir, force=True
+                name=self._exp_name,
+                include_untracked=self._include_untracked,
+                force=True,
             )
             mark_dvclive_only_ended()
 
