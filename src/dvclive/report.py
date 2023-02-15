@@ -160,9 +160,11 @@ def make_report(live: "Live"):
         )
         if live._report_notebook is not None:
             if inside_colab():
-                new_report = HTML(live.report_file)
+                new_report = HTML(live.report_file)  # type: ignore [assignment]
             else:
-                new_report = IFrame(live.report_file, "100%", 700)
+                new_report = IFrame(  # type: ignore [assignment]
+                    live.report_file, "100%", 700
+                )
             live._report_notebook.update(new_report)
     elif live._report_mode == "md":
         render_markdown(renderers, live.report_file)
