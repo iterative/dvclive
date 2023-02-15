@@ -126,17 +126,24 @@ def matplotlib_installed() -> bool:
     return True
 
 
-def inside_notebook() -> bool:
+def inside_colab() -> bool:
     try:
         from google import colab  # noqa: F401
 
         return True
     except ImportError:
-        pass
+        return False
+
+
+def inside_notebook() -> bool:
+    if inside_colab():
+        return True
+
     try:
         shell = get_ipython().__class__.__name__  # type: ignore[name-defined]
     except NameError:
         return False
+
     if shell == "ZMQInteractiveShell":
         import IPython
 
