@@ -16,7 +16,12 @@ from .dvc import (
     mark_dvclive_only_ended,
     mark_dvclive_only_started,
 )
-from .error import InvalidDataTypeError, InvalidParameterTypeError, InvalidPlotTypeError
+from .error import (
+    DuplicateArtifactError,
+    InvalidDataTypeError,
+    InvalidParameterTypeError,
+    InvalidPlotTypeError,
+)
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, Image, Metric, NumpyEncoder
 from .report import make_report
 from .serialize import dump_json, dump_yaml, load_yaml
@@ -56,6 +61,7 @@ class Live:
         self._images: Dict[str, Any] = {}
         self._params: Dict[str, Any] = {}
         self._plots: Dict[str, Any] = {}
+        self._outs: Set[str] = set()
         self._inside_with = False
         self._dvcyaml = dvcyaml
 
@@ -305,9 +311,23 @@ class Live:
         self,
         path: str,
     ):
-        """Saves the given parameter value to yaml"""
-        if self._dvc_repo is not None and not self._inside_dvc_exp:
-            dvc_file = self._dvc_repo.add(path)[0].addressing
+        from dvc.exceptions import OutputDuplicationError
+
+        """Saves a local file or directory as an artifact"""
+        if not isinstance(path, str):
+            raise InvalidDataTypeError("artifact", type(path))
+
+        if self._dvc_repo is not None:
+            if path in self._outs or self._inside_dvc_exp:
+                stage = self._dvc_repo.commit(path, force=True)
+            else:
+                try:
+                    stage = self._dvc_repo.add(path)
+                except OutputDuplicationError:
+                    raise DuplicateArtifactError(path)
+                self._outs.add(path)
+            dvc_file = stage[0].addressing
+
             if self._save_dvc_exp:
                 self._include_untracked.append(dvc_file)
                 self._include_untracked.append(

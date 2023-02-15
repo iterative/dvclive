@@ -27,3 +27,12 @@ class InvalidParameterTypeError(DvcLiveError):
     def __init__(self, val: Any):
         self.val = val
         super().__init__(f"Parameter type {type(val)} is not supported.")
+
+
+class DuplicateArtifactError(DvcLiveError):
+    def __init__(self, name):
+        self.name = name
+        super().__init__(
+            f"File '{name}' had already been a output of another "
+            "dvc stage, can't add it as a artifact of dvclive."
+        )
