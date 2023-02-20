@@ -57,7 +57,7 @@ class Live:
         self._images: Dict[str, Any] = {}
         self._params: Dict[str, Any] = {}
         self._plots: Dict[str, Any] = {}
-        self._outs: Set[str] = set()
+        self._outs: Set[StrPath] = set()
         self._inside_with = False
         self._dvcyaml = dvcyaml
 
@@ -295,18 +295,11 @@ class Live:
         self._dump_params()
         logger.debug(f"Logged {params} parameters to {self.params_file}")
 
-    def log_param(
-        self,
-        name: str,
-        val: ParamLike,
-    ):
+    def log_param(self, name: str, val: ParamLike):
         """Saves the given parameter value to yaml"""
         self.log_params({name: val})
 
-    def log_artifact(
-        self,
-        path: StrPath,
-    ):
+    def log_artifact(self, path: StrPath):
         """Tracks a local file or directory with DVC"""
         if not isinstance(path, (str, Path)):
             raise InvalidDataTypeError(path, type(path))
