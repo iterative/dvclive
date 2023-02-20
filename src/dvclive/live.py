@@ -16,12 +16,7 @@ from .dvc import (
     mark_dvclive_only_ended,
     mark_dvclive_only_started,
 )
-from .error import (
-    DuplicateArtifactError,
-    InvalidDataTypeError,
-    InvalidParameterTypeError,
-    InvalidPlotTypeError,
-)
+from .error import InvalidDataTypeError, InvalidParameterTypeError, InvalidPlotTypeError
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, Image, Metric, NumpyEncoder
 from .report import make_report
 from .serialize import dump_json, dump_yaml, load_yaml
@@ -40,6 +35,7 @@ logger = logging.getLogger("dvclive")
 logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "INFO").upper())
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
+StrPath = Union[str, Path]
 
 
 class Live:
@@ -309,23 +305,20 @@ class Live:
 
     def log_artifact(
         self,
-        path: str,
+        path: StrPath,
     ):
-        from dvc.exceptions import OutputDuplicationError
-
-        """Saves a local file or directory as an artifact"""
-        if not isinstance(path, str):
-            raise InvalidDataTypeError("artifact", type(path))
+        """Tracks a local file or directory with DVC"""
+        if not isinstance(path, (str, Path)):
+            raise InvalidDataTypeError(path, type(path))
 
         if self._dvc_repo is not None:
-            if path in self._outs or self._inside_dvc_exp:
-                stage = self._dvc_repo.commit(path, force=True)
-            else:
-                try:
-                    stage = self._dvc_repo.add(path)
-                except OutputDuplicationError:
-                    raise DuplicateArtifactError(path)
-                self._outs.add(path)
+            try:
+                stage = self._dvc_repo.add(path)
+            except Exception as e:
+                logger.warning(f"Failed to dvc add {path}: {e}")
+                return
+
+            self._outs.add(path)
             dvc_file = stage[0].addressing
 
             if self._save_dvc_exp:
