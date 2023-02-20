@@ -314,7 +314,7 @@ class Live:
         if self._dvc_repo is not None:
             try:
                 stage = self._dvc_repo.add(path)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logger.warning(f"Failed to dvc add {path}: {e}")
                 return
 

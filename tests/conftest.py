@@ -20,7 +20,7 @@ def mocked_dvc_repo(mocker):
 
 
 @pytest.fixture
-def dvc_repo(tmp_dir):
+def dvc_repo(tmp_dir):  # pylint: disable=redefined-outer-name
     from dvc.repo import Repo
     from scmrepo.git import Git
 
