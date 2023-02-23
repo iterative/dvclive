@@ -501,3 +501,11 @@ def test_make_dvcyaml(tmp_dir, dvcyaml):
     dvcyaml_path = tmp_dir / dvclive.dir / "dvc.yaml"
 
     assert dvcyaml_path.is_file()
+
+
+def test_exception(tmp_dir):
+    with pytest.raises(KeyboardInterrupt):
+        with Live() as live:
+            live.summary["foo"] = 1.0
+            raise KeyboardInterrupt
+    assert not (tmp_dir / live.metrics_file).exists()

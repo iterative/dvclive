@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import shutil
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
@@ -64,6 +65,7 @@ class Live:
         self._plots: Dict[str, Any] = {}
         self._inside_with = False
         self._dvcyaml = dvcyaml
+        self._exception = False
 
         os.makedirs(self.dir, exist_ok=True)
 
@@ -86,6 +88,8 @@ class Live:
         self._latest_studio_step = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
         self._init_studio()
+
+        self._init_exception()
 
     def _init_resume(self):
         self._read_params()
@@ -198,6 +202,12 @@ class Live:
                 "`report` can only be `None`, `auto`, `html`, `notebook` or `md`"
             )
         logger.debug(f"{self._report_mode=}")
+
+    def set_exception(self):
+        self._exception = True
+
+    def _init_exception(self):
+        sys.excepthook = self.set_exception()
 
     @property
     def dir(self) -> str:
@@ -359,8 +369,9 @@ class Live:
         make_dvcyaml(self)
 
     def end(self):
-        if self._inside_with:
-            # Prevent `live.end` calls inside context manager
+        if self._inside_with or self._exception:
+            # Prevent `live.end` calls inside context manager or exception
+            # raised
             return
         self.make_summary(update_step=False)
 
