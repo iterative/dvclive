@@ -393,10 +393,16 @@ class Live:
             and not self._inside_dvc_exp
             and self._save_dvc_exp
         ):
-            self._experiment_rev = self._dvc_repo.experiments.save(
-                name=self._exp_name, include_untracked=self.dir, force=True
-            )
-            mark_dvclive_only_ended()
+            from dvc.exceptions import DvcException
+
+            try:
+                self._experiment_rev = self._dvc_repo.experiments.save(
+                    name=self._exp_name, include_untracked=self.dir, force=True
+                )
+            except DvcException as e:
+                logger.warning(f"Failed to save experiment:\n{e}")
+            finally:
+                mark_dvclive_only_ended()
 
     def make_checkpoint(self):
         if env2bool(env.DVC_CHECKPOINT):

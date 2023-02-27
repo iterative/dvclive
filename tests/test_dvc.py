@@ -183,3 +183,17 @@ def test_exp_save_with_dvc_files(tmp_dir, mocker):
     dvc_repo.experiments.save.assert_called_with(
         name=live._exp_name, include_untracked=live.dir, force=True
     )
+
+
+def test_exp_save_dvcexception_is_ignored(tmp_dir, mocker):
+    from dvc.exceptions import DvcException
+
+    dvc_repo = mocker.MagicMock()
+    dvc_repo.index.stages = []
+    dvc_repo.scm.get_rev.return_value = "current_rev"
+    dvc_repo.scm.get_ref.return_value = None
+    dvc_repo.experiments.save.side_effect = DvcException("foo")
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
+
+    with Live(save_dvc_exp=True):
+        pass
