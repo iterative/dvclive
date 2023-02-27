@@ -146,7 +146,7 @@ class Live:
                 self._studio_events_to_skip.add("done")
                 return
 
-        if not self._dvc_repo:
+        if not (self._dvc_repo or self._inside_dvc_exp):
             logger.debug("`studio` report can't be used without a DVC Repo.")
             self._studio_events_to_skip.add("start")
             self._studio_events_to_skip.add("data")
