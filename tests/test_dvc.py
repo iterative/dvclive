@@ -41,7 +41,7 @@ def test_make_dvcyaml_metrics(tmp_dir):
 
     assert load_yaml(live.dvc_file) == {
         "metrics": ["metrics.json"],
-        "plots": ["plots/metrics"],
+        "plots": [{"plots/metrics": {"x": "step"}}],
     }
 
 
@@ -58,7 +58,7 @@ def test_make_dvcyaml_all_plots(tmp_dir):
         "metrics": ["metrics.json"],
         "params": ["params.yaml"],
         "plots": [
-            "plots/metrics",
+            {"plots/metrics": {"x": "step"}},
             "plots/images",
             {
                 "plots/sklearn/confusion_matrix.json": {
