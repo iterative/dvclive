@@ -81,15 +81,16 @@ class DVCLiveLogger(Logger):
         ), "experiment tried to log from global_rank != 0"
 
         self.experiment.step = step
-        epoch = False
+        step = False
         for metric_name, metric_val in metrics.items():
             if is_tensor(metric_val):
                 metric_val = metric_val.cpu().detach().item()
-            if metric_name.endswith("_epoch"):
-                epoch = True
+            if metric_name.endswith("_step"):
+                step = True
             metric_name = standardize_metric_name(metric_name, __name__)
             self.experiment.log_metric(name=metric_name, val=metric_val)
-        if epoch:
+        # Only call next_step for epoch-level metrics
+        if not step:
             self.experiment.next_step()
 
     @rank_zero_only
