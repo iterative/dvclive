@@ -39,6 +39,8 @@ class DVCLiveLogger(Logger):
         self._version = run_name
         # Force Live instantiation
         self.experiment  # noqa pylint: disable=pointless-statement
+        # Track whether all metrics are step-level
+        self._step_only = True
 
     @property
     def name(self):
@@ -80,19 +82,27 @@ class DVCLiveLogger(Logger):
             rank_zero_only.rank == 0  # type: ignore
         ), "experiment tried to log from global_rank != 0"
 
-        self.experiment.step = step
-        step = False
+        if self.experiment.step != step:
+            # don't call next_step if only "_step" metrics were logged
+            if not self._step_only:
+                self.experiment.next_step()
+                self._step_only = True
+            self.experiment.step = step
+
+        step_metrics = False
         for metric_name, metric_val in metrics.items():
             if is_tensor(metric_val):
                 metric_val = metric_val.cpu().detach().item()
             if metric_name.endswith("_step"):
-                step = True
+                step_metrics = True
             metric_name = standardize_metric_name(metric_name, __name__)
             self.experiment.log_metric(name=metric_name, val=metric_val)
-        # Only call next_step for epoch-level metrics
-        if not step:
-            self.experiment.next_step()
+
+        if not step_metrics:
+            self._step_only = False
 
     @rank_zero_only
     def finalize(self, status: str) -> None:
+        # need a final call to make_summary to update step
+        self.experiment.make_summary()
         self.experiment.end()

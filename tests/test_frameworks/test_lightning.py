@@ -150,10 +150,12 @@ def test_lightning_kwargs(tmp_dir):
     assert not os.path.exists("dir/dvc.yaml")
 
 
-def test_lightning_steps(tmp_dir):
+def test_lightning_steps(tmp_dir, mocker):
     model = LitXOR()
     # Handle kwargs passed to Live.
     dvclive_logger = DVCLiveLogger(dir="logs")
+    live = dvclive_logger.experiment
+    spy = mocker.spy(live, "make_report")
     trainer = Trainer(
         logger=dvclive_logger,
         max_epochs=2,
@@ -172,18 +174,5 @@ def test_lightning_steps(tmp_dir):
     assert len(epoch_loss) == 2
     assert len(step_loss) == 4
 
-
-def test_lightning_next_step(tmp_dir, mocker):
-    model = LitXOR()
-    dvclive_logger = DVCLiveLogger("test_run")
-    live = dvclive_logger.experiment
-    spy = mocker.spy(live, "next_step")
-    trainer = Trainer(
-        logger=dvclive_logger,
-        max_epochs=2,
-        enable_checkpointing=False,
-        log_every_n_steps=2,
-    )
-    trainer.fit(model)
-
+    # call make_report once per epoch
     assert spy.call_count == 2
