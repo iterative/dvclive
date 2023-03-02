@@ -73,14 +73,19 @@ def make_checkpoint():
         sleep(_CHECKPOINT_SLEEP)
 
 
-def get_dvc_repo():
+def dvc_api_available() -> bool:
     # noqa pylint: disable=unused-import
     try:
-        from dvc.exceptions import NotDvcRepoError
-        from dvc.repo import Repo
-        from dvc.scm import SCMError
+        import dvc  # noqa: F401
     except ImportError:
-        return None
+        return False
+    return True
+
+
+def get_dvc_repo():
+    from dvc.exceptions import NotDvcRepoError
+    from dvc.repo import Repo
+    from dvc.scm import SCMError
 
     try:
         return Repo()

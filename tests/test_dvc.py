@@ -197,3 +197,9 @@ def test_exp_save_dvcexception_is_ignored(tmp_dir, mocker):
 
     with Live(save_dvc_exp=True):
         pass
+
+
+def test_exp_save_skipped_if_not_dvc_api_available(tmp_dir, mocker):
+    mocker.patch("dvclive.live.dvc_api_available", return_value=False)
+    live = Live(save_dvc_exp=True)
+    assert not live._save_dvc_exp
