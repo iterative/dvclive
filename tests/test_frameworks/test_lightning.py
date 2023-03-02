@@ -171,3 +171,19 @@ def test_lightning_steps(tmp_dir):
     step_loss = history[os.path.join(scalars, "train", "step", "loss.tsv")]
     assert len(epoch_loss) == 2
     assert len(step_loss) == 4
+
+
+def test_lightning_next_step(tmp_dir, mocker):
+    model = LitXOR()
+    dvclive_logger = DVCLiveLogger("test_run")
+    live = dvclive_logger.experiment
+    spy = mocker.spy(live, "next_step")
+    trainer = Trainer(
+        logger=dvclive_logger,
+        max_epochs=2,
+        enable_checkpointing=False,
+        log_every_n_steps=2,
+    )
+    trainer.fit(model)
+
+    assert spy.call_count == 2
