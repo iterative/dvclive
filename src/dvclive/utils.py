@@ -88,9 +88,14 @@ def standardize_metric_name(metric_name: str, framework: str) -> str:
 
     elif framework == "dvclive.lightning":
         parts = metric_name.split("_")
-        if len(parts) > 2:
-            split, *rest, freq = parts
-            metric_name = f"{split}/{freq}/{'_'.join(rest)}"
+        split, freq, rest = None, None, None
+        if parts[0] in ["train", "val", "test"]:
+            split = parts.pop(0)
+        if parts[-1] in ["step", "epoch"]:
+            freq = parts.pop()
+        rest = "_".join(parts)
+        parts = [part for part in (split, freq, rest) if part]
+        metric_name = "/".join(parts)
 
     return metric_name
 
