@@ -4,7 +4,7 @@ from dvclive.utils import standardize_metric_name
 
 
 @pytest.mark.parametrize(
-    "framework,input,output",
+    "framework,logged,standardized",
     [
         ("dvclive.lightning", "epoch", "epoch"),
         ("dvclive.lightning", "train_loss", "train/loss"),
@@ -12,5 +12,5 @@ from dvclive.utils import standardize_metric_name
         ("dvclive.lightning", "train_model_error", "train/model_error"),
     ],
 )
-def test_standardize_metric_name(framework, input, output):
-    assert standardize_metric_name(input, framework) == output
+def test_standardize_metric_name(framework, logged, standardized):
+    assert standardize_metric_name(logged, framework) == standardized
