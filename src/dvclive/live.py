@@ -5,6 +5,8 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
+from dvc_studio_client.env import STUDIO_TOKEN
+from dvc_studio_client.post_live_metrics import post_live_metrics
 from ruamel.yaml.representer import RepresenterError
 
 from . import env
@@ -28,13 +30,6 @@ from .utils import (
     nested_update,
     open_file_in_browser,
 )
-
-try:
-    from dvc_studio_client.env import STUDIO_TOKEN
-    from dvc_studio_client.post_live_metrics import post_live_metrics
-except ImportError:
-    post_live_metrics = None
-    STUDIO_TOKEN = None
 
 logging.basicConfig()
 logger = logging.getLogger("dvclive")
@@ -110,11 +105,6 @@ class Live:
                 os.remove(f)
 
     def _init_dvc(self):
-        self._dvc_repo = get_dvc_repo()
-
-        if self._dvc_repo is not None:
-            self._baseline_rev = self._dvc_repo.scm.get_rev()
-
         if os.getenv(env.DVC_EXP_BASELINE_REV, None):
             # `dvc exp` execution
             self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV, "")
@@ -124,50 +114,46 @@ class Live:
                 logger.warning(
                     "Ignoring `_save_dvc_exp` because `dvc exp run` is running"
                 )
-        elif self._save_dvc_exp:
-            if self._dvc_repo is not None:
-                # `DVCLive Only` or `dvc repro` execution
-                self._exp_name = get_random_exp_name(
-                    self._dvc_repo.scm, self._baseline_rev
-                )
-                mark_dvclive_only_started()
-            else:
+                self._save_dvc_exp = False
+            return
+
+        self._dvc_repo = get_dvc_repo()
+        if self._dvc_repo is None:
+            if self._save_dvc_exp:
                 logger.warning(
                     "Can't save experiment without a DVC Repo."
                     "\nYou can create a DVC Repo by calling `dvc init`."
                 )
+                self._save_dvc_exp = False
+            return
+
+        self._baseline_rev = self._dvc_repo.scm.get_rev()
+        if self._save_dvc_exp:
+            self._exp_name = get_random_exp_name(self._dvc_repo.scm, self._baseline_rev)
+            mark_dvclive_only_started()
 
     def _init_studio(self):
-        if post_live_metrics is not None:
-            if not os.getenv(STUDIO_TOKEN, None):
-                logger.debug("Skipping `studio` report.")
-                self._studio_events_to_skip.add("start")
-                self._studio_events_to_skip.add("data")
-                self._studio_events_to_skip.add("done")
-                return
-
-        if not (self._dvc_repo or self._inside_dvc_exp):
-            logger.debug("`studio` report can't be used without a DVC Repo.")
+        if not os.getenv(STUDIO_TOKEN, None):
+            logger.debug("Missing env var `STUDIO_TOKEN`, skipping `studio` report.")
             self._studio_events_to_skip.add("start")
             self._studio_events_to_skip.add("data")
             self._studio_events_to_skip.add("done")
-            return
-
-        if self._inside_dvc_exp:
+        elif self._inside_dvc_exp:
             logger.debug("Skipping `studio` report `start` and `done` events.")
             self._studio_events_to_skip.add("start")
             self._studio_events_to_skip.add("done")
+        elif self._dvc_repo is None:
+            logger.warning(
+                "Can't send updates to Studio without a DVC Repo."
+                "\nYou can create a DVC Repo by calling `dvc init`."
+            )
+            self._studio_events_to_skip.add("start")
+            self._studio_events_to_skip.add("data")
+            self._studio_events_to_skip.add("done")
         else:
-            response = False
-            if post_live_metrics is not None:
-                response = post_live_metrics(
-                    "start", self._baseline_rev, self._exp_name, "dvclive"
-                )
-            else:
-                logger.debug(
-                    "`dvc_studio_client` is not installed.\n"
-                    "You can install it with `pip install dvc-studio-client`."
-                )
+            response = post_live_metrics(
+                "start", self._baseline_rev, self._exp_name, "dvclive"
+            )
             if not response:
                 logger.debug(
                     "`studio` report `start` event failed. "
@@ -384,15 +370,10 @@ class Live:
                 logger.warning("`post_to_studio` `done` event failed.")
             self._studio_events_to_skip.add("done")
             self._studio_events_to_skip.add("data")
-
         else:
             self.make_report()
 
-        if (
-            self._dvc_repo is not None
-            and not self._inside_dvc_exp
-            and self._save_dvc_exp
-        ):
+        if self._save_dvc_exp:
             from dvc.exceptions import DvcException
 
             try:

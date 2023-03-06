@@ -74,13 +74,9 @@ def make_checkpoint():
 
 
 def get_dvc_repo():
-    # noqa pylint: disable=unused-import
-    try:
-        from dvc.exceptions import NotDvcRepoError
-        from dvc.repo import Repo
-        from dvc.scm import SCMError
-    except ImportError:
-        return None
+    from dvc.exceptions import NotDvcRepoError
+    from dvc.repo import Repo
+    from dvc.scm import SCMError
 
     try:
         return Repo()
