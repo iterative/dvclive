@@ -97,7 +97,7 @@ def test_exp_save_on_end(tmp_dir, mocker, save):
         assert live._baseline_rev is not None
         assert live._exp_name != "dvclive-exp"
         dvc_repo.experiments.save.assert_called_with(
-            name=live._exp_name, include_untracked=live.dir, force=True
+            name=live._exp_name, include_untracked=[live.dir], force=True
         )
     else:
         assert live._baseline_rev is not None
@@ -134,7 +134,7 @@ def test_exp_save_run_on_dvc_repro(tmp_dir, mocker):
         live.end()
 
     dvc_repo.experiments.save.assert_called_with(
-        name=live._exp_name, include_untracked=live.dir, force=True
+        name=live._exp_name, include_untracked=[live.dir], force=True
     )
 
 
@@ -181,7 +181,7 @@ def test_exp_save_with_dvc_files(tmp_dir, mocker):
         live.end()
 
     dvc_repo.experiments.save.assert_called_with(
-        name=live._exp_name, include_untracked=live.dir, force=True
+        name=live._exp_name, include_untracked=[live.dir], force=True
     )
 
 
