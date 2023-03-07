@@ -397,7 +397,7 @@ class Live:
 
             try:
                 self._experiment_rev = self._dvc_repo.experiments.save(
-                    name=self._exp_name, include_untracked=self.dir, force=True
+                    name=self._exp_name, include_untracked=[self.dir], force=True
                 )
             except DvcException as e:
                 logger.warning(f"Failed to save experiment:\n{e}")
