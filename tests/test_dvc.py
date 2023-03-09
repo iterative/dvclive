@@ -1,4 +1,5 @@
 # pylint: disable=unused-argument,protected-access
+
 import pytest
 from dvc.repo import Repo
 from PIL import Image
@@ -85,24 +86,21 @@ def test_make_dvcyaml_all_plots(tmp_dir):
 
 
 @pytest.mark.parametrize("save", [True, False])
-def test_exp_save_on_end(tmp_dir, mocker, save):
-    dvc_repo = mocker.MagicMock()
-    dvc_repo.index.stages = []
-    dvc_repo.scm.get_rev.return_value = "current_rev"
-    dvc_repo.scm.get_ref.return_value = None
-    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
-        live = Live(save_dvc_exp=save)
-        live.end()
+def test_exp_save_on_end(tmp_dir, save, mocked_dvc_repo):
+    live = Live(save_dvc_exp=save)
+    live.end()
     if save:
         assert live._baseline_rev is not None
         assert live._exp_name != "dvclive-exp"
-        dvc_repo.experiments.save.assert_called_with(
-            name=live._exp_name, include_untracked=[live.dir], force=True
+        mocked_dvc_repo.experiments.save.assert_called_with(
+            name=live._exp_name,
+            include_untracked=[live.dir],
+            force=True,
         )
     else:
         assert live._baseline_rev is not None
         assert live._exp_name == "dvclive-exp"
-        dvc_repo.experiments.save.assert_not_called()
+        mocked_dvc_repo.experiments.save.assert_not_called()
 
 
 def test_exp_save_skip_on_env_vars(tmp_dir, monkeypatch, mocker):
@@ -139,14 +137,9 @@ def test_exp_save_run_on_dvc_repro(tmp_dir, mocker):
 
 
 @pytest.mark.parametrize("dvcyaml", [True, False])
-def test_dvcyaml_on_next_step(tmp_dir, mocker, dvcyaml):
-    dvc_repo = mocker.MagicMock()
-    dvc_repo.index.stages = []
-    dvc_repo.scm.get_rev.return_value = "current_rev"
-    dvc_repo.scm.get_ref.return_value = None
-    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
-        live = Live(dvcyaml=dvcyaml)
-        live.next_step()
+def test_dvcyaml_on_next_step(tmp_dir, dvcyaml, mocked_dvc_repo):
+    live = Live(dvcyaml=dvcyaml)
+    live.next_step()
     if dvcyaml:
         assert (tmp_dir / live.dvc_file).exists()
     else:
@@ -154,14 +147,9 @@ def test_dvcyaml_on_next_step(tmp_dir, mocker, dvcyaml):
 
 
 @pytest.mark.parametrize("dvcyaml", [True, False])
-def test_dvcyaml_on_end(tmp_dir, mocker, dvcyaml):
-    dvc_repo = mocker.MagicMock()
-    dvc_repo.index.stages = []
-    dvc_repo.scm.get_rev.return_value = "current_rev"
-    dvc_repo.scm.get_ref.return_value = None
-    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
-        live = Live(dvcyaml=dvcyaml)
-        live.end()
+def test_dvcyaml_on_end(tmp_dir, dvcyaml, mocked_dvc_repo):
+    live = Live(dvcyaml=dvcyaml)
+    live.end()
     if dvcyaml:
         assert (tmp_dir / live.dvc_file).exists()
     else:

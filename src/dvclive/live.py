@@ -36,6 +36,7 @@ logger = logging.getLogger("dvclive")
 logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "INFO").upper())
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
+StrPath = Union[str, Path]
 
 
 class Live:
@@ -57,6 +58,7 @@ class Live:
         self._images: Dict[str, Any] = {}
         self._params: Dict[str, Any] = {}
         self._plots: Dict[str, Any] = {}
+        self._outs: Set[StrPath] = set()
         self._inside_with = False
         self._dvcyaml = dvcyaml
 
@@ -76,6 +78,7 @@ class Live:
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
         self._dvc_repo = None
+        self._include_untracked: List[str] = []
         self._init_dvc()
 
         self._latest_studio_step = self.step if resume else -1
@@ -131,6 +134,7 @@ class Live:
         if self._save_dvc_exp:
             self._exp_name = get_random_exp_name(self._dvc_repo.scm, self._baseline_rev)
             mark_dvclive_only_started()
+            self._include_untracked.append(self.dir)
 
     def _init_studio(self):
         if not os.getenv(STUDIO_TOKEN, None):
@@ -300,13 +304,30 @@ class Live:
         self._dump_params()
         logger.debug(f"Logged {params} parameters to {self.params_file}")
 
-    def log_param(
-        self,
-        name: str,
-        val: ParamLike,
-    ):
+    def log_param(self, name: str, val: ParamLike):
         """Saves the given parameter value to yaml"""
         self.log_params({name: val})
+
+    def log_artifact(self, path: StrPath):
+        """Tracks a local file or directory with DVC"""
+        if not isinstance(path, (str, Path)):
+            raise InvalidDataTypeError(path, type(path))
+
+        if self._dvc_repo is not None:
+            try:
+                stage = self._dvc_repo.add(path)
+            except Exception as e:  # pylint: disable=broad-except
+                logger.warning(f"Failed to dvc add {path}: {e}")
+                return
+
+            self._outs.add(path)
+            dvc_file = stage[0].addressing
+
+            if self._save_dvc_exp:
+                self._include_untracked.append(dvc_file)
+                self._include_untracked.append(
+                    str(Path(dvc_file).parent / ".gitignore")
+                )
 
     def make_summary(self, update_step: bool = True):
         if self._step is not None and update_step:
@@ -378,7 +399,9 @@ class Live:
 
             try:
                 self._experiment_rev = self._dvc_repo.experiments.save(
-                    name=self._exp_name, include_untracked=[self.dir], force=True
+                    name=self._exp_name,
+                    include_untracked=self._include_untracked,
+                    force=True,
                 )
             except DvcException as e:
                 logger.warning(f"Failed to save experiment:\n{e}")
