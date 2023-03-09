@@ -399,8 +399,8 @@ class Live:
 
             try:
                 self._experiment_rev = self._dvc_repo.experiments.save(
-                    name=self._exp_name, 
-                    include_untracked=self._include_untracked, 
+                    name=self._exp_name,
+                    include_untracked=self._include_untracked,
                     force=True,
                 )
             except DvcException as e:
