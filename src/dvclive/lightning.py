@@ -1,3 +1,5 @@
+# pylint: disable=protected-access
+import inspect
 from typing import Any, Dict, Optional
 
 from lightning_fabric.utilities.logger import (
@@ -11,6 +13,24 @@ from torch import is_tensor
 
 from dvclive import Live
 from dvclive.utils import standardize_metric_name
+
+
+def _should_call_next_step():
+    """
+    Find out if pytorch_lightning is calling `log_metrics` from the functions
+    where we actually want to call `next_step`.
+    For example, prevents calling next_step when external callbacks call
+    `log_metrics` or during the multiple `update_eval_step_metrics`.
+    """
+    return any(
+        frame.function
+        in (
+            "update_train_step_metrics",
+            "update_train_epoch_metrics",
+            "log_eval_end_metrics",
+        )
+        for frame in inspect.stack()
+    )
 
 
 class DVCLiveLogger(Logger):
@@ -37,6 +57,8 @@ class DVCLiveLogger(Logger):
             self._live_init["dir"] = dir
         self._experiment = experiment
         self._version = run_name
+        # Force Live instantiation
+        self.experiment  # noqa pylint: disable=pointless-statement
 
     @property
     def name(self):
@@ -77,14 +99,19 @@ class DVCLiveLogger(Logger):
         assert (
             rank_zero_only.rank == 0  # type: ignore
         ), "experiment tried to log from global_rank != 0"
-
         self.experiment.step = step
         for metric_name, metric_val in metrics.items():
             if is_tensor(metric_val):
                 metric_val = metric_val.cpu().detach().item()
             metric_name = standardize_metric_name(metric_name, __name__)
             self.experiment.log_metric(name=metric_name, val=metric_val)
-        self.experiment.next_step()
+        if _should_call_next_step():
+            if step == self.experiment._latest_studio_step:
+                # We are in log_eval_end_metrics but there has been already
+                # a studio request sent with `step`.
+                # We decrease the number to bypass `live.studio._get_unsent_datapoints`
+                self.experiment._latest_studio_step -= 1
+            self.experiment.next_step()
 
     @rank_zero_only
     def finalize(self, status: str) -> None:

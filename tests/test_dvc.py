@@ -42,7 +42,7 @@ def test_make_dvcyaml_metrics(tmp_dir):
 
     assert load_yaml(live.dvc_file) == {
         "metrics": ["metrics.json"],
-        "plots": ["plots/metrics"],
+        "plots": [{"plots/metrics": {"x": "step"}}],
     }
 
 
@@ -59,7 +59,7 @@ def test_make_dvcyaml_all_plots(tmp_dir):
         "metrics": ["metrics.json"],
         "params": ["params.yaml"],
         "plots": [
-            "plots/metrics",
+            {"plots/metrics": {"x": "step"}},
             "plots/images",
             {
                 "plots/sklearn/confusion_matrix.json": {
@@ -171,3 +171,17 @@ def test_exp_save_with_dvc_files(tmp_dir, mocker):
     dvc_repo.experiments.save.assert_called_with(
         name=live._exp_name, include_untracked=[live.dir], force=True
     )
+
+
+def test_exp_save_dvcexception_is_ignored(tmp_dir, mocker):
+    from dvc.exceptions import DvcException
+
+    dvc_repo = mocker.MagicMock()
+    dvc_repo.index.stages = []
+    dvc_repo.scm.get_rev.return_value = "current_rev"
+    dvc_repo.scm.get_ref.return_value = None
+    dvc_repo.experiments.save.side_effect = DvcException("foo")
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
+
+    with Live(save_dvc_exp=True):
+        pass

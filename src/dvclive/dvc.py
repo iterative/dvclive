@@ -74,13 +74,9 @@ def make_checkpoint():
 
 
 def get_dvc_repo():
-    # noqa pylint: disable=unused-import
-    try:
-        from dvc.exceptions import NotDvcRepoError
-        from dvc.repo import Repo
-        from dvc.scm import SCMError
-    except ImportError:
-        return None
+    from dvc.exceptions import NotDvcRepoError
+    from dvc.repo import Repo
+    from dvc.scm import SCMError
 
     try:
         return Repo()
@@ -97,8 +93,9 @@ def make_dvcyaml(live):
     plots = []
     plots_path = Path(live.plots_dir)
     if live._metrics:
-        metrics_path = (plots_path / Metric.subfolder).relative_to(live.dir)
-        plots.append(metrics_path.as_posix())
+        metrics_path = (plots_path / Metric.subfolder).relative_to(live.dir).as_posix()
+        metrics_config = {metrics_path: {"x": "step"}}
+        plots.append(metrics_config)
     if live._images:
         images_path = (plots_path / Image.subfolder).relative_to(live.dir)
         plots.append(images_path.as_posix())

@@ -215,14 +215,13 @@ def test_post_to_studio_skip_on_env_var(tmp_dir, mocker, monkeypatch):
     monkeypatch.setenv(STUDIO_REPO_URL, "STUDIO_REPO_URL")
     monkeypatch.setenv(STUDIO_TOKEN, "STUDIO_TOKEN")
 
-    monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
+    monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
 
     with Live() as live:
         live.log_metric("foo", 1)
-        live.next_step()
 
-    assert mocked_post.call_count == 0
+    assert mocked_post.call_count == 1
 
 
 @pytest.mark.studio
@@ -233,7 +232,7 @@ def test_post_to_studio_skip_if_no_token(tmp_dir, mocker, monkeypatch):
 
     mocked_post = mocker.patch("dvclive.live.post_live_metrics", return_value=None)
 
-    monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
+    monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
 
     with Live() as live:
@@ -328,3 +327,23 @@ def test_post_to_studio_shorten_names(tmp_dir, mocker, monkeypatch):
         },
         timeout=5,
     )
+
+
+@pytest.mark.studio
+def test_post_to_studio_inside_dvc_exp(tmp_dir, mocker, monkeypatch):
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=None)
+
+    valid_response = mocker.MagicMock()
+    valid_response.status_code = 200
+    mocked_post = mocker.patch("requests.post", return_value=valid_response)
+    monkeypatch.setenv(STUDIO_ENDPOINT, "https://0.0.0.0")
+    monkeypatch.setenv(STUDIO_REPO_URL, "STUDIO_REPO_URL")
+    monkeypatch.setenv(STUDIO_TOKEN, "STUDIO_TOKEN")
+
+    monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
+    monkeypatch.setenv(DVC_EXP_NAME, "bar")
+
+    with Live() as live:
+        live.log_metric("foo", 1)
+
+    assert mocked_post.call_count == 1

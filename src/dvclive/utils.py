@@ -7,6 +7,8 @@ from collections.abc import Mapping
 from pathlib import Path
 from platform import uname
 
+# noqa pylint: disable=unused-import
+
 
 def nested_set(d, keys, value):
     """Set d[keys[0]]...[keys[-1]] to `value`.
@@ -86,9 +88,16 @@ def standardize_metric_name(metric_name: str, framework: str) -> str:
 
     elif framework == "dvclive.lightning":
         parts = metric_name.split("_")
-        if len(parts) > 2:
-            split, *rest, freq = parts
-            metric_name = f"{split}/{freq}/{'_'.join(rest)}"
+        split, freq, rest = None, None, None
+        if parts[0] in ["train", "val", "test"]:
+            split = parts.pop(0)
+            # Only set freq if split was also found.
+            # Otherwise we end up conflicting with out internal `step` property.
+            if parts[-1] in ["step", "epoch"]:
+                freq = parts.pop()
+        rest = "_".join(parts)
+        parts = [part for part in (split, freq, rest) if part]
+        metric_name = "/".join(parts)
 
     return metric_name
 
@@ -117,9 +126,33 @@ def parse_metrics(live):
 
 
 def matplotlib_installed() -> bool:
-    # noqa pylint: disable=unused-import
     try:
         import matplotlib  # noqa: F401
     except ImportError:
         return False
     return True
+
+
+def inside_colab() -> bool:
+    try:
+        from google import colab  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
+def inside_notebook() -> bool:
+    if inside_colab():
+        return True
+
+    try:
+        shell = get_ipython().__class__.__name__  # type: ignore[name-defined]
+    except NameError:
+        return False
+
+    if shell == "ZMQInteractiveShell":
+        import IPython
+
+        return IPython.__version__ >= "6.0.0"
+    return False

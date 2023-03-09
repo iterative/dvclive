@@ -11,13 +11,39 @@ from dvc_render.vega import VegaRenderer
 from dvclive.plots import SKLEARN_PLOTS, Image, Metric
 from dvclive.plots.sklearn import SKLearnPlot
 from dvclive.serialize import load_yaml
-from dvclive.utils import parse_tsv
+from dvclive.utils import inside_colab, parse_tsv
 
 if TYPE_CHECKING:
     from dvclive import Live
 
 
 # noqa pylint: disable=protected-access
+
+
+BLANK_NOTEBOOK_REPORT = """
+<div style="width: 100%;height: 700px;text-align: center">
+DVCLive Report
+</div>
+"""
+
+COLAB_HTML = """<!DOCTYPE html>
+<html>
+<head>
+    {refresh_tag}
+    <title>DVC Plot</title>
+    {scripts}
+    <style>
+        table {
+            border-spacing: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div style="width: 100%;height: 700px>
+        {plot_divs}
+    </div>
+</body>
+</html>"""
 
 
 def get_scalar_renderers(metrics_path):
@@ -123,6 +149,23 @@ def make_report(live: "Live"):
 
     if live._report_mode == "html":
         render_html(renderers, live.report_file, refresh_seconds=5)
+    elif live._report_mode == "notebook":
+        from IPython.display import HTML, IFrame
+
+        render_html(
+            renderers,
+            live.report_file,
+            # Use custom template to limit the size of the display
+            html_template=COLAB_HTML if inside_colab() else None,
+        )
+        if live._report_notebook is not None:
+            if inside_colab():
+                new_report = HTML(live.report_file)  # type: ignore [assignment]
+            else:
+                new_report = IFrame(  # type: ignore [assignment]
+                    live.report_file, "100%", 700
+                )
+            live._report_notebook.update(new_report)
     elif live._report_mode == "md":
         render_markdown(renderers, live.report_file)
     else:
