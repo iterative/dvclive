@@ -2,6 +2,7 @@ import csv
 import os
 import time
 from pathlib import Path
+from typing import List
 
 from .base import Data
 from .utils import NUMPY_SCALARS
@@ -43,5 +44,5 @@ class Metric(Data):
             writer.writerow(row)
 
     @property
-    def summary_keys(self) -> list[str]:
+    def summary_keys(self) -> List[str]:
         return os.path.normpath(self.name).split(os.path.sep)
