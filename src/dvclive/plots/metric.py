@@ -3,8 +3,6 @@ import os
 import time
 from pathlib import Path
 
-from dvclive.utils import nested_set
-
 from .base import Data
 from .utils import NUMPY_SCALARS
 
@@ -44,7 +42,6 @@ class Metric(Data):
                 writer.writeheader()
             writer.writerow(row)
 
-    def to_summary(self, val):
-        d = {}
-        nested_set(d, os.path.normpath(self.name).split(os.path.sep), val)
-        return d
+    @property
+    def summary_keys(self) -> list[str]:
+        return os.path.normpath(self.name).split(os.path.sep)
