@@ -2,11 +2,12 @@
 import logging
 import os
 import random
+from io import StringIO
 from pathlib import Path
 
 from dvclive import env
 from dvclive.plots import Image, Metric
-from dvclive.serialize import dump_yaml
+from dvclive.serialize import dump_yaml, get_yaml
 
 logging.basicConfig()
 logger = logging.getLogger("dvclive")
@@ -156,3 +157,28 @@ def get_random_exp_name(scm, baseline_rev):
         exp_ref = ExpRefInfo(baseline_sha=baseline_rev, name=name)
         if not scm.get_ref(str(exp_ref)):
             return name
+
+
+def get_dvc_stage_template(live):
+    stage = {
+        "cmd": "<python my_code_file.py my_args>",
+        "deps": ["<my_code_file.py>"],
+        "outs": [],
+    }
+    if live._params:
+        params_path = os.path.relpath(live.params_file, live.dir)
+        stage["outs"].append({params_path: {"cache": False}})
+    if live._metrics:
+        metrics_path = os.path.relpath(live.metrics_file, live.dir)
+        stage["outs"].append({metrics_path: {"cache": False}})
+    if live._metrics or live._images or live._plots:
+        plots_path = Path(live.plots_dir).as_posix()
+        stage["outs"].append({plots_path: {"cache": False}})
+    stage["outs"] += list(live._outs)
+    dvcyaml_dict = {"stages": {"dvclive": stage}}
+
+    output = StringIO()
+    get_yaml().dump(dvcyaml_dict, output)
+    dvcyaml = output.getvalue()
+    output.close()
+    return dvcyaml
