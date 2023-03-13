@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Set, Union
 
 from dvc_studio_client.env import STUDIO_TOKEN
 from dvc_studio_client.post_live_metrics import post_live_metrics
+from funcy import set_in
 from ruamel.yaml.representer import RepresenterError
 
 from . import env
@@ -23,13 +24,7 @@ from .plots import PLOT_TYPES, SKLEARN_PLOTS, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_studio_updates
-from .utils import (
-    env2bool,
-    inside_notebook,
-    matplotlib_installed,
-    nested_update,
-    open_file_in_browser,
-)
+from .utils import env2bool, inside_notebook, matplotlib_installed, open_file_in_browser
 
 logging.basicConfig()
 logger = logging.getLogger("dvclive")
@@ -254,7 +249,7 @@ class Live:
         data.step = self.step
         data.dump(val, timestamp=timestamp)
 
-        self.summary = nested_update(self.summary, data.to_summary(val))
+        self.summary = set_in(self.summary, data.summary_keys, val)
         logger.debug(f"Logged {name}: {val}")
 
     def log_image(self, name: str, val):
