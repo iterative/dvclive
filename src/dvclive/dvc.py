@@ -166,11 +166,9 @@ def get_dvc_stage_template(live):
         "outs": [],
     }
     if live._params:
-        params_path = os.path.relpath(live.params_file, live.dir)
-        stage["outs"].append({params_path: {"cache": False}})
+        stage["outs"].append({live.params_file: {"cache": False}})
     if live._metrics:
-        metrics_path = os.path.relpath(live.metrics_file, live.dir)
-        stage["outs"].append({metrics_path: {"cache": False}})
+        stage["outs"].append({live.metrics_file: {"cache": False}})
     if live._metrics or live._images or live._plots:
         plots_path = Path(live.plots_dir).as_posix()
         stage["outs"].append({plots_path: {"cache": False}})

@@ -412,7 +412,7 @@ class Live:
             try:
                 path = os.path.join(self._dvc_repo.root_dir, "dvc.yaml")
                 yaml = get_dvc_stage_template(self)
-                logger.info(f"To run experiments with DVC, add this to {path}:\n{yaml}")
+                logger.info(f"To run with DVC, add this to {path}:\n{yaml}")
             except DvcException as e:
                 logger.warning(f"Failed to print DVC stage template:\n{e}")
 
