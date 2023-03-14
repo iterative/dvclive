@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from fastai.callback.tracker import SaveModelCallback
 from fastai.tabular.all import (
     Categorify,
     Normalize,
@@ -70,9 +71,12 @@ def test_fastai_model_file(tmp_dir, data_loader, mocker):
     learn.remove_cb(ProgressCallback)
     learn.model_dir = os.path.abspath("./")
     save = mocker.spy(learn, "save")
-    learn.fit_one_cycle(2, cbs=[DVCLiveCallback("model", with_opt=True)])
+    live_callback = DVCLiveCallback("model", with_opt=True)
+    log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
+    learn.fit_one_cycle(2, cbs=[live_callback])
     assert (tmp_dir / "model.pth").is_file()
     save.assert_called_with("model", with_opt=True)
+    log_artifact.assert_called_with(str(tmp_dir / "model.pth"))
 
 
 def test_fastai_pass_logger():
@@ -116,3 +120,16 @@ def test_fast_ai_avoid_unnecessary_end_calls(tmp_dir, data_loader, mocker):
     learn.fine_tune(2, cbs=[callback])
     assert end.call_count == 1
     assert after_fit.call_count == 2
+
+
+def test_fastai_save_model_callback(tmp_dir, data_loader, mocker):
+    learn = tabular_learner(data_loader, metrics=accuracy)
+    learn.remove_cb(ProgressCallback)
+    learn.model_dir = os.path.abspath("./")
+
+    save_callback = SaveModelCallback()
+    live_callback = DVCLiveCallback()
+    log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
+    learn.fit_one_cycle(2, cbs=[save_callback, live_callback])
+    assert (tmp_dir / "model.pth").is_file()
+    log_artifact.assert_called_with(str(save_callback.last_saved_path))

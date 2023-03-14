@@ -67,7 +67,8 @@ class DVCLiveCallback(Callback):
         # fast.ai calls after_epoch but we don't want to increase the step.
         if logged_metrics:
             if self.model_file:
-                self.learn.save(self.model_file, with_opt=self.with_opt)
+                file = self.learn.save(self.model_file, with_opt=self.with_opt)
+                self.live.log_artifact(str(file))
             self.live.next_step()
 
     def after_fit(self):
@@ -76,4 +77,7 @@ class DVCLiveCallback(Callback):
         if _inside_fine_tune() and not self.freeze_stage_ended:
             self.freeze_stage_ended = True
         else:
+            if hasattr(self, "save_model"):
+                if self.save_model.last_saved_path:
+                    self.live.log_artifact(str(self.save_model.last_saved_path))
             self.live.end()
