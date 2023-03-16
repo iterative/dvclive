@@ -6,6 +6,7 @@ from transformers import (
     TrainerState,
     TrainingArguments,
 )
+from transformers.trainer import Trainer
 
 from dvclive import Live
 from dvclive.utils import standardize_metric_name
@@ -42,6 +43,7 @@ class DVCLiveCallback(TrainerCallback):
             tokenizer = kwargs.get("tokenizer")
             if tokenizer:
                 tokenizer.save_pretrained(self.model_file)
+            self.live.log_artifact(self.model_file)
 
     def on_train_end(
         self,
@@ -50,4 +52,10 @@ class DVCLiveCallback(TrainerCallback):
         control: TrainerControl,
         **kwargs
     ):
+        if args.load_best_model_at_end:
+            trainer = Trainer(
+                args=args, model=kwargs.get("model"), tokenizer=kwargs.get("tokenizer")
+            )
+            trainer.save_model()
+            self.live.log_artifact(args.output_dir)
         self.live.end()
