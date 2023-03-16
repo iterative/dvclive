@@ -70,17 +70,20 @@ def test_keras_model_file(tmp_dir, xor_model, mocker, save_weights_only, capture
     save = mocker.spy(model, "save")
     save_weights = mocker.spy(model, "save_weights")
 
+    live_callback = DVCLiveCallback(
+        model_file="model.h5", save_weights_only=save_weights_only
+    )
+    log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
     model.fit(
         x,
         y,
         epochs=1,
         batch_size=1,
-        callbacks=[
-            DVCLiveCallback(model_file="model.h5", save_weights_only=save_weights_only)
-        ],
+        callbacks=[live_callback],
     )
     assert save.call_count != save_weights_only
     assert save_weights.call_count == save_weights_only
+    log_artifact.assert_called_with(live_callback.model_file)
 
 
 @pytest.mark.parametrize("save_weights_only", (True, False))
