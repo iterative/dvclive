@@ -113,7 +113,6 @@ class Live:
                     "Ignoring `_save_dvc_exp` because `dvc exp run` is running"
                 )
                 self._save_dvc_exp = False
-            return
 
         self._dvc_repo = get_dvc_repo()
         if self._dvc_repo is None:
@@ -123,6 +122,9 @@ class Live:
                     "\nYou can create a DVC Repo by calling `dvc init`."
                 )
                 self._save_dvc_exp = False
+            return
+
+        if self._inside_dvc_exp:
             return
 
         self._baseline_rev = self._dvc_repo.scm.get_rev()

@@ -1,6 +1,7 @@
 # pylint: disable=protected-access
 import logging
 import os
+from pathlib import Path
 
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
@@ -24,32 +25,47 @@ def _cast_to_numbers(datapoints):
     return datapoints
 
 
-def _to_dvc_format(plots):
-    formatted = {}
-    for k, v in plots.items():
-        formatted[k] = {"data": v}
-    return formatted
+def _rel_path(path, dvc_root_path):
+    absolute_path = Path(path).resolve()
+    return str(absolute_path.relative_to(dvc_root_path).as_posix())
+
+
+def _adapt_plot_name(live, name):
+    if live._dvc_repo is not None:
+        name = _rel_path(name, live._dvc_repo.root_dir)
+    if os.path.isfile(live.dvc_file):
+        dvc_file = live.dvc_file
+        if live._dvc_repo is not None:
+            dvc_file = _rel_path(live.dvc_file, live._dvc_repo.root_dir)
+        name = f"{dvc_file}::{name}"
+    return name
+
+
+def _adapt_plot_datapoints(live, plot):
+    datapoints = _get_unsent_datapoints(plot, live._latest_studio_step)
+    return _cast_to_numbers(datapoints)
 
 
 def get_studio_updates(live):
-    plots, metrics = parse_metrics(live)
-    latest_step = live._latest_studio_step
-
-    if os.path.isfile(live.dvc_file):
-        # Add prefix to match DVC's `repo.plos.show`.
-        # See https://github.com/iterative/studio/issues/4981
-        plots = {f"{live.dvc_file}::{name}": plot for name, plot in plots.items()}
-    for name, plot in plots.items():
-        datapoints = _get_unsent_datapoints(plot, latest_step)
-        plots[name] = _cast_to_numbers(datapoints)
-
-    metrics = {live.metrics_file: {"data": metrics}}
-
     if os.path.isfile(live.params_file):
-        params = {live.params_file: load_yaml(live.params_file)}
+        params_file = live.params_file
+        if live._dvc_repo is not None:
+            params_file = _rel_path(params_file, live._dvc_repo.root_dir)
+        params = {params_file: load_yaml(live.params_file)}
     else:
         params = {}
 
-    plots = _to_dvc_format(plots)
+    plots, metrics = parse_metrics(live)
+
+    metrics_file = live.metrics_file
+    if live._dvc_repo is not None:
+        metrics_file = _rel_path(metrics_file, live._dvc_repo.root_dir)
+    metrics = {metrics_file: {"data": metrics}}
+
+    plots = {
+        _adapt_plot_name(live, name): _adapt_plot_datapoints(live, plot)
+        for name, plot in plots.items()
+    }
+    plots = {k: {"data": v} for k, v in plots.items()}
 
     return metrics, params, plots

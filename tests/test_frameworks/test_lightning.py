@@ -1,7 +1,6 @@
 import os
 
 import torch
-from dvc_studio_client.env import STUDIO_ENDPOINT, STUDIO_REPO_URL, STUDIO_TOKEN
 from pytorch_lightning import LightningModule
 from pytorch_lightning.trainer import Trainer
 from torch import nn
@@ -209,17 +208,9 @@ class ValLitXOR(LitXOR):
         return loss
 
 
-def test_lightning_val_udpates_to_studio(tmp_dir, mocker, monkeypatch):
+def test_lightning_val_udpates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     """Test the `self.experiment._latest_studio_step -= 1` logic."""
-    dvc_repo = mocker.MagicMock()
-    dvc_repo.scm.get_rev.return_value = "f" * 40
-    mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
-    mocked_response = mocker.MagicMock()
-    mocked_response.status_code = 200
-    mocked_post = mocker.patch("requests.post", return_value=mocked_response)
-    monkeypatch.setenv(STUDIO_ENDPOINT, "https://0.0.0.0")
-    monkeypatch.setenv(STUDIO_REPO_URL, "STUDIO_REPO_URL")
-    monkeypatch.setenv(STUDIO_TOKEN, "STUDIO_TOKEN")
+    mocked_post, _ = mocked_studio_post
 
     model = ValLitXOR()
     dvclive_logger = DVCLiveLogger()
