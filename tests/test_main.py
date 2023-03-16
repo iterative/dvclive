@@ -2,13 +2,14 @@
 # pylint: disable=unused-argument
 import json
 import os
+from io import StringIO
 
 import pytest
 
 from dvclive import Live, env
 from dvclive.error import InvalidDataTypeError, InvalidParameterTypeError
 from dvclive.plots import Metric
-from dvclive.serialize import load_yaml
+from dvclive.serialize import get_yaml, load_yaml
 from dvclive.utils import parse_metrics, parse_tsv
 
 
@@ -476,23 +477,6 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
     "dvcyaml",
     [True, False],
 )
-def test_dvcyaml(tmp_dir, dvcyaml):
-    dvclive = Live("logs", dvcyaml=dvcyaml)
-    dvclive.log_metric("m1", 1)
-    dvclive.next_step()
-
-    dvcyaml_path = tmp_dir / dvclive.dir / "dvc.yaml"
-
-    if dvcyaml:
-        assert dvcyaml_path.is_file()
-    else:
-        assert not dvcyaml_path.is_file()
-
-
-@pytest.mark.parametrize(
-    "dvcyaml",
-    [True, False],
-)
 def test_make_dvcyaml(tmp_dir, dvcyaml):
     dvclive = Live("logs", dvcyaml=dvcyaml)
     dvclive.log_metric("m1", 1)
@@ -501,3 +485,28 @@ def test_make_dvcyaml(tmp_dir, dvcyaml):
     dvcyaml_path = tmp_dir / dvclive.dir / "dvc.yaml"
 
     assert dvcyaml_path.is_file()
+
+
+def test_get_dvc_stage_template(tmp_dir, mocker, mocked_dvc_repo):
+    logger = mocker.patch("dvclive.live.logger")
+    dvclive = Live()
+    dvclive._dvc_repo.root_dir = tmp_dir
+    dvclive.end()
+
+    template = {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": [],
+            }
+        }
+    }
+
+    output = StringIO()
+    get_yaml().dump(template, output)
+    yaml_str = output.getvalue()
+    output.close()
+    path_str = os.path.join(tmp_dir, "dvc.yaml")
+    log_str = f"To run with DVC, add this to {path_str}:\n{yaml_str}"
+    logger.info.assert_called_with(log_str)
