@@ -295,11 +295,11 @@ def test_get_dvc_stage_template_artifacts(tmp_dir, mocked_dvc_repo):
     }
 
 
-def test_get_dvc_stage_template_chdir(tmp_dir, mocked_dvc_repo):
+def test_get_dvc_stage_template_chdir(tmp_dir, mocked_dvc_repo, monkeypatch):
     mocked_dvc_repo.root_dir = tmp_dir
     d = tmp_dir / "sub" / "dir"
     d.mkdir(parents=True)
-    os.chdir(d)
+    monkeypatch.chdir(d)
     live = Live("live")
     live.log_param("foo", 1)
     live.log_metric("bar", 1)
