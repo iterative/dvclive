@@ -1,5 +1,7 @@
 # pylint: disable=unused-argument,protected-access
 
+import os
+
 import pytest
 from dvc.repo import Repo
 from PIL import Image
@@ -277,7 +279,7 @@ def test_get_dvc_stage_template_sklearn_plots(tmp_dir, mocked_dvc_repo):
 
 
 def test_get_dvc_stage_template_artifacts(tmp_dir, mocked_dvc_repo):
-    mocked_dvc_repo.root_dir = "."
+    mocked_dvc_repo.root_dir = tmp_dir
     live = Live()
     live.log_artifact("artifact.txt")
     template = get_dvc_stage_template(live)
@@ -288,6 +290,35 @@ def test_get_dvc_stage_template_artifacts(tmp_dir, mocked_dvc_repo):
                 "cmd": "<python my_code_file.py my_args>",
                 "deps": ["<my_code_file.py>"],
                 "outs": ["artifact.txt"],
+            }
+        }
+    }
+
+
+def test_get_dvc_stage_template_chdir(tmp_dir, mocked_dvc_repo):
+    mocked_dvc_repo.root_dir = tmp_dir
+    d = tmp_dir / "sub" / "dir"
+    d.mkdir(parents=True)
+    os.chdir(d)
+    live = Live("live")
+    live.log_param("foo", 1)
+    live.log_metric("bar", 1)
+    live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
+    live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
+    live.log_artifact("artifact.txt")
+    template = get_dvc_stage_template(live)
+
+    assert YAML_LOADER.load(template) == {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": [
+                    {"sub/dir/live/params.yaml": {"cache": False}},
+                    {"sub/dir/live/metrics.json": {"cache": False}},
+                    {"sub/dir/live/plots": {"cache": False}},
+                    "sub/dir/artifact.txt",
+                ],
             }
         }
     }

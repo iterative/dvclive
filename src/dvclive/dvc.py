@@ -165,17 +165,20 @@ def get_dvc_stage_template(live):
         "deps": ["<my_code_file.py>"],
         "outs": [],
     }
-    rel_path = os.path.relpath(os.getcwd(), live._dvc_repo.root_dir)
+    rel_path = Path(os.path.relpath(os.getcwd(), live._dvc_repo.root_dir))
     if live._params:
-        params_path = (Path(rel_path) / Path(live.params_file)).as_posix()
+        params_path = (rel_path / live.params_file).as_posix()
         stage["outs"].append({params_path: {"cache": False}})
     if live._metrics:
-        metrics_path = (Path(rel_path) / Path(live.metrics_file)).as_posix()
+        metrics_path = (rel_path / live.metrics_file).as_posix()
         stage["outs"].append({metrics_path: {"cache": False}})
     if live._metrics or live._images or live._plots:
-        plots_path = (Path(rel_path) / Path(live.plots_dir)).as_posix()
+        plots_path = (rel_path / live.plots_dir).as_posix()
         stage["outs"].append({plots_path: {"cache": False}})
-    stage["outs"] += list(live._outs)
+    for o in live._outs:
+        artifact_path = Path(os.getcwd()) / o
+        artifact_path = artifact_path.relative_to(live._dvc_repo.root_dir).as_posix()
+        stage["outs"].append(artifact_path)
     dvcyaml_dict = {"stages": {"dvclive": stage}}
 
     output = StringIO()
