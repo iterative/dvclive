@@ -490,7 +490,6 @@ def test_make_dvcyaml(tmp_dir, dvcyaml):
 def test_get_dvc_stage_template(tmp_dir, mocker, mocked_dvc_repo):
     logger = mocker.patch("dvclive.live.logger")
     dvclive = Live()
-    dvclive._dvc_repo.root_dir = tmp_dir
     dvclive.end()
 
     template = {

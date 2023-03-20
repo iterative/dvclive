@@ -1,7 +1,5 @@
 # pylint: disable=unused-argument,protected-access
 
-import os
-
 import pytest
 from dvc.repo import Repo
 from PIL import Image
@@ -208,7 +206,6 @@ def test_get_dvc_stage_template_empty(tmp_dir, mocked_dvc_repo):
 
 
 def test_get_dvc_stage_template_params(tmp_dir, mocked_dvc_repo):
-    mocked_dvc_repo.root_dir = tmp_dir
     live = Live()
     live.log_param("foo", 1)
     template = get_dvc_stage_template(live)
@@ -225,7 +222,6 @@ def test_get_dvc_stage_template_params(tmp_dir, mocked_dvc_repo):
 
 
 def test_get_dvc_stage_template_metrics(tmp_dir, mocked_dvc_repo):
-    mocked_dvc_repo.root_dir = tmp_dir
     live = Live()
     live.log_metric("foo", 1)
     template = get_dvc_stage_template(live)
@@ -245,7 +241,6 @@ def test_get_dvc_stage_template_metrics(tmp_dir, mocked_dvc_repo):
 
 
 def test_get_dvc_stage_template_image(tmp_dir, mocked_dvc_repo):
-    mocked_dvc_repo.root_dir = tmp_dir
     live = Live()
     live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
     template = get_dvc_stage_template(live)
@@ -262,7 +257,6 @@ def test_get_dvc_stage_template_image(tmp_dir, mocked_dvc_repo):
 
 
 def test_get_dvc_stage_template_sklearn_plots(tmp_dir, mocked_dvc_repo):
-    mocked_dvc_repo.root_dir = tmp_dir
     live = Live()
     live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
     template = get_dvc_stage_template(live)
@@ -279,7 +273,6 @@ def test_get_dvc_stage_template_sklearn_plots(tmp_dir, mocked_dvc_repo):
 
 
 def test_get_dvc_stage_template_artifacts(tmp_dir, mocked_dvc_repo):
-    mocked_dvc_repo.root_dir = tmp_dir
     live = Live()
     live.log_artifact("artifact.txt")
     template = get_dvc_stage_template(live)
@@ -296,7 +289,6 @@ def test_get_dvc_stage_template_artifacts(tmp_dir, mocked_dvc_repo):
 
 
 def test_get_dvc_stage_template_chdir(tmp_dir, mocked_dvc_repo, monkeypatch):
-    mocked_dvc_repo.root_dir = tmp_dir
     d = tmp_dir / "sub" / "dir"
     d.mkdir(parents=True)
     monkeypatch.chdir(d)
