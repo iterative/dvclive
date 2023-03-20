@@ -25,7 +25,7 @@ def load_yaml(path, typ="safe"):
             raise YAMLFileCorruptedError(path)
 
 
-def _get_yaml():
+def get_yaml():
     from ruamel.yaml import YAML
 
     yaml = YAML()
@@ -38,7 +38,7 @@ def _get_yaml():
 
 
 def dump_yaml(content, output_file):
-    yaml = _get_yaml()
+    yaml = get_yaml()
     with open(output_file, "w", encoding="utf-8") as fd:
         yaml.dump(content, fd)
 

@@ -3,12 +3,15 @@
 import pytest
 from dvc.repo import Repo
 from PIL import Image
+from ruamel.yaml import YAML
 from scmrepo.git import Git
 
 from dvclive import Live
-from dvclive.dvc import get_dvc_repo, make_dvcyaml
+from dvclive.dvc import get_dvc_repo, get_dvc_stage_template, make_dvcyaml
 from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME
 from dvclive.serialize import load_yaml
+
+YAML_LOADER = YAML(typ="safe")
 
 
 def test_get_dvc_repo(tmp_dir):
@@ -185,3 +188,129 @@ def test_exp_save_dvcexception_is_ignored(tmp_dir, mocker):
 
     with Live(save_dvc_exp=True):
         pass
+
+
+def test_get_dvc_stage_template_empty(tmp_dir, mocked_dvc_repo):
+    live = Live()
+    template = get_dvc_stage_template(live)
+
+    assert YAML_LOADER.load(template) == {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": [],
+            }
+        }
+    }
+
+
+def test_get_dvc_stage_template_params(tmp_dir, mocked_dvc_repo):
+    live = Live()
+    live.log_param("foo", 1)
+    template = get_dvc_stage_template(live)
+
+    assert YAML_LOADER.load(template) == {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": [{"dvclive/params.yaml": {"cache": False}}],
+            }
+        }
+    }
+
+
+def test_get_dvc_stage_template_metrics(tmp_dir, mocked_dvc_repo):
+    live = Live()
+    live.log_metric("foo", 1)
+    template = get_dvc_stage_template(live)
+
+    assert YAML_LOADER.load(template) == {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": [
+                    {"dvclive/metrics.json": {"cache": False}},
+                    {"dvclive/plots": {"cache": False}},
+                ],
+            }
+        }
+    }
+
+
+def test_get_dvc_stage_template_image(tmp_dir, mocked_dvc_repo):
+    live = Live()
+    live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
+    template = get_dvc_stage_template(live)
+
+    assert YAML_LOADER.load(template) == {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": [{"dvclive/plots": {"cache": False}}],
+            }
+        }
+    }
+
+
+def test_get_dvc_stage_template_sklearn_plots(tmp_dir, mocked_dvc_repo):
+    live = Live()
+    live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
+    template = get_dvc_stage_template(live)
+
+    assert YAML_LOADER.load(template) == {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": [{"dvclive/plots": {"cache": False}}],
+            }
+        }
+    }
+
+
+def test_get_dvc_stage_template_artifacts(tmp_dir, mocked_dvc_repo):
+    live = Live()
+    live.log_artifact("artifact.txt")
+    template = get_dvc_stage_template(live)
+
+    assert YAML_LOADER.load(template) == {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": ["artifact.txt"],
+            }
+        }
+    }
+
+
+def test_get_dvc_stage_template_chdir(tmp_dir, mocked_dvc_repo, monkeypatch):
+    d = tmp_dir / "sub" / "dir"
+    d.mkdir(parents=True)
+    monkeypatch.chdir(d)
+    live = Live("live")
+    live.log_param("foo", 1)
+    live.log_metric("bar", 1)
+    live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
+    live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
+    live.log_artifact("artifact.txt")
+    template = get_dvc_stage_template(live)
+
+    assert YAML_LOADER.load(template) == {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": [
+                    {"sub/dir/live/params.yaml": {"cache": False}},
+                    {"sub/dir/live/metrics.json": {"cache": False}},
+                    {"sub/dir/live/plots": {"cache": False}},
+                    "sub/dir/artifact.txt",
+                ],
+            }
+        }
+    }
