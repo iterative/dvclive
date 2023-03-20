@@ -51,6 +51,7 @@ class DVCLiveCallback(Callback):
                 self.model.save_weights(self.model_file)
             else:
                 self.model.save(self.model_file)
+            self.live.log_artifact(self.model_file)
         self.live.next_step()
 
     def on_train_end(

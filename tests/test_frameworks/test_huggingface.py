@@ -127,6 +127,10 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker):
 def test_huggingface_model_file(tmp_dir, model, args, data, mocker):
     model_path = tmp_dir / "model_hf"
     model_save = mocker.spy(model, "save_pretrained")
+
+    live_callback = DVCLiveCallback(model_file=model_path)
+    log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
+
     trainer = Trainer(
         model,
         args,
@@ -134,7 +138,7 @@ def test_huggingface_model_file(tmp_dir, model, args, data, mocker):
         eval_dataset=data[1],
         compute_metrics=compute_metrics,
     )
-    trainer.add_callback(DVCLiveCallback(model_file=model_path))
+    trainer.add_callback(live_callback)
     trainer.train()
 
     assert model_path.is_dir()
@@ -142,6 +146,7 @@ def test_huggingface_model_file(tmp_dir, model, args, data, mocker):
     assert (model_path / "pytorch_model.bin").exists()
     assert (model_path / "config.json").exists()
     assert model_save.call_count == 2
+    log_artifact.assert_called_with(model_path)
 
 
 def test_huggingface_pass_logger():
@@ -149,3 +154,21 @@ def test_huggingface_pass_logger():
 
     assert DVCLiveCallback().live is not logger
     assert DVCLiveCallback(live=logger).live is logger
+
+
+def test_huggingface_log_artifact(tmp_dir, model, args, data, mocker):
+    live_callback = DVCLiveCallback()
+    log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
+
+    args.load_best_model_at_end = True
+    trainer = Trainer(
+        model,
+        args,
+        train_dataset=data[0],
+        eval_dataset=data[1],
+        compute_metrics=compute_metrics,
+    )
+    trainer.add_callback(live_callback)
+    trainer.train()
+
+    log_artifact.assert_called_with(trainer.args.output_dir)
