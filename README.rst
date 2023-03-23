@@ -17,7 +17,7 @@ DVCLive
 .. |License| image:: https://img.shields.io/pypi/l/dvclive
    :target: https://opensource.org/licenses/Apache-2.0
    :alt: License
-.. |Tests| image:: https://github.com/iterative/dvclive/workflows/Tests/badge.svg
+.. |Tests| image:: https://github.com/iterative/dvclive/workflows/Tests/badge.svg?branch=main
    :target: https://github.com/iterative/dvclive/actions?workflow=Tests
    :alt: Tests
 .. |Codecov| image:: https://codecov.io/gh/iterative/dvclive/branch/main/graph/badge.svg
