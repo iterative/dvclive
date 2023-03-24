@@ -225,6 +225,10 @@ def test_get_dvc_stage_template_chdir(tmp_dir, mocked_dvc_repo, monkeypatch):
     d.mkdir(parents=True)
     monkeypatch.chdir(d)
     live = Live("live")
+    live.log_param("foo", 1)
+    live.log_metric("bar", 1)
+    live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
+    live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
     live.log_artifact("artifact.txt")
     template = get_dvc_stage_template(live)
 
