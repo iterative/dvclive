@@ -497,7 +497,6 @@ def test_get_dvc_stage_template(tmp_dir, mocker, mocked_dvc_repo):
             "dvclive": {
                 "cmd": "<python my_code_file.py my_args>",
                 "deps": ["<my_code_file.py>"],
-                "outs": [],
             }
         }
     }
