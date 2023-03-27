@@ -213,7 +213,7 @@ def test_lightning_val_udpates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio
     mocked_post, _ = mocked_studio_post
 
     model = ValLitXOR()
-    dvclive_logger = DVCLiveLogger()
+    dvclive_logger = DVCLiveLogger(save_dvc_exp=True)
     trainer = Trainer(
         logger=dvclive_logger,
         max_steps=4,

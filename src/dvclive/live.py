@@ -70,7 +70,7 @@ class Live:
             self._init_cleanup()
 
         self._baseline_rev: Optional[str] = None
-        self._exp_name: str = "dvclive-exp"
+        self._exp_name: Optional[str] = None
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
         self._dvc_repo = None
@@ -146,8 +146,17 @@ class Live:
             self._studio_events_to_skip.add("done")
         elif self._dvc_repo is None:
             logger.warning(
-                "Can't send updates to Studio without a DVC Repo."
+                "Can't connect to Studio without a DVC Repo."
                 "\nYou can create a DVC Repo by calling `dvc init`."
+            )
+            self._studio_events_to_skip.add("start")
+            self._studio_events_to_skip.add("data")
+            self._studio_events_to_skip.add("done")
+        elif not self._save_dvc_exp:
+            logger.warning(
+                "Can't connect to Studio without creating a DVC experiment."
+                "\nIf you have a DVC Pipeline, run it with `dvc exp run`."
+                "\nIf you are using DVCLive alone, use `save_dvc_exp=True`."
             )
             self._studio_events_to_skip.add("start")
             self._studio_events_to_skip.add("data")
