@@ -19,6 +19,24 @@ from dvclive.report import (
 )
 
 
+@pytest.mark.parametrize("mode", ["html", "md", "notebook"])
+def test_get_image_renderers(tmp_dir, mode):
+    with Live() as live:
+        img = Image.new("RGB", (10, 10), (255, 0, 0))
+        live.log_image("image.png", img)
+
+    image_renderers = get_image_renderers(
+        tmp_dir / live.plots_dir / LiveImage.subfolder, report_mode=mode
+    )
+    assert len(image_renderers) == 1
+    img = image_renderers[0].datapoints[0]
+    if mode == "md":
+        assert img["src"] == os.path.join("plots", LiveImage.subfolder, "image.png")
+    else:
+        assert img["src"].startswith("data:image;base64,")
+    assert img["rev"] == "image.png"
+
+
 def test_get_renderers(tmp_dir, mocker):
     live = Live()
 
@@ -27,20 +45,7 @@ def test_get_renderers(tmp_dir, mocker):
 
     for i in range(2):
         live.log_metric("foo/bar", i)
-        img = Image.new("RGB", (10, 10), (i, i, i))
-        live.log_image("image.png", img)
         live.next_step()
-
-    image_renderers = get_image_renderers(
-        tmp_dir / live.plots_dir / LiveImage.subfolder
-    )
-    assert len(image_renderers) == 1
-    assert image_renderers[0].datapoints == [
-        {
-            "src": os.path.join("plots", LiveImage.subfolder, "image.png"),
-            "rev": "image.png",
-        }
-    ]
 
     scalar_renderers = get_scalar_renderers(tmp_dir / live.plots_dir / Metric.subfolder)
     assert len(scalar_renderers) == 1
