@@ -1,3 +1,4 @@
+import base64
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -64,13 +65,17 @@ def get_scalar_renderers(metrics_path):
     return renderers
 
 
-def get_image_renderers(images_folder):
+def get_image_renderers(images_folder, report_mode):
     plots_path = images_folder.parent.parent
     renderers = []
     for suffix in Image.suffixes:
         all_images = Path(images_folder).rglob(f"*{suffix}")
         for file in sorted(all_images):
-            src = str(file.relative_to(plots_path))
+            if report_mode in {"html", "notebook"}:
+                base64_str = base64.b64encode(file.read_bytes()).decode()
+                src = f"data:image;base64,{base64_str}"
+            else:
+                src = str(file.relative_to(plots_path))
             name = str(file.relative_to(images_folder))
             data = [
                 {
@@ -144,7 +149,9 @@ def make_report(live: "Live"):
     renderers.extend(get_params_renderers(live.params_file))
     renderers.extend(get_metrics_renderers(live.metrics_file))
     renderers.extend(get_scalar_renderers(plots_path / Metric.subfolder))
-    renderers.extend(get_image_renderers(plots_path / Image.subfolder))
+    renderers.extend(
+        get_image_renderers(plots_path / Image.subfolder, report_mode=live._report_mode)
+    )
     renderers.extend(get_plot_renderers(plots_path / SKLearnPlot.subfolder, live))
 
     if live._report_mode == "html":
