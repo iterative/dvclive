@@ -89,7 +89,7 @@ def make_dvcyaml(live):
     dvcyaml = {}
     if live._params:
         dvcyaml["params"] = [os.path.relpath(live.params_file, live.dir)]
-    if live._metrics:
+    if live._metrics or live.summary:
         dvcyaml["metrics"] = [os.path.relpath(live.metrics_file, live.dir)]
     plots = []
     plots_path = Path(live.plots_dir)
