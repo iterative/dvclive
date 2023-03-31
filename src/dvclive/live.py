@@ -377,9 +377,11 @@ class Live:
             # Prevent `live.end` calls inside context manager
             return
         self.make_summary(update_step=False)
-
         if self._dvcyaml:
             self.make_dvcyaml()
+
+        if self._inside_dvc_exp and self._dvc_repo:
+            self._dvc_repo.scm.add(self._dir)
 
         if "done" not in self._studio_events_to_skip:
             response = False

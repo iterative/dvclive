@@ -241,3 +241,12 @@ def test_get_dvc_stage_template_chdir(tmp_dir, mocked_dvc_repo, monkeypatch):
             }
         }
     }
+
+
+def test_live_dir_is_included_in_dvc_exp_run(tmp_dir, mocked_dvc_repo, monkeypatch):
+    monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
+    monkeypatch.setenv(DVC_EXP_NAME, "bar")
+    live = Live()
+    live.log_metric("foo", 1)
+    live.end()
+    live._dvc_repo.scm.add.assert_called_with(live.dir)
