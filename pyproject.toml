@@ -91,3 +91,7 @@ ignore-words-list = "fpr"
 [tool.bandit]
 exclude_dirs = ["tests"]
 skips = ["B101"]
+
+authors = [
+    "AvatarJ. David Ibáñez <jdavid.ibp@gmail.com>",
+]
