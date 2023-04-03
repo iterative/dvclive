@@ -25,3 +25,5 @@ def test_optuna_(tmp_dir, mocked_dvc_repo):
     assert metric_name in metrics
     params = load_yaml("dvclive-optuna/params.yaml")
     assert "x" in params
+
+    assert not (tmp_dir / "dvclive-optuna" / "plots").exists()
