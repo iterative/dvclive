@@ -43,4 +43,4 @@ class DVCLiveCallback:
 
         metrics = {name: val for name, val in zip(names, values)}
         for k, v in metrics.items():
-            live.log_metric(k, v)
+            live.summary[k] = v
