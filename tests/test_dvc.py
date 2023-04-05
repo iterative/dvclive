@@ -1,4 +1,5 @@
 # pylint: disable=unused-argument,protected-access
+import os
 
 import pytest
 from dvc.repo import Repo
@@ -253,10 +254,35 @@ def test_get_dvc_stage_template_chdir(tmp_dir, mocked_dvc_repo, monkeypatch):
     }
 
 
-def test_live_dir_is_included_in_dvc_exp_run(tmp_dir, mocked_dvc_repo, monkeypatch):
+def test_untracked_dvclive_files_inside_dvc_exp_run_are_added(
+    tmp_dir, mocked_dvc_repo, monkeypatch
+):
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
-    live = Live()
-    live.log_metric("foo", 1)
-    live.end()
-    live._dvc_repo.scm.add.assert_called_with(live.dir)
+    plot_file = os.path.join("dvclive", "plots", "metrics", "foo.tsv")
+    mocked_dvc_repo.scm.untracked_files.return_value = [
+        "dvclive/metrics.json",
+        plot_file,
+    ]
+    with Live(report=None) as live:
+        live.log_metric("foo", 1)
+        live.next_step()
+    live._dvc_repo.scm.add.assert_called_with(["dvclive/metrics.json", plot_file])
+
+
+def test_dvc_outs_are_not_added(tmp_dir, mocked_dvc_repo, monkeypatch):
+    """Regression test for https://github.com/iterative/dvclive/issues/516"""
+    monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
+    monkeypatch.setenv(DVC_EXP_NAME, "bar")
+    mocked_dvc_repo.index.outs = ["dvclive/plots"]
+    plot_file = os.path.join("dvclive", "plots", "metrics", "foo.tsv")
+    mocked_dvc_repo.scm.untracked_files.return_value = [
+        "dvclive/metrics.json",
+        plot_file,
+    ]
+
+    with Live(report=None) as live:
+        live.log_metric("foo", 1)
+        live.next_step()
+
+    live._dvc_repo.scm.add.assert_called_with(["dvclive/metrics.json"])
