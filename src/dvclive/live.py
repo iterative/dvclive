@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Set, Union
 from dvc_studio_client.env import STUDIO_TOKEN
 from dvc_studio_client.post_live_metrics import post_live_metrics
 from funcy import set_in
+from pathspec import PathSpec
 from ruamel.yaml.representer import RepresenterError
 
 from . import env
@@ -381,7 +382,17 @@ class Live:
             self.make_dvcyaml()
 
         if self._inside_dvc_exp and self._dvc_repo:
-            self._dvc_repo.scm.add(self._dir)
+            dir_spec = PathSpec.from_lines("gitwildmatch", [self.dir])
+            outs_spec = PathSpec.from_lines(
+                "gitwildmatch", [str(o) for o in self._dvc_repo.index.outs]
+            )
+            paths_to_track = [
+                f
+                for f in self._dvc_repo.scm.untracked_files()
+                if (dir_spec.match_file(f) and not outs_spec.match_file(f))
+            ]
+            if paths_to_track:
+                self._dvc_repo.scm.add(paths_to_track)
 
         if "done" not in self._studio_events_to_skip:
             response = False
