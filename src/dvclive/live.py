@@ -269,6 +269,11 @@ class Live:
         if not Image.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 
+        if isinstance(val, str) or isinstance(val, Path):
+            from PIL import Image as ImagePIL
+
+            val = ImagePIL.open(val)
+
         if name in self._images:
             data = self._images[name]
         else:
