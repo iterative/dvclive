@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path, PurePath
 
 from .base import Data
 
@@ -18,6 +18,8 @@ class Image(Data):
         if val.__class__.__module__ == "PIL.Image":
             return True
         if val.__class__.__module__ == "numpy":
+            return True
+        if isinstance(val, PurePath) or isinstance(val, str):
             return True
         return False
 
