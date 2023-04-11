@@ -35,9 +35,9 @@ DVCLive is a Python library for logging machine learning metrics and other metad
 `Documentation <https://dvc.org/doc/dvclive>`_
 ----------------------------------------------
 
-- `Get Started <https://dvc.org/doc/dvclive/get-started>`_
+- `Get Started <https://dvc.org/doc/start/experiments>`_
 - `How it Works <https://dvc.org/doc/dvclive/how-it-works>`_
-- `API Reference <https://dvc.org/doc/dvclive/api-reference>`_
+- `API Reference <https://dvc.org/doc/dvclive/live>`_
 
 Installation
 ------------
