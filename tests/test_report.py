@@ -6,6 +6,7 @@ from PIL import Image
 
 from dvclive import Live
 from dvclive.env import DVCLIVE_OPEN
+from dvclive.error import InvalidReportModeError
 from dvclive.plots import Image as LiveImage
 from dvclive.plots import Metric
 from dvclive.plots.sklearn import ConfusionMatrix, Roc, SKLearnPlot
@@ -88,7 +89,7 @@ def test_report_init(monkeypatch, mocker):
         live = Live(report=report)
         assert live._report_mode == report
 
-    with pytest.raises(ValueError, match="Invalid report mode"):
+    with pytest.raises(InvalidReportModeError, match="Got foo instead."):
         Live(report="foo")
 
 
