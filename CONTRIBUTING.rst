@@ -41,17 +41,27 @@ Request features on the `Issue Tracker`_.
 How to set up your development environment
 ------------------------------------------
 
-You need Python 3.8+ and the following tools:
+You need Python 3.8+.
 
-- Nox_
-
-Install the package with development requirements:
+- Clone the repository:
 
 .. code:: console
 
-   $ pip install nox
+   $ git clone https://github.com/iterative/dvclive
+   $ cd dvclive
 
-.. _Nox: https://nox.thea.codes/
+- Set up a virtual environment:
+
+.. code:: console
+
+   $ python -m venv .venv
+   $ source .venv/bin/activate
+
+Install in editable mode:
+
+.. code:: console
+
+   $ pip install -e .
 
 
 How to test the project
@@ -61,22 +71,9 @@ Run the full test suite:
 
 .. code:: console
 
-   $ nox
+   $ pytest -v tests
 
-List the available Nox sessions:
-
-.. code:: console
-
-   $ nox --list-sessions
-
-You can also run a specific Nox session.
-For example, invoke the unit test suite like this:
-
-.. code:: console
-
-   $ nox --session=tests
-
-Unit tests are located in the ``tests`` directory,
+Tests are located in the ``tests`` directory,
 and are written using the pytest_ testing framework.
 
 .. _pytest: https://pytest.readthedocs.io/
@@ -89,17 +86,17 @@ Open a `pull request`_ to submit changes to this project.
 
 Your pull request needs to meet the following guidelines for acceptance:
 
-- The Nox test suite must pass without errors and warnings.
-- Include unit tests. This project maintains 100% code coverage.
+- The test suite must pass without errors and warnings.
+- Include unit tests.
 - If your changes add functionality, update the documentation accordingly.
 
 Feel free to submit early, though—we can always iterate on this.
 
-To run linting and code formatting checks, you can invoke a `lint` session in nox:
+To run linting and code formatting checks, you can use `pre-commit`:
 
 .. code:: console
 
-   $ nox -s lint
+   $ pre-commit run --all-files
 
 It is recommended to open an issue before starting work on anything.
 This will allow a chance to talk it over with the owners and validate your approach.
