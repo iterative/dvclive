@@ -7,8 +7,6 @@ from dvclive.keras import DVCLiveCallback
 from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
 
-# pylint: disable=unused-argument, no-name-in-module, redefined-outer-name
-
 
 @pytest.fixture()
 def xor_model():

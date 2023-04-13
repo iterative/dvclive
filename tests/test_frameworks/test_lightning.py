@@ -13,8 +13,6 @@ from dvclive.plots.metric import Metric
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
 
-# pylint: disable=redefined-outer-name, unused-argument
-
 
 class XORDataset(Dataset):
     def __init__(self, *args, **kwargs):

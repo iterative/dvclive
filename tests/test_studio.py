@@ -1,4 +1,3 @@
-# pylint: disable=protected-access,redefined-outer-name,unused-argument
 from pathlib import Path
 
 import pytest

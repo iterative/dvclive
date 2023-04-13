@@ -10,8 +10,6 @@ from dvclive import Live
 from dvclive.utils import parse_metrics
 from dvclive.xgb import DVCLiveCallback
 
-# pylint: disable=redefined-outer-name, unused-argument
-
 
 @pytest.fixture()
 def train_params():

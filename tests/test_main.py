@@ -1,5 +1,3 @@
-# pylint: disable=protected-access
-# pylint: disable=unused-argument
 import json
 import os
 from io import StringIO

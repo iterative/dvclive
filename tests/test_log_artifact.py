@@ -1,4 +1,3 @@
-# pylint: disable=unused-argument,protected-access
 from dvclive import Live
 
 

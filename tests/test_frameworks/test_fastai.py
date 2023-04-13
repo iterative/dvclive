@@ -15,8 +15,6 @@ from dvclive import Live
 from dvclive.fastai import DVCLiveCallback
 from dvclive.plots.metric import Metric
 
-# pylint: disable=redefined-outer-name, unused-argument
-
 
 @pytest.fixture()
 def data_loader():

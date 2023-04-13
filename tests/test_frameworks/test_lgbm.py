@@ -12,8 +12,6 @@ from dvclive import Live
 from dvclive.lgbm import DVCLiveCallback
 from dvclive.utils import parse_metrics
 
-# pylint: disable=redefined-outer-name, unused-argument
-
 
 @pytest.fixture()
 def model_params():
