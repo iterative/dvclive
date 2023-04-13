@@ -77,7 +77,6 @@ class DVCLiveCallback(Callback):
         if _inside_fine_tune() and not self.freeze_stage_ended:
             self.freeze_stage_ended = True
         else:
-            if hasattr(self, "save_model"):
-                if self.save_model.last_saved_path:
-                    self.live.log_artifact(str(self.save_model.last_saved_path))
+            if hasattr(self, "save_model") and self.save_model.last_saved_path:
+                self.live.log_artifact(str(self.save_model.last_saved_path))
             self.live.end()

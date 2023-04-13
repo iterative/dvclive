@@ -6,14 +6,13 @@ import webbrowser
 from pathlib import Path
 from platform import uname
 
-# noqa pylint: disable=unused-import
-
 
 def run_once(f):
     def wrapper(*args, **kwargs):
         if not wrapper.has_run:
             wrapper.has_run = True
             return f(*args, **kwargs)
+        return None
 
     wrapper.has_run = False
     return wrapper
@@ -107,10 +106,9 @@ def matplotlib_installed() -> bool:
 def inside_colab() -> bool:
     try:
         from google import colab  # noqa: F401
-
-        return True
     except ImportError:
         return False
+    return True
 
 
 def inside_notebook() -> bool:

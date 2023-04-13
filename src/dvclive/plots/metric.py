@@ -16,9 +16,11 @@ class Metric(Data):
     def could_log(val: object) -> bool:
         if isinstance(val, (int, float)):
             return True
-        if val.__class__.__module__ == "numpy":
-            if val.__class__.__name__ in NUMPY_SCALARS:
-                return True
+        if (
+            val.__class__.__module__ == "numpy"
+            and val.__class__.__name__ in NUMPY_SCALARS
+        ):
+            return True
         return False
 
     @property

@@ -1,4 +1,4 @@
-# pylint: disable=protected-access
+# ruff: noqa: ARG002
 import inspect
 from typing import Any, Dict, Optional
 
@@ -39,7 +39,7 @@ class DVCLiveLogger(Logger):
         run_name: Optional[str] = "dvclive_run",
         prefix="",
         experiment=None,
-        dir: Optional[str] = None,  # noqa pylint: disable=redefined-builtin
+        dir: Optional[str] = None,  # noqa: A002
         resume: bool = False,
         report: Optional[str] = "auto",
         save_dvc_exp: bool = False,
@@ -58,7 +58,7 @@ class DVCLiveLogger(Logger):
         self._experiment = experiment
         self._version = run_name
         # Force Live instantiation
-        self.experiment  # noqa pylint: disable=pointless-statement
+        self.experiment  # noqa: B018
 
     @property
     def name(self):
@@ -82,11 +82,7 @@ class DVCLiveLogger(Logger):
         """
         if self._experiment is not None:
             return self._experiment
-        else:
-            assert (
-                rank_zero_only.rank == 0
-            ), "tried to init log dirs in non global_rank=0"
-            self._experiment = Live(**self._live_init)
+        self._experiment = Live(**self._live_init)
 
         return self._experiment
 
@@ -96,21 +92,19 @@ class DVCLiveLogger(Logger):
 
     @rank_zero_only
     def log_metrics(self, metrics: Dict[str, Any], step: Optional[int] = None):
-        assert (
-            rank_zero_only.rank == 0  # type: ignore
-        ), "experiment tried to log from global_rank != 0"
         self.experiment.step = step
         for metric_name, metric_val in metrics.items():
-            if is_tensor(metric_val):
-                metric_val = metric_val.cpu().detach().item()
-            metric_name = standardize_metric_name(metric_name, __name__)
-            self.experiment.log_metric(name=metric_name, val=metric_val)
+            val = metric_val
+            if is_tensor(val):
+                val = val.cpu().detach().item()
+            name = standardize_metric_name(metric_name, __name__)
+            self.experiment.log_metric(name=name, val=val)
         if _should_call_next_step():
-            if step == self.experiment._latest_studio_step:
+            if step == self.experiment._latest_studio_step:  # noqa: SLF001
                 # We are in log_eval_end_metrics but there has been already
                 # a studio request sent with `step`.
                 # We decrease the number to bypass `live.studio._get_unsent_datapoints`
-                self.experiment._latest_studio_step -= 1
+                self.experiment._latest_studio_step -= 1  # noqa: SLF001
             self.experiment.next_step()
 
     @rank_zero_only

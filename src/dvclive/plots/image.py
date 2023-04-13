@@ -19,11 +19,11 @@ class Image(Data):
             return True
         if val.__class__.__module__ == "numpy":
             return True
-        if isinstance(val, PurePath) or isinstance(val, str):
+        if isinstance(val, (PurePath, str)):
             return True
         return False
 
-    def dump(self, val, **kwargs) -> None:
+    def dump(self, val, **kwargs) -> None:  # noqa: ARG002
         if val.__class__.__module__ == "numpy":
             from PIL import Image as ImagePIL
 

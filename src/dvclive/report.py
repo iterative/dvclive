@@ -1,3 +1,4 @@
+# ruff: noqa: SLF001
 import base64
 import json
 from pathlib import Path
@@ -9,6 +10,7 @@ from dvc_render.markdown import render_markdown
 from dvc_render.table import TableRenderer
 from dvc_render.vega import VegaRenderer
 
+from dvclive.error import InvalidReportModeError
 from dvclive.plots import SKLEARN_PLOTS, Image, Metric
 from dvclive.plots.sklearn import SKLearnPlot
 from dvclive.serialize import load_yaml
@@ -16,9 +18,6 @@ from dvclive.utils import inside_colab, parse_tsv
 
 if TYPE_CHECKING:
     from dvclive import Live
-
-
-# noqa pylint: disable=protected-access
 
 
 BLANK_NOTEBOOK_REPORT = """
@@ -176,4 +175,4 @@ def make_report(live: "Live"):
     elif live._report_mode == "md":
         render_markdown(renderers, live.report_file)
     else:
-        raise ValueError(f"Invalid `mode` {live._report_mode}.")
+        raise InvalidReportModeError(live._report_mode)

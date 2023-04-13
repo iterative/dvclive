@@ -15,12 +15,12 @@ from dvclive.utils import parse_metrics
 # pylint: disable=redefined-outer-name, unused-argument
 
 
-@pytest.fixture
+@pytest.fixture()
 def model_params():
     return {"objective": "multiclass", "n_estimators": 5, "seed": 0}
 
 
-@pytest.fixture
+@pytest.fixture()
 def iris_data():
     iris = datasets.load_iris()
     x = pd.DataFrame(iris["data"], columns=iris["feature_names"])

@@ -18,7 +18,7 @@ from dvclive.plots.metric import Metric
 # pylint: disable=redefined-outer-name, unused-argument
 
 
-@pytest.fixture
+@pytest.fixture()
 def data_loader():
     from pandas import DataFrame
 
@@ -28,7 +28,7 @@ def data_loader():
         "y": [1, 0, 0, 1, 1, 0, 0, 1],
     }
     df = DataFrame(d)
-    xor_loader = TabularDataLoaders.from_df(
+    return TabularDataLoaders.from_df(
         df,
         valid_idx=[4, 5, 6, 7],
         batch_size=2,
@@ -36,7 +36,6 @@ def data_loader():
         procs=[Categorify, Normalize],
         y_names="y",
     )
-    return xor_loader
 
 
 def test_fastai_callback(tmp_dir, data_loader, mocker):

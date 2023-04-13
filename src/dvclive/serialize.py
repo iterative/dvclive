@@ -22,7 +22,7 @@ def load_yaml(path, typ="safe"):
         try:
             return yaml.load(fd.read())
         except _YAMLError:
-            raise YAMLFileCorruptedError(path)
+            raise YAMLFileCorruptedError(path) from _YAMLError
 
 
 def get_yaml():

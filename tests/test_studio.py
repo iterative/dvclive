@@ -175,7 +175,7 @@ def test_post_to_studio_end_only_once(tmp_dir, mocked_dvc_repo, mocked_studio_po
     assert mocked_post.call_count == 3
 
 
-@pytest.mark.studio
+@pytest.mark.studio()
 def test_post_to_studio_skip_on_env_var(
     tmp_dir, mocked_dvc_repo, mocked_studio_post, monkeypatch
 ):
@@ -190,7 +190,7 @@ def test_post_to_studio_skip_on_env_var(
     assert mocked_post.call_count == 1
 
 
-@pytest.mark.studio
+@pytest.mark.studio()
 def test_post_to_studio_skip_if_no_token(
     tmp_dir,
     mocker,
@@ -274,7 +274,7 @@ def test_post_to_studio_shorten_names(tmp_dir, mocked_dvc_repo, mocked_studio_po
     )
 
 
-@pytest.mark.studio
+@pytest.mark.studio()
 def test_post_to_studio_inside_dvc_exp(
     tmp_dir, mocker, monkeypatch, mocked_studio_post
 ):
@@ -290,7 +290,7 @@ def test_post_to_studio_inside_dvc_exp(
     assert mocked_post.call_count == 1
 
 
-@pytest.mark.studio
+@pytest.mark.studio()
 def test_post_to_studio_inside_subdir(
     tmp_dir, dvc_repo, mocker, monkeypatch, mocked_studio_post
 ):
@@ -331,7 +331,7 @@ def test_post_to_studio_inside_subdir(
     )
 
 
-@pytest.mark.studio
+@pytest.mark.studio()
 def test_post_to_studio_inside_subdir_dvc_exp(
     tmp_dir, dvc_repo, monkeypatch, mocked_studio_post
 ):

@@ -21,7 +21,12 @@ from .dvc import (
     mark_dvclive_only_ended,
     mark_dvclive_only_started,
 )
-from .error import InvalidDataTypeError, InvalidParameterTypeError, InvalidPlotTypeError
+from .error import (
+    InvalidDataTypeError,
+    InvalidParameterTypeError,
+    InvalidPlotTypeError,
+    InvalidReportModeError,
+)
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
@@ -39,7 +44,7 @@ StrPath = Union[str, Path]
 class Live:
     def __init__(
         self,
-        dir: str = "dvclive",  # noqa pylint: disable=redefined-builtin
+        dir: str = "dvclive",  # noqa: A002
         resume: bool = False,
         report: Optional[str] = "auto",
         save_dvc_exp: bool = False,
@@ -192,13 +197,11 @@ class Live:
             else:
                 self._report_mode = "html"
         elif self._report_mode not in {None, "html", "notebook", "md"}:
-            raise ValueError(
-                "`report` can only be `None`, `auto`, `html`, `notebook` or `md`"
-            )
+            raise InvalidReportModeError(self._report_mode)
         logger.debug(f"{self._report_mode=}")
 
     @property
-    def dir(self) -> str:
+    def dir(self) -> str:  # noqa: A003
         return self._dir
 
     @property
@@ -220,10 +223,7 @@ class Live:
     @property
     def report_file(self) -> Optional[str]:
         if self._report_mode in ("html", "md", "notebook"):
-            if self._report_mode == "notebook":
-                suffix = "html"
-            else:
-                suffix = self._report_mode
+            suffix = "html" if self._report_mode == "notebook" else self._report_mode
             return os.path.join(self.dir, f"report.{suffix}")
         return None
 
@@ -269,7 +269,7 @@ class Live:
         if not Image.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 
-        if isinstance(val, str) or isinstance(val, Path):
+        if isinstance(val, (str, Path)):
             from PIL import Image as ImagePIL
 
             val = ImagePIL.open(val)
@@ -329,7 +329,7 @@ class Live:
         if self._dvc_repo is not None:
             try:
                 stage = self._dvc_repo.add(path)
-            except Exception as e:  # pylint: disable=broad-except
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to dvc add {path}: {e}")
                 return
 
@@ -386,18 +386,7 @@ class Live:
         if self._dvcyaml:
             self.make_dvcyaml()
 
-        if self._inside_dvc_exp and self._dvc_repo:
-            dir_spec = PathSpec.from_lines("gitwildmatch", [self.dir])
-            outs_spec = PathSpec.from_lines(
-                "gitwildmatch", [str(o) for o in self._dvc_repo.index.outs]
-            )
-            paths_to_track = [
-                f
-                for f in self._dvc_repo.scm.untracked_files()
-                if (dir_spec.match_file(f) and not outs_spec.match_file(f))
-            ]
-            if paths_to_track:
-                self._dvc_repo.scm.add(paths_to_track)
+        self._ensure_paths_are_tracked_in_dvc_exp()
 
         if "done" not in self._studio_events_to_skip:
             response = False
@@ -419,19 +408,7 @@ class Live:
         else:
             self.make_report()
 
-        if self._save_dvc_exp:
-            from dvc.exceptions import DvcException
-
-            try:
-                self._experiment_rev = self._dvc_repo.experiments.save(
-                    name=self._exp_name,
-                    include_untracked=self._include_untracked,
-                    force=True,
-                )
-            except DvcException as e:
-                logger.warning(f"Failed to save experiment:\n{e}")
-            finally:
-                mark_dvclive_only_ended()
+        self.save_dvc_exp()
 
         if self._dvc_repo and not self._inside_dvc_exp:
             from dvc.exceptions import DvcException
@@ -464,3 +441,32 @@ class Live:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._inside_with = False
         self.end()
+
+    def _ensure_paths_are_tracked_in_dvc_exp(self):
+        if self._inside_dvc_exp and self._dvc_repo:
+            dir_spec = PathSpec.from_lines("gitwildmatch", [self.dir])
+            outs_spec = PathSpec.from_lines(
+                "gitwildmatch", [str(o) for o in self._dvc_repo.index.outs]
+            )
+            paths_to_track = [
+                f
+                for f in self._dvc_repo.scm.untracked_files()
+                if (dir_spec.match_file(f) and not outs_spec.match_file(f))
+            ]
+            if paths_to_track:
+                self._dvc_repo.scm.add(paths_to_track)
+
+    def save_dvc_exp(self):
+        if self._save_dvc_exp:
+            from dvc.exceptions import DvcException
+
+            try:
+                self._experiment_rev = self._dvc_repo.experiments.save(
+                    name=self._exp_name,
+                    include_untracked=self._include_untracked,
+                    force=True,
+                )
+            except DvcException as e:
+                logger.warning(f"Failed to save experiment:\n{e}")
+            finally:
+                mark_dvclive_only_ended()

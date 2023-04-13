@@ -1,3 +1,4 @@
+# ruff: noqa: N806
 import os
 
 import catalyst
@@ -9,10 +10,8 @@ from dvclive import Live
 from dvclive.catalyst import DVCLiveCallback
 from dvclive.plots import Metric
 
-# pylint: disable=redefined-outer-name, unused-argument
 
-
-@pytest.fixture
+@pytest.fixture()
 def runner():
     return dl.SupervisedRunner(
         engine=catalyst.utils.torch.get_available_engine(cpu=True),
@@ -25,7 +24,7 @@ def runner():
 
 # see:
 # https://github.com/catalyst-team/catalyst/blob/e99f9/tests/catalyst/callbacks/test_batch_overfit.py
-@pytest.fixture
+@pytest.fixture()
 def runner_params():
     from torch.utils.data import DataLoader, TensorDataset
 

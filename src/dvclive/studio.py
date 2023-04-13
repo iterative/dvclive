@@ -1,4 +1,4 @@
-# pylint: disable=protected-access
+# ruff: noqa: SLF001
 import logging
 import os
 from pathlib import Path

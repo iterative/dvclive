@@ -2,12 +2,11 @@ import numpy as np
 import pytest
 from PIL import Image
 
-# pylint: disable=unused-argument
 from dvclive import Live
 from dvclive.plots import Image as LiveImage
 
 
-def test_PIL(tmp_dir):
+def test_pil(tmp_dir):
     live = Live()
     img = Image.new("RGB", (10, 10), (250, 250, 250))
     live.log_image("image.png", img)
@@ -18,7 +17,7 @@ def test_PIL(tmp_dir):
 def test_invalid_extension(tmp_dir):
     live = Live()
     img = Image.new("RGB", (10, 10), (250, 250, 250))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="unknown file extension"):
         live.log_image("image.foo", img)
 
 

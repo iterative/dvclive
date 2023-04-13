@@ -89,7 +89,7 @@ def test_report_init(monkeypatch, mocker):
         live = Live(report=report)
         assert live._report_mode == report
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid report mode"):
         Live(report="foo")
 
 
@@ -108,7 +108,7 @@ def test_make_report(tmp_dir, mode):
         last_report = current_report
 
 
-@pytest.mark.vscode
+@pytest.mark.vscode()
 def test_make_report_open(tmp_dir, mocker, monkeypatch):
     mocked_open = mocker.patch("webbrowser.open")
     live = Live()
