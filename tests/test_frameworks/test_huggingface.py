@@ -11,8 +11,6 @@ from dvclive.huggingface import DVCLiveCallback
 from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
 
-# pylint: disable=redefined-outer-name, unused-argument, no-value-for-parameter
-
 
 def compute_metrics(eval_preds):
     """https://github.com/iterative/dvclive/pull/321#issuecomment-1266916039"""
@@ -74,18 +72,18 @@ class RegressionPreTrainedModel(PreTrainedModel):
         return (loss, y, y) if self.double_output else (loss, y)
 
 
-@pytest.fixture
+@pytest.fixture()
 def data():
     return RegressionDataset(), RegressionDataset()
 
 
-@pytest.fixture
+@pytest.fixture()
 def model():
     config = RegressionModelConfig()
     return RegressionPreTrainedModel(config)
 
 
-@pytest.fixture
+@pytest.fixture()
 def args():
     return TrainingArguments(
         "foo",

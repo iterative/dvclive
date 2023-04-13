@@ -4,7 +4,7 @@ import torch
 from pytorch_lightning import LightningModule
 from pytorch_lightning.trainer import Trainer
 from torch import nn
-from torch.nn import functional as F
+from torch.nn import functional as F  # noqa: N812
 from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 
@@ -12,8 +12,6 @@ from dvclive.lightning import DVCLiveLogger
 from dvclive.plots.metric import Metric
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
-
-# pylint: disable=redefined-outer-name, unused-argument
 
 
 class XORDataset(Dataset):
@@ -51,12 +49,10 @@ class LitXOR(LightningModule):
 
     def train_loader(self):
         dataset = XORDataset()
-        loader = DataLoader(dataset, batch_size=1)
-        return loader
+        return DataLoader(dataset, batch_size=1)
 
     def train_dataloader(self):
-        loader = self.train_loader()
-        return loader
+        return self.train_loader()
 
     def training_step(self, *args, **kwargs):
         batch = args[0]
@@ -184,12 +180,10 @@ def test_lightning_steps(tmp_dir, mocker):
 class ValLitXOR(LitXOR):
     def val_loader(self):
         dataset = XORDataset()
-        loader = DataLoader(dataset, batch_size=1)
-        return loader
+        return DataLoader(dataset, batch_size=1)
 
     def val_dataloader(self):
-        loader = self.val_loader()
-        return loader
+        return self.val_loader()
 
     def training_step(self, *args, **kwargs):
         batch = args[0]

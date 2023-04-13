@@ -1,3 +1,4 @@
+# ruff: noqa: ARG002
 from typing import Optional
 
 from catalyst import utils
@@ -15,8 +16,9 @@ class DVCLiveCallback(Callback):
     def on_epoch_end(self, runner) -> None:
         for loader_key, per_loader_metrics in runner.epoch_metrics.items():
             for key, value in per_loader_metrics.items():
-                key = key.replace("/", "_")
-                self.live.log_metric(f"{loader_key}/{key}", float(value))
+                self.live.log_metric(
+                    f"{loader_key}/{key.replace('/', '_')}", float(value)
+                )
 
         if self.model_file:
             checkpoint = utils.pack_checkpoint(
@@ -28,5 +30,5 @@ class DVCLiveCallback(Callback):
             utils.save_checkpoint(checkpoint, self.model_file)
         self.live.next_step()
 
-    def on_experiment_end(self, runner):  # pylint: disable=unused-argument
+    def on_experiment_end(self, runner):
         self.live.end()

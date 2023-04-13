@@ -1,5 +1,3 @@
-# pylint: disable=protected-access
-# pylint: disable=unused-argument
 import json
 import os
 from io import StringIO
@@ -44,7 +42,7 @@ def test_logging_no_step(tmp_dir):
 
 
 @pytest.mark.parametrize(
-    "param_name,param_value",
+    ("param_name", "param_value"),
     [
         ("param_string", "value"),
         ("param_int", 42),
@@ -93,7 +91,7 @@ def test_log_params(tmp_dir):
     assert s == params
 
 
-@pytest.mark.parametrize("resume", (False, True))
+@pytest.mark.parametrize("resume", [False, True])
 def test_log_params_resume(tmp_dir, resume):
     dvclive = Live(resume=resume)
     dvclive.log_param("param", 42)
@@ -193,7 +191,7 @@ def test_cleanup_params(tmp_dir):
 
 
 @pytest.mark.parametrize(
-    "resume, steps, metrics",
+    ("resume", "steps", "metrics"),
     [(True, [0, 1, 2, 3], [0.9, 0.8, 0.7, 0.6]), (False, [0, 1], [0.7, 0.6])],
 )
 def test_continue(tmp_dir, resume, steps, metrics):
@@ -351,7 +349,7 @@ def test_make_summary_without_calling_log(tmp_dir):
     assert not log_file.exists()
 
 
-@pytest.mark.parametrize("timestamp", (True, False))
+@pytest.mark.parametrize("timestamp", [True, False])
 def test_log_metric_timestamp(tmp_dir, timestamp):
     live = Live()
     live.log_metric("foo", 1.0, timestamp=timestamp)
@@ -440,7 +438,7 @@ def test_create_checkpoint_file(tmp_dir, monkeypatch, dvc_root, set_env, mocker)
         assert not native_exists(os.path.join(".dvc", "tmp", env.DVC_CHECKPOINT))
 
 
-@pytest.mark.vscode
+@pytest.mark.vscode()
 @pytest.mark.parametrize("dvc_root", [True, False])
 def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
     signal_file = os.path.join(tmp_dir, ".dvc", "tmp", "exps", "run", "DVCLIVE_ONLY")

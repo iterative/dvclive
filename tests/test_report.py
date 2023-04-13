@@ -1,4 +1,3 @@
-# pylint: disable=unused-argument,protected-access
 import os
 
 import pytest
@@ -7,6 +6,7 @@ from PIL import Image
 
 from dvclive import Live
 from dvclive.env import DVCLIVE_OPEN
+from dvclive.error import InvalidReportModeError
 from dvclive.plots import Image as LiveImage
 from dvclive.plots import Metric
 from dvclive.plots.sklearn import ConfusionMatrix, Roc, SKLearnPlot
@@ -89,7 +89,7 @@ def test_report_init(monkeypatch, mocker):
         live = Live(report=report)
         assert live._report_mode == report
 
-    with pytest.raises(ValueError):
+    with pytest.raises(InvalidReportModeError, match="Got foo instead."):
         Live(report="foo")
 
 
@@ -108,7 +108,7 @@ def test_make_report(tmp_dir, mode):
         last_report = current_report
 
 
-@pytest.mark.vscode
+@pytest.mark.vscode()
 def test_make_report_open(tmp_dir, mocker, monkeypatch):
     mocked_open = mocker.patch("webbrowser.open")
     live = Live()

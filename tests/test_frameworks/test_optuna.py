@@ -1,4 +1,3 @@
-# pylint: disable=protected-access, unused-argument
 import optuna
 
 from dvclive.optuna import DVCLiveCallback

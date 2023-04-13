@@ -1,3 +1,4 @@
+# ruff: noqa: ARG002
 from dvclive import Live
 
 
@@ -20,27 +21,24 @@ class DVCLiveCallback:
         if isinstance(self.metric_name, str):
             if len(values) > 1:
                 # Broadcast default name for multi-objective optimization.
-                names = [
-                    "{}_{}".format(self.metric_name, i) for i in range(len(values))
-                ]
+                names = [f"{self.metric_name}_{i}" for i in range(len(values))]
 
             else:
                 names = [self.metric_name]
 
-        else:
-            if len(self.metric_name) != len(values):
-                raise ValueError(
-                    "Running multi-objective optimization "
-                    "with {} objective values, but {} names specified. "
-                    "Match objective values and names,"
-                    "or use default broadcasting.".format(
-                        len(values), len(self.metric_name)
-                    )
+        elif len(self.metric_name) != len(values):
+            raise ValueError(
+                "Running multi-objective optimization "
+                "with {} objective values, but {} names specified. "
+                "Match objective values and names,"
+                "or use default broadcasting.".format(
+                    len(values), len(self.metric_name)
                 )
+            )
 
-            else:
-                names = [*self.metric_name]
+        else:
+            names = [*self.metric_name]
 
-        metrics = {name: val for name, val in zip(names, values)}
+        metrics = dict(zip(names, values))
         for k, v in metrics.items():
             live.summary[k] = v

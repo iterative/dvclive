@@ -1,3 +1,4 @@
+# ruff: noqa: ARG002
 from typing import Optional
 
 from xgboost.callback import TrainingCallback

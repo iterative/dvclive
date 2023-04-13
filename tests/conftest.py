@@ -1,17 +1,17 @@
-# pylint: disable=redefined-outer-name
+# ruff: noqa: ARG002
 import sys
 
 import pytest
 from dvc_studio_client.env import STUDIO_ENDPOINT, STUDIO_REPO_URL, STUDIO_TOKEN
 
 
-@pytest.fixture
+@pytest.fixture()
 def tmp_dir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    yield tmp_path
+    return tmp_path
 
 
-@pytest.fixture
+@pytest.fixture()
 def mocked_dvc_repo(tmp_dir, mocker):
     _dvc_repo = mocker.MagicMock()
     _dvc_repo.index.stages = []
@@ -22,8 +22,8 @@ def mocked_dvc_repo(tmp_dir, mocker):
     return _dvc_repo
 
 
-@pytest.fixture
-def dvc_repo(tmp_dir):  # pylint: disable=redefined-outer-name
+@pytest.fixture()
+def dvc_repo(tmp_dir):
     from dvc.repo import Repo
     from scmrepo.git import Git
 
@@ -34,24 +34,23 @@ def dvc_repo(tmp_dir):  # pylint: disable=redefined-outer-name
 
 
 @pytest.fixture(autouse=True)
-def capture_wrap():
+def _capture_wrap():
     # https://github.com/pytest-dev/pytest/issues/5502#issuecomment-678368525
     sys.stderr.close = lambda *args: None
     sys.stdout.close = lambda *args: None
-    yield
 
 
 @pytest.fixture(autouse=True)
-def mocked_webbrowser_open(mocker):
+def _mocked_webbrowser_open(mocker):
     mocker.patch("webbrowser.open")
 
 
 @pytest.fixture(autouse=True)
-def mocked_CI(monkeypatch):
+def _mocked_ci(monkeypatch):
     monkeypatch.setenv("CI", "false")
 
 
-@pytest.fixture
+@pytest.fixture()
 def mocked_studio_post(mocker, monkeypatch):
     valid_response = mocker.MagicMock()
     valid_response.status_code = 200

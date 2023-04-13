@@ -10,15 +10,13 @@ from dvclive import Live
 from dvclive.utils import parse_metrics
 from dvclive.xgb import DVCLiveCallback
 
-# pylint: disable=redefined-outer-name, unused-argument
 
-
-@pytest.fixture
+@pytest.fixture()
 def train_params():
     return {"objective": "multi:softmax", "num_class": 3, "seed": 0}
 
 
-@pytest.fixture
+@pytest.fixture()
 def iris_data():
     iris = datasets.load_iris()
     x = pd.DataFrame(iris["data"], columns=iris["feature_names"])

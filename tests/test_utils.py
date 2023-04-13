@@ -4,7 +4,7 @@ from dvclive.utils import standardize_metric_name
 
 
 @pytest.mark.parametrize(
-    "framework,logged,standardized",
+    ("framework", "logged", "standardized"),
     [
         ("dvclive.lightning", "epoch", "epoch"),
         ("dvclive.lightning", "train_loss", "train/loss"),

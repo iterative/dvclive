@@ -1,3 +1,4 @@
+# ruff: noqa: N806
 import json
 
 import pytest
@@ -6,10 +7,8 @@ from sklearn import calibration, metrics
 from dvclive import Live
 from dvclive.plots.sklearn import SKLearnPlot
 
-# pylint: disable=redefined-outer-name, unused-argument
 
-
-@pytest.fixture
+@pytest.fixture()
 def y_true_y_pred_y_score():
     from sklearn.datasets import make_classification
     from sklearn.ensemble import RandomForestClassifier

@@ -21,7 +21,7 @@ class SKLearnPlot(Data):
 
     @staticmethod
     def could_log(val: object) -> bool:
-        if isinstance(val, tuple) and len(val) == 2:
+        if isinstance(val, tuple) and len(val) == 2:  # noqa: PLR2004
             return True
         return False
 
@@ -125,7 +125,7 @@ class ConfusionMatrix(SKLearnPlot):
             "y_label": "Predicted Label",
         }
 
-    def dump(self, val, **kwargs) -> None:
+    def dump(self, val, **kwargs) -> None:  # noqa: ARG002
         cm = [
             {"actual": str(actual), "predicted": str(predicted)}
             for actual, predicted in zip(val[0], val[1])

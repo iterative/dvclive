@@ -7,10 +7,8 @@ from dvclive.keras import DVCLiveCallback
 from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
 
-# pylint: disable=unused-argument, no-name-in-module, redefined-outer-name
 
-
-@pytest.fixture
+@pytest.fixture()
 def xor_model():
     import numpy as np
     from tensorflow.python.keras import Sequential
@@ -30,10 +28,10 @@ def xor_model():
 
         return model, x, y
 
-    yield make
+    return make
 
 
-def test_keras_callback(tmp_dir, xor_model, capture_wrap, mocker):
+def test_keras_callback(tmp_dir, xor_model, mocker):
     model, x, y = xor_model()
 
     callback = DVCLiveCallback()
@@ -64,8 +62,8 @@ def test_keras_callback_pass_logger():
     assert DVCLiveCallback(live=logger).live is logger
 
 
-@pytest.mark.parametrize("save_weights_only", (True, False))
-def test_keras_model_file(tmp_dir, xor_model, mocker, save_weights_only, capture_wrap):
+@pytest.mark.parametrize("save_weights_only", [True, False])
+def test_keras_model_file(tmp_dir, xor_model, mocker, save_weights_only):
     model, x, y = xor_model()
     save = mocker.spy(model, "save")
     save_weights = mocker.spy(model, "save_weights")
@@ -86,10 +84,8 @@ def test_keras_model_file(tmp_dir, xor_model, mocker, save_weights_only, capture
     log_artifact.assert_called_with(live_callback.model_file)
 
 
-@pytest.mark.parametrize("save_weights_only", (True, False))
-def test_keras_load_model_on_resume(
-    tmp_dir, xor_model, mocker, save_weights_only, capture_wrap
-):
+@pytest.mark.parametrize("save_weights_only", [True, False])
+def test_keras_load_model_on_resume(tmp_dir, xor_model, mocker, save_weights_only):
     import dvclive.keras
 
     model, x, y = xor_model()
@@ -120,7 +116,7 @@ def test_keras_load_model_on_resume(
     assert load_weights.call_count == save_weights_only
 
 
-def test_keras_no_resume_skip_load(tmp_dir, xor_model, mocker, capture_wrap):
+def test_keras_no_resume_skip_load(tmp_dir, xor_model, mocker):
     model, x, y = xor_model()
 
     model.save_weights("model.h5")
@@ -144,9 +140,7 @@ def test_keras_no_resume_skip_load(tmp_dir, xor_model, mocker, capture_wrap):
     assert load_weights.call_count == 0
 
 
-def test_keras_no_existing_model_file_skip_load(
-    tmp_dir, xor_model, mocker, capture_wrap
-):
+def test_keras_no_existing_model_file_skip_load(tmp_dir, xor_model, mocker):
     model, x, y = xor_model()
 
     load_weights = mocker.spy(model, "load_weights")
@@ -168,7 +162,7 @@ def test_keras_no_existing_model_file_skip_load(
     assert load_weights.call_count == 0
 
 
-def test_keras_None_model_file_skip_load(tmp_dir, xor_model, mocker, capture_wrap):
+def test_keras_none_model_file_skip_load(tmp_dir, xor_model, mocker):
     model, x, y = xor_model()
 
     model.save_weights("model.h5")

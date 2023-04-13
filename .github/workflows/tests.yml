@@ -50,10 +50,6 @@ jobs:
       - name: Full install
         run: pip install -e '.[dev]'
 
-      - name: pylint
-        run: |
-           python -m pylint src tests
-
       - name: mypy
         run: |
            python -m mypy --install-types --non-interactive
