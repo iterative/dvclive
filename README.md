@@ -19,17 +19,19 @@ DVC.
 -   [Get Started](https://dvc.org/doc/start/experiments)
 -   [How it Works](https://dvc.org/doc/dvclive/how-it-works)
 -   [API Reference](https://dvc.org/doc/dvclive/live)
+-   [Integrations](https://dvc.org/doc/dvclive/ml-frameworks)
+
+---
 
 # Quickstart
 
-1. Install *dvclive* via [pip](https://pip.pypa.io/) from
-[PyPI](https://pypi.org/):
+## Install *dvclive*
 
 ```console
 $ pip install dvclive
 ```
 
-2. Initialize DVC Repository
+## Initialize DVC Repository
 
 ```console
 $ git init
@@ -37,7 +39,9 @@ $ dvc init
 $ git commit -m "DVC init"
 ```
 
-3. Copy snippet below as a basic example of the API usage:
+## Example code
+
+Copy the snippet below as a basic example of the API usage:
 
 ```python
 # train.py
@@ -56,7 +60,12 @@ with Live(save_dvc_exp=True) as live:
         live.next_step()
 ```
 
-4. Run the code a copuple of times:
+See [Integrations](https://dvc.org/doc/dvclive/ml-frameworks) for examples
+using DVCLive alongside different ML Frameworks.
+
+## Running
+
+Run couple of times passing different values:
 
 ```console
 $ python train.py 5
@@ -64,14 +73,14 @@ $ python train.py 5
 $ python train.py 7
 ```
 
-4. Visualize the results
+## Comparing
 
 DVCLive outputs can be rendered in different ways:
 
-- DVC CLI
+### DVC CLI
 
-You can use [dvc exp show] and [dvc plots] to compare and visualize metrics, 
-parameters and plots across experiments.
+You can use [dvc exp show](https://dvc.org/doc/command-reference/exp/show) and [dvc plots](https://dvc.org/doc/command-reference/plots) to compare and visualize metrics, 
+parameters and plots across experiments:
 
 ```console
 $ dvc exp show
@@ -89,15 +98,29 @@ master                     08:50 PM                -            -              -
 ```
 
 ```console
-$ dvc plots diff ($dvc exp list --names-only)
+$ dvc plots diff $(dvc exp list --names-only) --open
 ```
 
-![dvc plots diff]
+![dvc plots diff](./docs/dvc_plots_diff.png)
 
-- DVC VSCode Extension
+### DVC Extension for VS Code
 
+Inside the [DVC Extension for VS Code](https://marketplace.visualstudio.com/items?itemName=Iterative.dvc), you can compare and visualize results using the [Experiments](https://github.com/iterative/vscode-dvc/blob/main/extension/resources/walkthrough/experiments-table.md) and [Plots](https://github.com/iterative/vscode-dvc/blob/main/extension/resources/walkthrough/plots.md) views:
 
-- DVC Studio
+![VSCode Experiments](./docs/vscode_experiments.png)
+
+![VSCode Plots](./docs/vscode_plots.png)
+
+While experiments are running, live updates will be displayed in both views.
+
+### DVC Studio
+
+If you push the results to [DVC Studio](https://dvc.org/doc/studio), you can compare experiments against the entire repo history:
+
+![Studio Compare](./docs/studio_compare.png)
+
+You can enable [Studio Live Experiments](https://dvc.org/doc/studio/user-guide/projects-and-experiments/live-metrics-and-plots) to see live updates while 
+experiments are running.
 
 ---
 
@@ -110,11 +133,13 @@ $ dvc plots diff ($dvc exp list --names-only)
 -   [Neptune](https://neptune.ai/)
 
 The main difference with those *ML Loggers* is that **DVCLive** does not
-require any additional services or servers to run.
+**require** any additional services or servers to run.
 
-Logged metrics and metadata are stored as plain text files that can be
-versioned by version control tools (i.e Git) or tracked as pointers to
-files in DVC storage.
+Logged metrics, parameters, and plots are stored as plain text files that can be
+versioned by tools like Git or tracked as pointers to files in DVC storage.
+
+You can then use different [options](#visualize-the-results) to visualize the metrics, parameters, and 
+plots.
 
 ------------------------------------------------------------------------
 
