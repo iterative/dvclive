@@ -79,21 +79,21 @@ DVCLive outputs can be rendered in different ways:
 
 ### DVC CLI
 
-You can use [dvc exp show](https://dvc.org/doc/command-reference/exp/show) and [dvc plots](https://dvc.org/doc/command-reference/plots) to compare and visualize metrics, 
+You can use [dvc exp show](https://dvc.org/doc/command-reference/exp/show) and [dvc plots](https://dvc.org/doc/command-reference/plots) to compare and visualize metrics,
 parameters and plots across experiments:
 
 ```console
 $ dvc exp show
 ```
 ```
-───────────────────────────────────────────────────────────────────────────────────────────────────────────── 
-Experiment                 Created    train.accuracy   train.loss   val.accuracy   val.loss   step   epochs  
-───────────────────────────────────────────────────────────────────────────────────────────────────────────── 
-workspace                  -                  6.0109      0.23311          6.062    0.24321      6   7       
-master                     08:50 PM                -            -              -          -      -   -       
-├── 4475845 [aulic-chiv]   08:56 PM           6.0109      0.23311          6.062    0.24321      6   7       
-├── 7d4cef7 [yarer-tods]   08:56 PM           4.8551      0.82012         4.5555   0.033533      4   5       
-└── d503f8e [curst-chad]   08:56 PM           4.9768     0.070585         4.0773    0.46639      4   5       
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Experiment                 Created    train.accuracy   train.loss   val.accuracy   val.loss   step   epochs
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+workspace                  -                  6.0109      0.23311          6.062    0.24321      6   7
+master                     08:50 PM                -            -              -          -      -   -
+├── 4475845 [aulic-chiv]   08:56 PM           6.0109      0.23311          6.062    0.24321      6   7
+├── 7d4cef7 [yarer-tods]   08:56 PM           4.8551      0.82012         4.5555   0.033533      4   5
+└── d503f8e [curst-chad]   08:56 PM           4.9768     0.070585         4.0773    0.46639      4   5
 ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ```
 
@@ -119,7 +119,7 @@ If you push the results to [DVC Studio](https://dvc.org/doc/studio), you can com
 
 ![Studio Compare](./docs/studio_compare.png)
 
-You can enable [Studio Live Experiments](https://dvc.org/doc/studio/user-guide/projects-and-experiments/live-metrics-and-plots) to see live updates while 
+You can enable [Studio Live Experiments](https://dvc.org/doc/studio/user-guide/projects-and-experiments/live-metrics-and-plots) to see live updates while
 experiments are running.
 
 ---
@@ -138,7 +138,7 @@ The main difference with those *ML Loggers* is that **DVCLive** does not
 Logged metrics, parameters, and plots are stored as plain text files that can be
 versioned by tools like Git or tracked as pointers to files in DVC storage.
 
-You can then use different [options](#visualize-the-results) to visualize the metrics, parameters, and 
+You can then use different [options](#visualize-the-results) to visualize the metrics, parameters, and
 plots.
 
 ------------------------------------------------------------------------
