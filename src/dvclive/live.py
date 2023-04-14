@@ -388,6 +388,8 @@ class Live:
 
         self._ensure_paths_are_tracked_in_dvc_exp()
 
+        self.save_dvc_exp()
+
         if "done" not in self._studio_events_to_skip:
             response = False
             if post_live_metrics is not None:
@@ -407,8 +409,6 @@ class Live:
             self._studio_events_to_skip.add("data")
         else:
             self.make_report()
-
-        self.save_dvc_exp()
 
         if self._dvc_repo and not self._inside_dvc_exp:
             from dvc.exceptions import DvcException
