@@ -87,6 +87,7 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
             "type": "done",
             "repo_url": "STUDIO_REPO_URL",
             "baseline_sha": "f" * 40,
+            "experiment_rev": live._experiment_rev,
             "name": live._exp_name,
             "client": "dvclive",
         },
