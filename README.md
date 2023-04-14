@@ -10,18 +10,17 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-DVCLive is a Python library for logging machine learning metrics and
-other metadata in simple file formats, which is fully compatible with
-DVC.
+DVCLive is a Python library for logging machine learning metrics and other
+metadata in simple file formats, which is fully compatible with DVC.
 
 # [Documentation](https://dvc.org/doc/dvclive)
 
--   [Get Started](https://dvc.org/doc/start/experiments)
--   [How it Works](https://dvc.org/doc/dvclive/how-it-works)
--   [API Reference](https://dvc.org/doc/dvclive/live)
--   [Integrations](https://dvc.org/doc/dvclive/ml-frameworks)
+- [Get Started](https://dvc.org/doc/start/experiments)
+- [How it Works](https://dvc.org/doc/dvclive/how-it-works)
+- [API Reference](https://dvc.org/doc/dvclive/live)
+- [Integrations](https://dvc.org/doc/dvclive/ml-frameworks)
 
----
+______________________________________________________________________
 
 # Quickstart
 
@@ -60,8 +59,8 @@ with Live(save_dvc_exp=True) as live:
         live.next_step()
 ```
 
-See [Integrations](https://dvc.org/doc/dvclive/ml-frameworks) for examples
-using DVCLive alongside different ML Frameworks.
+See [Integrations](https://dvc.org/doc/dvclive/ml-frameworks) for examples using
+DVCLive alongside different ML Frameworks.
 
 ## Running
 
@@ -79,12 +78,14 @@ DVCLive outputs can be rendered in different ways:
 
 ### DVC CLI
 
-You can use [dvc exp show](https://dvc.org/doc/command-reference/exp/show) and [dvc plots](https://dvc.org/doc/command-reference/plots) to compare and visualize metrics,
-parameters and plots across experiments:
+You can use [dvc exp show](https://dvc.org/doc/command-reference/exp/show) and
+[dvc plots](https://dvc.org/doc/command-reference/plots) to compare and
+visualize metrics, parameters and plots across experiments:
 
 ```console
 $ dvc exp show
 ```
+
 ```
 ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
 Experiment                 Created    train.accuracy   train.loss   val.accuracy   val.loss   step   epochs
@@ -105,7 +106,13 @@ $ dvc plots diff $(dvc exp list --names-only) --open
 
 ### DVC Extension for VS Code
 
-Inside the [DVC Extension for VS Code](https://marketplace.visualstudio.com/items?itemName=Iterative.dvc), you can compare and visualize results using the [Experiments](https://github.com/iterative/vscode-dvc/blob/main/extension/resources/walkthrough/experiments-table.md) and [Plots](https://github.com/iterative/vscode-dvc/blob/main/extension/resources/walkthrough/plots.md) views:
+Inside the
+[DVC Extension for VS Code](https://marketplace.visualstudio.com/items?itemName=Iterative.dvc),
+you can compare and visualize results using the
+[Experiments](https://github.com/iterative/vscode-dvc/blob/main/extension/resources/walkthrough/experiments-table.md)
+and
+[Plots](https://github.com/iterative/vscode-dvc/blob/main/extension/resources/walkthrough/plots.md)
+views:
 
 ![VSCode Experiments](./docs/vscode_experiments.png)
 
@@ -115,22 +122,24 @@ While experiments are running, live updates will be displayed in both views.
 
 ### DVC Studio
 
-If you push the results to [DVC Studio](https://dvc.org/doc/studio), you can compare experiments against the entire repo history:
+If you push the results to [DVC Studio](https://dvc.org/doc/studio), you can
+compare experiments against the entire repo history:
 
 ![Studio Compare](./docs/studio_compare.png)
 
-You can enable [Studio Live Experiments](https://dvc.org/doc/studio/user-guide/projects-and-experiments/live-metrics-and-plots) to see live updates while
-experiments are running.
+You can enable
+[Studio Live Experiments](https://dvc.org/doc/studio/user-guide/projects-and-experiments/live-metrics-and-plots)
+to see live updates while experiments are running.
 
----
+______________________________________________________________________
 
 # Comparison to related technologies
 
 **DVCLive** is an *ML Logger*, similar to:
 
--   [MLFlow](https://mlflow.org/)
--   [Weights & Biases](https://wandb.ai/site)
--   [Neptune](https://neptune.ai/)
+- [MLFlow](https://mlflow.org/)
+- [Weights & Biases](https://wandb.ai/site)
+- [Neptune](https://neptune.ai/)
 
 The main difference with those *ML Loggers* is that **DVCLive** does not
 **require** any additional services or servers to run.
@@ -138,18 +147,18 @@ The main difference with those *ML Loggers* is that **DVCLive** does not
 Logged metrics, parameters, and plots are stored as plain text files that can be
 versioned by tools like Git or tracked as pointers to files in DVC storage.
 
-You can then use different [options](#comparing) to visualize the metrics, parameters, and
-plots across experiments.
+You can then use different [options](#comparing) to visualize the metrics,
+parameters, and plots across experiments.
 
-------------------------------------------------------------------------
+______________________________________________________________________
 
 # Contributing
 
-Contributions are very welcome. To learn more, see the [Contributor
-Guide](CONTRIBUTING.rst).
+Contributions are very welcome. To learn more, see the
+[Contributor Guide](CONTRIBUTING.rst).
 
 # License
 
-Distributed under the terms of the [Apache 2.0
-license](https://opensource.org/licenses/Apache-2.0), *dvclive* is free
-and open source software.
+Distributed under the terms of the
+[Apache 2.0 license](https://opensource.org/licenses/Apache-2.0), *dvclive* is
+free and open source software.
