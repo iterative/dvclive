@@ -138,8 +138,8 @@ The main difference with those *ML Loggers* is that **DVCLive** does not
 Logged metrics, parameters, and plots are stored as plain text files that can be
 versioned by tools like Git or tracked as pointers to files in DVC storage.
 
-You can then use different [options](#visualize-the-results) to visualize the metrics, parameters, and
-plots.
+You can then use different [options](#comparing) to visualize the metrics, parameters, and
+plots across experiments.
 
 ------------------------------------------------------------------------
 
