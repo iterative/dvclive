@@ -24,6 +24,8 @@ ______________________________________________________________________
 
 # Quickstart
 
+<a href=\"https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-Quickstart.ipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>
+
 ## Install *dvclive*
 
 ```console
