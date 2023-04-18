@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
-from dvc_studio_client.env import STUDIO_TOKEN
+from dvc_studio_client.env import DVC_STUDIO_TOKEN, STUDIO_TOKEN
 from dvc_studio_client.post_live_metrics import post_live_metrics
 from funcy import set_in
 from pathspec import PathSpec
@@ -141,7 +141,7 @@ class Live:
             self._include_untracked.append(self.dir)
 
     def _init_studio(self):
-        if not os.getenv(STUDIO_TOKEN, None):
+        if not any((os.getenv(STUDIO_TOKEN, None), os.getenv(DVC_STUDIO_TOKEN, None))):
             logger.debug("Missing env var `STUDIO_TOKEN`, skipping `studio` report.")
             self._studio_events_to_skip.add("start")
             self._studio_events_to_skip.add("data")
