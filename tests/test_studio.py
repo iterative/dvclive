@@ -19,7 +19,7 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     mocked_post, _ = mocked_studio_post
 
     mocked_post.assert_called_with(
-        "https://0.0.0.0",
+        "https://0.0.0.0/api/live",
         json={
             "type": "start",
             "repo_url": "STUDIO_REPO_URL",
@@ -38,7 +38,7 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
 
     live.next_step()
     mocked_post.assert_called_with(
-        "https://0.0.0.0",
+        "https://0.0.0.0/api/live",
         json={
             "type": "data",
             "repo_url": "STUDIO_REPO_URL",
@@ -61,7 +61,7 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
 
     live.next_step()
     mocked_post.assert_called_with(
-        "https://0.0.0.0",
+        "https://0.0.0.0/api/live",
         json={
             "type": "data",
             "repo_url": "STUDIO_REPO_URL",
@@ -82,7 +82,7 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
 
     live.end()
     mocked_post.assert_called_with(
-        "https://0.0.0.0",
+        "https://0.0.0.0/api/live",
         json={
             "type": "done",
             "repo_url": "STUDIO_REPO_URL",
@@ -120,7 +120,7 @@ def test_post_to_studio_failed_data_request(
     live.log_metric("foo", 2)
     live.next_step()
     mocked_post.assert_called_with(
-        "https://0.0.0.0",
+        "https://0.0.0.0/api/live",
         json={
             "type": "data",
             "repo_url": "STUDIO_REPO_URL",
@@ -223,7 +223,7 @@ def test_post_to_studio_include_prefix_if_needed(
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
 
     mocked_post.assert_called_with(
-        "https://0.0.0.0",
+        "https://0.0.0.0/api/live",
         json={
             "type": "data",
             "repo_url": "STUDIO_REPO_URL",
@@ -255,7 +255,7 @@ def test_post_to_studio_shorten_names(tmp_dir, mocked_dvc_repo, mocked_studio_po
     loss_path = (plots_path / Metric.subfolder / "eval/loss.tsv").as_posix()
 
     mocked_post.assert_called_with(
-        "https://0.0.0.0",
+        "https://0.0.0.0/api/live",
         json={
             "type": "data",
             "repo_url": "STUDIO_REPO_URL",
@@ -308,7 +308,7 @@ def test_post_to_studio_inside_subdir(
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
 
     mocked_post.assert_called_with(
-        "https://0.0.0.0",
+        "https://0.0.0.0/api/live",
         json={
             "type": "data",
             "repo_url": "STUDIO_REPO_URL",
@@ -352,7 +352,7 @@ def test_post_to_studio_inside_subdir_dvc_exp(
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
 
     mocked_post.assert_called_with(
-        "https://0.0.0.0",
+        "https://0.0.0.0/api/live",
         json={
             "type": "data",
             "repo_url": "STUDIO_REPO_URL",

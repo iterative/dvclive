@@ -2,7 +2,7 @@
 import sys
 
 import pytest
-from dvc_studio_client.env import STUDIO_ENDPOINT, STUDIO_REPO_URL, STUDIO_TOKEN
+from dvc_studio_client.env import DVC_STUDIO_TOKEN, DVC_STUDIO_URL, STUDIO_REPO_URL
 
 
 @pytest.fixture()
@@ -56,7 +56,7 @@ def mocked_studio_post(mocker, monkeypatch):
     valid_response = mocker.MagicMock()
     valid_response.status_code = 200
     mocked_post = mocker.patch("requests.post", return_value=valid_response)
-    monkeypatch.setenv(STUDIO_ENDPOINT, "https://0.0.0.0")
+    monkeypatch.setenv(DVC_STUDIO_URL, "https://0.0.0.0")
     monkeypatch.setenv(STUDIO_REPO_URL, "STUDIO_REPO_URL")
-    monkeypatch.setenv(STUDIO_TOKEN, "STUDIO_TOKEN")
+    monkeypatch.setenv(DVC_STUDIO_TOKEN, "STUDIO_TOKEN")
     return mocked_post, valid_response
