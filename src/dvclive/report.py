@@ -93,17 +93,12 @@ def get_plot_renderers(plots_folder, live):
             name = file.relative_to(plots_folder).with_suffix("").as_posix()
             properties = {}
 
-            if name in SKLEARN_PLOTS:
-                properties = SKLEARN_PLOTS[name].get_properties()
-                data_field = name
-            else:
-                # Plot with custom name
-                logged_plot = live._plots[name]
-                for default_name, plot_class in SKLEARN_PLOTS.items():
-                    if isinstance(logged_plot, plot_class):
-                        properties = plot_class.get_properties()
-                        data_field = default_name
-                        break
+            logged_plot = live._plots[name]
+            for default_name, plot_class in SKLEARN_PLOTS.items():
+                if isinstance(logged_plot, plot_class):
+                    properties = logged_plot.get_properties()
+                    data_field = default_name
+                    break
 
             data = json.loads(file.read_text())
 
