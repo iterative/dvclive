@@ -1,3 +1,4 @@
+import copy
 from pathlib import Path
 
 from dvclive.serialize import dump_json
@@ -9,7 +10,7 @@ class SKLearnPlot(Data):
     suffixes = [".json"]
     subfolder = "sklearn"
 
-    def __init__(self, name: str, output_folder: str) -> None:
+    def __init__(self, name: str, output_folder: str, **kwargs) -> None:  # noqa: ARG002
         super().__init__(name, output_folder)
         self.name = self.name.replace(".json", "")
 
@@ -25,22 +26,22 @@ class SKLearnPlot(Data):
             return True
         return False
 
-    @staticmethod
-    def get_properties():
+    def get_properties(self):
         raise NotImplementedError
 
 
 class Roc(SKLearnPlot):
-    @staticmethod
-    def get_properties():
-        return {
-            "template": "simple",
-            "x": "fpr",
-            "y": "tpr",
-            "title": "Receiver operating characteristic (ROC)",
-            "x_label": "False Positive Rate",
-            "y_label": "True Positive Rate",
-        }
+    DEFAULT_PROPERTIES = {
+        "template": "simple",
+        "x": "fpr",
+        "y": "tpr",
+        "title": "Receiver operating characteristic (ROC)",
+        "x_label": "False Positive Rate",
+        "y_label": "True Positive Rate",
+    }
+
+    def get_properties(self):
+        return copy.deepcopy(self.DEFAULT_PROPERTIES)
 
     def dump(self, val, **kwargs) -> None:
         from sklearn import metrics
@@ -58,16 +59,17 @@ class Roc(SKLearnPlot):
 
 
 class PrecisionRecall(SKLearnPlot):
-    @staticmethod
-    def get_properties():
-        return {
-            "template": "simple",
-            "x": "recall",
-            "y": "precision",
-            "title": "Precision-Recall Curve",
-            "x_label": "Recall",
-            "y_label": "Precision",
-        }
+    DEFAULT_PROPERTIES = {
+        "template": "simple",
+        "x": "recall",
+        "y": "precision",
+        "title": "Precision-Recall Curve",
+        "x_label": "Recall",
+        "y_label": "Precision",
+    }
+
+    def get_properties(self):
+        return copy.deepcopy(self.DEFAULT_PROPERTIES)
 
     def dump(self, val, **kwargs) -> None:
         from sklearn import metrics
@@ -86,16 +88,17 @@ class PrecisionRecall(SKLearnPlot):
 
 
 class Det(SKLearnPlot):
-    @staticmethod
-    def get_properties():
-        return {
-            "template": "simple",
-            "x": "fpr",
-            "y": "fnr",
-            "title": "Detection error tradeoff (DET)",
-            "x_label": "False Positive Rate",
-            "y_label": "False Negative Rate",
-        }
+    DEFAULT_PROPERTIES = {
+        "template": "simple",
+        "x": "fpr",
+        "y": "fnr",
+        "title": "Detection error tradeoff (DET)",
+        "x_label": "False Positive Rate",
+        "y_label": "False Negative Rate",
+    }
+
+    def get_properties(self):
+        return copy.deepcopy(self.DEFAULT_PROPERTIES)
 
     def dump(self, val, **kwargs) -> None:
         from sklearn import metrics
@@ -114,16 +117,24 @@ class Det(SKLearnPlot):
 
 
 class ConfusionMatrix(SKLearnPlot):
-    @staticmethod
-    def get_properties():
-        return {
-            "template": "confusion",
-            "x": "actual",
-            "y": "predicted",
-            "title": "Confusion Matrix",
-            "x_label": "True Label",
-            "y_label": "Predicted Label",
-        }
+    DEFAULT_PROPERTIES = {
+        "template": "confusion",
+        "x": "actual",
+        "y": "predicted",
+        "title": "Confusion Matrix",
+        "x_label": "True Label",
+        "y_label": "Predicted Label",
+    }
+
+    def __init__(self, name: str, output_folder: str, **kwargs) -> None:
+        super().__init__(name, output_folder)
+        self.normalized = kwargs.get("normalized") or False
+
+    def get_properties(self):
+        properties = copy.deepcopy(self.DEFAULT_PROPERTIES)
+        if self.normalized:
+            properties["template"] = "confusion_normalized"
+        return properties
 
     def dump(self, val, **kwargs) -> None:  # noqa: ARG002
         cm = [
@@ -134,16 +145,17 @@ class ConfusionMatrix(SKLearnPlot):
 
 
 class Calibration(SKLearnPlot):
-    @staticmethod
-    def get_properties():
-        return {
-            "template": "simple",
-            "x": "prob_pred",
-            "y": "prob_true",
-            "title": "Calibration Curve",
-            "x_label": "Mean Predicted Probability",
-            "y_label": "Fraction of Positives",
-        }
+    DEFAULT_PROPERTIES = {
+        "template": "simple",
+        "x": "prob_pred",
+        "y": "prob_true",
+        "title": "Calibration Curve",
+        "x_label": "Mean Predicted Probability",
+        "y_label": "Fraction of Positives",
+    }
+
+    def get_properties(self):
+        return copy.deepcopy(self.DEFAULT_PROPERTIES)
 
     def dump(self, val, **kwargs) -> None:
         from sklearn import calibration
