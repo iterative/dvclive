@@ -77,12 +77,16 @@ def make_checkpoint():
 def get_dvc_repo():
     from dvc.exceptions import NotDvcRepoError
     from dvc.repo import Repo
-    from dvc.scm import SCMError
+    from dvc.scm import Git, SCMError
+    from scmrepo.exceptions import SCMError as GitSCMError
 
     try:
         return Repo()
     except (NotDvcRepoError, SCMError):
-        return None
+        try:
+            return Repo.init(Git().root_dir)
+        except GitSCMError:
+            return None
 
 
 def make_dvcyaml(live):
