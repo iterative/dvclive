@@ -59,7 +59,7 @@ class Live:
         self._images: Dict[str, Any] = {}
         self._params: Dict[str, Any] = {}
         self._plots: Dict[str, Any] = {}
-        self._outs: Set[StrPath] = set()
+        self._artifacts: Dict[str, Dict] = {}
         self._inside_with = False
         self._dvcyaml = dvcyaml
 
@@ -320,19 +320,42 @@ class Live:
         """Saves the given parameter value to yaml"""
         self.log_params({name: val})
 
-    def log_artifact(self, path: StrPath):
+    def log_artifact(
+        self,
+        path: StrPath,
+        type: Optional[str] = None,  # noqa: A002
+        name: Optional[str] = None,
+        desc: Optional[str] = None,  # noqa: ARG002
+        labels: Optional[List[str]] = None,  # noqa: ARG002
+        meta: Optional[Dict[str, Any]] = None,  # noqa: ARG002
+    ):
         """Tracks a local file or directory with DVC"""
         if not isinstance(path, (str, Path)):
             raise InvalidDataTypeError(path, type(path))
 
         if self._dvc_repo is not None:
+            from dvc.repo.artifacts import name_is_compatible
+
             try:
                 stage = self._dvc_repo.add(path)
             except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to dvc add {path}: {e}")
                 return
 
-            self._outs.add(path)
+            name = name or Path(path).stem
+            if name_is_compatible(name):
+                self._artifacts[name] = {
+                    k: v
+                    for k, v in locals().items()
+                    if k in ("path", "type", "desc", "labels", "meta") and v is not None
+                }
+            else:
+                logger.warning(
+                    "Can't use '%s' as artifact name (ID)."
+                    " It will not be included in the `artifacts` section.",
+                    name,
+                )
+
             dvc_file = stage[0].addressing
 
             if self._save_dvc_exp:

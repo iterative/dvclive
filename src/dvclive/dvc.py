@@ -106,6 +106,14 @@ def make_dvcyaml(live):
     if plots:
         dvcyaml["plots"] = plots
 
+    if live._artifacts:
+        dvcyaml["artifacts"] = live._artifacts
+        for artifact in dvcyaml["artifacts"].values():
+            abs_path = os.path.realpath(artifact["path"])
+            abs_dir = os.path.realpath(live.dir)
+            relative_path = os.path.relpath(abs_path, abs_dir)
+            artifact["path"] = Path(relative_path).as_posix()
+
     dump_yaml(dvcyaml, live.dvc_file)
 
 
