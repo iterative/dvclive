@@ -65,6 +65,13 @@ def test_make_dvcyaml_all_plots(tmp_dir):
     live.log_metric("bar", 2)
     live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
     live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
+    live.log_sklearn_plot(
+        "confusion_matrix",
+        [0, 0, 1, 1],
+        [0, 1, 1, 0],
+        name="confusion_matrix_normalized",
+        normalized=True,
+    )
     live.log_sklearn_plot("roc", [0, 0, 1, 1], [0.0, 0.5, 0.5, 0.0], "custom_name_roc")
     make_dvcyaml(live)
 
@@ -83,6 +90,16 @@ def test_make_dvcyaml_all_plots(tmp_dir):
                     "x_label": "True Label",
                     "y_label": "Predicted Label",
                 },
+            },
+            {
+                "plots/sklearn/confusion_matrix_normalized.json": {
+                    "template": "confusion_normalized",
+                    "title": "Confusion Matrix",
+                    "x": "actual",
+                    "x_label": "True Label",
+                    "y": "predicted",
+                    "y_label": "Predicted Label",
+                }
             },
             {
                 "plots/sklearn/custom_name_roc.json": {

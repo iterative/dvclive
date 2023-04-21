@@ -162,7 +162,7 @@ def test_get_plot_renderers(tmp_dir, mocker):
             {"fpr": 1.0, "rev": "workspace", "threshold": 0.1, "tpr": 0.5},
             {"fpr": 1.0, "rev": "workspace", "threshold": 0.0, "tpr": 1.0},
         ]
-        assert plot_renderer.properties == Roc.get_properties()
+        assert plot_renderer.properties == Roc.DEFAULT_PROPERTIES
 
     for name in ("confusion_matrix", "train/cm"):
         plot_renderer = plot_renderers_dict[name]
@@ -172,7 +172,7 @@ def test_get_plot_renderers(tmp_dir, mocker):
             {"actual": "1", "rev": "workspace", "predicted": "0"},
             {"actual": "1", "rev": "workspace", "predicted": "1"},
         ]
-        assert plot_renderer.properties == ConfusionMatrix.get_properties()
+        assert plot_renderer.properties == ConfusionMatrix.DEFAULT_PROPERTIES
 
 
 def test_report_auto_doesnt_set_notebook(tmp_dir, mocker):
