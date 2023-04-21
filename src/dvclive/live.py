@@ -14,7 +14,6 @@ from ruamel.yaml.representer import RepresenterError
 from . import env
 from .dvc import (
     get_dvc_repo,
-    get_dvc_stage_template,
     get_random_exp_name,
     make_checkpoint,
     make_dvcyaml,
@@ -409,16 +408,6 @@ class Live:
             self._studio_events_to_skip.add("data")
         else:
             self.make_report()
-
-        if self._dvc_repo and not self._inside_dvc_exp:
-            from dvc.exceptions import DvcException
-
-            try:
-                path = os.path.join(self._dvc_repo.root_dir, "dvc.yaml")
-                yaml = get_dvc_stage_template(self)
-                logger.info(f"To run with DVC, add this to {path}:\n{yaml}")
-            except DvcException as e:
-                logger.warning(f"Failed to print DVC stage template:\n{e}")
 
     def make_checkpoint(self):
         if env2bool(env.DVC_CHECKPOINT):

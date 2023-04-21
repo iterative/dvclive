@@ -7,7 +7,7 @@ from ruamel.yaml import YAML
 from scmrepo.git import Git
 
 from dvclive import Live
-from dvclive.dvc import get_dvc_repo, get_dvc_stage_template, make_dvcyaml
+from dvclive.dvc import get_dvc_repo, make_dvcyaml
 from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME
 from dvclive.serialize import load_yaml
 
@@ -198,59 +198,6 @@ def test_exp_save_dvcexception_is_ignored(tmp_dir, mocker):
 
     with Live(save_dvc_exp=True):
         pass
-
-
-def test_get_dvc_stage_template_empty(tmp_dir, mocked_dvc_repo):
-    live = Live()
-    template = get_dvc_stage_template(live)
-
-    assert YAML_LOADER.load(template) == {
-        "stages": {
-            "dvclive": {
-                "cmd": "<python my_code_file.py my_args>",
-                "deps": ["<my_code_file.py>"],
-            }
-        }
-    }
-
-
-def test_get_dvc_stage_template_artifacts(tmp_dir, mocked_dvc_repo):
-    live = Live()
-    live.log_artifact("artifact.txt")
-    template = get_dvc_stage_template(live)
-
-    assert YAML_LOADER.load(template) == {
-        "stages": {
-            "dvclive": {
-                "cmd": "<python my_code_file.py my_args>",
-                "deps": ["<my_code_file.py>"],
-                "outs": ["artifact.txt"],
-            }
-        }
-    }
-
-
-def test_get_dvc_stage_template_chdir(tmp_dir, mocked_dvc_repo, monkeypatch):
-    d = tmp_dir / "sub" / "dir"
-    d.mkdir(parents=True)
-    monkeypatch.chdir(d)
-    live = Live("live")
-    live.log_param("foo", 1)
-    live.log_metric("bar", 1)
-    live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
-    live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
-    live.log_artifact("artifact.txt")
-    template = get_dvc_stage_template(live)
-
-    assert YAML_LOADER.load(template) == {
-        "stages": {
-            "dvclive": {
-                "cmd": "<python my_code_file.py my_args>",
-                "deps": ["<my_code_file.py>"],
-                "outs": ["sub/dir/artifact.txt"],
-            }
-        }
-    }
 
 
 def test_untracked_dvclive_files_inside_dvc_exp_run_are_added(
