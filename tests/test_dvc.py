@@ -17,8 +17,15 @@ YAML_LOADER = YAML(typ="safe")
 def test_get_dvc_repo(tmp_dir):
     assert get_dvc_repo() is None
     Git.init(tmp_dir)
-    Repo.init(tmp_dir)
     assert isinstance(get_dvc_repo(), Repo)
+
+
+def test_get_dvc_repo_subdir(tmp_dir):
+    Git.init(tmp_dir)
+    subdir = tmp_dir / "sub"
+    subdir.mkdir()
+    os.chdir(subdir)
+    assert get_dvc_repo().root_dir == str(tmp_dir)
 
 
 def test_make_dvcyaml_empty(tmp_dir):
@@ -137,6 +144,7 @@ def test_exp_save_run_on_dvc_repro(tmp_dir, mocker):
     dvc_repo.index.stages = [dvc_stage, dvc_file]
     dvc_repo.scm.get_rev.return_value = "current_rev"
     dvc_repo.scm.get_ref.return_value = None
+    dvc_repo.scm.no_commits = False
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
         live = Live(save_dvc_exp=True)
         assert live._save_dvc_exp
@@ -176,6 +184,7 @@ def test_exp_save_with_dvc_files(tmp_dir, mocker):
     dvc_repo.index.stages = [dvc_file]
     dvc_repo.scm.get_rev.return_value = "current_rev"
     dvc_repo.scm.get_ref.return_value = None
+    dvc_repo.scm.no_commits = False
 
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
         live = Live(save_dvc_exp=True)

@@ -453,6 +453,7 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
     dvc_repo.index.stages = []
     dvc_repo.scm.get_rev.return_value = "current_rev"
     dvc_repo.scm.get_ref.return_value = None
+    dvc_repo.scm.no_commits = False
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo), mocker.patch(
         "dvclive.live.os.getpid", return_value=test_pid
     ):
