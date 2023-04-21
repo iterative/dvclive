@@ -107,6 +107,14 @@ def make_dvcyaml(live):
     if plots:
         dvcyaml["plots"] = plots
 
+    if live._artifacts:
+        dvcyaml["artifacts"] = live._artifacts
+        for artifact in dvcyaml["artifacts"].values():
+            abs_path = os.path.realpath(artifact["path"])
+            abs_dir = os.path.realpath(live.dir)
+            relative_path = os.path.relpath(abs_path, abs_dir)
+            artifact["path"] = Path(relative_path).as_posix()
+
     dump_yaml(dvcyaml, live.dvc_file)
 
 
@@ -164,9 +172,10 @@ def get_dvc_stage_template(live):
         "cmd": "<python my_code_file.py my_args>",
         "deps": ["<my_code_file.py>"],
     }
-    if live._outs:
+    if live._artifacts:
         stage["outs"] = []
-    for o in live._outs:
+    for artifact in live._artifacts.values():
+        o = artifact["path"]
         artifact_path = Path(os.getcwd()) / o
         artifact_path = artifact_path.relative_to(live._dvc_repo.root_dir).as_posix()
         stage["outs"].append(artifact_path)
