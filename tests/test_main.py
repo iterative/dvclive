@@ -1,13 +1,12 @@
 import json
 import os
-from io import StringIO
 
 import pytest
 
 from dvclive import Live, env
 from dvclive.error import InvalidDataTypeError, InvalidParameterTypeError
 from dvclive.plots import Metric
-from dvclive.serialize import get_yaml, load_yaml
+from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics, parse_tsv
 
 
@@ -483,26 +482,3 @@ def test_make_dvcyaml(tmp_dir, dvcyaml):
     dvcyaml_path = tmp_dir / dvclive.dir / "dvc.yaml"
 
     assert dvcyaml_path.is_file()
-
-
-def test_get_dvc_stage_template(tmp_dir, mocker, mocked_dvc_repo):
-    logger = mocker.patch("dvclive.live.logger")
-    dvclive = Live()
-    dvclive.end()
-
-    template = {
-        "stages": {
-            "dvclive": {
-                "cmd": "<python my_code_file.py my_args>",
-                "deps": ["<my_code_file.py>"],
-            }
-        }
-    }
-
-    output = StringIO()
-    get_yaml().dump(template, output)
-    yaml_str = output.getvalue()
-    output.close()
-    path_str = os.path.join(tmp_dir, "dvc.yaml")
-    log_str = f"To run with DVC, add this to {path_str}:\n{yaml_str}"
-    logger.info.assert_called_with(log_str)
