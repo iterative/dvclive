@@ -1,12 +1,9 @@
 # ruff: noqa: SLF001
-import logging
 import os
 from pathlib import Path
 
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
-
-logger = logging.getLogger(__name__)
 
 
 def _get_unsent_datapoints(plot, latest_step):

@@ -32,8 +32,9 @@ from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_studio_updates
 from .utils import env2bool, inside_notebook, matplotlib_installed, open_file_in_browser
 
-logging.basicConfig()
 logger = logging.getLogger("dvclive")
+logger.addHandler(logging.StreamHandler())
+logger.addHandler(logging.FileHandler("dvclive.log"))
 logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "INFO").upper())
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]

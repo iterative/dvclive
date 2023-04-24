@@ -1,5 +1,4 @@
 # ruff: noqa: SLF001
-import logging
 import os
 import random
 from pathlib import Path
@@ -7,10 +6,6 @@ from pathlib import Path
 from dvclive import env
 from dvclive.plots import Image, Metric
 from dvclive.serialize import dump_yaml
-
-logging.basicConfig()
-logger = logging.getLogger("dvclive")
-logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "INFO").upper())
 
 _CHECKPOINT_SLEEP = 0.1
 
