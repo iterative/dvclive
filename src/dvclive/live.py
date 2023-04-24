@@ -124,8 +124,16 @@ class Live:
         if self._dvc_repo is None:
             if self._save_dvc_exp:
                 logger.warning(
-                    "Can't save experiment without a DVC Repo."
-                    "\nYou can create a DVC Repo by calling `dvc init`."
+                    "Can't save experiment without a Git Repo."
+                    "\nCreate a Git repo (`git init`) and commit (`git commit`)."
+                )
+                self._save_dvc_exp = False
+            return
+        if self._dvc_repo.scm.no_commits:
+            if self._save_dvc_exp:
+                logger.warning(
+                    "Can't save experiment to an empty Git Repo."
+                    "\nAdd a commit (`git commit`) to save experiments."
                 )
                 self._save_dvc_exp = False
             return
