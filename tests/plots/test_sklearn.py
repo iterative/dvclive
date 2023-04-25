@@ -155,3 +155,27 @@ def test_custom_name(tmp_dir, y_true_y_pred_y_score):
     assert (out / "train" / "cm.json").exists()
     assert (out / "val" / "cm.json").exists()
     assert (out / "cm.json").exists()
+
+
+def test_custom_title(tmp_dir, y_true_y_pred_y_score):
+    """https://github.com/iterative/dvclive/issues/453"""
+    live = Live()
+    out = tmp_dir / live.plots_dir / SKLearnPlot.subfolder
+
+    y_true, y_pred, _ = y_true_y_pred_y_score
+
+    live.log_sklearn_plot(
+        "confusion_matrix",
+        y_true,
+        y_pred,
+        name="train/cm",
+        title="Train Confusion Matrix",
+    )
+    live.log_sklearn_plot(
+        "confusion_matrix", y_true, y_pred, name="val/cm", title="Val Confusion Matrix"
+    )
+    assert (out / "train" / "cm.json").exists()
+    assert (out / "val" / "cm.json").exists()
+
+    assert live._plots["train/cm"].plot_config["title"] == "Train Confusion Matrix"
+    assert live._plots["val/cm"].plot_config["title"] == "Val Confusion Matrix"
