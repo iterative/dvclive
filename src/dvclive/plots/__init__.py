@@ -1,3 +1,4 @@
+from .custom import CustomPlot
 from .image import Image
 from .metric import Metric
 from .sklearn import Calibration, ConfusionMatrix, Det, PrecisionRecall, Roc
@@ -10,4 +11,4 @@ SKLEARN_PLOTS = {
     "precision_recall": PrecisionRecall,
     "roc": Roc,
 }
-PLOT_TYPES = (*SKLEARN_PLOTS.values(), Metric, Image)
+PLOT_TYPES = (*SKLEARN_PLOTS.values(), Metric, Image, CustomPlot)

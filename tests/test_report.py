@@ -7,15 +7,17 @@ from PIL import Image
 from dvclive import Live
 from dvclive.env import DVCLIVE_OPEN
 from dvclive.error import InvalidReportModeError
+from dvclive.plots import CustomPlot
 from dvclive.plots import Image as LiveImage
 from dvclive.plots import Metric
-from dvclive.plots.sklearn import ConfusionMatrix, Roc, SKLearnPlot
+from dvclive.plots.sklearn import SKLearnPlot
 from dvclive.report import (
+    get_custom_plot_renderers,
     get_image_renderers,
     get_metrics_renderers,
     get_params_renderers,
-    get_plot_renderers,
     get_scalar_renderers,
+    get_sklearn_plot_renderers,
 )
 
 
@@ -133,7 +135,7 @@ def test_make_report_open(tmp_dir, mocker, monkeypatch):
     mocked_open.assert_called_once()
 
 
-def test_get_plot_renderers(tmp_dir, mocker):
+def test_get_plot_renderers_sklearn(tmp_dir):
     live = Live()
 
     for _ in range(2):
@@ -147,7 +149,7 @@ def test_get_plot_renderers(tmp_dir, mocker):
         )
         live.next_step()
 
-    plot_renderers = get_plot_renderers(
+    plot_renderers = get_sklearn_plot_renderers(
         tmp_dir / live.plots_dir / SKLearnPlot.subfolder, live
     )
     assert len(plot_renderers) == 4
@@ -162,7 +164,7 @@ def test_get_plot_renderers(tmp_dir, mocker):
             {"fpr": 1.0, "rev": "workspace", "threshold": 0.1, "tpr": 0.5},
             {"fpr": 1.0, "rev": "workspace", "threshold": 0.0, "tpr": 1.0},
         ]
-        assert plot_renderer.properties == Roc.DEFAULT_PROPERTIES
+        assert plot_renderer.properties == live._plots[name].plot_config
 
     for name in ("confusion_matrix", "train/cm"):
         plot_renderer = plot_renderers_dict[name]
@@ -172,7 +174,38 @@ def test_get_plot_renderers(tmp_dir, mocker):
             {"actual": "1", "rev": "workspace", "predicted": "0"},
             {"actual": "1", "rev": "workspace", "predicted": "1"},
         ]
-        assert plot_renderer.properties == ConfusionMatrix.DEFAULT_PROPERTIES
+        assert plot_renderer.properties == live._plots[name].plot_config
+
+
+def test_get_plot_renderers_custom(tmp_dir):
+    live = Live()
+
+    datapoints = [{"x": 1, "y": 2}, {"x": 3, "y": 4}]
+    for _ in range(2):
+        live.log_plot("foo_default", datapoints, x="x", y="y")
+        live.log_plot(
+            "foo_scatter",
+            datapoints,
+            x="x",
+            y="y",
+            template="scatter",
+        )
+        live.next_step()
+    plot_renderers = get_custom_plot_renderers(
+        tmp_dir / live.plots_dir / CustomPlot.subfolder, live
+    )
+
+    assert len(plot_renderers) == 2
+    plot_renderers_dict = {
+        plot_renderer.name: plot_renderer for plot_renderer in plot_renderers
+    }
+    for name in ("foo_default", "foo_scatter"):
+        plot_renderer = plot_renderers_dict[name]
+        assert plot_renderer.datapoints == [
+            {"rev": "workspace", "x": 1, "y": 2},
+            {"rev": "workspace", "x": 3, "y": 4},
+        ]
+        assert plot_renderer.properties == live._plots[name].plot_config
 
 
 def test_report_auto_doesnt_set_notebook(tmp_dir, mocker):

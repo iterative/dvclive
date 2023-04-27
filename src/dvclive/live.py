@@ -26,7 +26,7 @@ from .error import (
     InvalidPlotTypeError,
     InvalidReportModeError,
 )
-from .plots import PLOT_TYPES, SKLEARN_PLOTS, Image, Metric, NumpyEncoder
+from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_studio_updates
@@ -264,15 +264,15 @@ class Live:
             raise InvalidDataTypeError(name, type(val))
 
         if name in self._metrics:
-            data = self._metrics[name]
+            metric = self._metrics[name]
         else:
-            data = Metric(name, self.plots_dir)
-            self._metrics[name] = data
+            metric = Metric(name, self.plots_dir)
+            self._metrics[name] = metric
 
-        data.step = self.step
-        data.dump(val, timestamp=timestamp)
+        metric.step = self.step
+        metric.dump(val, timestamp=timestamp)
 
-        self.summary = set_in(self.summary, data.summary_keys, val)
+        self.summary = set_in(self.summary, metric.summary_keys, val)
         logger.debug(f"Logged {name}: {val}")
 
     def log_image(self, name: str, val):
@@ -285,29 +285,70 @@ class Live:
             val = ImagePIL.open(val)
 
         if name in self._images:
-            data = self._images[name]
+            image = self._images[name]
         else:
-            data = Image(name, self.plots_dir)
-            self._images[name] = data
+            image = Image(name, self.plots_dir)
+            self._images[name] = image
 
-        data.step = self.step
-        data.dump(val)
+        image.step = self.step
+        image.dump(val)
         logger.debug(f"Logged {name}: {val}")
+
+    def log_plot(
+        self,
+        name: str,
+        datapoints: List[Dict],
+        x: str,
+        y: str,
+        template: Optional[str] = None,
+        title: Optional[str] = None,
+        x_label: Optional[str] = None,
+        y_label: Optional[str] = None,
+    ):
+        if not CustomPlot.could_log(datapoints):
+            raise InvalidDataTypeError(name, type(datapoints))
+
+        if name in self._plots:
+            plot = self._plots[name]
+        else:
+            plot = CustomPlot(
+                name,
+                self.plots_dir,
+                x=x,
+                y=y,
+                template=template,
+                title=title,
+                x_label=x_label,
+                y_label=y_label,
+            )
+            self._plots[name] = plot
+
+        plot.step = self.step
+        plot.dump(datapoints)
+        logger.debug(f"Logged {name}")
 
     def log_sklearn_plot(self, kind, labels, predictions, name=None, **kwargs):
         val = (labels, predictions)
 
+        plot_config = {
+            k: v
+            for k, v in kwargs.items()
+            if k in ("title", "x_label", "y_label", "normalized")
+        }
         name = name or kind
         if name in self._plots:
-            data = self._plots[name]
+            plot = self._plots[name]
         elif kind in SKLEARN_PLOTS and SKLEARN_PLOTS[kind].could_log(val):
-            data = SKLEARN_PLOTS[kind](name, self.plots_dir, **kwargs)
-            self._plots[data.name] = data
+            plot = SKLEARN_PLOTS[kind](name, self.plots_dir, **plot_config)
+            self._plots[plot.name] = plot
         else:
             raise InvalidPlotTypeError(name)
 
-        data.step = self.step
-        data.dump(val, **kwargs)
+        sklearn_kwargs = {
+            k: v for k, v in kwargs.items() if k not in plot_config or k != "normalized"
+        }
+        plot.step = self.step
+        plot.dump(val, **sklearn_kwargs)
         logger.debug(f"Logged {name}")
 
     def _read_params(self):

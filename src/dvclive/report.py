@@ -11,7 +11,7 @@ from dvc_render.table import TableRenderer
 from dvc_render.vega import VegaRenderer
 
 from dvclive.error import InvalidReportModeError
-from dvclive.plots import SKLEARN_PLOTS, Image, Metric
+from dvclive.plots import SKLEARN_PLOTS, CustomPlot, Image, Metric
 from dvclive.plots.sklearn import SKLearnPlot
 from dvclive.serialize import load_yaml
 from dvclive.utils import inside_colab, parse_tsv
@@ -86,7 +86,25 @@ def get_image_renderers(images_folder, report_mode):
     return renderers
 
 
-def get_plot_renderers(plots_folder, live):
+def get_custom_plot_renderers(plots_folder, live):
+    renderers = []
+    for suffix in CustomPlot.suffixes:
+        for file in Path(plots_folder).rglob(f"*{suffix}"):
+            name = file.relative_to(plots_folder).with_suffix("").as_posix()
+
+            logged_plot = live._plots[name]
+            properties = logged_plot.plot_config
+
+            data = json.loads(file.read_text())
+
+            for row in data:
+                row["rev"] = "workspace"
+
+            renderers.append(VegaRenderer(data, name, **properties))
+    return renderers
+
+
+def get_sklearn_plot_renderers(plots_folder, live):
     renderers = []
     for suffix in SKLearnPlot.suffixes:
         for file in Path(plots_folder).rglob(f"*{suffix}"):
@@ -96,7 +114,7 @@ def get_plot_renderers(plots_folder, live):
             logged_plot = live._plots[name]
             for default_name, plot_class in SKLEARN_PLOTS.items():
                 if isinstance(logged_plot, plot_class):
-                    properties = logged_plot.get_properties()
+                    properties = logged_plot.plot_config
                     data_field = default_name
                     break
 
@@ -146,7 +164,10 @@ def make_report(live: "Live"):
     renderers.extend(
         get_image_renderers(plots_path / Image.subfolder, report_mode=live._report_mode)
     )
-    renderers.extend(get_plot_renderers(plots_path / SKLearnPlot.subfolder, live))
+    renderers.extend(
+        get_sklearn_plot_renderers(plots_path / SKLearnPlot.subfolder, live)
+    )
+    renderers.extend(get_custom_plot_renderers(plots_path / CustomPlot.subfolder, live))
 
     if live._report_mode == "html":
         render_html(renderers, live.report_file, refresh_seconds=5)

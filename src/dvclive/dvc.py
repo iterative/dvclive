@@ -101,7 +101,7 @@ def make_dvcyaml(live):
     if live._plots:
         for plot in live._plots.values():
             plot_path = plot.output_path.relative_to(live.dir)
-            plots.append({plot_path.as_posix(): plot.get_properties()})
+            plots.append({plot_path.as_posix(): plot.plot_config})
     if plots:
         dvcyaml["plots"] = plots
 
