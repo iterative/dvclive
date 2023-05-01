@@ -6,6 +6,15 @@ from dvclive import Live
 from dvclive.plots import Image as LiveImage
 
 
+# From https://stackoverflow.com/questions/5165317/how-can-i-extend-image-class
+class ExtendedImage(Image.Image):
+    def __init__(self, img):
+        self._img = img
+
+    def __getattr__(self, key):
+        return getattr(self._img, key)
+
+
 def test_pil(tmp_dir):
     live = Live()
     img = Image.new("RGB", (10, 10), (250, 250, 250))
@@ -82,3 +91,12 @@ def test_cleanup(tmp_dir):
     Live()
 
     assert not (tmp_dir / live.plots_dir / LiveImage.subfolder).exists()
+
+
+def test_custom_class(tmp_dir):
+    live = Live()
+    img = Image.new("RGB", (10, 10), (250, 250, 250))
+    extended_img = ExtendedImage(img)
+    live.log_image("image.png", extended_img)
+
+    assert (tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png").exists()

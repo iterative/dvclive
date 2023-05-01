@@ -15,10 +15,13 @@ class Image(Data):
 
     @staticmethod
     def could_log(val: object) -> bool:
-        if val.__class__.__module__ == "PIL.Image":
-            return True
-        if val.__class__.__module__ == "numpy":
-            return True
+        acceptable = {
+            ("numpy", "ndarray"),
+            ("PIL.Image", "Image"),
+        }
+        for cls in type(val).mro():
+            if (cls.__module__, cls.__name__) in acceptable:
+                return True
         if isinstance(val, (PurePath, str)):
             return True
         return False
