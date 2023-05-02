@@ -258,3 +258,13 @@ def test_dvc_outs_are_not_added(tmp_dir, mocked_dvc_repo, monkeypatch):
         live.next_step()
 
     live._dvc_repo.scm.add.assert_called_with(["dvclive/metrics.json"])
+
+
+def test_errors_on_git_add_are_catched(tmp_dir, mocked_dvc_repo, monkeypatch):
+    monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
+    monkeypatch.setenv(DVC_EXP_NAME, "bar")
+    mocked_dvc_repo.scm.untracked_files.return_value = ["dvclive/metrics.json"]
+    mocked_dvc_repo.scm.add.side_effect = Exception("foo")
+
+    with Live(report=None) as live:
+        live.summary["foo"] = 1

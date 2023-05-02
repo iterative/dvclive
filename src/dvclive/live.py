@@ -512,13 +512,16 @@ class Live:
             outs_spec = PathSpec.from_lines(
                 "gitwildmatch", [str(o) for o in self._dvc_repo.index.outs]
             )
-            paths_to_track = [
-                f
-                for f in self._dvc_repo.scm.untracked_files()
-                if (dir_spec.match_file(f) and not outs_spec.match_file(f))
-            ]
-            if paths_to_track:
-                self._dvc_repo.scm.add(paths_to_track)
+            try:
+                paths_to_track = [
+                    f
+                    for f in self._dvc_repo.scm.untracked_files()
+                    if (dir_spec.match_file(f) and not outs_spec.match_file(f))
+                ]
+                if paths_to_track:
+                    self._dvc_repo.scm.add(paths_to_track)
+            except Exception as e:  # noqa: BLE001
+                logger.warning(f"Failed to git add paths:\n{e}")
 
     def save_dvc_exp(self):
         if self._save_dvc_exp:
