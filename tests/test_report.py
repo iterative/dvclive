@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from IPython import display
 from PIL import Image
@@ -28,14 +26,11 @@ def test_get_image_renderers(tmp_dir, mode):
         live.log_image("image.png", img)
 
     image_renderers = get_image_renderers(
-        tmp_dir / live.plots_dir / LiveImage.subfolder, report_mode=mode
+        tmp_dir / live.plots_dir / LiveImage.subfolder
     )
     assert len(image_renderers) == 1
     img = image_renderers[0].datapoints[0]
-    if mode == "md":
-        assert img["src"] == os.path.join("plots", LiveImage.subfolder, "image.png")
-    else:
-        assert img["src"].startswith("data:image;base64,")
+    assert img["src"].startswith("data:image;base64,")
     assert img["rev"] == "image.png"
 
 
