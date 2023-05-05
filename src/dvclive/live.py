@@ -204,11 +204,11 @@ class Live:
                 self._report_mode = "html"
         elif self._report_mode == "notebook":
             if inside_notebook():
-                from IPython.display import HTML, display
+                from IPython.display import Markdown, display
 
                 self._report_mode = "notebook"
                 self._report_notebook = display(
-                    HTML(BLANK_NOTEBOOK_REPORT), display_id=True
+                    Markdown(BLANK_NOTEBOOK_REPORT), display_id=True
                 )
             else:
                 self._report_mode = "html"
@@ -243,7 +243,7 @@ class Live:
     @property
     def report_file(self) -> Optional[str]:
         if self._report_mode in ("html", "md", "notebook"):
-            suffix = "html" if self._report_mode == "notebook" else self._report_mode
+            suffix = "md" if self._report_mode == "notebook" else self._report_mode
             return os.path.join(self.dir, f"report.{suffix}")
         return None
 

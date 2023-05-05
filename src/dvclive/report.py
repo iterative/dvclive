@@ -14,7 +14,7 @@ from dvclive.error import InvalidReportModeError
 from dvclive.plots import SKLEARN_PLOTS, CustomPlot, Image, Metric
 from dvclive.plots.sklearn import SKLearnPlot
 from dvclive.serialize import load_yaml
-from dvclive.utils import inside_colab, parse_tsv
+from dvclive.utils import parse_tsv
 
 if TYPE_CHECKING:
     from dvclive import Live
@@ -25,25 +25,6 @@ BLANK_NOTEBOOK_REPORT = """
 DVCLive Report
 </div>
 """
-
-COLAB_HTML = """<!DOCTYPE html>
-<html>
-<head>
-    {refresh_tag}
-    <title>DVC Plot</title>
-    {scripts}
-    <style>
-        table {
-            border-spacing: 15px;
-        }
-    </style>
-</head>
-<body>
-    <div style="width: 100%;height: 700px>
-        {plot_divs}
-    </div>
-</body>
-</html>"""
 
 
 def get_scalar_renderers(metrics_path):
@@ -64,17 +45,13 @@ def get_scalar_renderers(metrics_path):
     return renderers
 
 
-def get_image_renderers(images_folder, report_mode):
-    plots_path = images_folder.parent.parent
+def get_image_renderers(images_folder):
     renderers = []
     for suffix in Image.suffixes:
         all_images = Path(images_folder).rglob(f"*{suffix}")
         for file in sorted(all_images):
-            if report_mode in {"html", "notebook"}:
-                base64_str = base64.b64encode(file.read_bytes()).decode()
-                src = f"data:image;base64,{base64_str}"
-            else:
-                src = str(file.relative_to(plots_path))
+            base64_str = base64.b64encode(file.read_bytes()).decode()
+            src = f"data:image;base64,{base64_str}"
             name = str(file.relative_to(images_folder))
             data = [
                 {
@@ -161,9 +138,7 @@ def make_report(live: "Live"):
     renderers.extend(get_params_renderers(live.params_file))
     renderers.extend(get_metrics_renderers(live.metrics_file))
     renderers.extend(get_scalar_renderers(plots_path / Metric.subfolder))
-    renderers.extend(
-        get_image_renderers(plots_path / Image.subfolder, report_mode=live._report_mode)
-    )
+    renderers.extend(get_image_renderers(plots_path / Image.subfolder))
     renderers.extend(
         get_sklearn_plot_renderers(plots_path / SKLearnPlot.subfolder, live)
     )
@@ -172,21 +147,11 @@ def make_report(live: "Live"):
     if live._report_mode == "html":
         render_html(renderers, live.report_file, refresh_seconds=5)
     elif live._report_mode == "notebook":
-        from IPython.display import HTML, IFrame
+        from IPython.display import Markdown
 
-        render_html(
-            renderers,
-            live.report_file,
-            # Use custom template to limit the size of the display
-            html_template=COLAB_HTML if inside_colab() else None,
-        )
+        render_markdown(renderers, live.report_file)
         if live._report_notebook is not None:
-            if inside_colab():
-                new_report = HTML(live.report_file)  # type: ignore [assignment]
-            else:
-                new_report = IFrame(  # type: ignore [assignment]
-                    live.report_file, "100%", 700
-                )
+            new_report = Markdown(live.report_file)  # type: ignore [assignment]
             live._report_notebook.update(new_report)
     elif live._report_mode == "md":
         render_markdown(renderers, live.report_file)
