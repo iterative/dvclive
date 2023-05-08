@@ -85,6 +85,7 @@ class Live:
         self._include_untracked: List[str] = []
         self._init_dvc()
 
+        self._studio_token: Optional[str] = None
         self._latest_studio_step = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
         self._init_studio()
@@ -151,7 +152,12 @@ class Live:
             self._include_untracked.append(self.dir)
 
     def _init_studio(self):
-        if not any((os.getenv(STUDIO_TOKEN, None), os.getenv(DVC_STUDIO_TOKEN, None))):
+        self._studio_token = os.getenv(STUDIO_TOKEN, None) or os.getenv(
+            DVC_STUDIO_TOKEN, None
+        )
+        if self._dvc_repo and not self._studio_token:
+            self._studio_token = self._dvc_repo.config.get("studio", {}).get("token")
+        if not self._studio_token:
             logger.debug("Missing env var `STUDIO_TOKEN`, skipping `studio` report.")
             self._studio_events_to_skip.add("start")
             self._studio_events_to_skip.add("data")
@@ -179,7 +185,11 @@ class Live:
             self._studio_events_to_skip.add("done")
         else:
             response = post_live_metrics(
-                "start", self._baseline_rev, self._exp_name, "dvclive"
+                "start",
+                self._baseline_rev,
+                self._exp_name,
+                "dvclive",
+                studio_token=self._studio_token,
             )
             if not response:
                 logger.debug(
@@ -435,6 +445,7 @@ class Live:
                     metrics=metrics,
                     params=params,
                     plots=plots,
+                    studio_token=self._studio_token,
                 )
             if not response:
                 logger.warning(
@@ -475,6 +486,7 @@ class Live:
                     self._baseline_rev,
                     self._exp_name,
                     "dvclive",
+                    studio_token=self._studio_token,
                     **kwargs,
                 )
             if not response:

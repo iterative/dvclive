@@ -191,6 +191,23 @@ def test_post_to_studio_skip_on_env_var(
 
 
 @pytest.mark.studio()
+def test_post_to_studio_dvc_config(
+    tmp_dir, mocker, mocked_dvc_repo, mocked_studio_post, monkeypatch
+):
+    mocked_post, _ = mocked_studio_post
+
+    monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
+    monkeypatch.setenv(DVC_EXP_NAME, "bar")
+
+    mocked_dvc_repo.config = {"studio": {"token": "token"}}
+
+    with Live() as live:
+        live.log_metric("foo", 1)
+
+    assert mocked_post.call_count == 1
+
+
+@pytest.mark.studio()
 def test_post_to_studio_skip_if_no_token(
     tmp_dir,
     mocker,
@@ -201,6 +218,8 @@ def test_post_to_studio_skip_if_no_token(
 
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
+
+    mocked_dvc_repo.config = {}
 
     with Live() as live:
         live.log_metric("foo", 1)
