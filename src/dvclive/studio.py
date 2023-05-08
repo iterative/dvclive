@@ -2,6 +2,8 @@
 import os
 from pathlib import Path
 
+from dvc_studio_client.post_live_metrics import get_studio_token_and_repo_url
+
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
 
@@ -66,3 +68,11 @@ def get_studio_updates(live):
     plots = {k: {"data": v} for k, v in plots.items()}
 
     return metrics, params, plots
+
+
+def get_studio_token(repo):
+    """Get Studio token value."""
+    studio_token, _ = get_studio_token_and_repo_url()
+    if repo and not studio_token:
+        return repo.config.get("studio", {}).get("token")
+    return studio_token

@@ -5,7 +5,6 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
-from dvc_studio_client.env import DVC_STUDIO_TOKEN, STUDIO_TOKEN
 from dvc_studio_client.post_live_metrics import post_live_metrics
 from funcy import set_in
 from pathspec import PathSpec
@@ -29,7 +28,7 @@ from .error import (
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
-from .studio import get_studio_updates
+from .studio import get_studio_token, get_studio_updates
 from .utils import env2bool, inside_notebook, matplotlib_installed, open_file_in_browser
 
 logger = logging.getLogger("dvclive")
@@ -85,7 +84,7 @@ class Live:
         self._include_untracked: List[str] = []
         self._init_dvc()
 
-        self._studio_token: Optional[str] = None
+        self._studio_token: Optional[str] = get_studio_token(self._dvc_repo)
         self._latest_studio_step = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
         self._init_studio()
@@ -152,11 +151,6 @@ class Live:
             self._include_untracked.append(self.dir)
 
     def _init_studio(self):
-        self._studio_token = os.getenv(STUDIO_TOKEN, None) or os.getenv(
-            DVC_STUDIO_TOKEN, None
-        )
-        if self._dvc_repo and not self._studio_token:
-            self._studio_token = self._dvc_repo.config.get("studio", {}).get("token")
         if not self._studio_token:
             logger.debug("Missing env var `STUDIO_TOKEN`, skipping `studio` report.")
             self._studio_events_to_skip.add("start")
