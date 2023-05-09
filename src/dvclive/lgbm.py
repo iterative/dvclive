@@ -11,9 +11,8 @@ class DVCLiveCallback:
 
     def __call__(self, env):
         for eval_result in env.evaluation_result_list:
-            metric = eval_result[1]
-            value = eval_result[2]
-            self.live.log_metric(metric, value)
+            data_name, eval_name, result = eval_result[:3]
+            self.live.log_metric(f"{data_name}-{eval_name}", result)
 
         if self.model_file:
             env.model.save_model(self.model_file)
