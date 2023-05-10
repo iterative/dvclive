@@ -1,10 +1,13 @@
 from pathlib import Path
 
 import pytest
+from dvc_studio_client.env import DVC_STUDIO_REPO_URL, DVC_STUDIO_TOKEN
+from dvc_studio_client.post_live_metrics import STUDIO_URL
 
 from dvclive import Live
 from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME
 from dvclive.plots import Metric
+from dvclive.studio import get_dvc_studio_config
 
 
 def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
@@ -397,3 +400,31 @@ def test_post_to_studio_inside_subdir_dvc_exp(
 def test_post_to_studio_requires_exp(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     assert Live()._studio_events_to_skip == {"start", "data", "done"}
     assert not Live(save_dvc_exp=True)._studio_events_to_skip
+
+
+def test_get_dvc_studio_config_none(mocker):
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=None)
+    live = Live()
+    assert get_dvc_studio_config(live) == {}
+
+
+def test_get_dvc_studio_config_env_var(monkeypatch, mocker):
+    monkeypatch.setenv(DVC_STUDIO_TOKEN, "token")
+    monkeypatch.setenv(DVC_STUDIO_REPO_URL, "repo_url")
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=None)
+    live = Live()
+    assert get_dvc_studio_config(live) == {
+        "studio_token": "token",
+        "studio_repo_url": "repo_url",
+        "studio_url": STUDIO_URL,
+    }
+
+
+def test_get_dvc_studio_config_dvc_repo(mocked_dvc_repo):
+    mocked_dvc_repo.config = {"studio": {"token": "token", "repo_url": "repo_url"}}
+    live = Live()
+    assert get_dvc_studio_config(live) == {
+        "studio_token": "token",
+        "studio_repo_url": "repo_url",
+        "studio_url": STUDIO_URL,
+    }

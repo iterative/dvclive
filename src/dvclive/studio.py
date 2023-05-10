@@ -2,6 +2,8 @@
 import os
 from pathlib import Path
 
+from dvc_studio_client.post_live_metrics import get_studio_config
+
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
 
@@ -66,3 +68,10 @@ def get_studio_updates(live):
     plots = {k: {"data": v} for k, v in plots.items()}
 
     return metrics, params, plots
+
+
+def get_dvc_studio_config(live):
+    config = {}
+    if live._dvc_repo:
+        config = live._dvc_repo.config.get("studio")
+    return get_studio_config(dvc_config=config)

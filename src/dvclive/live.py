@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
-from dvc_studio_client.post_live_metrics import get_studio_config, post_live_metrics
+from dvc_studio_client.post_live_metrics import post_live_metrics
 from funcy import set_in
 from pathspec import PathSpec
 from ruamel.yaml.representer import RepresenterError
@@ -28,7 +28,7 @@ from .error import (
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
-from .studio import get_studio_updates
+from .studio import get_dvc_studio_config, get_studio_updates
 from .utils import env2bool, inside_notebook, matplotlib_installed, open_file_in_browser
 
 logger = logging.getLogger("dvclive")
@@ -80,15 +80,13 @@ class Live:
         self._exp_name: Optional[str] = None
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
-        self._dvc_repo = None
+        self._dvc_repo = get_dvc_repo()
         self._include_untracked: List[str] = []
         self._init_dvc()
 
-        self._dvc_config = {}
-        if self._dvc_repo:
-            self._dvc_config = self._dvc_repo.config.get("studio")
         self._latest_studio_step = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
+        self._dvc_studio_config: Dict[str, Any] = get_dvc_studio_config(self)
         self._init_studio()
 
     def _init_resume(self):
@@ -125,7 +123,6 @@ class Live:
                 )
                 self._save_dvc_exp = False
 
-        self._dvc_repo = get_dvc_repo()
         if self._dvc_repo is None:
             if self._save_dvc_exp:
                 logger.warning(
@@ -153,8 +150,7 @@ class Live:
             self._include_untracked.append(self.dir)
 
     def _init_studio(self):
-        studio_config = get_studio_config(dvc_config=self._dvc_config)
-        if not studio_config:
+        if not self._dvc_studio_config:
             logger.debug("Skipping `studio` report.")
             self._studio_events_to_skip.add("start")
             self._studio_events_to_skip.add("data")
@@ -186,7 +182,7 @@ class Live:
                 self._baseline_rev,
                 self._exp_name,
                 "dvclive",
-                dvc_config=self._dvc_config,
+                dvc_config=self._dvc_studio_config,
             )
             if not response:
                 logger.debug(
@@ -442,7 +438,7 @@ class Live:
                     metrics=metrics,
                     params=params,
                     plots=plots,
-                    dvc_config=self._dvc_config,
+                    dvc_config=self._dvc_studio_config,
                 )
             if not response:
                 logger.warning(
@@ -483,7 +479,7 @@ class Live:
                     self._baseline_rev,
                     self._exp_name,
                     "dvclive",
-                    dvc_config=self._dvc_config,
+                    dvc_config=self._dvc_studio_config,
                     **kwargs,
                 )
             if not response:
