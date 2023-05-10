@@ -58,6 +58,18 @@ def test_log_artifact_type_model(tmp_dir, mocked_dvc_repo):
     }
 
 
+def test_log_artifact_dvc_symlink(tmp_dir, dvc_repo):
+    (tmp_dir / "model.pth").touch()
+
+    with Live() as live:
+        live._dvc_repo.cache.local.cache_types = ["symlink"]
+        live.log_artifact("model.pth", type="model")
+
+    assert load_yaml(live.dvc_file) == {
+        "artifacts": {"model": {"path": "../model.pth", "type": "model"}}
+    }
+
+
 def test_log_artifact_type_model_provided_name(tmp_dir, mocked_dvc_repo):
     (tmp_dir / "model.pth").touch()
 
