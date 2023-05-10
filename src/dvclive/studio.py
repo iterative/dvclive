@@ -74,4 +74,4 @@ def get_dvc_studio_config(live):
     config = {}
     if live._dvc_repo:
         config = live._dvc_repo.config.get("studio")
-    return get_studio_config(dvc_config=config)
+    return get_studio_config(dvc_studio_config=config)

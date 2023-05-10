@@ -182,7 +182,7 @@ class Live:
                 self._baseline_rev,
                 self._exp_name,
                 "dvclive",
-                dvc_config=self._dvc_studio_config,
+                dvc_studio_config=self._dvc_studio_config,
             )
             if not response:
                 logger.debug(
@@ -438,7 +438,7 @@ class Live:
                     metrics=metrics,
                     params=params,
                     plots=plots,
-                    dvc_config=self._dvc_studio_config,
+                    dvc_studio_config=self._dvc_studio_config,
                 )
             if not response:
                 logger.warning(
@@ -479,7 +479,7 @@ class Live:
                     self._baseline_rev,
                     self._exp_name,
                     "dvclive",
-                    dvc_config=self._dvc_studio_config,
+                    dvc_studio_config=self._dvc_studio_config,
                     **kwargs,
                 )
             if not response:

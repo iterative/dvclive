@@ -194,7 +194,7 @@ def test_post_to_studio_skip_on_env_var(
 
 
 @pytest.mark.studio()
-def test_post_to_studio_dvc_config(
+def test_post_to_studio_dvc_studio_config(
     tmp_dir, mocker, mocked_dvc_repo, mocked_studio_post, monkeypatch
 ):
     mocked_post, _ = mocked_studio_post
@@ -414,9 +414,9 @@ def test_get_dvc_studio_config_env_var(monkeypatch, mocker):
     mocker.patch("dvclive.live.get_dvc_repo", return_value=None)
     live = Live()
     assert get_dvc_studio_config(live) == {
-        "studio_token": "token",
-        "studio_repo_url": "repo_url",
-        "studio_url": STUDIO_URL,
+        "token": "token",
+        "repo_url": "repo_url",
+        "url": STUDIO_URL,
     }
 
 
@@ -424,7 +424,7 @@ def test_get_dvc_studio_config_dvc_repo(mocked_dvc_repo):
     mocked_dvc_repo.config = {"studio": {"token": "token", "repo_url": "repo_url"}}
     live = Live()
     assert get_dvc_studio_config(live) == {
-        "studio_token": "token",
-        "studio_repo_url": "repo_url",
-        "studio_url": STUDIO_URL,
+        "token": "token",
+        "repo_url": "repo_url",
+        "url": STUDIO_URL,
     }
