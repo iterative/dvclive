@@ -162,6 +162,7 @@ def test_exp_save_run_on_dvc_repro(tmp_dir, mocker):
     dvc_repo.scm.get_rev.return_value = "current_rev"
     dvc_repo.scm.get_ref.return_value = None
     dvc_repo.scm.no_commits = False
+    dvc_repo.config = {}
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
         live = Live(save_dvc_exp=True)
         assert live._save_dvc_exp
@@ -202,6 +203,7 @@ def test_exp_save_with_dvc_files(tmp_dir, mocker):
     dvc_repo.scm.get_rev.return_value = "current_rev"
     dvc_repo.scm.get_ref.return_value = None
     dvc_repo.scm.no_commits = False
+    dvc_repo.config = {}
 
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
         live = Live(save_dvc_exp=True)
@@ -219,6 +221,7 @@ def test_exp_save_dvcexception_is_ignored(tmp_dir, mocker):
     dvc_repo.index.stages = []
     dvc_repo.scm.get_rev.return_value = "current_rev"
     dvc_repo.scm.get_ref.return_value = None
+    dvc_repo.config = {}
     dvc_repo.experiments.save.side_effect = DvcException("foo")
     mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
 

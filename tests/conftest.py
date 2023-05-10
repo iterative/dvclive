@@ -20,6 +20,7 @@ def mocked_dvc_repo(tmp_dir, mocker):
     _dvc_repo.scm.no_commits = False
     _dvc_repo.experiments.save.return_value = "e" * 40
     _dvc_repo.root_dir = tmp_dir
+    _dvc_repo.config = {"studio": {}}
     mocker.patch("dvclive.live.get_dvc_repo", return_value=_dvc_repo)
     return _dvc_repo
 
