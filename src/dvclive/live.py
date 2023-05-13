@@ -232,8 +232,8 @@ class Live:
 
     @property
     def report_file(self) -> Optional[str]:
-        if self._report_mode in ("html", "md", "notebook"):
-            suffix = "md" if self._report_mode == "notebook" else self._report_mode
+        if self._report_mode in ("html", "md"):
+            suffix = self._report_mode
             return os.path.join(self.dir, f"report.{suffix}")
         return None
 

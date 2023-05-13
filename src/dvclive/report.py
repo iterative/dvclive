@@ -149,9 +149,9 @@ def make_report(live: "Live"):
     elif live._report_mode == "notebook":
         from IPython.display import Markdown
 
-        render_markdown(renderers, live.report_file)
+        md = render_markdown(renderers)
         if live._report_notebook is not None:
-            new_report = Markdown(live.report_file)  # type: ignore [assignment]
+            new_report = Markdown(md)  # type: ignore [assignment]
             live._report_notebook.update(new_report)
     elif live._report_mode == "md":
         render_markdown(renderers, live.report_file)
