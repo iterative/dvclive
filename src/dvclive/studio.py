@@ -1,4 +1,5 @@
 # ruff: noqa: SLF001
+import base64
 import os
 from pathlib import Path
 
@@ -43,6 +44,21 @@ def _adapt_plot_datapoints(live, plot):
     return _cast_to_numbers(datapoints)
 
 
+def _adapt_image(image_path):
+    with open(image_path, "rb") as fobj:
+        return base64.b64encode(fobj.read()).decode("utf-8")
+
+
+def _adapt_images(live):
+    return {
+        _adapt_plot_name(live, image.output_path): {
+            "image": _adapt_image(image.output_path)
+        }
+        for image in live._images.values()
+        if image.step > live._latest_studio_step
+    }
+
+
 def get_studio_updates(live):
     if os.path.isfile(live.params_file):
         params_file = live.params_file
@@ -64,5 +80,7 @@ def get_studio_updates(live):
         for name, plot in plots.items()
     }
     plots = {k: {"data": v} for k, v in plots.items()}
+
+    plots.update(_adapt_images(live))
 
     return metrics, params, plots
