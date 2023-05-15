@@ -52,7 +52,7 @@ jobs:
 
       - name: mypy
         run: |
-           python -m mypy --install-types --non-interactive
+           python -m mypy
 
       - name: Run tests
         run: pytest -v tests --cov --cov-report=xml --cov-config=pyproject.toml

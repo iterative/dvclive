@@ -2,9 +2,13 @@ import csv
 import json
 import os
 import re
+import shutil
 import webbrowser
 from pathlib import Path
 from platform import uname
+from typing import Union
+
+StrPath = Union[str, Path]
 
 
 def run_once(f):
@@ -125,3 +129,22 @@ def inside_notebook() -> bool:
 
         return IPython.__version__ >= "6.0.0"
     return False
+
+
+def clean_and_copy_into(src: StrPath, dst: StrPath) -> str:
+    Path(dst).mkdir(exist_ok=True)
+
+    basename = os.path.basename(os.path.normpath(src))
+    dst_path = Path(os.path.join(dst, basename))
+
+    if dst_path.is_file() or dst_path.is_symlink():
+        dst_path.unlink()
+    elif dst_path.is_dir():
+        shutil.rmtree(dst_path)
+
+    if os.path.isdir(src):
+        shutil.copytree(src, dst_path)
+    else:
+        shutil.copy2(src, dst_path)
+
+    return str(dst_path)
