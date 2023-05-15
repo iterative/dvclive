@@ -29,7 +29,14 @@ from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEn
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, get_studio_updates
-from .utils import env2bool, inside_notebook, matplotlib_installed, open_file_in_browser
+from .utils import (
+    StrPath,
+    clean_and_copy_into,
+    env2bool,
+    inside_notebook,
+    matplotlib_installed,
+    open_file_in_browser,
+)
 
 logger = logging.getLogger("dvclive")
 handler = logging.StreamHandler()
@@ -39,7 +46,6 @@ logger.addHandler(handler)
 logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "INFO").upper())
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
-StrPath = Union[str, Path]
 
 
 class Live:
@@ -201,11 +207,11 @@ class Live:
                 self._report_mode = "html"
         elif self._report_mode == "notebook":
             if inside_notebook():
-                from IPython.display import HTML, display
+                from IPython.display import Markdown, display
 
                 self._report_mode = "notebook"
                 self._report_notebook = display(
-                    HTML(BLANK_NOTEBOOK_REPORT), display_id=True
+                    Markdown(BLANK_NOTEBOOK_REPORT), display_id=True
                 )
             else:
                 self._report_mode = "html"
@@ -234,9 +240,13 @@ class Live:
         return os.path.join(self.dir, "plots")
 
     @property
+    def artifacts_dir(self) -> str:
+        return os.path.join(self.dir, "artifacts")
+
+    @property
     def report_file(self) -> Optional[str]:
-        if self._report_mode in ("html", "md", "notebook"):
-            suffix = "html" if self._report_mode == "notebook" else self._report_mode
+        if self._report_mode in ("html", "md"):
+            suffix = self._report_mode
             return os.path.join(self.dir, f"report.{suffix}")
         return None
 
@@ -383,6 +393,7 @@ class Live:
         desc: Optional[str] = None,  # noqa: ARG002
         labels: Optional[List[str]] = None,  # noqa: ARG002
         meta: Optional[Dict[str, Any]] = None,  # noqa: ARG002
+        copy: bool = False,
     ):
         """Tracks a local file or directory with DVC"""
         if not isinstance(path, (str, Path)):
@@ -390,6 +401,9 @@ class Live:
 
         if self._dvc_repo is not None:
             from dvc.repo.artifacts import name_is_compatible
+
+            if copy:
+                path = clean_and_copy_into(path, self.artifacts_dir)
 
             try:
                 stage = self._dvc_repo.add(path)

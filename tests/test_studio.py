@@ -3,11 +3,12 @@ from pathlib import Path
 import pytest
 from dvc_studio_client.env import DVC_STUDIO_REPO_URL, DVC_STUDIO_TOKEN
 from dvc_studio_client.post_live_metrics import STUDIO_URL
+from PIL import Image as ImagePIL
 
 from dvclive import Live
 from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME
-from dvclive.plots import Metric
-from dvclive.studio import get_dvc_studio_config
+from dvclive.plots import Image, Metric
+from dvclive.studio import _adapt_image, get_dvc_studio_config
 
 
 def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
@@ -428,3 +429,36 @@ def test_get_dvc_studio_config_dvc_repo(mocked_dvc_repo):
         "repo_url": "repo_url",
         "url": STUDIO_URL,
     }
+
+
+def test_post_to_studio_images(tmp_dir, mocked_dvc_repo, mocked_studio_post):
+    mocked_post, _ = mocked_studio_post
+
+    live = Live(save_dvc_exp=True)
+    live.log_image("foo.png", ImagePIL.new("RGB", (10, 10), (0, 0, 0)))
+    live.next_step()
+
+    dvc_path = Path(live.dvc_file).as_posix()
+    metrics_path = Path(live.metrics_file).as_posix()
+    foo_path = (Path(live.plots_dir) / Image.subfolder / "foo.png").as_posix()
+
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        json={
+            "type": "data",
+            "repo_url": "STUDIO_REPO_URL",
+            "baseline_sha": live._baseline_rev,
+            "name": live._exp_name,
+            "step": 0,
+            "metrics": {f"{metrics_path}": {"data": {"step": 0}}},
+            "plots": {
+                f"{dvc_path}::{foo_path}": {"image": _adapt_image(foo_path)},
+            },
+            "client": "dvclive",
+        },
+        headers={
+            "Authorization": "token STUDIO_TOKEN",
+            "Content-type": "application/json",
+        },
+        timeout=5,
+    )
