@@ -86,13 +86,13 @@ class Live:
         self._exp_name: Optional[str] = None
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
-        self._dvc_repo = get_dvc_repo()
+        self._dvc_repo = None
         self._include_untracked: List[str] = []
         self._init_dvc()
 
         self._latest_studio_step = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
-        self._dvc_studio_config: Dict[str, Any] = get_dvc_studio_config(self)
+        self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
 
     def _init_resume(self):
@@ -129,6 +129,7 @@ class Live:
                 )
                 self._save_dvc_exp = False
 
+        self._dvc_repo = get_dvc_repo()
         if self._dvc_repo is None:
             if self._save_dvc_exp:
                 logger.warning(
@@ -156,6 +157,7 @@ class Live:
             self._include_untracked.append(self.dir)
 
     def _init_studio(self):
+        self._dvc_studio_config = get_dvc_studio_config(self)
         if not self._dvc_studio_config:
             logger.debug("Skipping `studio` report.")
             self._studio_events_to_skip.add("start")
