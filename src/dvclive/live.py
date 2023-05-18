@@ -5,7 +5,6 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
-from dvc_studio_client.env import DVC_STUDIO_TOKEN, STUDIO_TOKEN
 from dvc_studio_client.post_live_metrics import post_live_metrics
 from funcy import set_in
 from pathspec import PathSpec
@@ -29,7 +28,7 @@ from .error import (
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
-from .studio import get_studio_updates
+from .studio import get_dvc_studio_config, get_studio_updates
 from .utils import (
     StrPath,
     clean_and_copy_into,
@@ -93,6 +92,7 @@ class Live:
 
         self._latest_studio_step = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
+        self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
 
     def _init_resume(self):
@@ -157,8 +157,9 @@ class Live:
             self._include_untracked.append(self.dir)
 
     def _init_studio(self):
-        if not any((os.getenv(STUDIO_TOKEN, None), os.getenv(DVC_STUDIO_TOKEN, None))):
-            logger.debug("Missing env var `STUDIO_TOKEN`, skipping `studio` report.")
+        self._dvc_studio_config = get_dvc_studio_config(self)
+        if not self._dvc_studio_config:
+            logger.debug("Skipping `studio` report.")
             self._studio_events_to_skip.add("start")
             self._studio_events_to_skip.add("data")
             self._studio_events_to_skip.add("done")
@@ -185,7 +186,11 @@ class Live:
             self._studio_events_to_skip.add("done")
         else:
             response = post_live_metrics(
-                "start", self._baseline_rev, self._exp_name, "dvclive"
+                "start",
+                self._baseline_rev,
+                self._exp_name,
+                "dvclive",
+                dvc_studio_config=self._dvc_studio_config,
             )
             if not response:
                 logger.debug(
@@ -449,6 +454,7 @@ class Live:
                     metrics=metrics,
                     params=params,
                     plots=plots,
+                    dvc_studio_config=self._dvc_studio_config,
                 )
             if not response:
                 logger.warning(
@@ -489,6 +495,7 @@ class Live:
                     self._baseline_rev,
                     self._exp_name,
                     "dvclive",
+                    dvc_studio_config=self._dvc_studio_config,
                     **kwargs,
                 )
             if not response:

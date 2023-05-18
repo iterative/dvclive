@@ -450,6 +450,7 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
 
     dvc_repo = mocker.MagicMock()
     dvc_repo.index.stages = []
+    dvc_repo.config = {}
     dvc_repo.scm.get_rev.return_value = "current_rev"
     dvc_repo.scm.get_ref.return_value = None
     dvc_repo.scm.no_commits = False
