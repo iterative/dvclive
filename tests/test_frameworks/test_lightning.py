@@ -29,7 +29,7 @@ class XORDataset(Dataset):
 
 
 class LitXOR(LightningModule):
-    def __init__(self, latent_dims=4):
+    def __init__(self, latent_dims=4, optim_params={}):  # noqa: B006
         super().__init__()
 
         self.save_hyperparameters()
@@ -70,7 +70,7 @@ class LitXOR(LightningModule):
         return loss
 
     def configure_optimizers(self):
-        return Adam(self.parameters(), lr=1e-3)
+        return Adam(self.parameters(), **self.hparams.optim_params)
 
     def predict_dataloader(self):
         pass
@@ -84,7 +84,7 @@ class LitXOR(LightningModule):
 
 def test_lightning_integration(tmp_dir, mocker):
     # init model
-    model = LitXOR()
+    model = LitXOR(latent_dims=8, optim_params={"lr": 0.01})
     # init logger
     dvclive_logger = DVCLiveLogger("test_run", dir="logs")
     live = dvclive_logger.experiment
@@ -111,7 +111,7 @@ def test_lightning_integration(tmp_dir, mocker):
 
     params_file = dvclive_logger.experiment.params_file
     assert os.path.exists(params_file)
-    assert load_yaml(params_file) == {"latent_dims": 4}
+    assert load_yaml(params_file) == {"latent_dims": 8, "optim_params": {"lr": 0.01}}
 
 
 def test_lightning_default_dir(tmp_dir):

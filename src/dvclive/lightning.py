@@ -2,11 +2,7 @@
 import inspect
 from typing import Any, Dict, Optional
 
-from lightning_fabric.utilities.logger import (
-    _convert_params,
-    _sanitize_callable_params,
-    _sanitize_params,
-)
+from lightning_fabric.utilities.logger import _convert_params, _sanitize_callable_params
 from pytorch_lightning.loggers.logger import Logger, rank_zero_experiment
 from pytorch_lightning.utilities import rank_zero_only
 from torch import is_tensor
@@ -68,7 +64,6 @@ class DVCLiveLogger(Logger):
     def log_hyperparams(self, params, *args, **kwargs):
         params = _convert_params(params)
         params = _sanitize_callable_params(params)
-        params = _sanitize_params(params)
         self.experiment.log_params(params)
 
     @property  # type: ignore
