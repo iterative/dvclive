@@ -1,4 +1,5 @@
 # ruff: noqa: SLF001
+import copy
 import os
 import random
 from pathlib import Path
@@ -106,7 +107,7 @@ def make_dvcyaml(live):
         dvcyaml["plots"] = plots
 
     if live._artifacts:
-        dvcyaml["artifacts"] = live._artifacts
+        dvcyaml["artifacts"] = copy.deepcopy(live._artifacts)
         for artifact in dvcyaml["artifacts"].values():
             abs_path = os.path.abspath(artifact["path"])
             abs_dir = os.path.realpath(live.dir)

@@ -271,3 +271,18 @@ def test_errors_on_git_add_are_catched(tmp_dir, mocked_dvc_repo, monkeypatch):
 
     with Live(report=None) as live:
         live.summary["foo"] = 1
+
+
+def test_make_dvcyaml_idempotent(tmp_dir, mocked_dvc_repo):
+    (tmp_dir / "model.pth").touch()
+
+    with Live() as live:
+        live.log_artifact("model.pth", type="model")
+
+    live.make_dvcyaml()
+
+    assert load_yaml(live.dvc_file) == {
+        "artifacts": {
+            "model": {"path": "../model.pth", "type": "model"},
+        }
+    }
