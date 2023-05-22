@@ -46,3 +46,4 @@ def dump_yaml(content, output_file):
 def dump_json(content, output_file, indent=4, **kwargs):
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(content, f, indent=indent, **kwargs)
+        f.write("\n")
