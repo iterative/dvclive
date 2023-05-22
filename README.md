@@ -148,9 +148,12 @@ ______________________________________________________________________
 The main differences with those *ML Loggers* are:
 
 - **DVCLive** does not **require** any additional services or servers to run.
-- **DVCLive** metrics, parameters, and plots are [stored as plain text files](https://dvc.org/doc/dvclive/how-it-works#directory-structure) that can be
-versioned by tools like Git or tracked as pointers to files in DVC storage.
-- **DVCLive** can save experiments or runs as [hidden Git commits](https://dvc.org/doc/dvclive/how-it-works#track-the-results). 
+- **DVCLive** metrics, parameters, and plots are
+  [stored as plain text files](https://dvc.org/doc/dvclive/how-it-works#directory-structure)
+  that can be versioned by tools like Git or tracked as pointers to files in DVC
+  storage.
+- **DVCLive** can save experiments or runs as
+  [hidden Git commits](https://dvc.org/doc/dvclive/how-it-works#track-the-results).
 
 You can then use different [options](#comparing) to visualize the metrics,
 parameters, and plots across experiments.
