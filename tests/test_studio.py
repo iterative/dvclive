@@ -35,7 +35,7 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
             "Authorization": "token STUDIO_TOKEN",
             "Content-type": "application/json",
         },
-        timeout=5,
+        timeout=(30, 5),
     )
 
     live.log_metric("foo", 1)
@@ -58,7 +58,7 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
             "Authorization": "token STUDIO_TOKEN",
             "Content-type": "application/json",
         },
-        timeout=5,
+        timeout=(30, 5),
     )
 
     live.log_metric("foo", 2)
@@ -81,7 +81,7 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
             "Authorization": "token STUDIO_TOKEN",
             "Content-type": "application/json",
         },
-        timeout=5,
+        timeout=(30, 5),
     )
 
     live.end()
@@ -99,7 +99,7 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
             "Authorization": "token STUDIO_TOKEN",
             "Content-type": "application/json",
         },
-        timeout=5,
+        timeout=(30, 5),
     )
 
 
@@ -146,7 +146,7 @@ def test_post_to_studio_failed_data_request(
             "Authorization": "token STUDIO_TOKEN",
             "Content-type": "application/json",
         },
-        timeout=5,
+        timeout=(30, 5),
     )
 
 
@@ -261,7 +261,7 @@ def test_post_to_studio_include_prefix_if_needed(
             "Authorization": "token STUDIO_TOKEN",
             "Content-type": "application/json",
         },
-        timeout=5,
+        timeout=(30, 5),
     )
 
 
@@ -293,7 +293,7 @@ def test_post_to_studio_shorten_names(tmp_dir, mocked_dvc_repo, mocked_studio_po
             "Authorization": "token STUDIO_TOKEN",
             "Content-type": "application/json",
         },
-        timeout=5,
+        timeout=(30, 5),
     )
 
 
@@ -350,7 +350,7 @@ def test_post_to_studio_inside_subdir(
             "Authorization": "token STUDIO_TOKEN",
             "Content-type": "application/json",
         },
-        timeout=5,
+        timeout=(30, 5),
     )
 
 
@@ -394,7 +394,7 @@ def test_post_to_studio_inside_subdir_dvc_exp(
             "Authorization": "token STUDIO_TOKEN",
             "Content-type": "application/json",
         },
-        timeout=5,
+        timeout=(30, 5),
     )
 
 
@@ -460,5 +460,5 @@ def test_post_to_studio_images(tmp_dir, mocked_dvc_repo, mocked_studio_post):
             "Authorization": "token STUDIO_TOKEN",
             "Content-type": "application/json",
         },
-        timeout=5,
+        timeout=(30, 5),
     )
