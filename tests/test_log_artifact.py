@@ -47,6 +47,7 @@ def test_log_artifact_with_save_dvc_exp(tmp_dir, mocker, mocked_dvc_repo):
         name=live._exp_name,
         include_untracked=[live.dir, "data", ".gitignore"],
         force=True,
+        message=None,
     )
 
 
@@ -149,7 +150,7 @@ def test_log_artifact_type_model_provided_name(tmp_dir, mocked_dvc_repo):
     }
 
 
-def test_log_artifact_type_model_on_step(tmp_dir, mocked_dvc_repo):
+def test_log_artifact_type_model_on_step_and_final(tmp_dir, mocked_dvc_repo):
     (tmp_dir / "model.pth").touch()
 
     with Live() as live:
@@ -160,6 +161,22 @@ def test_log_artifact_type_model_on_step(tmp_dir, mocked_dvc_repo):
     assert load_yaml(live.dvc_file) == {
         "artifacts": {
             "model": {"path": "../model.pth", "type": "model", "labels": ["final"]},
+        },
+        "metrics": ["metrics.json"],
+    }
+
+
+def test_log_artifact_type_model_on_step(tmp_dir, mocked_dvc_repo):
+    (tmp_dir / "model.pth").touch()
+
+    with Live() as live:
+        for _ in range(3):
+            live.log_artifact("model.pth", type="model")
+            live.next_step()
+
+    assert load_yaml(live.dvc_file) == {
+        "artifacts": {
+            "model": {"path": "../model.pth", "type": "model"},
         },
         "metrics": ["metrics.json"],
     }
