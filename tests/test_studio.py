@@ -462,3 +462,26 @@ def test_post_to_studio_images(tmp_dir, mocked_dvc_repo, mocked_studio_post):
         },
         timeout=(30, 5),
     )
+
+
+def test_post_to_studio_message(tmp_dir, mocked_dvc_repo, mocked_studio_post):
+    live = Live(save_dvc_exp=True, exp_message="Custom message")
+
+    mocked_post, _ = mocked_studio_post
+
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        json={
+            "type": "start",
+            "repo_url": "STUDIO_REPO_URL",
+            "baseline_sha": "f" * 40,
+            "name": live._exp_name,
+            "client": "dvclive",
+            "message": "Custom message",
+        },
+        headers={
+            "Authorization": "token STUDIO_TOKEN",
+            "Content-type": "application/json",
+        },
+        timeout=5,
+    )

@@ -56,6 +56,7 @@ class Live:
         report: Optional[str] = "auto",
         save_dvc_exp: bool = False,
         dvcyaml: bool = True,
+        exp_message: Optional[str] = None,
     ):
         self.summary: Dict[str, Any] = {}
 
@@ -84,6 +85,7 @@ class Live:
 
         self._baseline_rev: Optional[str] = None
         self._exp_name: Optional[str] = None
+        self._exp_message: Optional[str] = exp_message
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
         self._dvc_repo = None
@@ -191,6 +193,7 @@ class Live:
                 self._exp_name,
                 "dvclive",
                 dvc_studio_config=self._dvc_studio_config,
+                message=self._exp_message,
             )
             if not response:
                 logger.debug(
@@ -553,6 +556,7 @@ class Live:
                     name=self._exp_name,
                     include_untracked=self._include_untracked,
                     force=True,
+                    message=self._exp_message,
                 )
             except DvcException as e:
                 logger.warning(f"Failed to save experiment:\n{e}")
