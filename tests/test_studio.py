@@ -483,5 +483,5 @@ def test_post_to_studio_message(tmp_dir, mocked_dvc_repo, mocked_studio_post):
             "Authorization": "token STUDIO_TOKEN",
             "Content-type": "application/json",
         },
-        timeout=5,
+        timeout=(30 5),
     )
