@@ -275,7 +275,7 @@ class Live:
         self.step += 1
 
     def log_metric(
-        self, name: str, val: Union[int, float], timestamp: bool = False, plot=True
+        self, name: str, val: Union[int, float], timestamp: bool = False, plot: bool = True
     ):
         if not Metric.could_log(val):
             raise InvalidDataTypeError(name, type(val))
