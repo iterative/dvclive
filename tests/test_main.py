@@ -29,10 +29,10 @@ def read_latest(live, metric_name):
 def test_logging_no_step(tmp_dir):
     dvclive = Live("logs")
 
-    dvclive.log_metric("m1", 1)
+    dvclive.log_metric("m1", 1, plot=False)
     dvclive.make_summary()
 
-    assert not (tmp_dir / "logs" / "m1.tsv").is_file()
+    assert not (tmp_dir / "logs" / "plots" / "metrics" / "m1.tsv").is_file()
     assert (tmp_dir / dvclive.metrics_file).is_file()
 
     s = load_yaml(dvclive.metrics_file)
