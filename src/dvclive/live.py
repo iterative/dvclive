@@ -277,7 +277,9 @@ class Live:
         self.make_checkpoint()
         self.step += 1
 
-    def log_metric(self, name: str, val: Union[int, float], timestamp: bool = False):
+    def log_metric(
+        self, name: str, val: Union[int, float], timestamp: bool = False, plot=True
+    ):
         if not Metric.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 
@@ -288,7 +290,8 @@ class Live:
             self._metrics[name] = metric
 
         metric.step = self.step
-        metric.dump(val, timestamp=timestamp)
+        if plot:
+            metric.dump(val, timestamp=timestamp)
 
         self.summary = set_in(self.summary, metric.summary_keys, val)
         logger.debug(f"Logged {name}: {val}")
