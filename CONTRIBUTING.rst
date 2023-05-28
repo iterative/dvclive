@@ -57,11 +57,11 @@ You need Python 3.8+.
    $ python -m venv .venv
    $ source .venv/bin/activate
 
-Install in editable mode:
+Install in editable mode including development dependencies:
 
 .. code:: console
 
-   $ pip install -e .
+   $ pip install -e .[dev]
 
 
 How to test the project
