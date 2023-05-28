@@ -61,7 +61,7 @@ Install in editable mode including development dependencies:
 
 .. code:: console
 
-   $ pip install -e .[dev]
+   $ pip install -e .[tests]
 
 
 How to test the project
