@@ -1,14 +1,19 @@
 # ruff: noqa: N806
 import os
 
-import catalyst
 import pytest
-import torch
-from catalyst import dl
 
 from dvclive import Live
-from dvclive.catalyst import DVCLiveCallback
 from dvclive.plots import Metric
+
+try:
+    import catalyst
+    import torch
+    from catalyst import dl
+
+    from dvclive.catalyst import DVCLiveCallback
+except ImportError:
+    pytest.skip("skipping catalyst tests", allow_module_level=True)
 
 
 @pytest.fixture()

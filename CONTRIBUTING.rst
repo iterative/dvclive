@@ -63,6 +63,12 @@ Install in editable mode including development dependencies:
 
    $ pip install -e .[tests]
 
+If you need to test against a specific framework, you can install it separately:
+
+.. code:: console
+
+   $ pip install -e .[tests,tf]
+   $ pip install -e .[tests,optuna]
 
 How to test the project
 -----------------------

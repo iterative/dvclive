@@ -3,9 +3,13 @@ import os
 import pytest
 
 from dvclive import Live
-from dvclive.keras import DVCLiveCallback
 from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
+
+try:
+    from dvclive.keras import DVCLiveCallback
+except ImportError:
+    pytest.skip("skipping keras tests", allow_module_level=True)
 
 
 @pytest.fixture()
