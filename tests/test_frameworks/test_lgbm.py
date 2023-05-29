@@ -1,16 +1,21 @@
 import os
 from sys import platform
 
-import lightgbm as lgbm
-import numpy as np
-import pandas as pd
 import pytest
-from sklearn import datasets
-from sklearn.model_selection import train_test_split
 
 from dvclive import Live
-from dvclive.lgbm import DVCLiveCallback
 from dvclive.utils import parse_metrics
+
+try:
+    import lightgbm as lgbm
+    import numpy as np
+    import pandas as pd
+    from sklearn import datasets
+    from sklearn.model_selection import train_test_split
+
+    from dvclive.lgbm import DVCLiveCallback
+except ImportError:
+    pytest.skip("skipping lightgbm tests", allow_module_level=True)
 
 
 @pytest.fixture()
