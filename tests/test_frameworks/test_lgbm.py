@@ -51,7 +51,34 @@ def test_lgbm_integration(tmp_dir, model_params, iris_data):
     assert os.path.exists("dvclive")
 
     logs, _ = parse_metrics(callback.live)
+    assert "dvclive/plots/metrics/multi_logloss.tsv" in logs
     assert len(logs) == 1
+    assert len(list(logs.values())[0]) == 5
+
+
+@pytest.mark.skipif(platform == "darwin", reason="LIBOMP Segmentation fault on MacOS")
+def test_lgbm_integration_multi_eval(tmp_dir, model_params, iris_data):
+    model = lgbm.LGBMClassifier()
+    model.set_params(**model_params)
+
+    callback = DVCLiveCallback()
+    model.fit(
+        iris_data[0][0],
+        iris_data[0][1],
+        eval_set=[
+            (iris_data[0][0], iris_data[0][1]),
+            (iris_data[1][0], iris_data[1][1]),
+        ],
+        eval_metric=["multi_logloss"],
+        callbacks=[callback],
+    )
+
+    assert os.path.exists("dvclive")
+
+    logs, _ = parse_metrics(callback.live)
+    assert "dvclive/plots/metrics/training/multi_logloss.tsv" in logs
+    assert "dvclive/plots/metrics/valid_1/multi_logloss.tsv" in logs
+    assert len(logs) == 2
     assert len(list(logs.values())[0]) == 5
 
 
