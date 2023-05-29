@@ -15,7 +15,7 @@ class DVCLiveCallback(Callback):
         model_file=None,
         save_weights_only: bool = False,
         live: Optional[Live] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.model_file = model_file

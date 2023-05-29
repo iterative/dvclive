@@ -24,7 +24,7 @@ class DVCLiveCallback(TrainerCallback):
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
-        **kwargs
+        **kwargs,
     ):
         logs = kwargs["logs"]
         for key, value in logs.items():
@@ -36,7 +36,7 @@ class DVCLiveCallback(TrainerCallback):
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
-        **kwargs
+        **kwargs,
     ):
         if self.model_file:
             model = kwargs["model"]
@@ -51,7 +51,7 @@ class DVCLiveCallback(TrainerCallback):
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
-        **kwargs
+        **kwargs,
     ):
         if args.load_best_model_at_end:
             trainer = Trainer(
