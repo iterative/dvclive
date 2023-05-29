@@ -7,15 +7,15 @@ from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
 
 try:
-  import torch
-  from pytorch_lightning import LightningModule
-  from pytorch_lightning.trainer import Trainer
-  from torch import nn
-  from torch.nn import functional as F  # noqa: N812
-  from torch.optim import SGD, Adam
-  from torch.utils.data import DataLoader, Dataset
+    import torch
+    from pytorch_lightning import LightningModule
+    from pytorch_lightning.trainer import Trainer
+    from torch import nn
+    from torch.nn import functional as F  # noqa: N812
+    from torch.optim import SGD, Adam
+    from torch.utils.data import DataLoader, Dataset
 
-  from dvclive.lightning import DVCLiveLogger
+    from dvclive.lightning import DVCLiveLogger
 except ImportError:
     pytest.skip("skipping pytorch_lightning tests", allow_module_level=True)
 
