@@ -1,5 +1,3 @@
-/src/dvclive/_dvclive_version.py
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
