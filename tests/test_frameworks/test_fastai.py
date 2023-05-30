@@ -1,19 +1,24 @@
 import os
 
 import pytest
-from fastai.callback.tracker import SaveModelCallback
-from fastai.tabular.all import (
-    Categorify,
-    Normalize,
-    ProgressCallback,
-    TabularDataLoaders,
-    accuracy,
-    tabular_learner,
-)
 
 from dvclive import Live
-from dvclive.fastai import DVCLiveCallback
 from dvclive.plots.metric import Metric
+
+try:
+    from fastai.callback.tracker import SaveModelCallback
+    from fastai.tabular.all import (
+        Categorify,
+        Normalize,
+        ProgressCallback,
+        TabularDataLoaders,
+        accuracy,
+        tabular_learner,
+    )
+
+    from dvclive.fastai import DVCLiveCallback
+except ImportError:
+    pytest.skip("skipping fastai tests", allow_module_level=True)
 
 
 @pytest.fixture()

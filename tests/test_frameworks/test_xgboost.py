@@ -1,17 +1,22 @@
 import os
 from contextlib import nullcontext
 
-import numpy as np
-import pandas as pd
 import pytest
-import xgboost as xgb
-from sklearn import datasets
-from sklearn.model_selection import train_test_split
 
 from dvclive import Live
 from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
-from dvclive.xgb import DVCLiveCallback
+
+try:
+    import numpy as np
+    import pandas as pd
+    import xgboost as xgb
+    from sklearn import datasets
+    from sklearn.model_selection import train_test_split
+
+    from dvclive.xgb import DVCLiveCallback
+except ImportError:
+    pytest.skip("skipping xgboost tests", allow_module_level=True)
 
 
 @pytest.fixture()

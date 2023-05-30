@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 import pytest
@@ -484,3 +485,8 @@ def test_make_dvcyaml(tmp_dir, dvcyaml):
     dvcyaml_path = tmp_dir / dvclive.dir / "dvc.yaml"
 
     assert dvcyaml_path.is_file()
+
+
+def test_suppress_dvc_logs(tmp_dir, mocked_dvc_repo):
+    Live()
+    assert logging.getLogger("dvc").level == 30

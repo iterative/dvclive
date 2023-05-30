@@ -2,6 +2,7 @@ import os
 
 import pytest
 from dvc.repo import Repo
+from dvc.scm import NoSCM
 from PIL import Image
 from ruamel.yaml import YAML
 from scmrepo.git import Git
@@ -298,3 +299,15 @@ def test_exp_save_message(tmp_dir, mocked_dvc_repo):
         force=True,
         message="Custom message",
     )
+
+
+def test_no_scm_repo(tmp_dir, mocker):
+    dvc_repo = mocker.MagicMock()
+    dvc_repo.scm = NoSCM()
+
+    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
+        live = Live()
+        assert live._dvc_repo == dvc_repo
+
+        live = Live(save_dvc_exp=True)
+        assert live._save_dvc_exp is False
