@@ -134,6 +134,10 @@ class Live:
                 self._save_dvc_exp = False
 
         self._dvc_repo = get_dvc_repo()
+
+        dvc_logger = logging.getLogger("dvc")
+        dvc_logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "WARNING").upper())
+
         if (self._dvc_repo is None) or isinstance(self._dvc_repo.scm, NoSCM):
             if self._save_dvc_exp:
                 logger.warning(
