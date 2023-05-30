@@ -31,9 +31,7 @@ class DVCLiveCallback(TrainingCallback):
             evals_log = {"": evals_log[self._metric_data]}
         for subdir, data in evals_log.items():
             for key, values in data.items():
-                self.live.log_metric(
-                    f"{subdir}/{key}" if subdir else key, values[-1]
-                )
+                self.live.log_metric(f"{subdir}/{key}" if subdir else key, values[-1])
         if self.model_file:
             model.save_model(self.model_file)
         self.live.next_step()
