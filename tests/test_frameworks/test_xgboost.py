@@ -1,8 +1,10 @@
 import os
+from contextlib import nullcontext
 
 import pytest
 
 from dvclive import Live
+from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
 
 try:
@@ -10,6 +12,7 @@ try:
     import pandas as pd
     import xgboost as xgb
     from sklearn import datasets
+    from sklearn.model_selection import train_test_split
 
     from dvclive.xgb import DVCLiveCallback
 except ImportError:
@@ -29,24 +32,52 @@ def iris_data():
     return xgb.DMatrix(x, y)
 
 
-def test_xgb_integration(tmp_dir, train_params, iris_data, mocker):
-    callback = DVCLiveCallback("eval_data")
+@pytest.fixture()
+def iris_train_eval_data():
+    iris = datasets.load_iris()
+    x_train, x_eval, y_train, y_eval = train_test_split(
+        iris.data, iris.target, random_state=0
+    )
+    return (xgb.DMatrix(x_train, y_train), xgb.DMatrix(x_eval, y_eval))
+
+
+@pytest.mark.parametrize(
+    ("metric_data", "subdirs", "context"),
+    [
+        (
+            "eval",
+            ("",),
+            pytest.warns(DeprecationWarning, match="`metric_data`.+deprecated"),
+        ),
+        (None, ("train", "eval"), nullcontext()),
+    ],
+)
+def test_xgb_integration(
+    tmp_dir, train_params, iris_train_eval_data, metric_data, subdirs, context, mocker
+):
+    with context:
+        callback = DVCLiveCallback(metric_data)
     live = callback.live
     spy = mocker.spy(live, "end")
+    data_train, data_eval = iris_train_eval_data
     xgb.train(
         train_params,
-        iris_data,
+        data_train,
         callbacks=[callback],
         num_boost_round=5,
-        evals=[(iris_data, "eval_data")],
+        evals=[(data_train, "train"), (data_eval, "eval")],
     )
     spy.assert_called_once()
 
     assert os.path.exists("dvclive")
 
     logs, _ = parse_metrics(callback.live)
-    assert len(logs) == 1
-    assert len(list(logs.values())[0]) == 5
+    assert len(logs) == len(subdirs)
+    assert list(map(len, logs.values())) == [5] * len(logs)
+    scalars = os.path.join(callback.live.plots_dir, Metric.subfolder)
+    assert all(
+        os.path.join(scalars, subdir, "mlogloss.tsv") in logs for subdir in subdirs
+    )
 
 
 def test_xgb_model_file(tmp_dir, train_params, iris_data):
