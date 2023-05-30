@@ -2,6 +2,7 @@ import os
 
 import pytest
 from dvc.repo import Repo
+from dvc.scm import NoSCM
 from PIL import Image
 from ruamel.yaml import YAML
 from scmrepo.git import Git
@@ -133,6 +134,7 @@ def test_exp_save_on_end(tmp_dir, save, mocked_dvc_repo):
             name=live._exp_name,
             include_untracked=[live.dir],
             force=True,
+            message=None,
         )
     else:
         assert live._baseline_rev is not None
@@ -171,7 +173,7 @@ def test_exp_save_run_on_dvc_repro(tmp_dir, mocker):
         live.end()
 
     dvc_repo.experiments.save.assert_called_with(
-        name=live._exp_name, include_untracked=[live.dir], force=True
+        name=live._exp_name, include_untracked=[live.dir], force=True, message=None
     )
 
 
@@ -210,7 +212,7 @@ def test_exp_save_with_dvc_files(tmp_dir, mocker):
         live.end()
 
     dvc_repo.experiments.save.assert_called_with(
-        name=live._exp_name, include_untracked=[live.dir], force=True
+        name=live._exp_name, include_untracked=[live.dir], force=True, message=None
     )
 
 
@@ -271,3 +273,41 @@ def test_errors_on_git_add_are_catched(tmp_dir, mocked_dvc_repo, monkeypatch):
 
     with Live(report=None) as live:
         live.summary["foo"] = 1
+
+
+def test_make_dvcyaml_idempotent(tmp_dir, mocked_dvc_repo):
+    (tmp_dir / "model.pth").touch()
+
+    with Live() as live:
+        live.log_artifact("model.pth", type="model")
+
+    live.make_dvcyaml()
+
+    assert load_yaml(live.dvc_file) == {
+        "artifacts": {
+            "model": {"path": "../model.pth", "type": "model"},
+        }
+    }
+
+
+def test_exp_save_message(tmp_dir, mocked_dvc_repo):
+    live = Live(save_dvc_exp=True, exp_message="Custom message")
+    live.end()
+    mocked_dvc_repo.experiments.save.assert_called_with(
+        name=live._exp_name,
+        include_untracked=[live.dir],
+        force=True,
+        message="Custom message",
+    )
+
+
+def test_no_scm_repo(tmp_dir, mocker):
+    dvc_repo = mocker.MagicMock()
+    dvc_repo.scm = NoSCM()
+
+    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
+        live = Live()
+        assert live._dvc_repo == dvc_repo
+
+        live = Live(save_dvc_exp=True)
+        assert live._save_dvc_exp is False

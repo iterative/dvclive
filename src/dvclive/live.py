@@ -56,6 +56,7 @@ class Live:
         report: Optional[str] = "auto",
         save_dvc_exp: bool = False,
         dvcyaml: bool = True,
+        exp_message: Optional[str] = None,
     ):
         self.summary: Dict[str, Any] = {}
 
@@ -84,6 +85,7 @@ class Live:
 
         self._baseline_rev: Optional[str] = None
         self._exp_name: Optional[str] = None
+        self._exp_message: Optional[str] = exp_message
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
         self._dvc_repo = None
@@ -118,6 +120,8 @@ class Live:
                 os.remove(f)
 
     def _init_dvc(self):
+        from dvc.scm import NoSCM
+
         if os.getenv(env.DVC_EXP_BASELINE_REV, None):
             # `dvc exp` execution
             self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV, "")
@@ -134,7 +138,7 @@ class Live:
         dvc_logger = logging.getLogger("dvc")
         dvc_logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "WARNING").upper())
 
-        if self._dvc_repo is None:
+        if (self._dvc_repo is None) or isinstance(self._dvc_repo.scm, NoSCM):
             if self._save_dvc_exp:
                 logger.warning(
                     "Can't save experiment without a Git Repo."
@@ -195,6 +199,7 @@ class Live:
                 self._exp_name,
                 "dvclive",
                 dvc_studio_config=self._dvc_studio_config,
+                message=self._exp_message,
             )
             if not response:
                 logger.debug(
@@ -278,7 +283,13 @@ class Live:
         self.make_checkpoint()
         self.step += 1
 
-    def log_metric(self, name: str, val: Union[int, float], timestamp: bool = False):
+    def log_metric(
+        self,
+        name: str,
+        val: Union[int, float],
+        timestamp: bool = False,
+        plot: bool = True,
+    ):
         if not Metric.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 
@@ -289,7 +300,8 @@ class Live:
             self._metrics[name] = metric
 
         metric.step = self.step
-        metric.dump(val, timestamp=timestamp)
+        if plot:
+            metric.dump(val, timestamp=timestamp)
 
         self.summary = set_in(self.summary, metric.summary_keys, val)
         logger.debug(f"Logged {name}: {val}")
@@ -557,6 +569,7 @@ class Live:
                     name=self._exp_name,
                     include_untracked=self._include_untracked,
                     force=True,
+                    message=self._exp_message,
                 )
             except DvcException as e:
                 logger.warning(f"Failed to save experiment:\n{e}")

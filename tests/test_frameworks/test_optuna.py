@@ -1,8 +1,14 @@
-import optuna
+import pytest
 
-from dvclive.optuna import DVCLiveCallback
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_json
+
+try:
+    import optuna
+
+    from dvclive.optuna import DVCLiveCallback
+except ImportError:
+    pytest.skip("skipping optuna tests", allow_module_level=True)
 
 
 def objective(trial):
