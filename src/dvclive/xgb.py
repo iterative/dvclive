@@ -1,5 +1,6 @@
 # ruff: noqa: ARG002
-from typing import Optional, Sequence, Union
+from typing import Optional
+from warnings import warn
 
 from xgboost.callback import TrainingCallback
 
@@ -9,22 +10,28 @@ from dvclive import Live
 class DVCLiveCallback(TrainingCallback):
     def __init__(
         self,
-        metric_data: Union[str, Sequence[str]],
+        metric_data: Optional[str] = None,
         model_file=None,
         live: Optional[Live] = None,
         **kwargs,
     ):
         super().__init__()
-        if isinstance(metric_data, str):
-            metric_data = (metric_data,)
-        self._metric_spec = {
-            name: name if len(metric_data) > 1 else "" for name in metric_data
-        }
+        if metric_data is not None:
+            warn(
+                "`metric_data` is deprecated and will be removed",
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
+        self._metric_data = metric_data
         self.model_file = model_file
         self.live = live if live is not None else Live(**kwargs)
 
     def after_iteration(self, model, epoch, evals_log):
-        for name, subdir in self._metric_spec.items():
+        for name, subdir in (
+            [(self._metric_data, "")]
+            if self._metric_data
+            else zip(evals_log, evals_log)
+        ):
             for key, values in evals_log[name].items():
                 if values:
                     latest_metric = values[-1]

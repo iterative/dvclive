@@ -1,4 +1,5 @@
 import os
+from contextlib import nullcontext
 
 import numpy as np
 import pandas as pd
@@ -36,13 +37,21 @@ def iris_train_eval_data():
 
 
 @pytest.mark.parametrize(
-    ("metric_data", "subdirs"),
-    [("eval", ("",)), (("eval",), ("",)), (("train", "eval"), ("train", "eval"))],
+    ("metric_data", "subdirs", "context"),
+    [
+        (
+            "eval",
+            ("",),
+            pytest.warns(DeprecationWarning, match="`metric_data`.+deprecated"),
+        ),
+        (None, ("train", "eval"), nullcontext()),
+    ],
 )
 def test_xgb_integration(
-    tmp_dir, train_params, iris_train_eval_data, metric_data, subdirs, mocker
+    tmp_dir, train_params, iris_train_eval_data, metric_data, subdirs, context, mocker
 ):
-    callback = DVCLiveCallback(metric_data)
+    with context:
+        callback = DVCLiveCallback(metric_data)
     live = callback.live
     spy = mocker.spy(live, "end")
     data_train, data_eval = iris_train_eval_data
