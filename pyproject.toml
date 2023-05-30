@@ -63,7 +63,7 @@ huggingface = ["transformers", "datasets"]
 catalyst = ["catalyst>22"]
 fastai = ["fastai"]
 pytorch_lightning = ["pytorch-lightning>=1.9", "torch<2.1"] # for backward compatibility
-pytorch-lightning = ["pytorch-lightning>=1.9", "torch<2.1"]
+lightning = ["lightning>=1.9", "torch<2.1"]
 optuna = ["optuna"]
 all = [
    "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,pytorch-lightning,optuna,plots,markdown]"
