@@ -27,16 +27,12 @@ class DVCLiveCallback(TrainingCallback):
         self.live = live if live is not None else Live(**kwargs)
 
     def after_iteration(self, model, epoch, evals_log):
-        for name, subdir in (
-            [(self._metric_data, "")]
-            if self._metric_data
-            else zip(evals_log, evals_log)
-        ):
-            for key, values in evals_log[name].items():
-                if values:
-                    latest_metric = values[-1]
+        if self._metric_data:
+            evals_log = {"": evals_log[self._metric_data]}
+        for subdir, data in evals_log.items():
+            for key, values in data.items():
                 self.live.log_metric(
-                    f"{subdir}/{key}" if subdir else key, latest_metric
+                    f"{subdir}/{key}" if subdir else key, values[-1]
                 )
         if self.model_file:
             model.save_model(self.model_file)
