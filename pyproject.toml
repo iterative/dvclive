@@ -1,8 +1,92 @@
 [build-system]
-requires = ["setuptools>=48", "setuptools_scm[toml]>=6.3.1"]
+requires = ["setuptools>=61", "setuptools_scm[toml]>=7"]
 build-backend = "setuptools.build_meta"
 
+[project]
+description = "Experiments logger for ML projects."
+name = "dvclive"
+readme = "README.md"
+keywords = [
+    "ai",
+    "metrics",
+    "collaboration",
+    "data-science",
+    "data-version-control",
+    "developer-tools",
+    "git",
+    "machine-learning",
+    "reproducibility",
+]
+license = { text = "Apache License 2.0" }
+maintainers = [{ name = "Iterative", email = "support@dvc.org" }]
+authors = [{ name = "Iterative", email = "support@dvc.org" }]
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dynamic = ["version"]
+dependencies = [
+    "dvc>=2.58.0,<3",
+    "dvc-render>=0.5.0,<1.0",
+    "dvc-studio-client>=0.10.0,<1",
+    "funcy",
+    "ruamel.yaml",
+    "scmrepo",
+]
+[project.optional-dependencies]
+image = ["numpy", "pillow"]
+sklearn = ["scikit-learn"]
+plots = ["dvclive[sklearn]"]
+markdown = ["matplotlib"]
+tests = [
+    "pytest>=7.2.0,<8.0",
+    "pytest-sugar>=0.9.6,<1.0",
+    "pytest-cov>=3.0.0,<4.0",
+    "pytest-mock>=3.8.2,<4.0",
+    "dvclive[image,plots,markdown]",
+    "ipython",
+]
+dev = [
+    "dvclive[all,tests]",
+    "mypy>=1.1.1"
+]
+mmcv = ["mmcv"]
+tf = ["tensorflow"]
+xgb = ["xgboost"]
+lgbm = ["lightgbm"]
+huggingface = ["transformers", "datasets"]
+catalyst = ["catalyst>22"]
+fastai = ["fastai"]
+pytorch_lightning = ["pytorch-lightning>=1.9", "torch<2.1"] # for backward compatibility
+lightning = ["lightning>=1.9", "torch<2.1"]
+optuna = ["optuna"]
+all = [
+   "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,pytorch-lightning,optuna,plots,markdown]"
+]
+
+[project.urls]
+Homepage = "https://github.com/iterative/dvclive"
+Documentation = "https://dvc.org/doc/dvclive"
+Repository = "https://github.com/iterative/dvclive"
+Changelog = "https://github.com/iterative/dvclive/releases"
+Issues = "https://github.com/iterative/dvclive/issues"
+
+[tool.setuptools.packages.find]
+exclude = ["tests", "tests.*"]
+where = ["src"]
+namespaces = false
+
+[tool.setuptools]
+license-files = ["LICENSE"]
+platforms = ["any"]
+
 [tool.setuptools_scm]
+write_to = "src/dvclive/_dvclive_version.py"
 
 [tool.black]
 line-length = 88
