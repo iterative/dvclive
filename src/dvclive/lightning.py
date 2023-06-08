@@ -57,8 +57,9 @@ class DVCLiveLogger(Logger):
             self._live_init["dir"] = dir
         self._experiment = experiment
         self._version = run_name
-        # Force Live instantiation
-        self.experiment  # noqa: B018
+        if report == "notebook":
+            # Force Live instantiation
+            self.experiment  # noqa: B018
 
     @property
     def name(self):
