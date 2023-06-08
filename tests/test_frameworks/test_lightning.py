@@ -15,6 +15,7 @@ try:
     from torch.optim import SGD, Adam
     from torch.utils.data import DataLoader, Dataset
 
+    from dvclive import Live
     from dvclive.lightning import DVCLiveLogger
 except ImportError:
     pytest.skip("skipping pytorch_lightning tests", allow_module_level=True)
@@ -239,3 +240,14 @@ def test_lightning_val_udpates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio
     # Without `self.experiment._latest_studio_step -= 1`
     # This would be empty
     assert len(val_loss["data"]) == 1
+
+
+def test_lightning_force_init(tmp_dir, mocker):
+    """Regression test for https://github.com/iterative/dvclive/issues/594
+    Only call Live.__init__ when report is notebook.
+    """
+    init = mocker.spy(Live, "__init__")
+    DVCLiveLogger()
+    init.assert_not_called()
+    DVCLiveLogger(report="notebook")
+    init.assert_called_once()
