@@ -120,6 +120,8 @@ class Live:
                 os.remove(f)
 
     def _init_dvc(self):
+        from dvc.scm import NoSCM
+
         if os.getenv(env.DVC_EXP_BASELINE_REV, None):
             # `dvc exp` execution
             self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV, "")
@@ -132,7 +134,11 @@ class Live:
                 self._save_dvc_exp = False
 
         self._dvc_repo = get_dvc_repo()
-        if self._dvc_repo is None:
+
+        dvc_logger = logging.getLogger("dvc")
+        dvc_logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "WARNING").upper())
+
+        if (self._dvc_repo is None) or isinstance(self._dvc_repo.scm, NoSCM):
             if self._save_dvc_exp:
                 logger.warning(
                     "Can't save experiment without a Git Repo."

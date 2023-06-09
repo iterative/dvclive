@@ -1,16 +1,21 @@
 import os
 from sys import platform
 
-import lightgbm as lgbm
-import numpy as np
-import pandas as pd
 import pytest
-from sklearn import datasets
-from sklearn.model_selection import train_test_split
 
 from dvclive import Live
-from dvclive.lgbm import DVCLiveCallback
 from dvclive.utils import parse_metrics
+
+try:
+    import lightgbm as lgbm
+    import numpy as np
+    import pandas as pd
+    from sklearn import datasets
+    from sklearn.model_selection import train_test_split
+
+    from dvclive.lgbm import DVCLiveCallback
+except ImportError:
+    pytest.skip("skipping lightgbm tests", allow_module_level=True)
 
 
 @pytest.fixture()
@@ -46,7 +51,34 @@ def test_lgbm_integration(tmp_dir, model_params, iris_data):
     assert os.path.exists("dvclive")
 
     logs, _ = parse_metrics(callback.live)
+    assert "dvclive/plots/metrics/multi_logloss.tsv" in logs
     assert len(logs) == 1
+    assert len(list(logs.values())[0]) == 5
+
+
+@pytest.mark.skipif(platform == "darwin", reason="LIBOMP Segmentation fault on MacOS")
+def test_lgbm_integration_multi_eval(tmp_dir, model_params, iris_data):
+    model = lgbm.LGBMClassifier()
+    model.set_params(**model_params)
+
+    callback = DVCLiveCallback()
+    model.fit(
+        iris_data[0][0],
+        iris_data[0][1],
+        eval_set=[
+            (iris_data[0][0], iris_data[0][1]),
+            (iris_data[1][0], iris_data[1][1]),
+        ],
+        eval_metric=["multi_logloss"],
+        callbacks=[callback],
+    )
+
+    assert os.path.exists("dvclive")
+
+    logs, _ = parse_metrics(callback.live)
+    assert "dvclive/plots/metrics/training/multi_logloss.tsv" in logs
+    assert "dvclive/plots/metrics/valid_1/multi_logloss.tsv" in logs
+    assert len(logs) == 2
     assert len(list(logs.values())[0]) == 5
 
 

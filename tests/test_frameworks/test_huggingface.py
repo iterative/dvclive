@@ -1,15 +1,25 @@
 import os
 
-import numpy as np
 import pytest
-import torch
-from torch import nn
-from transformers import PretrainedConfig, PreTrainedModel, Trainer, TrainingArguments
 
 from dvclive import Live
-from dvclive.huggingface import DVCLiveCallback
 from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
+
+try:
+    import numpy as np
+    import torch
+    from torch import nn
+    from transformers import (
+        PretrainedConfig,
+        PreTrainedModel,
+        Trainer,
+        TrainingArguments,
+    )
+
+    from dvclive.huggingface import DVCLiveCallback
+except ImportError:
+    pytest.skip("skipping huggingface tests", allow_module_level=True)
 
 
 def compute_metrics(eval_preds):

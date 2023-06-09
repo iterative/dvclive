@@ -1,17 +1,24 @@
 import os
 
-import torch
-from pytorch_lightning import LightningModule
-from pytorch_lightning.trainer import Trainer
-from torch import nn
-from torch.nn import functional as F  # noqa: N812
-from torch.optim import Adam
-from torch.utils.data import DataLoader, Dataset
+import pytest
 
-from dvclive.lightning import DVCLiveLogger
 from dvclive.plots.metric import Metric
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
+
+try:
+    import torch
+    from pytorch_lightning import LightningModule
+    from pytorch_lightning.trainer import Trainer
+    from torch import nn
+    from torch.nn import functional as F  # noqa: N812
+    from torch.optim import SGD, Adam
+    from torch.utils.data import DataLoader, Dataset
+
+    from dvclive import Live
+    from dvclive.lightning import DVCLiveLogger
+except ImportError:
+    pytest.skip("skipping pytorch_lightning tests", allow_module_level=True)
 
 
 class XORDataset(Dataset):
@@ -29,7 +36,9 @@ class XORDataset(Dataset):
 
 
 class LitXOR(LightningModule):
-    def __init__(self, latent_dims=4):
+    def __init__(
+        self, latent_dims=4, optim=SGD, optim_params={"lr": 0.01}  # noqa: B006
+    ):
         super().__init__()
 
         self.save_hyperparameters()
@@ -70,7 +79,7 @@ class LitXOR(LightningModule):
         return loss
 
     def configure_optimizers(self):
-        return Adam(self.parameters(), lr=1e-3)
+        return self.hparams.optim(self.parameters(), **self.hparams.optim_params)
 
     def predict_dataloader(self):
         pass
@@ -84,7 +93,7 @@ class LitXOR(LightningModule):
 
 def test_lightning_integration(tmp_dir, mocker):
     # init model
-    model = LitXOR()
+    model = LitXOR(latent_dims=8, optim=Adam, optim_params={"lr": 0.02})
     # init logger
     dvclive_logger = DVCLiveLogger("test_run", dir="logs")
     live = dvclive_logger.experiment
@@ -111,7 +120,11 @@ def test_lightning_integration(tmp_dir, mocker):
 
     params_file = dvclive_logger.experiment.params_file
     assert os.path.exists(params_file)
-    assert load_yaml(params_file) == {"latent_dims": 4}
+    assert load_yaml(params_file) == {
+        "latent_dims": 8,
+        "optim": "Adam",
+        "optim_params": {"lr": 0.02},
+    }
 
 
 def test_lightning_default_dir(tmp_dir):
@@ -227,3 +240,14 @@ def test_lightning_val_udpates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio
     # Without `self.experiment._latest_studio_step -= 1`
     # This would be empty
     assert len(val_loss["data"]) == 1
+
+
+def test_lightning_force_init(tmp_dir, mocker):
+    """Regression test for https://github.com/iterative/dvclive/issues/594
+    Only call Live.__init__ when report is notebook.
+    """
+    init = mocker.spy(Live, "__init__")
+    DVCLiveLogger()
+    init.assert_not_called()
+    DVCLiveLogger(report="notebook")
+    init.assert_called_once()

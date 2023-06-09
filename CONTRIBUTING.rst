@@ -57,12 +57,18 @@ You need Python 3.8+.
    $ python -m venv .venv
    $ source .venv/bin/activate
 
-Install in editable mode:
+Install in editable mode including development dependencies:
 
 .. code:: console
 
-   $ pip install -e .
+   $ pip install -e .[tests]
 
+If you need to test against a specific framework, you can install it separately:
+
+.. code:: console
+
+   $ pip install -e .[tests,tf]
+   $ pip install -e .[tests,optuna]
 
 How to test the project
 -----------------------
