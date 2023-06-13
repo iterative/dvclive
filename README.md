@@ -25,7 +25,17 @@ ______________________________________________________________________
 # Quickstart
 
 <p align='center'>
-<a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-Quickstart.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-Quickstart.ipynb">
+Python API Overview
+<img src="https://colab.research.google.com/assets/colab-badge.svg" />
+</a>
+</p>
+
+<p align='center'>
+<a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-PyTorch-Lightning.ipynb">
+PyTorch Lightning Example
+<img src="https://colab.research.google.com/assets/colab-badge.svg" />
+</a>
 </p>
 
 ## Install *dvclive*
