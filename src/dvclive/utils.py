@@ -51,7 +51,7 @@ def standardize_metric_name(metric_name: str, framework: str) -> str:
         metric_name = metric_name.replace("valid_", "eval/")
 
     elif framework == "dvclive.huggingface":
-        for split in {"train", "eval"}:
+        for split in ("train", "eval"):
             metric_name = metric_name.replace(f"{split}_", f"{split}/")
 
     elif framework == "dvclive.keras":

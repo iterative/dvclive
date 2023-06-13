@@ -82,7 +82,7 @@ def test_report_init(monkeypatch, mocker):
     live = Live()
     assert live._report_mode == "html"
 
-    for report in {None, "html", "md"}:
+    for report in (None, "html", "md"):
         live = Live(report=report)
         assert live._report_mode == report
 
