@@ -200,3 +200,14 @@ def test_log_artifact_attrs(tmp_dir, mocked_dvc_repo):
             "foo": {"path": "../model.pth", **attrs},
         }
     }
+
+
+def test_log_artifact_type_model_when_dvc_add_fails(tmp_dir, mocker, mocked_dvc_repo):
+    (tmp_dir / "model.pth").touch()
+    mocked_dvc_repo.add.side_effect = Exception
+    with Live(save_dvc_exp=True) as live:
+        live.log_artifact("model.pth", type="model")
+
+    assert load_yaml(live.dvc_file) == {
+        "artifacts": {"model": {"path": "../model.pth", "type": "model"}}
+    }
