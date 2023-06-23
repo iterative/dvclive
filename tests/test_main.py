@@ -3,6 +3,7 @@ import logging
 import os
 
 import pytest
+from PIL import Image
 
 from dvclive import Live, env
 from dvclive.error import InvalidDataTypeError, InvalidParameterTypeError
@@ -490,3 +491,12 @@ def test_make_dvcyaml(tmp_dir, dvcyaml):
 def test_suppress_dvc_logs(tmp_dir, mocked_dvc_repo):
     Live()
     assert logging.getLogger("dvc").level == 30
+
+
+@pytest.mark.parametrize("cache", [False, True])
+def test_cache_images(tmp_dir, dvc_repo, cache):
+    live = Live(cache_images=cache)
+    img = Image.new("RGB", (10, 10), (250, 250, 250))
+    live.log_image("image.png", img)
+    live.end()
+    assert (tmp_dir / "dvclive" / "plots" / "images.dvc").exists() == cache
