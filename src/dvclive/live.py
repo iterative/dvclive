@@ -56,6 +56,7 @@ class Live:
         report: Optional[str] = "auto",
         save_dvc_exp: bool = False,
         dvcyaml: bool = True,
+        cache_images: bool = False,
         exp_message: Optional[str] = None,
     ):
         self.summary: Dict[str, Any] = {}
@@ -71,6 +72,7 @@ class Live:
         self._artifacts: Dict[str, Dict] = {}
         self._inside_with = False
         self._dvcyaml = dvcyaml
+        self._cache_images = cache_images
 
         os.makedirs(self.dir, exist_ok=True)
 
@@ -423,11 +425,7 @@ class Live:
             if copy:
                 path = clean_and_copy_into(path, self.artifacts_dir)
 
-            try:
-                stage = self._dvc_repo.add(path)
-            except Exception as e:  # noqa: BLE001
-                logger.warning(f"Failed to dvc add {path}: {e}")
-                return
+            self.cache(path)
 
             name = name or Path(path).stem
             if name_is_compatible(name):
@@ -443,13 +441,18 @@ class Live:
                     name,
                 )
 
-            dvc_file = stage[0].addressing
+    def cache(self, path):
+        try:
+            stage = self._dvc_repo.add(path)
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"Failed to dvc add {path}: {e}")
+            return
 
-            if self._save_dvc_exp:
-                self._include_untracked.append(dvc_file)
-                self._include_untracked.append(
-                    str(Path(dvc_file).parent / ".gitignore")
-                )
+        dvc_file = stage[0].addressing
+
+        if self._save_dvc_exp:
+            self._include_untracked.append(dvc_file)
+            self._include_untracked.append(str(Path(dvc_file).parent / ".gitignore"))
 
     def make_summary(self, update_step: bool = True):
         if self._step is not None and update_step:
@@ -492,6 +495,11 @@ class Live:
         if self._inside_with:
             # Prevent `live.end` calls inside context manager
             return
+
+        if self._images and self._cache_images:
+            images_path = Path(self.plots_dir) / Image.subfolder
+            self.cache(images_path)
+
         self.make_summary(update_step=False)
         if self._dvcyaml:
             self.make_dvcyaml()
