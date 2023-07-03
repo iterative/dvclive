@@ -7,7 +7,7 @@ from .base import Data
 
 
 class CustomPlot(Data):
-    suffixes = [".json"]
+    suffixes = (".json",)
     subfolder = "custom"
 
     def __init__(
