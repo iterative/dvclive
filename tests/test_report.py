@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from IPython import display
 from PIL import Image
@@ -154,7 +155,7 @@ def test_get_plot_renderers_sklearn(tmp_dir):
     for name in ("roc_curve", "other_roc"):
         plot_renderer = plot_renderers_dict[name]
         assert plot_renderer.datapoints == [
-            {"fpr": 0.0, "rev": "workspace", "threshold": 2.0, "tpr": 0.0},
+            {"fpr": 0.0, "rev": "workspace", "threshold": np.inf, "tpr": 0.0},
             {"fpr": 0.5, "rev": "workspace", "threshold": 1.0, "tpr": 0.5},
             {"fpr": 1.0, "rev": "workspace", "threshold": 0.1, "tpr": 0.5},
             {"fpr": 1.0, "rev": "workspace", "threshold": 0.0, "tpr": 1.0},
