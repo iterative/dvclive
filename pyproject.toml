@@ -41,7 +41,7 @@ dependencies = [
 [project.optional-dependencies]
 image = ["numpy", "pillow"]
 sklearn = ["scikit-learn"]
-plots = ["dvclive[sklearn]"]
+plots = ["scikit-learn"]
 markdown = ["matplotlib"]
 tests = [
     "pytest>=7.2.0,<8.0",

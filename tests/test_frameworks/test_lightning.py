@@ -53,8 +53,7 @@ class LitXOR(LightningModule):
         x = self.layer_1(x)
         x = F.relu(x)
         x = self.layer_2(x)
-        x = F.log_softmax(x, dim=1)
-        return x
+        return F.log_softmax(x, dim=1)
 
     def train_loader(self):
         dataset = XORDataset()
