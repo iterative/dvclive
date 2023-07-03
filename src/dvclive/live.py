@@ -410,10 +410,11 @@ class Live:
         path: StrPath,
         type: Optional[str] = None,  # noqa: A002
         name: Optional[str] = None,
-        desc: Optional[str] = None,  # noqa: ARG002
-        labels: Optional[List[str]] = None,  # noqa: ARG002
-        meta: Optional[Dict[str, Any]] = None,  # noqa: ARG002
+        desc: Optional[str] = None,
+        labels: Optional[List[str]] = None,
+        meta: Optional[Dict[str, Any]] = None,
         copy: bool = False,
+        cache: bool = True,
     ):
         """Tracks a local file or directory with DVC"""
         if not isinstance(path, (str, Path)):
@@ -425,21 +426,24 @@ class Live:
             if copy:
                 path = clean_and_copy_into(path, self.artifacts_dir)
 
-            self.cache(path)
+            if cache:
+                self.cache(path)
 
-            name = name or Path(path).stem
-            if name_is_compatible(name):
-                self._artifacts[name] = {
-                    k: v
-                    for k, v in locals().items()
-                    if k in ("path", "type", "desc", "labels", "meta") and v is not None
-                }
-            else:
-                logger.warning(
-                    "Can't use '%s' as artifact name (ID)."
-                    " It will not be included in the `artifacts` section.",
-                    name,
-                )
+            if any((type, name, desc, labels, meta)):
+                name = name or Path(path).stem
+                if name_is_compatible(name):
+                    self._artifacts[name] = {
+                        k: v
+                        for k, v in locals().items()
+                        if k in ("path", "type", "desc", "labels", "meta")
+                        and v is not None
+                    }
+                else:
+                    logger.warning(
+                        "Can't use '%s' as artifact name (ID)."
+                        " It will not be included in the `artifacts` section.",
+                        name,
+                    )
 
     def cache(self, path):
         try:

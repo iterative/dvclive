@@ -1,12 +1,13 @@
 # ruff: noqa: ARG002
 import inspect
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from lightning.fabric.utilities.logger import (
     _convert_params,
     _sanitize_callable_params,
     _sanitize_params,
 )
+from lightning.pytorch.callbacks.model_checkpoint import ModelCheckpoint
 from lightning.pytorch.loggers.logger import Logger, rank_zero_experiment
 from lightning.pytorch.utilities import rank_zero_only
 from torch import is_tensor
@@ -38,6 +39,7 @@ class DVCLiveLogger(Logger):
         self,
         run_name: Optional[str] = "dvclive_run",
         prefix="",
+        log_model: Union[str, bool] = False,
         experiment=None,
         dir: Optional[str] = None,  # noqa: A002
         resume: bool = False,
@@ -60,6 +62,8 @@ class DVCLiveLogger(Logger):
         if report == "notebook":
             # Force Live instantiation
             self.experiment  # noqa: B018
+        self._log_model = log_model
+        self._checkpoint_callback: Optional[ModelCheckpoint] = None
 
     @property
     def name(self):
@@ -119,6 +123,19 @@ class DVCLiveLogger(Logger):
                 self.experiment._latest_studio_step -= 1  # noqa: SLF001
             self.experiment.next_step()
 
+    def after_save_checkpoint(self, checkpoint_callback: ModelCheckpoint) -> None:
+        self._checkpoint_callback = checkpoint_callback
+        if self._log_model == "all":
+            self.experiment.log_artifact(checkpoint_callback.dirpath)
+
     @rank_zero_only
     def finalize(self, status: str) -> None:
+        checkpoint_callback = self._checkpoint_callback
+        # Save model checkpoints.
+        if self._log_model is True:
+            self.experiment.log_artifact(checkpoint_callback.dirpath)
+        # Log best model.
+        if self._log_model in (True, "all"):
+            best_model_path = checkpoint_callback.best_model_path
+            self.experiment.log_artifact(best_model_path, name="best", cache=False)
         self.experiment.end()
