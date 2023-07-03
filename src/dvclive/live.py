@@ -121,6 +121,9 @@ class Live:
             if f and os.path.exists(f):
                 os.remove(f)
 
+        if self.dvc_file and os.path.exists(self.dvc_file):
+            os.remove(self.dvc_file)
+
     def _init_dvc(self):
         from dvc.scm import NoSCM
 
