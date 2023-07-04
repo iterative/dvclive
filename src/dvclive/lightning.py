@@ -53,6 +53,7 @@ class DVCLiveLogger(Logger):
             "report": report,
             "save_dvc_exp": save_dvc_exp,
             "dvcyaml": dvcyaml,
+            "cache_images": cache_images,
         }
         if dir is not None:
             self._live_init["dir"] = dir
