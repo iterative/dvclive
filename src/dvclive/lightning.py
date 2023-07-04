@@ -137,7 +137,9 @@ class DVCLiveLogger(Logger):
 
     def after_save_checkpoint(self, checkpoint_callback: ModelCheckpoint) -> None:
         self._checkpoint_callback = checkpoint_callback
-        if self._log_model == "all":
+        if self._log_model == "all" or (
+            self._log_model is True and checkpoint_callback.save_top_k == -1
+        ):
             self.experiment.log_artifact(checkpoint_callback.dirpath)
 
     @rank_zero_only
