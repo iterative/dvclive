@@ -144,7 +144,9 @@ def test_lightning_default_dir(tmp_dir):
 def test_lightning_kwargs(tmp_dir):
     model = LitXOR()
     # Handle kwargs passed to Live.
-    dvclive_logger = DVCLiveLogger(dir="dir", report="md", dvcyaml=False)
+    dvclive_logger = DVCLiveLogger(
+        dir="dir", report="md", dvcyaml=False, cache_images=True
+    )
     trainer = Trainer(
         logger=dvclive_logger,
         max_epochs=2,
@@ -156,6 +158,7 @@ def test_lightning_kwargs(tmp_dir):
     assert os.path.exists("dir")
     assert os.path.exists("dir/report.md")
     assert not os.path.exists("dir/dvc.yaml")
+    assert dvclive_logger.experiment._cache_images is True
 
 
 def test_lightning_steps(tmp_dir, mocker):
