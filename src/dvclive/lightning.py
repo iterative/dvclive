@@ -139,5 +139,7 @@ class DVCLiveLogger(Logger):
         # Log best model.
         if self._log_model in (True, "all"):
             best_model_path = checkpoint_callback.best_model_path
-            self.experiment.log_artifact(best_model_path, name="best", cache=False)
+            self.experiment.log_artifact(
+                best_model_path, name="best", type="model", cache=False
+            )
         self.experiment.end()
