@@ -1,16 +1,20 @@
 import shutil
 from pathlib import Path
 
+import pytest
+
 from dvclive import Live
 from dvclive.serialize import load_yaml
 
 
-def test_log_artifact(tmp_dir, dvc_repo):
+@pytest.mark.parametrize("cache", [True, False])
+def test_log_artifact(tmp_dir, dvc_repo, cache):
     data = tmp_dir / "data"
     data.touch()
     with Live() as live:
-        live.log_artifact("data")
-    assert data.with_suffix(".dvc").exists()
+        live.log_artifact("data", cache=cache)
+    assert data.with_suffix(".dvc").exists() is cache
+    assert load_yaml(live.dvc_file) == {}
 
 
 def test_log_artifact_on_existing_dvc_file(tmp_dir, dvc_repo):
@@ -78,14 +82,14 @@ def test_log_artifact_copy(tmp_dir, dvc_repo):
     (tmp_dir / "model.pth").touch()
 
     with Live() as live:
-        live.log_artifact("model.pth", copy=True)
+        live.log_artifact("model.pth", type="model", copy=True)
 
     artifacts_dir = Path(live.artifacts_dir)
     assert (artifacts_dir / "model.pth").exists()
     assert (artifacts_dir / "model.pth.dvc").exists()
 
     assert load_yaml(live.dvc_file) == {
-        "artifacts": {"model": {"path": "artifacts/model.pth"}}
+        "artifacts": {"model": {"path": "artifacts/model.pth", "type": "model"}}
     }
 
 
@@ -97,15 +101,15 @@ def test_log_artifact_copy_overwrite(tmp_dir, dvc_repo):
         # testing with symlink cache to make sure that DVC protected mode
         # does not prevent the overwrite
         live._dvc_repo.cache.local.cache_types = ["symlink"]
-        live.log_artifact("model.pth", copy=True)
+        live.log_artifact("model.pth", type="model", copy=True)
         assert (artifacts_dir / "model.pth").is_symlink()
-        live.log_artifact("model.pth", copy=True)
+        live.log_artifact("model.pth", type="model", copy=True)
 
     assert (artifacts_dir / "model.pth").exists()
     assert (artifacts_dir / "model.pth.dvc").exists()
 
     assert load_yaml(live.dvc_file) == {
-        "artifacts": {"model": {"path": "artifacts/model.pth"}}
+        "artifacts": {"model": {"path": "artifacts/model.pth", "type": "model"}}
     }
 
 
@@ -119,14 +123,14 @@ def test_log_artifact_copy_directory_overwrite(tmp_dir, dvc_repo):
         # testing with symlink cache to make sure that DVC protected mode
         # does not prevent the overwrite
         live._dvc_repo.cache.local.cache_types = ["symlink"]
-        live.log_artifact(model_path, copy=True)
+        live.log_artifact(model_path, type="model", copy=True)
         assert (artifacts_dir / "weights" / "model-epoch-1.pth").is_symlink()
 
         shutil.rmtree(model_path)
         model_path.mkdir()
         (tmp_dir / "weights" / "model-epoch-10.pth").write_text("Model weights")
         (tmp_dir / "weights" / "best.pth").write_text("Best model weights")
-        live.log_artifact(model_path, copy=True)
+        live.log_artifact(model_path, type="model", copy=True)
 
     assert (artifacts_dir / "weights").exists()
     assert (artifacts_dir / "weights" / "best.pth").is_symlink()
@@ -135,7 +139,7 @@ def test_log_artifact_copy_directory_overwrite(tmp_dir, dvc_repo):
     assert len(list((artifacts_dir / "weights").iterdir())) == 2
 
     assert load_yaml(live.dvc_file) == {
-        "artifacts": {"weights": {"path": "artifacts/weights"}}
+        "artifacts": {"weights": {"path": "artifacts/weights", "type": "model"}}
     }
 
 
