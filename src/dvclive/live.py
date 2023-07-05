@@ -446,7 +446,7 @@ class Live:
 
     def cache(self, path):
         try:
-            stage = self._dvc_repo.add(path)
+            stage = self._dvc_repo.add(str(path))
         except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to dvc add {path}: {e}")
             return
