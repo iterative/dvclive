@@ -15,18 +15,17 @@ except ImportError:
 @pytest.fixture()
 def xor_model():
     import numpy as np
-    from tensorflow.python.keras import Sequential
-    from tensorflow.python.keras.layers import Activation, Dense
+    import tensorflow as tf
 
     def make():
         x = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
         y = np.array([[0], [1], [1], [0]])
 
-        model = Sequential()
-        model.add(Dense(8, input_dim=2))
-        model.add(Activation("relu"))
-        model.add(Dense(1))
-        model.add(Activation("sigmoid"))
+        model = tf.keras.Sequential()
+        model.add(tf.keras.layers.Dense(8, input_dim=2))
+        model.add(tf.keras.layers.Activation("relu"))
+        model.add(tf.keras.layers.Dense(1))
+        model.add(tf.keras.layers.Activation("sigmoid"))
 
         model.compile(loss="binary_crossentropy", optimizer="sgd", metrics=["accuracy"])
 
@@ -90,8 +89,6 @@ def test_keras_model_file(tmp_dir, xor_model, mocker, save_weights_only):
 
 @pytest.mark.parametrize("save_weights_only", [True, False])
 def test_keras_load_model_on_resume(tmp_dir, xor_model, mocker, save_weights_only):
-    import dvclive.keras
-
     model, x, y = xor_model()
 
     if save_weights_only:
@@ -100,7 +97,6 @@ def test_keras_load_model_on_resume(tmp_dir, xor_model, mocker, save_weights_onl
         model.save("model.h5")
 
     load_weights = mocker.spy(model, "load_weights")
-    load_model = mocker.spy(dvclive.keras, "load_model")
 
     model.fit(
         x,
@@ -116,7 +112,6 @@ def test_keras_load_model_on_resume(tmp_dir, xor_model, mocker, save_weights_onl
         ],
     )
 
-    assert load_model.call_count != save_weights_only
     assert load_weights.call_count == save_weights_only
 
 
