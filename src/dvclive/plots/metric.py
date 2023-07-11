@@ -9,7 +9,7 @@ from .utils import NUMPY_SCALARS
 
 
 class Metric(Data):
-    suffixes = [".csv", ".tsv"]
+    suffixes = (".csv", ".tsv")
     subfolder = "metrics"
 
     @staticmethod

@@ -46,6 +46,7 @@ class DVCLiveLogger(Logger):
         report: Optional[str] = "auto",
         save_dvc_exp: bool = False,
         dvcyaml: bool = True,
+        cache_images: bool = False,
     ):
         super().__init__()
         self._prefix = prefix
@@ -54,6 +55,7 @@ class DVCLiveLogger(Logger):
             "report": report,
             "save_dvc_exp": save_dvc_exp,
             "dvcyaml": dvcyaml,
+            "cache_images": cache_images,
         }
         if dir is not None:
             self._live_init["dir"] = dir

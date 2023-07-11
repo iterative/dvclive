@@ -121,6 +121,9 @@ class Live:
             if f and os.path.exists(f):
                 os.remove(f)
 
+        if self.dvc_file and os.path.exists(self.dvc_file):
+            os.remove(self.dvc_file)
+
     def _init_dvc(self):
         from dvc.scm import NoSCM
 
@@ -447,7 +450,7 @@ class Live:
 
     def cache(self, path):
         try:
-            stage = self._dvc_repo.add(path)
+            stage = self._dvc_repo.add(str(path))
         except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to dvc add {path}: {e}")
             return

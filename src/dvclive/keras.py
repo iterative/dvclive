@@ -2,14 +2,13 @@
 import os
 from typing import Dict, Optional
 
-from tensorflow.keras.callbacks import Callback
-from tensorflow.keras.models import load_model
+import tensorflow as tf
 
 from dvclive import Live
 from dvclive.utils import standardize_metric_name
 
 
-class DVCLiveCallback(Callback):
+class DVCLiveCallback(tf.keras.callbacks.Callback):
     def __init__(
         self,
         model_file=None,
@@ -31,7 +30,7 @@ class DVCLiveCallback(Callback):
             if self.save_weights_only:
                 self.model.load_weights(self.model_file)
             else:
-                self.model = load_model(self.model_file)
+                self.model = tf.keras.models.load_model(self.model_file)
 
     def on_epoch_end(self, epoch: int, logs: Optional[Dict] = None):
         logs = logs or {}

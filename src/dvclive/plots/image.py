@@ -4,7 +4,7 @@ from .base import Data
 
 
 class Image(Data):
-    suffixes = [".jpg", ".jpeg", ".gif", ".png"]
+    suffixes = (".jpg", ".jpeg", ".gif", ".png")
     subfolder = "images"
 
     @property
