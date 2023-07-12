@@ -130,7 +130,9 @@ class DVCLiveLogger(Logger):
             self.experiment.next_step()
 
     def after_save_checkpoint(self, checkpoint_callback: ModelCheckpoint) -> None:
-        self._checkpoint_callback = checkpoint_callback
+        if self._log_model in [True, "all"]:
+            self._checkpoint_callback = checkpoint_callback
+            self._scan_checkpoints(checkpoint_callback)
         if self._log_model == "all" or (
             self._log_model is True and checkpoint_callback.save_top_k == -1
         ):
@@ -138,13 +140,11 @@ class DVCLiveLogger(Logger):
 
     @rank_zero_only
     def finalize(self, status: str) -> None:
-        checkpoint_callback = self._checkpoint_callback
-        # Save model checkpoints.
-        if self._log_model is True:
-            self._save_checkpoints(checkpoint_callback)
         # Log best model.
-        if self._log_model in (True, "all"):
-            best_model_path = checkpoint_callback.best_model_path
+        if self._checkpoint_callback:
+            self._scan_checkpoints(self._checkpoint_callback)
+            self._save_checkpoints(self._checkpoint_callback)
+            best_model_path = self._checkpoint_callback.best_model_path
             self.experiment.log_artifact(
                 best_model_path, name="best", type="model", cache=False
             )
