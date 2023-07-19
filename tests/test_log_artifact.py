@@ -215,3 +215,12 @@ def test_log_artifact_type_model_when_dvc_add_fails(tmp_dir, mocker, mocked_dvc_
     assert load_yaml(live.dvc_file) == {
         "artifacts": {"model": {"path": "../model.pth", "type": "model"}}
     }
+
+
+def test_log_artifact_inside_exp(tmp_dir, mocked_dvc_repo):
+    data = tmp_dir / "data"
+    data.touch()
+    with Live() as live:
+        live._inside_dvc_exp = True
+        live.log_artifact("data")
+    mocked_dvc_repo.add.assert_not_called()
