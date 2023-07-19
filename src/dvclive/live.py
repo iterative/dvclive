@@ -43,7 +43,6 @@ handler = logging.StreamHandler()
 formatter = logging.Formatter("%(levelname)s:%(name)s:%(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "INFO").upper())
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
 
@@ -133,9 +132,7 @@ class Live:
             self._exp_name = os.getenv(env.DVC_EXP_NAME, "")
             self._inside_dvc_exp = True
             if self._save_dvc_exp:
-                logger.warning(
-                    "Ignoring `_save_dvc_exp` because `dvc exp run` is running"
-                )
+                logger.info("Ignoring `_save_dvc_exp` because `dvc exp run` is running")
                 self._save_dvc_exp = False
 
         self._dvc_repo = get_dvc_repo()
@@ -449,6 +446,19 @@ class Live:
                     )
 
     def cache(self, path):
+        if self._inside_dvc_exp:
+            from dvc.exceptions import OutputNotFoundError
+
+            msg = f"Skipping dvc add {path} because `dvc exp run` is running."
+            try:
+                self._dvc_repo.find_outs_by_path(path)
+                msg += " It is already being tracked automatically."
+                logger.info(msg)
+            except OutputNotFoundError:
+                msg += " Add it as a pipeline output to track it."
+                logger.warn(msg)
+            return
+
         try:
             stage = self._dvc_repo.add(str(path))
         except Exception as e:  # noqa: BLE001
