@@ -43,7 +43,6 @@ handler = logging.StreamHandler()
 formatter = logging.Formatter("%(levelname)s:%(name)s:%(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "INFO").upper())
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
 
@@ -133,9 +132,7 @@ class Live:
             self._exp_name = os.getenv(env.DVC_EXP_NAME, "")
             self._inside_dvc_exp = True
             if self._save_dvc_exp:
-                logger.warning(
-                    "Ignoring `_save_dvc_exp` because `dvc exp run` is running"
-                )
+                logger.info("Ignoring `_save_dvc_exp` because `dvc exp run` is running")
                 self._save_dvc_exp = False
 
         self._dvc_repo = get_dvc_repo()
