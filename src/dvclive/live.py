@@ -132,7 +132,7 @@ class Live:
             self._exp_name = os.getenv(env.DVC_EXP_NAME, "")
             self._inside_dvc_exp = True
             if self._save_dvc_exp:
-                logger.info("Ignoring `_save_dvc_exp` because `dvc exp run` is running")
+                logger.info("Ignoring `save_dvc_exp` because `dvc exp run` is running")
                 self._save_dvc_exp = False
 
         self._dvc_repo = get_dvc_repo()
