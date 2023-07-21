@@ -3,15 +3,27 @@ import inspect
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from lightning.fabric.utilities.logger import (
-    _convert_params,
-    _sanitize_callable_params,
-    _sanitize_params,
-)
-from lightning.pytorch.callbacks.model_checkpoint import ModelCheckpoint
-from lightning.pytorch.loggers.logger import Logger, rank_zero_experiment
-from lightning.pytorch.loggers.utilities import _scan_checkpoints
-from lightning.pytorch.utilities import rank_zero_only
+try:
+    from lightning.fabric.utilities.logger import (
+        _convert_params,
+        _sanitize_callable_params,
+        _sanitize_params,
+    )
+    from lightning.pytorch.callbacks.model_checkpoint import ModelCheckpoint
+    from lightning.pytorch.loggers.logger import Logger, rank_zero_experiment
+    from lightning.pytorch.loggers.utilities import _scan_checkpoints
+    from lightning.pytorch.utilities import rank_zero_only
+except ImportError:
+    from lightning_fabric.utilities.logger import (
+        _convert_params,
+        _sanitize_callable_params,
+        _sanitize_params,
+    )
+    from pytorch_lightning.callbacks import ModelCheckpoint
+    from pytorch_lightning.loggers.logger import Logger, rank_zero_experiment
+    from pytorch_lightning.utilities.logger import _scan_checkpoints
+    from pytorch_lightning.utilities import rank_zero_only
+
 from torch import is_tensor
 
 from dvclive import Live
