@@ -447,16 +447,30 @@ class Live:
 
     def cache(self, path):
         if self._inside_dvc_exp:
-            from dvc.exceptions import OutputNotFoundError
-
             msg = f"Skipping dvc add {path} because `dvc exp run` is running."
-            try:
-                self._dvc_repo.find_outs_by_path(path)
-                msg += " It is already being tracked automatically."
+            path_stage = None
+            for stage in self._dvc_repo.stage.collect():
+                for out in stage.outs:
+                    if out.fspath == str(Path(path).absolute()):
+                        path_stage = stage
+                        break
+            if not path_stage:
+                msg += (
+                    "\nTo track it automatically during `dvc exp run`, "
+                    "add it as an output of the pipeline stage."
+                )
+                logger.warning(msg)
+            elif path_stage.cmd:
+                msg += "\nIt is already being tracked automatically."
                 logger.info(msg)
-            except OutputNotFoundError:
-                msg += " Add it as a pipeline output to track it."
-                logger.warn(msg)
+            else:
+                msg += (
+                    "\nTo track it automatically during `dvc exp run`:"
+                    f"\n1. Run `dvc exp remove {path_stage.addressing}` "
+                    "to stop tracking it outside the pipeline."
+                    "\n2. Add it as an output of the pipeline stage."
+                )
+                logger.warning(msg)
             return
 
         try:

@@ -6,6 +6,14 @@ import pytest
 from dvclive import Live
 from dvclive.serialize import load_yaml
 
+dvcyaml = """
+stages:
+  train:
+    cmd: python train.py
+    outs:
+    - data
+"""
+
 
 @pytest.mark.parametrize("cache", [True, False])
 def test_log_artifact(tmp_dir, dvc_repo, cache):
@@ -224,3 +232,37 @@ def test_log_artifact_inside_exp(tmp_dir, mocked_dvc_repo):
         live._inside_dvc_exp = True
         live.log_artifact("data")
     mocked_dvc_repo.add.assert_not_called()
+
+
+@pytest.mark.parametrize("tracked", ["data_source", "stage", None])
+def test_log_artifact_inside_exp_logger(tmp_dir, mocker, dvc_repo, tracked):
+    logger = mocker.patch("dvclive.live.logger")
+    if tracked == "data_source":
+        data = tmp_dir / "data"
+        data.touch()
+        dvc_repo.add(data)
+    elif tracked == "stage":
+        dvcyaml_path = tmp_dir / "dvc.yaml"
+        with open(dvcyaml_path, "w") as f:
+            f.write(dvcyaml)
+    with Live() as live:
+        live._inside_dvc_exp = True
+        live.log_artifact("data")
+    msg = "Skipping dvc add data because `dvc exp run` is running."
+    if tracked == "data_source":
+        msg += (
+            "\nTo track it automatically during `dvc exp run`:"
+            "\n1. Run `dvc exp remove data.dvc`"
+            "to stop tracking it outside the pipeline."
+            "\n2. Add it as an output of the pipeline stage."
+        )
+        logger.warning.assert_called_with(msg)
+    elif tracked == "stage":
+        msg += "\nIt is already being tracked automatically."
+        logger.info.assert_called_with(msg)
+    else:
+        msg += (
+            "\nTo track it automatically during `dvc exp run`, "
+            "add it as an output of the pipeline stage."
+        )
+        logger.warning.assert_called_with(msg)
