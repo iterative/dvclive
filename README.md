@@ -71,7 +71,7 @@ with Live(save_dvc_exp=True) as live:
     # simulate training
     offset = random.uniform(0.0.2, 0.1)
     for epoch in range(1, params["epochs"]):
-        fuzz = random.uniform(0.01, 0.1) 
+        fuzz = random.uniform(0.01, 0.1)
         accuracy = 1 - (2 ** - epoch) - fuzz - offset
         loss = (2 ** - epoch) + fuzz + offset
 
