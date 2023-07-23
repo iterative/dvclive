@@ -52,23 +52,34 @@ $ git commit -m "DVC init"
 
 ## Example code
 
-Copy the snippet below as a basic example of the API usage:
+Copy the snippet below into `train.py` for a basic API usage example:
 
 ```python
-# train.py
+import time
 import random
-import sys
+
 from dvclive import Live
 
+params = {"learning_rate": 0.002, "optimizer": "Adam", "epochs": 20}
+
 with Live(save_dvc_exp=True) as live:
-    epochs = int(sys.argv[1])
-    live.log_param("epochs", epochs)
-    for epoch in range(epochs):
-        live.log_metric("train/accuracy", epoch + random.random())
-        live.log_metric("train/loss", epochs - epoch - random.random())
-        live.log_metric("val/accuracy",epoch + random.random() )
-        live.log_metric("val/loss", epochs - epoch - random.random())
+
+    # log a parameters
+    for param in params:
+        live.log_param(param, params[param])
+
+    # simulate training
+    offset = random.uniform(0.0.2, 0.1)
+    for epoch in range(1, params["epochs"]):
+        fuzz = random.uniform(0.01, 0.1) 
+        accuracy = 1 - (2 ** - epoch) - fuzz - offset
+        loss = (2 ** - epoch) + fuzz + offset
+
+        # log metrics to studio
+        live.log_metric("accuracy", accuracy)
+        live.log_metric("loss", loss)
         live.next_step()
+        time.sleep(0.2)
 ```
 
 See [Integrations](https://dvc.org/doc/dvclive/ml-frameworks) for examples using
@@ -76,12 +87,13 @@ DVCLive alongside different ML Frameworks.
 
 ## Running
 
-Run couple of times passing different values:
+Run this a couple of times to simulate multiple experiments:
 
 ```console
-$ python train.py 5
-$ python train.py 5
-$ python train.py 7
+$ python train.py
+$ python train.py
+$ python train.py
+...
 ```
 
 ## Comparing
