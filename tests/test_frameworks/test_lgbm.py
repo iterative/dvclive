@@ -53,7 +53,7 @@ def test_lgbm_integration(tmp_dir, model_params, iris_data):
     logs, _ = parse_metrics(callback.live)
     assert "dvclive/plots/metrics/multi_logloss.tsv" in logs
     assert len(logs) == 1
-    assert len(list(logs.values())[0]) == 5
+    assert len(next(iter(logs.values()))) == 5
 
 
 @pytest.mark.skipif(platform == "darwin", reason="LIBOMP Segmentation fault on MacOS")
@@ -79,7 +79,7 @@ def test_lgbm_integration_multi_eval(tmp_dir, model_params, iris_data):
     assert "dvclive/plots/metrics/training/multi_logloss.tsv" in logs
     assert "dvclive/plots/metrics/valid_1/multi_logloss.tsv" in logs
     assert len(logs) == 2
-    assert len(list(logs.values())[0]) == 5
+    assert len(next(iter(logs.values()))) == 5
 
 
 @pytest.mark.skipif(platform == "darwin", reason="LIBOMP Segmentation fault on MacOS")
