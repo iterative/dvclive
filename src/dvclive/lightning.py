@@ -21,7 +21,6 @@ except ImportError:
     )
     from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
     from pytorch_lightning.loggers.logger import Logger, rank_zero_experiment
-    from pytorch_lightning.utilities.logger import _scan_checkpoints
     from pytorch_lightning.utilities import rank_zero_only
     from pytorch_lightning.utilities.logger import _scan_checkpoints
 from torch import is_tensor
