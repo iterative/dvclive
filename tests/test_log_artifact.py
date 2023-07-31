@@ -252,7 +252,7 @@ def test_log_artifact_inside_exp_logger(tmp_dir, mocker, dvc_repo, tracked):
     if tracked == "data_source":
         msg += (
             "\nTo track it automatically during `dvc exp run`:"
-            "\n1. Run `dvc exp remove data.dvc`"
+            "\n1. Run `dvc exp remove data.dvc` "
             "to stop tracking it outside the pipeline."
             "\n2. Add it as an output of the pipeline stage."
         )
