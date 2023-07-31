@@ -8,8 +8,9 @@ from dvclive.utils import parse_metrics
 
 try:
     import torch
-    from pytorch_lightning import LightningModule
-    from pytorch_lightning.trainer import Trainer
+    from lightning import LightningModule
+    from lightning.pytorch import Trainer
+    from lightning.pytorch.callbacks import ModelCheckpoint
     from torch import nn
     from torch.nn import functional as F  # noqa: N812
     from torch.optim import SGD, Adam
@@ -18,7 +19,7 @@ try:
     from dvclive import Live
     from dvclive.lightning import DVCLiveLogger
 except ImportError:
-    pytest.skip("skipping pytorch_lightning tests", allow_module_level=True)
+    pytest.skip("skipping lightning tests", allow_module_level=True)
 
 
 class XORDataset(Dataset):
@@ -159,6 +160,38 @@ def test_lightning_kwargs(tmp_dir):
     assert os.path.exists("dir/report.md")
     assert not os.path.exists("dir/dvc.yaml")
     assert dvclive_logger.experiment._cache_images is True
+
+
+@pytest.mark.parametrize("log_model", [False, True, "all"])
+@pytest.mark.parametrize("save_top_k", [1, -1])
+def test_lightning_log_model(tmp_dir, mocker, log_model, save_top_k):
+    model = LitXOR()
+    dvclive_logger = DVCLiveLogger(dir="dir", log_model=log_model)
+    checkpoint = ModelCheckpoint(dirpath="model", save_top_k=save_top_k)
+    trainer = Trainer(
+        logger=dvclive_logger,
+        max_epochs=2,
+        log_every_n_steps=1,
+        callbacks=[checkpoint],
+    )
+    log_artifact = mocker.patch.object(dvclive_logger.experiment, "log_artifact")
+    trainer.fit(model)
+
+    # Check that log_artifact is called.
+    if log_model is False:
+        log_artifact.assert_not_called()
+    elif (log_model is True) and (save_top_k != -1):
+        # called once to cache, then again to log best artifact
+        assert log_artifact.call_count == 2
+    else:
+        # once per epoch plus two calls at the end (see above)
+        assert log_artifact.call_count == 4
+
+    # Check that checkpoint files does not grow with each run.
+    num_checkpoints = len(os.listdir(tmp_dir / "model"))
+    if log_model in [True, "all"]:
+        trainer.fit(model)
+        assert len(os.listdir(tmp_dir / "model")) == num_checkpoints
 
 
 def test_lightning_steps(tmp_dir, mocker):

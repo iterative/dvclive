@@ -1,6 +1,7 @@
 # ruff: noqa: ARG002
 import inspect
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 try:
     from lightning.fabric.utilities.logger import (
@@ -8,7 +9,9 @@ try:
         _sanitize_callable_params,
         _sanitize_params,
     )
+    from lightning.pytorch.callbacks.model_checkpoint import ModelCheckpoint
     from lightning.pytorch.loggers.logger import Logger, rank_zero_experiment
+    from lightning.pytorch.loggers.utilities import _scan_checkpoints
     from lightning.pytorch.utilities import rank_zero_only
 except ImportError:
     from lightning_fabric.utilities.logger import (
@@ -16,9 +19,10 @@ except ImportError:
         _sanitize_callable_params,
         _sanitize_params,
     )
+    from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
     from pytorch_lightning.loggers.logger import Logger, rank_zero_experiment
     from pytorch_lightning.utilities import rank_zero_only
-
+    from pytorch_lightning.utilities.logger import _scan_checkpoints
 from torch import is_tensor
 
 from dvclive import Live
@@ -44,10 +48,11 @@ def _should_call_next_step():
 
 
 class DVCLiveLogger(Logger):
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         run_name: Optional[str] = "dvclive_run",
         prefix="",
+        log_model: Union[str, bool] = False,
         experiment=None,
         dir: Optional[str] = None,  # noqa: A002
         resume: bool = False,
@@ -72,6 +77,10 @@ class DVCLiveLogger(Logger):
         if report == "notebook":
             # Force Live instantiation
             self.experiment  # noqa: B018
+        self._log_model = log_model
+        self._logged_model_time: Dict[str, float] = {}
+        self._checkpoint_callback: Optional[ModelCheckpoint] = None
+        self._all_checkpoint_paths: List[str] = []
 
     @property
     def name(self):
@@ -131,6 +140,42 @@ class DVCLiveLogger(Logger):
                 self.experiment._latest_studio_step -= 1  # noqa: SLF001
             self.experiment.next_step()
 
+    def after_save_checkpoint(self, checkpoint_callback: ModelCheckpoint) -> None:
+        if self._log_model in [True, "all"]:
+            self._checkpoint_callback = checkpoint_callback
+            self._scan_checkpoints(checkpoint_callback)
+        if self._log_model == "all" or (
+            self._log_model is True and checkpoint_callback.save_top_k == -1
+        ):
+            self._save_checkpoints(checkpoint_callback)
+
     @rank_zero_only
     def finalize(self, status: str) -> None:
+        # Log best model.
+        if self._checkpoint_callback:
+            self._scan_checkpoints(self._checkpoint_callback)
+            self._save_checkpoints(self._checkpoint_callback)
+            best_model_path = self._checkpoint_callback.best_model_path
+            self.experiment.log_artifact(
+                best_model_path, name="best", type="model", cache=False
+            )
         self.experiment.end()
+
+    def _scan_checkpoints(self, checkpoint_callback: ModelCheckpoint) -> None:
+        # get checkpoints to be saved with associated score
+        checkpoints = _scan_checkpoints(checkpoint_callback, self._logged_model_time)
+
+        # update model time and append path to list of all checkpoints
+        for t, p, _, _ in checkpoints:
+            self._logged_model_time[p] = t
+            self._all_checkpoint_paths.append(p)
+
+    def _save_checkpoints(self, checkpoint_callback: ModelCheckpoint) -> None:
+        # drop unused checkpoints
+        if not self._experiment._resume:  # noqa: SLF001
+            for p in Path(checkpoint_callback.dirpath).iterdir():
+                if str(p) not in self._all_checkpoint_paths:
+                    p.unlink(missing_ok=True)
+
+        # save directory
+        self.experiment.log_artifact(checkpoint_callback.dirpath)
