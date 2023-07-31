@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 
 import pytest
 from PIL import Image
@@ -502,3 +503,8 @@ def test_cache_images(tmp_dir, dvc_repo, cache):
     live.log_image("image.png", img)
     live.end()
     assert (tmp_dir / "dvclive" / "plots" / "images.dvc").exists() == cache
+
+
+def test_pathlib_path(tmp_dir):
+    live = Live(Path(tmp_dir))
+    assert live.dir == tmp_dir.as_posix()

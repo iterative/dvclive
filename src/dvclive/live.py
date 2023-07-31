@@ -50,7 +50,7 @@ ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike
 class Live:
     def __init__(
         self,
-        dir: str = "dvclive",  # noqa: A002
+        dir: Union[str, Path] = "dvclive",  # noqa: A002
         resume: bool = False,
         report: Optional[str] = "auto",
         save_dvc_exp: bool = False,
@@ -59,6 +59,9 @@ class Live:
         exp_message: Optional[str] = None,
     ):
         self.summary: Dict[str, Any] = {}
+
+        if isinstance(dir, Path):
+            dir = dir.as_posix()  # noqa: A001
 
         self._dir: str = dir
         self._resume: bool = resume or env2bool(env.DVCLIVE_RESUME)
