@@ -1,4 +1,4 @@
-- [ ] ❗ I have followed the [Contributing to DVCLive](https://github.com/iterative/dvclive/blob/master/CONTRIBUTING.md)
+- [ ] ❗ I have followed the [Contributing to DVCLive](https://github.com/iterative/dvclive/blob/main/CONTRIBUTING.rst)
   guide.
 
 - [ ] 📖 If this PR requires [documentation](https://dvc.org/doc) updates, I have created a separate PR (or issue, at least) in [dvc.org](https://github.com/iterative/dvc.org) and linked it here.
