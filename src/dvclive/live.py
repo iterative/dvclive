@@ -126,16 +126,17 @@ class Live:
     def _init_dvc(self):
         from dvc.scm import NoSCM
 
-        if os.getenv(env.DVC_EXP_BASELINE_REV, None):
+        self._dvc_repo = get_dvc_repo()
+
+        self._exp_name = os.getenv(env.DVC_EXP_NAME, "")
+        self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV, "")
+
+        if self._dvc_repo and self._baseline_rev and self._exp_name:
             # `dvc exp` execution
-            self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV, "")
-            self._exp_name = os.getenv(env.DVC_EXP_NAME, "")
             self._inside_dvc_exp = True
             if self._save_dvc_exp:
                 logger.info("Ignoring `save_dvc_exp` because `dvc exp run` is running")
                 self._save_dvc_exp = False
-
-        self._dvc_repo = get_dvc_repo()
 
         dvc_logger = logging.getLogger("dvc")
         dvc_logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "WARNING").upper())
@@ -176,23 +177,6 @@ class Live:
         elif self._inside_dvc_exp:
             logger.debug("Skipping `studio` report `start` and `done` events.")
             self._studio_events_to_skip.add("start")
-            self._studio_events_to_skip.add("done")
-        elif self._dvc_repo is None:
-            logger.warning(
-                "Can't connect to Studio without a DVC Repo."
-                "\nYou can create a DVC Repo by calling `dvc init`."
-            )
-            self._studio_events_to_skip.add("start")
-            self._studio_events_to_skip.add("data")
-            self._studio_events_to_skip.add("done")
-        elif not self._save_dvc_exp:
-            logger.warning(
-                "Can't connect to Studio without creating a DVC experiment."
-                "\nIf you have a DVC Pipeline, run it with `dvc exp run`."
-                "\nIf you are using DVCLive alone, use `save_dvc_exp=True`."
-            )
-            self._studio_events_to_skip.add("start")
-            self._studio_events_to_skip.add("data")
             self._studio_events_to_skip.add("done")
         else:
             response = post_live_metrics(
