@@ -449,7 +449,7 @@ class Live:
         if self._inside_dvc_exp:
             msg = f"Skipping dvc add {path} because `dvc exp run` is running."
             path_stage = None
-            for stage in self._dvc_repo.stage.collect():
+            for stage in self._dvc_repo.index.stages:
                 for out in stage.outs:
                     if out.fspath == str(Path(path).absolute()):
                         path_stage = stage
