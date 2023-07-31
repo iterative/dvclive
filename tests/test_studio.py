@@ -299,10 +299,9 @@ def test_post_to_studio_shorten_names(tmp_dir, mocked_dvc_repo, mocked_studio_po
 
 @pytest.mark.studio()
 def test_post_to_studio_inside_dvc_exp(
-    tmp_dir, mocker, monkeypatch, mocked_studio_post
+    tmp_dir, mocker, monkeypatch, mocked_studio_post, mocked_dvc_repo
 ):
     mocked_post, _ = mocked_studio_post
-    mocker.patch("dvclive.live.get_dvc_repo", return_value=None)
 
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
@@ -478,6 +477,102 @@ def test_post_to_studio_message(tmp_dir, mocked_dvc_repo, mocked_studio_post):
             "name": live._exp_name,
             "client": "dvclive",
             "message": "Custom message",
+        },
+        headers={
+            "Authorization": "token STUDIO_TOKEN",
+            "Content-type": "application/json",
+        },
+        timeout=(30, 5),
+    )
+
+
+def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post):
+    monkeypatch.setenv(DVC_STUDIO_TOKEN, "STUDIO_TOKEN")
+    monkeypatch.setenv(DVC_STUDIO_REPO_URL, "STUDIO_REPO_URL")
+    monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
+    monkeypatch.setenv(DVC_EXP_NAME, "bar")
+
+    live = Live(save_dvc_exp=True)
+    live.log_param("fooparam", 1)
+
+    dvc_path = Path(live.dvc_file).as_posix()
+    metrics_path = Path(live.metrics_file).as_posix()
+    params_path = Path(live.params_file).as_posix()
+    foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
+
+    mocked_post, _ = mocked_studio_post
+
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        json={
+            "type": "start",
+            "repo_url": "STUDIO_REPO_URL",
+            "baseline_sha": "f" * 40,
+            "name": live._exp_name,
+            "client": "dvclive",
+        },
+        headers={
+            "Authorization": "token STUDIO_TOKEN",
+            "Content-type": "application/json",
+        },
+        timeout=(30, 5),
+    )
+
+    live.log_metric("foo", 1)
+
+    live.next_step()
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        json={
+            "type": "data",
+            "repo_url": "STUDIO_REPO_URL",
+            "baseline_sha": "f" * 40,
+            "name": live._exp_name,
+            "step": 0,
+            "metrics": {metrics_path: {"data": {"step": 0, "foo": 1}}},
+            "params": {params_path: {"fooparam": 1}},
+            "plots": {f"{dvc_path}::{foo_path}": {"data": [{"step": 0, "foo": 1.0}]}},
+            "client": "dvclive",
+        },
+        headers={
+            "Authorization": "token STUDIO_TOKEN",
+            "Content-type": "application/json",
+        },
+        timeout=(30, 5),
+    )
+
+    live.log_metric("foo", 2)
+
+    live.next_step()
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        json={
+            "type": "data",
+            "repo_url": "STUDIO_REPO_URL",
+            "baseline_sha": "f" * 40,
+            "name": live._exp_name,
+            "step": 1,
+            "metrics": {metrics_path: {"data": {"step": 1, "foo": 2}}},
+            "params": {params_path: {"fooparam": 1}},
+            "plots": {f"{dvc_path}::{foo_path}": {"data": [{"step": 1, "foo": 2.0}]}},
+            "client": "dvclive",
+        },
+        headers={
+            "Authorization": "token STUDIO_TOKEN",
+            "Content-type": "application/json",
+        },
+        timeout=(30, 5),
+    )
+
+    live.end()
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        json={
+            "type": "done",
+            "repo_url": "STUDIO_REPO_URL",
+            "baseline_sha": "f" * 40,
+            "name": live._exp_name,
+            "client": "dvclive",
         },
         headers={
             "Authorization": "token STUDIO_TOKEN",

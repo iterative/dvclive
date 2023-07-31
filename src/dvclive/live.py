@@ -128,8 +128,8 @@ class Live:
 
         self._dvc_repo = get_dvc_repo()
 
-        self._exp_name = os.getenv(env.DVC_EXP_NAME, "")
-        self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV, "")
+        self._exp_name = os.getenv(env.DVC_EXP_NAME)
+        self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV)
 
         if self._dvc_repo and self._baseline_rev and self._exp_name:
             # `dvc exp` execution

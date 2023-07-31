@@ -142,15 +142,14 @@ def test_exp_save_on_end(tmp_dir, save, mocked_dvc_repo):
         mocked_dvc_repo.experiments.save.assert_not_called()
 
 
-def test_exp_save_skip_on_env_vars(tmp_dir, monkeypatch, mocker):
+def test_exp_save_skip_on_env_vars(tmp_dir, monkeypatch, mocked_dvc_repo):
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
 
-    with mocker.patch("dvclive.live.get_dvc_repo", return_value=None):
-        live = Live(save_dvc_exp=True)
-        live.end()
+    live = Live(save_dvc_exp=True)
+    live.end()
 
-    assert live._dvc_repo is None
+    assert live._dvc_repo is not None
     assert live._baseline_rev == "foo"
     assert live._exp_name == "bar"
     assert live._inside_dvc_exp
