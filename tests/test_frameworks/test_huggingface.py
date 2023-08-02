@@ -4,6 +4,7 @@ import pytest
 
 from dvclive import Live
 from dvclive.plots.metric import Metric
+from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
 
 try:
@@ -99,6 +100,7 @@ def args():
         "foo",
         evaluation_strategy="epoch",
         num_train_epochs=2,
+        save_strategy="epoch",
     )
 
 
@@ -130,6 +132,9 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker):
     assert os.path.join(scalars, "train", "loss.tsv") in logs
     assert len(logs[os.path.join(scalars, "epoch.tsv")]) == 3
     assert len(logs[os.path.join(scalars, "eval", "loss.tsv")]) == 2
+
+    params = load_yaml(live.params_file)
+    assert params["num_train_epochs"] == 2
 
 
 def test_huggingface_model_file(tmp_dir, model, args, data, mocker):
@@ -180,3 +185,4 @@ def test_huggingface_log_artifact(tmp_dir, model, args, data, mocker):
     trainer.train()
 
     log_artifact.assert_called_with(trainer.args.output_dir)
+    trainer.train()

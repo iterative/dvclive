@@ -19,6 +19,23 @@ class DVCLiveCallback(TrainerCallback):
         self.model_file = model_file
         self.live = live if live is not None else Live(**kwargs)
 
+    def on_train_begin(
+        self,
+        args: TrainingArguments,
+        state: TrainerState,
+        control: TrainerControl,
+        **kwargs,
+    ):
+        for key, value in args.to_dict().items():
+            if key in (
+                "num_train_epochs",
+                "weight_decay",
+                "max_grad_norm",
+                "warmup_ratio",
+                "warmup_steps",
+            ):
+                self.live.log_param(key, value)
+
     def on_log(
         self,
         args: TrainingArguments,
