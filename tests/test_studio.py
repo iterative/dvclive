@@ -482,10 +482,16 @@ def test_post_to_studio_message(tmp_dir, mocked_dvc_repo, mocked_studio_post):
 
 
 @pytest.mark.parametrize("exp_name", [True, False])
-def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post, exp_name):
+@pytest.mark.parametrize("baseline_rev", [True, False])
+def test_post_to_studio_no_repo(
+    tmp_dir, monkeypatch, mocked_studio_post, exp_name, baseline_rev
+):
     monkeypatch.setenv(DVC_STUDIO_TOKEN, "STUDIO_TOKEN")
     monkeypatch.setenv(DVC_STUDIO_REPO_URL, "STUDIO_REPO_URL")
-    monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
+    baseline = None
+    if baseline_rev:
+        baseline = "f" * 40
+        monkeypatch.setenv(DVC_EXP_BASELINE_REV, baseline)
     if exp_name:
         monkeypatch.setenv(DVC_EXP_NAME, "bar")
 
@@ -504,7 +510,7 @@ def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post, exp_na
         json={
             "type": "start",
             "repo_url": "STUDIO_REPO_URL",
-            "baseline_sha": "f" * 40,
+            "baseline_sha": baseline,
             "name": live._exp_name,
             "client": "dvclive",
         },
@@ -523,7 +529,7 @@ def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post, exp_na
         json={
             "type": "data",
             "repo_url": "STUDIO_REPO_URL",
-            "baseline_sha": "f" * 40,
+            "baseline_sha": baseline,
             "name": live._exp_name,
             "step": 0,
             "metrics": {metrics_path: {"data": {"step": 0, "foo": 1}}},
@@ -546,7 +552,7 @@ def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post, exp_na
         json={
             "type": "data",
             "repo_url": "STUDIO_REPO_URL",
-            "baseline_sha": "f" * 40,
+            "baseline_sha": baseline,
             "name": live._exp_name,
             "step": 1,
             "metrics": {metrics_path: {"data": {"step": 1, "foo": 2}}},
@@ -567,7 +573,7 @@ def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post, exp_na
         json={
             "type": "done",
             "repo_url": "STUDIO_REPO_URL",
-            "baseline_sha": "f" * 40,
+            "baseline_sha": baseline,
             "name": live._exp_name,
             "client": "dvclive",
         },
@@ -577,3 +583,5 @@ def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post, exp_na
         },
         timeout=(30, 5),
     )
+
+    assert live._exp_name is not None
