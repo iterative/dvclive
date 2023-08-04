@@ -91,7 +91,7 @@ def make_dvcyaml(live):
         dvcyaml["metrics"] = [os.path.relpath(live.metrics_file, live.dir)]
     plots = []
     plots_path = Path(live.plots_dir)
-    metrics_path = (plots_path / Metric.subfolder)
+    metrics_path = plots_path / Metric.subfolder
     if metrics_path.exists():
         metrics_relpath = metrics_path.relative_to(live.dir).as_posix()
         metrics_config = {metrics_relpath: {"x": "step"}}
