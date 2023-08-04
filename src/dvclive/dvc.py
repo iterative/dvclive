@@ -91,9 +91,10 @@ def make_dvcyaml(live):
         dvcyaml["metrics"] = [os.path.relpath(live.metrics_file, live.dir)]
     plots = []
     plots_path = Path(live.plots_dir)
-    if live._metrics:
-        metrics_path = (plots_path / Metric.subfolder).relative_to(live.dir).as_posix()
-        metrics_config = {metrics_path: {"x": "step"}}
+    metrics_path = plots_path / Metric.subfolder
+    if metrics_path.exists():
+        metrics_relpath = metrics_path.relative_to(live.dir).as_posix()
+        metrics_config = {metrics_relpath: {"x": "step"}}
         plots.append(metrics_config)
     if live._images:
         images_path = (plots_path / Image.subfolder).relative_to(live.dir)

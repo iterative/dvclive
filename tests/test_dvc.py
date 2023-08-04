@@ -57,6 +57,16 @@ def test_make_dvcyaml_metrics(tmp_dir):
     }
 
 
+def test_make_dvcyaml_metrics_no_plots(tmp_dir):
+    live = Live()
+    live.log_metric("bar", 2, plot=False)
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == {
+        "metrics": ["metrics.json"],
+    }
+
+
 def test_make_dvcyaml_summary(tmp_dir):
     live = Live()
     live.summary["bar"] = 2

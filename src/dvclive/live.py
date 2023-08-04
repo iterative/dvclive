@@ -433,35 +433,36 @@ class Live:
                     )
 
     def cache(self, path):
-        if self._inside_dvc_exp:
-            msg = f"Skipping dvc add {path} because `dvc exp run` is running."
-            path_stage = None
-            for stage in self._dvc_repo.index.stages:
-                for out in stage.outs:
-                    if out.fspath == str(Path(path).absolute()):
-                        path_stage = stage
-                        break
-            if not path_stage:
-                msg += (
-                    "\nTo track it automatically during `dvc exp run`, "
-                    "add it as an output of the pipeline stage."
-                )
-                logger.warning(msg)
-            elif path_stage.cmd:
-                msg += "\nIt is already being tracked automatically."
-                logger.info(msg)
-            else:
-                msg += (
-                    "\nTo track it automatically during `dvc exp run`:"
-                    f"\n1. Run `dvc exp remove {path_stage.addressing}` "
-                    "to stop tracking it outside the pipeline."
-                    "\n2. Add it as an output of the pipeline stage."
-                )
-                logger.warning(msg)
-            return
-
         try:
+            if self._inside_dvc_exp:
+                msg = f"Skipping dvc add {path} because `dvc exp run` is running."
+                path_stage = None
+                for stage in self._dvc_repo.index.stages:
+                    for out in stage.outs:
+                        if out.fspath == str(Path(path).absolute()):
+                            path_stage = stage
+                            break
+                if not path_stage:
+                    msg += (
+                        "\nTo track it automatically during `dvc exp run`, "
+                        "add it as an output of the pipeline stage."
+                    )
+                    logger.warning(msg)
+                elif path_stage.cmd:
+                    msg += "\nIt is already being tracked automatically."
+                    logger.info(msg)
+                else:
+                    msg += (
+                        "\nTo track it automatically during `dvc exp run`:"
+                        f"\n1. Run `dvc exp remove {path_stage.addressing}` "
+                        "to stop tracking it outside the pipeline."
+                        "\n2. Add it as an output of the pipeline stage."
+                    )
+                    logger.warning(msg)
+                return
+
             stage = self._dvc_repo.add(str(path))
+
         except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to dvc add {path}: {e}")
             return
