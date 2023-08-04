@@ -27,10 +27,7 @@ def _cast_to_numbers(datapoints):
 
 def _rel_path(live, path):
     absolute_path = Path(path).resolve()
-    if live._dvc_repo is not None:
-        root = live._dvc_repo.root_dir
-    else:
-        root = os.getcwd()
+    root = live._dvc_repo.root_dir if live._dvc_repo is not None else os.getcwd()
     return str(absolute_path.relative_to(root).as_posix())
 
 
