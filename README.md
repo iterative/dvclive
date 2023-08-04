@@ -36,7 +36,6 @@ PyTorch Lightning Example
 </a>
 </p>
 
-
 <p align='center'>
 <a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-YOLO.ipynb">
 Ultralytics YOLO v8 Example
