@@ -25,17 +25,18 @@ def _cast_to_numbers(datapoints):
     return datapoints
 
 
-def _rel_path(live, path):
-    absolute_path = Path(path).resolve()
-    root = live._dvc_repo.root_dir if live._dvc_repo is not None else os.getcwd()
-    return str(absolute_path.relative_to(root).as_posix())
+def _format_path(live, path):
+    if live._dvc_repo:
+        absolute_path = Path(path).resolve()
+        path = absolute_path.relative_to(live._dvc_repo.root_dir)
+    return str(Path(path).as_posix())
 
 
 def _adapt_plot_name(live, name):
-    name = _rel_path(live, name)
+    name = _format_path(live, name)
     if os.path.isfile(live.dvc_file):
         dvc_file = live.dvc_file
-        dvc_file = _rel_path(live, live.dvc_file)
+        dvc_file = _format_path(live, live.dvc_file)
         name = f"{dvc_file}::{name}"
     return name
 
@@ -63,7 +64,7 @@ def _adapt_images(live):
 def get_studio_updates(live):
     if os.path.isfile(live.params_file):
         params_file = live.params_file
-        params_file = _rel_path(live, params_file)
+        params_file = _format_path(live, params_file)
         params = {params_file: load_yaml(live.params_file)}
     else:
         params = {}
@@ -71,7 +72,7 @@ def get_studio_updates(live):
     plots, metrics = parse_metrics(live)
 
     metrics_file = live.metrics_file
-    metrics_file = _rel_path(live, metrics_file)
+    metrics_file = _format_path(live, metrics_file)
     metrics = {metrics_file: {"data": metrics}}
 
     plots = {
