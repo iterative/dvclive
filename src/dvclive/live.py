@@ -130,6 +130,9 @@ class Live:
 
         self._exp_name = os.getenv(env.DVC_EXP_NAME)
         self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV)
+        if not self._exp_name:
+            scm = self._dvc_repo.scm if self._dvc_repo else None
+            self._exp_name = get_random_exp_name(scm, self._baseline_rev)
 
         if self._dvc_repo and self._baseline_rev and self._exp_name:
             # `dvc exp` execution
@@ -162,8 +165,8 @@ class Live:
             return
 
         self._baseline_rev = self._dvc_repo.scm.get_rev()
+
         if self._save_dvc_exp:
-            self._exp_name = get_random_exp_name(self._dvc_repo.scm, self._baseline_rev)
             mark_dvclive_only_started()
             self._include_untracked.append(self.dir)
 

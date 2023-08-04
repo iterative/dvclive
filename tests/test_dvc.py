@@ -138,7 +138,7 @@ def test_exp_save_on_end(tmp_dir, save, mocked_dvc_repo):
         )
     else:
         assert live._baseline_rev is not None
-        assert live._exp_name is None
+        assert live._exp_name is not None
         mocked_dvc_repo.experiments.save.assert_not_called()
 
 

@@ -397,11 +397,6 @@ def test_post_to_studio_inside_subdir_dvc_exp(
     )
 
 
-def test_post_to_studio_requires_exp(tmp_dir, mocked_dvc_repo, mocked_studio_post):
-    assert Live()._studio_events_to_skip == {"start", "data", "done"}
-    assert not Live(save_dvc_exp=True)._studio_events_to_skip
-
-
 def test_get_dvc_studio_config_none(mocker):
     mocker.patch("dvclive.live.get_dvc_repo", return_value=None)
     live = Live()
@@ -486,11 +481,13 @@ def test_post_to_studio_message(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     )
 
 
-def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post):
+@pytest.mark.parametrize("exp_name", [True, False])
+def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post, exp_name):
     monkeypatch.setenv(DVC_STUDIO_TOKEN, "STUDIO_TOKEN")
     monkeypatch.setenv(DVC_STUDIO_REPO_URL, "STUDIO_REPO_URL")
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
-    monkeypatch.setenv(DVC_EXP_NAME, "bar")
+    if exp_name:
+        monkeypatch.setenv(DVC_EXP_NAME, "bar")
 
     live = Live(save_dvc_exp=True)
     live.log_param("fooparam", 1)

@@ -147,8 +147,12 @@ def mark_dvclive_only_ended():
 
 
 def get_random_exp_name(scm, baseline_rev):
+    from dvc.repo.experiments.utils import gen_random_name
     from dvc.repo.experiments.utils import (
         get_random_exp_name as dvc_get_random_exp_name,
     )
 
-    return dvc_get_random_exp_name(scm, baseline_rev)
+    if scm and baseline_rev:
+        return dvc_get_random_exp_name(scm, baseline_rev)
+    # TODO: ping studio for list of existing names to check against
+    return gen_random_name()
