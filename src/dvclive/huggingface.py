@@ -1,5 +1,6 @@
 # ruff: noqa: ARG002
-from typing import Optional
+import os
+from typing import Literal, Optional
 
 from transformers import (
     TrainerCallback,
@@ -14,9 +15,14 @@ from dvclive.utils import standardize_metric_name
 
 
 class DVCLiveCallback(TrainerCallback):
-    def __init__(self, model_file=None, live: Optional[Live] = None, **kwargs):
+    def __init__(
+        self,
+        live: Optional[Live] = None,
+        log_model: Optional[Literal["all", "last"]] = None,
+        **kwargs,
+    ):
         super().__init__()
-        self.model_file = model_file
+        self._log_model = log_model
         self.live = live if live is not None else Live(**kwargs)
 
     def on_train_begin(
@@ -48,20 +54,15 @@ class DVCLiveCallback(TrainerCallback):
             self.live.log_metric(standardize_metric_name(key, __name__), value)
         self.live.next_step()
 
-    def on_epoch_end(
+    def on_save(
         self,
         args: TrainingArguments,
         state: TrainerState,
         control: TrainerControl,
         **kwargs,
     ):
-        if self.model_file:
-            model = kwargs["model"]
-            model.save_pretrained(self.model_file)
-            tokenizer = kwargs.get("tokenizer")
-            if tokenizer:
-                tokenizer.save_pretrained(self.model_file)
-            self.live.log_artifact(self.model_file)
+        if self._log_model == "all" and state.is_world_process_zero:
+            self.live.log_artifact(args.output_dir)
 
     def on_train_end(
         self,
@@ -70,10 +71,11 @@ class DVCLiveCallback(TrainerCallback):
         control: TrainerControl,
         **kwargs,
     ):
-        if args.load_best_model_at_end:
-            trainer = Trainer(
+        if self._log_model == "last" and state.is_world_process_zero:
+            fake_trainer = Trainer(
                 args=args, model=kwargs.get("model"), tokenizer=kwargs.get("tokenizer")
             )
-            trainer.save_model()
-            self.live.log_artifact(args.output_dir)
+            output_dir = os.path.join(args.output_dir, "last")
+            fake_trainer.save_model(output_dir)
+            self.live.log_artifact(output_dir, type="model", copy=True)
         self.live.end()
