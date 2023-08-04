@@ -11,7 +11,7 @@ from dvclive.plots import Image, Metric
 from dvclive.studio import _adapt_image, get_dvc_studio_config
 
 
-def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
+def test_post_to_studio(tmp_dir, dvc_repo, mocked_studio_post):
     live = Live(save_dvc_exp=True)
     live.log_param("fooparam", 1)
 
