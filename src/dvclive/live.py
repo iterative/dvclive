@@ -126,10 +126,10 @@ class Live:
     def _init_check_dvcyaml(self):
         for stage in self._dvc_repo.index.stages:
             for out in stage.outs:
-                if Path(self.dvc_file).absolute().is_relative_to(out.fs_path):
+                if str(out.fs_path) in str(Path(self.dvc_file).absolute()):
                     msg = (
                         f"'{self.dvc_file}' is in outputs of stage "
-                        "'{stage.addressing}'.\n"
+                        f"'{stage.addressing}'.\n"
                         f"Remove it from outputs to make DVCLive work as expected."
                     )
                     logger.warning(msg)
