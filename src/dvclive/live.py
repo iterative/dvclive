@@ -123,6 +123,17 @@ class Live:
         if self.dvc_file and os.path.exists(self.dvc_file):
             os.remove(self.dvc_file)
 
+    def _init_check_dvcyaml(self):
+        if self._dvcyaml:
+            for stage in self._dvc_repo.index.stages:
+                for out in stage.outs:
+                    if Path(self.dvc_file).absolute().is_relative_to(out.fs_path):
+                        msg = (
+                            f"{self.dvc_file} overlaps out {out} in stage {stage}."
+                            f"Do not track {self.dvc_file} in stage outputs."
+                        )
+                        logger.warning(msg)
+
     def _init_dvc(self):
         from dvc.scm import NoSCM
 
@@ -158,6 +169,7 @@ class Live:
             return
 
         if self._inside_dvc_exp:
+            self._init_check_dvcyaml()
             return
 
         self._baseline_rev = self._dvc_repo.scm.get_rev()
