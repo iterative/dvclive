@@ -323,7 +323,8 @@ def test_no_scm_repo(tmp_dir, mocker):
         assert live._save_dvc_exp is False
 
 
-def test_warn_on_dvcyaml_output_overlap(tmp_dir, mocker):
+@pytest.mark.parametrize("dvcyaml", [True, False])
+def test_warn_on_dvcyaml_output_overlap(tmp_dir, mocker, dvcyaml):
     logger = mocker.patch("dvclive.live.logger")
     dvc_repo = mocker.MagicMock()
     dvc_stage = mocker.MagicMock()
@@ -335,14 +336,12 @@ def test_warn_on_dvcyaml_output_overlap(tmp_dir, mocker):
     dvc_repo.scm.get_rev.return_value = "current_rev"
     dvc_repo.scm.get_ref.return_value = None
     dvc_repo.scm.no_commits = False
-    dvc_repo.config = {}
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
-        live = Live(save_dvc_exp=True)
-        assert live._save_dvc_exp
-        assert live._baseline_rev is not None
-        assert live._exp_name is not None
-        live.end()
+        live = Live(dvcyaml=dvcyaml, save_dvc_exp=True)
 
-    msg = f"'{live.dvc_file}' is in outputs of stage 'train'.\n"
-    msg += "Remove it from outputs to make DVCLive work as expected."
-    logger.warning.assert_called_with(msg)
+    if dvcyaml:
+        msg = f"'{live.dvc_file}' is in outputs of stage 'train'.\n"
+        msg += "Remove it from outputs to make DVCLive work as expected."
+        logger.warning.assert_called_with(msg)
+    else:
+        logger.warning.assert_not_called()
