@@ -123,7 +123,7 @@ class Live:
         if self.dvc_file and os.path.exists(self.dvc_file):
             os.remove(self.dvc_file)
 
-    def _init_check_dvcyaml(self):
+    def _init_check_dvcyaml_overlap(self):
         for stage in self._dvc_repo.index.stages:
             for out in stage.outs:
                 if str(out.fs_path) in str(Path(self.dvc_file).absolute()):
@@ -169,7 +169,7 @@ class Live:
             return
 
         if self._dvcyaml:
-            self._init_check_dvcyaml()
+            self._init_check_dvcyaml_overlap()
 
         if self._inside_dvc_exp:
             return

@@ -324,20 +324,15 @@ def test_no_scm_repo(tmp_dir, mocker):
 
 
 @pytest.mark.parametrize("dvcyaml", [True, False])
-def test_warn_on_dvcyaml_output_overlap(tmp_dir, mocker, dvcyaml):
+def test_warn_on_dvcyaml_output_overlap(tmp_dir, mocker, mocked_dvc_repo, dvcyaml):
     logger = mocker.patch("dvclive.live.logger")
-    dvc_repo = mocker.MagicMock()
     dvc_stage = mocker.MagicMock()
     dvc_stage.addressing = "train"
     dvc_out = mocker.MagicMock()
     dvc_out.fs_path = tmp_dir / "dvclive"
     dvc_stage.outs = [dvc_out]
-    dvc_repo.index.stages = [dvc_stage]
-    dvc_repo.scm.get_rev.return_value = "current_rev"
-    dvc_repo.scm.get_ref.return_value = None
-    dvc_repo.scm.no_commits = False
-    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
-        live = Live(dvcyaml=dvcyaml, save_dvc_exp=True)
+    mocked_dvc_repo.index.stages = [dvc_stage]
+    live = Live(dvcyaml=dvcyaml)
 
     if dvcyaml:
         msg = f"'{live.dvc_file}' is in outputs of stage 'train'.\n"
