@@ -32,15 +32,7 @@ class DVCLiveCallback(TrainerCallback):
         control: TrainerControl,
         **kwargs,
     ):
-        for key, value in args.to_dict().items():
-            if key in (
-                "num_train_epochs",
-                "weight_decay",
-                "max_grad_norm",
-                "warmup_ratio",
-                "warmup_steps",
-            ):
-                self.live.log_param(key, value)
+        self.live.log_params(args.to_dict())
 
     def on_log(
         self,
