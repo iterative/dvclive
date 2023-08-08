@@ -37,9 +37,3 @@ repos:
     rev: 'v0.0.281'
     hooks:
       - id: ruff
-  - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.16
-    hooks:
-    - id: mdformat
-      exclude: ^\.github/.+_TEMPLATE.md$
-      args: ["--wrap=80"]
