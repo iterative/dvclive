@@ -123,6 +123,17 @@ class Live:
         if self.dvc_file and os.path.exists(self.dvc_file):
             os.remove(self.dvc_file)
 
+    def _init_check_dvcyaml_overlap(self):
+        for stage in self._dvc_repo.index.stages:
+            for out in stage.outs:
+                if str(out.fs_path) in str(Path(self.dvc_file).absolute()):
+                    msg = (
+                        f"'{self.dvc_file}' is in outputs of stage "
+                        f"'{stage.addressing}'.\n"
+                        f"Remove it from outputs to make DVCLive work as expected."
+                    )
+                    logger.warning(msg)
+
     def _init_dvc(self):
         from dvc.scm import NoSCM
 
@@ -156,6 +167,9 @@ class Live:
                 )
                 self._save_dvc_exp = False
             return
+
+        if self._dvcyaml:
+            self._init_check_dvcyaml_overlap()
 
         if self._inside_dvc_exp:
             return
