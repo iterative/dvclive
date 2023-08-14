@@ -1,5 +1,7 @@
 from pathlib import Path, PurePath
 
+from dvclive.utils import isinstance_without_import
+
 from .base import Data
 
 
@@ -17,20 +19,25 @@ class Image(Data):
     def could_log(val: object) -> bool:
         acceptable = {
             ("numpy", "ndarray"),
+            ("matplotlib.figure", "Figure"),
             ("PIL.Image", "Image"),
         }
         for cls in type(val).mro():
-            if (cls.__module__, cls.__name__) in acceptable:
+            if any(isinstance_without_import(val, *cls) for cls in acceptable):
                 return True
         if isinstance(val, (PurePath, str)):
             return True
         return False
 
     def dump(self, val, **kwargs) -> None:  # noqa: ARG002
-        if val.__class__.__module__ == "numpy":
+        if isinstance_without_import(val, "numpy", "ndarray"):
             from PIL import Image as ImagePIL
 
-            pil_image = ImagePIL.fromarray(val)
-        else:
-            pil_image = val
-        pil_image.save(self.output_path)
+            ImagePIL.fromarray(val).save(self.output_path)
+        elif isinstance_without_import(val, "matplotlib.figure", "Figure"):
+            import matplotlib.pyplot as plt
+
+            plt.savefig(self.output_path)
+            plt.close(val)
+        elif isinstance_without_import(val, "PIL.Image", "Image"):
+            val.save(self.output_path)
