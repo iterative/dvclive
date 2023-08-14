@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from PIL import Image
@@ -98,5 +99,19 @@ def test_custom_class(tmp_dir):
     img = Image.new("RGB", (10, 10), (250, 250, 250))
     extended_img = ExtendedImage(img)
     live.log_image("image.png", extended_img)
+
+    assert (tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png").exists()
+
+
+def test_matplotlib(tmp_dir):
+    live = Live()
+    fig, ax = plt.subplots()
+    ax.plot([1, 2, 3, 4])
+
+    assert plt.fignum_exists(fig.number)
+
+    live.log_image("image.png", fig)
+
+    assert not plt.fignum_exists(fig.number)
 
     assert (tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png").exists()

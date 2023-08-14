@@ -148,3 +148,10 @@ def clean_and_copy_into(src: StrPath, dst: StrPath) -> str:
         shutil.copy2(src, dst_path)
 
     return str(dst_path)
+
+
+def isinstance_without_import(val, module, name):
+    for cls in type(val).mro():
+        if (cls.__module__, cls.__name__) == (module, name):
+            return True
+    return False
