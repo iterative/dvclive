@@ -237,32 +237,38 @@ def test_log_artifact_inside_exp(tmp_dir, mocked_dvc_repo):
 @pytest.mark.parametrize("tracked", ["data_source", "stage", None])
 def test_log_artifact_inside_exp_logger(tmp_dir, mocker, dvc_repo, tracked):
     logger = mocker.patch("dvclive.live.logger")
+    data = tmp_dir / "data"
+    data.touch()
     if tracked == "data_source":
-        data = tmp_dir / "data"
-        data.touch()
         dvc_repo.add(data)
     elif tracked == "stage":
         dvcyaml_path = tmp_dir / "dvc.yaml"
         with open(dvcyaml_path, "w") as f:
             f.write(dvcyaml)
-    with Live() as live:
-        live._inside_dvc_exp = True
-        live.log_artifact("data")
-    msg = "Skipping dvc add data because `dvc exp run` is running."
-    if tracked == "data_source":
-        msg += (
-            "\nTo track it automatically during `dvc exp run`:"
+    live = Live()
+    spy = mocker.spy(live._dvc_repo, "add")
+    live._inside_dvc_exp = True
+    live.log_artifact("data")
+    if tracked == "stage":
+        msg = (
+            "Skipping `dvc add data` because it is already being tracked"
+            " automatically as an output of `dvc exp run`."
+        )
+        logger.info.assert_called_with(msg)
+        spy.assert_not_called()
+    elif tracked == "data_source":
+        msg = (
+            "\nTo track 'data' automatically during `dvc exp run`:"
             "\n1. Run `dvc exp remove data.dvc` "
             "to stop tracking it outside the pipeline."
             "\n2. Add it as an output of the pipeline stage."
         )
         logger.warning.assert_called_with(msg)
-    elif tracked == "stage":
-        msg += "\nIt is already being tracked automatically."
-        logger.info.assert_called_with(msg)
+        spy.assert_called_once()
     else:
-        msg += (
-            "\nTo track it automatically during `dvc exp run`, "
+        msg = (
+            "\nTo track 'data' automatically during `dvc exp run`, "
             "add it as an output of the pipeline stage."
         )
         logger.warning.assert_called_with(msg)
+        spy.assert_called_once()
