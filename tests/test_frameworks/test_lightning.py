@@ -192,6 +192,9 @@ def test_lightning_log_model(tmp_dir, mocker, log_model, save_top_k):
     if log_model in [True, "all"]:
         trainer.fit(model)
         assert len(os.listdir(tmp_dir / "model")) == num_checkpoints
+        log_artifact.assert_any_call(
+            checkpoint.best_model_path, name="best", type="model", copy=True
+        )
 
 
 def test_lightning_steps(tmp_dir, mocker):
