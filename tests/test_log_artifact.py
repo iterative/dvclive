@@ -225,17 +225,8 @@ def test_log_artifact_type_model_when_dvc_add_fails(tmp_dir, mocker, mocked_dvc_
     }
 
 
-def test_log_artifact_inside_exp(tmp_dir, mocked_dvc_repo):
-    data = tmp_dir / "data"
-    data.touch()
-    with Live() as live:
-        live._inside_dvc_exp = True
-        live.log_artifact("data")
-    mocked_dvc_repo.add.assert_not_called()
-
-
 @pytest.mark.parametrize("tracked", ["data_source", "stage", None])
-def test_log_artifact_inside_exp_logger(tmp_dir, mocker, dvc_repo, tracked):
+def test_log_artifact_inside_exp(tmp_dir, mocker, dvc_repo, tracked):
     logger = mocker.patch("dvclive.live.logger")
     data = tmp_dir / "data"
     data.touch()
