@@ -157,7 +157,7 @@ class DVCLiveLogger(Logger):
             self._save_checkpoints(self._checkpoint_callback)
             best_model_path = self._checkpoint_callback.best_model_path
             self.experiment.log_artifact(
-                best_model_path, name="best", type="model", cache=False
+                best_model_path, name="best", type="model", copy=True
             )
         self.experiment.end()
 
