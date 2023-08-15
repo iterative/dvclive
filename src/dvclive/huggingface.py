@@ -87,7 +87,7 @@ class DVCLiveCallback(TrainerCallback):
         control: TrainerControl,
         **kwargs,
     ):
-        if self._log_model == "last" and state.is_world_process_zero:
+        if self._log_model is True and state.is_world_process_zero:
             fake_trainer = Trainer(
                 args=args, model=kwargs.get("model"), tokenizer=kwargs.get("tokenizer")
             )

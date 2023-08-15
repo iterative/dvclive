@@ -137,7 +137,7 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker):
     assert params["num_train_epochs"] == 2
 
 
-@pytest.mark.parametrize("log_model", ["all", "last", None])
+@pytest.mark.parametrize("log_model", ["all", True, None])
 @pytest.mark.parametrize("best", [True, False])
 def test_huggingface_log_model(tmp_dir, model, args, data, mocker, log_model, best):
     live_callback = DVCLiveCallback(log_model=log_model)
@@ -156,7 +156,7 @@ def test_huggingface_log_model(tmp_dir, model, args, data, mocker, log_model, be
 
     expected_call_count = {
         "all": 2,
-        "last": 1,
+        True: 1,
         None: 0,
     }
     assert log_artifact.call_count == expected_call_count[log_model]
