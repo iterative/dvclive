@@ -138,10 +138,12 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker):
 
 
 @pytest.mark.parametrize("log_model", ["all", "last", None])
-def test_huggingface_log_model(tmp_dir, model, args, data, mocker, log_model):
+@pytest.mark.parametrize("best", [True, False])
+def test_huggingface_log_model(tmp_dir, model, args, data, mocker, log_model, best):
     live_callback = DVCLiveCallback(log_model=log_model)
     log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
 
+    args.load_best_model_at_end = best
     trainer = Trainer(
         model,
         args,
@@ -160,8 +162,10 @@ def test_huggingface_log_model(tmp_dir, model, args, data, mocker, log_model):
     assert log_artifact.call_count == expected_call_count[log_model]
 
     if log_model == "last":
+        name = "best" if best else "last"
         log_artifact.assert_called_with(
-            os.path.join(args.output_dir, "last"),
+            os.path.join(args.output_dir, name),
+            name=name,
             type="model",
             copy=True,
         )

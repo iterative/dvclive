@@ -1,6 +1,6 @@
 # ruff: noqa: ARG002
 import os
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 
 from transformers import (
     TrainerCallback,
@@ -18,7 +18,7 @@ class DVCLiveCallback(TrainerCallback):
     def __init__(
         self,
         live: Optional[Live] = None,
-        log_model: Optional[Literal["all", "last"]] = None,
+        log_model: Optional[Union[Literal["all"], bool]] = None,
         **kwargs,
     ):
         super().__init__()
@@ -67,7 +67,8 @@ class DVCLiveCallback(TrainerCallback):
             fake_trainer = Trainer(
                 args=args, model=kwargs.get("model"), tokenizer=kwargs.get("tokenizer")
             )
-            output_dir = os.path.join(args.output_dir, "last")
+            name = "best" if args.load_best_model_at_end else "last"
+            output_dir = os.path.join(args.output_dir, name)
             fake_trainer.save_model(output_dir)
-            self.live.log_artifact(output_dir, type="model", copy=True)
+            self.live.log_artifact(output_dir, name=name, type="model", copy=True)
         self.live.end()
