@@ -2,7 +2,7 @@
 import copy
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from dvclive import env
 from dvclive.plots import Image, Metric
@@ -96,7 +96,7 @@ def make_dvcyaml(live) -> None:
         dvcyaml["params"] = [os.path.relpath(live.params_file, live.dir)]
     if live._metrics or live.summary:
         dvcyaml["metrics"] = [os.path.relpath(live.metrics_file, live.dir)]
-    plots = []
+    plots: List[Any] = []
     plots_path = Path(live.plots_dir)
     metrics_path = plots_path / Metric.subfolder
     if metrics_path.exists():
@@ -115,7 +115,7 @@ def make_dvcyaml(live) -> None:
 
     if live._artifacts:
         dvcyaml["artifacts"] = copy.deepcopy(live._artifacts)
-        for artifact in dvcyaml["artifacts"].values():
+        for artifact in dvcyaml["artifacts"].values():  # type: ignore
             abs_path = os.path.abspath(artifact["path"])
             abs_dir = os.path.realpath(live.dir)
             relative_path = os.path.relpath(abs_path, abs_dir)
