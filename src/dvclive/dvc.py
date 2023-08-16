@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from dvc.stage import Stage
 
 
-
 def _dvc_dir(dirname: StrPath) -> str:
     return os.path.join(dirname, ".dvc")
 
