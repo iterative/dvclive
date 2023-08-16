@@ -465,7 +465,7 @@ class Live:
                 path_stage = None
                 for stage in self._dvc_repo.index.stages:
                     for out in stage.outs:
-                        if out.fspath == str(Path(path).absolute()):
+                        if out.fspath in str(Path(path).absolute()):
                             path_stage = stage
                             break
                 if path_stage and path_stage.cmd:
@@ -478,7 +478,7 @@ class Live:
                 if path_stage:
                     msg = (
                         f"\nTo track '{path}' automatically during `dvc exp run`:"
-                        f"\n1. Run `dvc exp remove {path_stage.addressing}` "
+                        f"\n1. Run `dvc remove {path_stage.addressing}` "
                         "to stop tracking it outside the pipeline."
                         "\n2. Add it as an output of the pipeline stage."
                     )
