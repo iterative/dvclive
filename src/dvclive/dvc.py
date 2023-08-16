@@ -2,25 +2,32 @@
 import copy
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from dvclive.plots import Image, Metric
 from dvclive.serialize import dump_yaml
+from dvclive.utils import StrPath
+
+if TYPE_CHECKING:
+    from dvc.repo import Repo
+    from dvc.stage import Stage
 
 
-def _dvc_dir(dirname):
+
+def _dvc_dir(dirname: StrPath) -> str:
     return os.path.join(dirname, ".dvc")
 
 
-def _dvc_exps_run_dir(dirname: str) -> str:
+def _dvc_exps_run_dir(dirname: StrPath) -> str:
     return os.path.join(dirname, ".dvc", "tmp", "exps", "run")
 
 
-def _dvclive_only_signal_file(root_dir: str) -> str:
+def _dvclive_only_signal_file(root_dir: StrPath) -> str:
     dvc_exps_run_dir = _dvc_exps_run_dir(root_dir)
     return os.path.join(dvc_exps_run_dir, "DVCLIVE_ONLY")
 
 
-def _find_dvc_root(root=None):
+def _find_dvc_root(root: Optional[StrPath] = None) -> Optional[str]:
     if not root:
         root = os.getcwd()
 
@@ -50,7 +57,7 @@ def _write_file(file: str, contents=""):
         os.fsync(fobj.fileno())
 
 
-def get_dvc_repo():
+def get_dvc_repo() -> Optional["Repo"]:
     from dvc.exceptions import NotDvcRepoError
     from dvc.repo import Repo
     from dvc.scm import Git, SCMError
@@ -65,13 +72,13 @@ def get_dvc_repo():
             return None
 
 
-def make_dvcyaml(live):
+def make_dvcyaml(live) -> None:
     dvcyaml = {}
     if live._params:
         dvcyaml["params"] = [os.path.relpath(live.params_file, live.dir)]
     if live._metrics or live.summary:
         dvcyaml["metrics"] = [os.path.relpath(live.metrics_file, live.dir)]
-    plots = []
+    plots: List[Any] = []
     plots_path = Path(live.plots_dir)
     metrics_path = plots_path / Metric.subfolder
     if metrics_path.exists():
@@ -90,7 +97,7 @@ def make_dvcyaml(live):
 
     if live._artifacts:
         dvcyaml["artifacts"] = copy.deepcopy(live._artifacts)
-        for artifact in dvcyaml["artifacts"].values():
+        for artifact in dvcyaml["artifacts"].values():  # type: ignore
             abs_path = os.path.abspath(artifact["path"])
             abs_dir = os.path.realpath(live.dir)
             relative_path = os.path.relpath(abs_path, abs_dir)
@@ -99,7 +106,7 @@ def make_dvcyaml(live):
     dump_yaml(dvcyaml, live.dvc_file)
 
 
-def mark_dvclive_only_started():
+def mark_dvclive_only_started() -> None:
     """
     Signal DVC VS Code extension that
     an experiment is running in the workspace.
@@ -116,7 +123,7 @@ def mark_dvclive_only_started():
     _write_file(signal_file, os.getpid())
 
 
-def mark_dvclive_only_ended():
+def mark_dvclive_only_ended() -> None:
     root_dir = _find_dvc_root()
     if not root_dir:
         return
@@ -129,9 +136,18 @@ def mark_dvclive_only_ended():
     os.remove(signal_file)
 
 
-def get_random_exp_name(scm, baseline_rev):
+def get_random_exp_name(scm, baseline_rev) -> str:
     from dvc.repo.experiments.utils import (
         get_random_exp_name as dvc_get_random_exp_name,
     )
 
     return dvc_get_random_exp_name(scm, baseline_rev)
+
+
+def find_overlapping_stage(dvc_repo: "Repo", path: StrPath) -> Optional["Stage"]:
+    abs_path = str(Path(path).absolute())
+    for stage in dvc_repo.index.stages:
+        for out in stage.outs:
+            if str(out.fs_path) in abs_path:
+                return stage
+    return None
