@@ -4,6 +4,7 @@ import pytest
 
 from dvclive import Live
 from dvclive.plots.metric import Metric
+from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
 
 try:
@@ -99,6 +100,7 @@ def args():
         "foo",
         evaluation_strategy="epoch",
         num_train_epochs=2,
+        save_strategy="epoch",
     )
 
 
@@ -131,10 +133,55 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker):
     assert len(logs[os.path.join(scalars, "epoch.tsv")]) == 3
     assert len(logs[os.path.join(scalars, "eval", "loss.tsv")]) == 2
 
+    params = load_yaml(live.params_file)
+    assert params["num_train_epochs"] == 2
+
+
+@pytest.mark.parametrize("log_model", ["all", True, None])
+@pytest.mark.parametrize("best", [True, False])
+def test_huggingface_log_model(tmp_dir, model, args, data, mocker, log_model, best):
+    live_callback = DVCLiveCallback(log_model=log_model)
+    log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
+
+    args.load_best_model_at_end = best
+    trainer = Trainer(
+        model,
+        args,
+        train_dataset=data[0],
+        eval_dataset=data[1],
+        compute_metrics=compute_metrics,
+    )
+    trainer.add_callback(live_callback)
+    trainer.train()
+
+    expected_call_count = {
+        "all": 2,
+        True: 1,
+        None: 0,
+    }
+    assert log_artifact.call_count == expected_call_count[log_model]
+
+    if log_model == "last":
+        name = "best" if best else "last"
+        log_artifact.assert_called_with(
+            os.path.join(args.output_dir, name),
+            name=name,
+            type="model",
+            copy=True,
+        )
+
+
+def test_huggingface_pass_logger():
+    logger = Live("train_logs")
+
+    assert DVCLiveCallback().live is not logger
+    assert DVCLiveCallback(live=logger).live is logger
+
 
 def test_huggingface_model_file(tmp_dir, model, args, data, mocker):
+    logger = mocker.patch("dvclive.huggingface.logger")
+
     model_path = tmp_dir / "model_hf"
-    model_save = mocker.spy(model, "save_pretrained")
 
     live_callback = DVCLiveCallback(model_file=model_path)
     log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
@@ -153,30 +200,9 @@ def test_huggingface_model_file(tmp_dir, model, args, data, mocker):
 
     assert (model_path / "pytorch_model.bin").exists()
     assert (model_path / "config.json").exists()
-    assert model_save.call_count == 2
     log_artifact.assert_called_with(model_path)
 
-
-def test_huggingface_pass_logger():
-    logger = Live("train_logs")
-
-    assert DVCLiveCallback().live is not logger
-    assert DVCLiveCallback(live=logger).live is logger
-
-
-def test_huggingface_log_artifact(tmp_dir, model, args, data, mocker):
-    live_callback = DVCLiveCallback()
-    log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
-
-    args.load_best_model_at_end = True
-    trainer = Trainer(
-        model,
-        args,
-        train_dataset=data[0],
-        eval_dataset=data[1],
-        compute_metrics=compute_metrics,
+    logger.warning.assert_called_with(
+        "model_file is deprecated and will be removed"
+        " in the next major version, use log_model instead"
     )
-    trainer.add_callback(live_callback)
-    trainer.train()
-
-    log_artifact.assert_called_with(trainer.args.output_dir)
