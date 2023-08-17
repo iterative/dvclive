@@ -2,6 +2,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+from dvc.exceptions import DvcException
 
 from dvclive import Live
 from dvclive.serialize import load_yaml
@@ -216,7 +217,7 @@ def test_log_artifact_attrs(tmp_dir, mocked_dvc_repo):
 
 def test_log_artifact_type_model_when_dvc_add_fails(tmp_dir, mocker, mocked_dvc_repo):
     (tmp_dir / "model.pth").touch()
-    mocked_dvc_repo.add.side_effect = Exception
+    mocked_dvc_repo.add.side_effect = DvcException("foo")
     with Live(save_dvc_exp=True) as live:
         live.log_artifact("model.pth", type="model")
 

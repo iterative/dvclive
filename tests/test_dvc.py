@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from dvc.exceptions import DvcException
 from dvc.repo import Repo
 from dvc.scm import NoSCM
 from PIL import Image
@@ -279,7 +280,7 @@ def test_errors_on_git_add_are_catched(tmp_dir, mocked_dvc_repo, monkeypatch):
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
     mocked_dvc_repo.scm.untracked_files.return_value = ["dvclive/metrics.json"]
-    mocked_dvc_repo.scm.add.side_effect = Exception("foo")
+    mocked_dvc_repo.scm.add.side_effect = DvcException("foo")
 
     with Live(report=None) as live:
         live.summary["foo"] = 1
