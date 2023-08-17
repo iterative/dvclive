@@ -466,7 +466,7 @@ class Live:
                         return  # skip caching
                     logger.warning(
                         f"To track '{path}' automatically during `dvc exp run`:"
-                        f"\n1. Run `dvc exp remove {existing_stage.addressing}` "
+                        f"\n1. Run `dvc remove {existing_stage.addressing}` "
                         "to stop tracking it outside the pipeline."
                         "\n2. Add it as an output of the pipeline stage."
                     )
