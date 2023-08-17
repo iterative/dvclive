@@ -72,15 +72,15 @@ def test_get_renderers(tmp_dir, mocker):
 
 def test_report_init(monkeypatch, mocker):
     monkeypatch.setenv("CI", "false")
-    live = Live()
+    live = Live(report="auto")
     assert live._report_mode == "html"
 
     monkeypatch.setenv("CI", "true")
-    live = Live()
+    live = Live(report="auto")
     assert live._report_mode == "md"
 
     mocker.patch("dvclive.live.matplotlib_installed", return_value=False)
-    live = Live()
+    live = Live(report="auto")
     assert live._report_mode == "html"
 
     for report in (None, "html", "md"):
@@ -116,7 +116,7 @@ def test_make_report_open(tmp_dir, mocker, monkeypatch):
 
     assert not mocked_open.called
 
-    live = Live(report=None)
+    live = Live(report="html")
     live.log_metric("foo", 1)
     live.next_step()
 
@@ -124,7 +124,7 @@ def test_make_report_open(tmp_dir, mocker, monkeypatch):
 
     monkeypatch.setenv(DVCLIVE_OPEN, True)
 
-    live = Live()
+    live = Live(report="html")
     live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
     live.make_report()
 

@@ -56,8 +56,8 @@ class Live:
         self,
         dir: str = "dvclive",  # noqa: A002
         resume: bool = False,
-        report: Optional[str] = "auto",
-        save_dvc_exp: bool = False,
+        report: Optional[str] = None,
+        save_dvc_exp: bool = True,
         dvcyaml: bool = True,
         cache_images: bool = False,
         exp_message: Optional[str] = None,
@@ -118,8 +118,9 @@ class Live:
 
         for f in (
             self.metrics_file,
-            self.report_file,
             self.params_file,
+            os.path.join(self.dir, "report.html"),
+            os.path.join(self.dir, "report.md"),
         ):
             if f and os.path.exists(f):
                 os.remove(f)
@@ -202,7 +203,6 @@ class Live:
             logger.warning(
                 "Can't connect to Studio without creating a DVC experiment."
                 "\nIf you have a DVC Pipeline, run it with `dvc exp run`."
-                "\nIf you are using DVCLive alone, use `save_dvc_exp=True`."
             )
             self._studio_events_to_skip.add("start")
             self._studio_events_to_skip.add("data")
