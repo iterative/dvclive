@@ -349,74 +349,6 @@ def test_get_dvc_stage_template_empty(tmp_dir, mocked_dvc_repo):
             "dvclive": {
                 "cmd": "<python my_code_file.py my_args>",
                 "deps": ["<my_code_file.py>"],
-                "outs": [],
-            }
-        }
-    }
-
-
-def test_get_dvc_stage_template_params(tmp_dir, mocked_dvc_repo):
-    live = Live()
-    live.log_param("foo", 1)
-    template = get_dvc_stage_template(live)
-
-    assert template == {
-        "stages": {
-            "dvclive": {
-                "cmd": "<python my_code_file.py my_args>",
-                "deps": ["<my_code_file.py>"],
-                "outs": [{"dvclive/params.yaml": {"cache": False}}],
-            }
-        }
-    }
-
-
-def test_get_dvc_stage_template_metrics(tmp_dir, mocked_dvc_repo):
-    live = Live()
-    live.log_metric("foo", 1)
-    template = get_dvc_stage_template(live)
-
-    assert template == {
-        "stages": {
-            "dvclive": {
-                "cmd": "<python my_code_file.py my_args>",
-                "deps": ["<my_code_file.py>"],
-                "outs": [
-                    {"dvclive/metrics.json": {"cache": False}},
-                    {"dvclive/plots"},
-                ],
-            }
-        }
-    }
-
-
-def test_get_dvc_stage_template_image(tmp_dir, mocked_dvc_repo):
-    live = Live()
-    live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
-    template = get_dvc_stage_template(live)
-
-    assert template == {
-        "stages": {
-            "dvclive": {
-                "cmd": "<python my_code_file.py my_args>",
-                "deps": ["<my_code_file.py>"],
-                "outs": [{"dvclive/plots"}],
-            }
-        }
-    }
-
-
-def test_get_dvc_stage_template_sklearn_plots(tmp_dir, mocked_dvc_repo):
-    live = Live()
-    live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
-    template = get_dvc_stage_template(live)
-
-    assert template == {
-        "stages": {
-            "dvclive": {
-                "cmd": "<python my_code_file.py my_args>",
-                "deps": ["<my_code_file.py>"],
-                "outs": [{"dvclive/plots"}],
             }
         }
     }
@@ -433,6 +365,56 @@ def test_get_dvc_stage_template_artifacts(tmp_dir, mocked_dvc_repo):
                 "cmd": "<python my_code_file.py my_args>",
                 "deps": ["<my_code_file.py>"],
                 "outs": ["artifact.txt"],
+            }
+        }
+    }
+
+
+def test_get_dvc_stage_template_artifacts_copy(tmp_dir, mocked_dvc_repo):
+    (tmp_dir / "artifact.txt").touch()
+    live = Live()
+    live.log_artifact("artifact.txt", copy=True)
+    template = get_dvc_stage_template(live)
+
+    assert template == {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": ["dvclive/artifacts/artifact.txt"],
+            }
+        }
+    }
+
+
+def test_get_dvc_stage_template_artifacts_cache_false(tmp_dir, mocked_dvc_repo):
+    live = Live()
+    live.log_artifact("artifact.txt", cache=False)
+    template = get_dvc_stage_template(live)
+
+    assert template == {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": [{"artifact.txt": {"cache": False}}],
+            }
+        }
+    }
+
+
+def test_get_dvc_stage_template_cache_images(tmp_dir, mocked_dvc_repo):
+    live = Live(cache_images=True)
+    img_pil = Image.new("RGB", (500, 500), (250, 250, 250))
+    live.log_image("plot.png", img_pil)
+    template = get_dvc_stage_template(live)
+
+    assert template == {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": ["dvclive/plots/images"],
             }
         }
     }
@@ -455,12 +437,7 @@ def test_get_dvc_stage_template_chdir(tmp_dir, mocked_dvc_repo, monkeypatch):
             "dvclive": {
                 "cmd": "<python my_code_file.py my_args>",
                 "deps": ["<my_code_file.py>"],
-                "outs": [
-                    {"sub/dir/live/params.yaml": {"cache": False}},
-                    {"sub/dir/live/metrics.json": {"cache": False}},
-                    {"sub/dir/live/plots"},
-                    "sub/dir/artifact.txt",
-                ],
+                "outs": ["sub/dir/artifact.txt"],
             }
         }
     }

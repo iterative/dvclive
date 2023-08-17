@@ -172,20 +172,19 @@ def get_dvc_stage_template(live):
     stage = {
         "cmd": "<python my_code_file.py my_args>",
         "deps": ["<my_code_file.py>"],
-        "outs": [],
     }
+    outs = []
     rel_path = Path(os.path.relpath(os.getcwd(), live._dvc_repo.root_dir))
-    if live._params:
-        params_path = (rel_path / live.params_file).as_posix()
-        stage["outs"].append({params_path: {"cache": False}})
-    if live._metrics:
-        metrics_path = (rel_path / live.metrics_file).as_posix()
-        stage["outs"].append({metrics_path: {"cache": False}})
-    if live._metrics or live._images or live._plots:
-        plots_path = (rel_path / live.plots_dir).as_posix()
-        stage["outs"].append({plots_path})
-    for o in live._outs:
+    if live._images and live._cache_images:
+        images_path = (rel_path / live.plots_dir / Image.subfolder).as_posix()
+        outs.append(images_path)
+    for o, cache in live._outs.items():
         artifact_path = Path(os.getcwd()) / o
         artifact_path = artifact_path.relative_to(live._dvc_repo.root_dir).as_posix()
-        stage["outs"].append(artifact_path)
+        if cache:
+            outs.append(artifact_path)
+        else:
+            outs.append({artifact_path: {"cache": False}})
+    if outs:
+        stage["outs"] = outs
     return {"stages": {"dvclive": stage}}

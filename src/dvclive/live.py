@@ -73,7 +73,7 @@ class Live:
         self._params: Dict[str, Any] = {}
         self._plots: Dict[str, Any] = {}
         self._artifacts: Dict[str, Dict] = {}
-        self._outs: List[str] = []
+        self._outs: Dict[str, bool] = {}
         self._inside_with = False
         self._dvcyaml = dvcyaml
         self._cache_images = cache_images
@@ -443,7 +443,6 @@ class Live:
 
             if cache:
                 self.cache(path)
-                self._outs.append(str(path))
 
             if any((type, name, desc, labels, meta)):
                 name = name or Path(path).stem
@@ -460,6 +459,8 @@ class Live:
                         " It will not be included in the `artifacts` section.",
                         name,
                     )
+
+        self._outs[str(path)] = cache
 
     @catch_and_warn(DvcException, logger)
     def cache(self, path):
