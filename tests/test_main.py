@@ -472,3 +472,31 @@ def test_cache_images(tmp_dir, dvc_repo, cache):
     live.log_image("image.png", img)
     live.end()
     assert (tmp_dir / "dvclive" / "plots" / "images.dvc").exists() == cache
+
+
+def test_make_stage_template(tmp_dir, dvc_repo):
+    dvclive = Live("logs")
+    dvclive.log_metric("m1", 1)
+    dvclive.make_stage_template()
+
+    stage_template_path = tmp_dir / dvclive.dir / "stage_template.yaml"
+
+    assert stage_template_path.is_file()
+
+
+@pytest.mark.parametrize("report", ["html", None])
+@pytest.mark.parametrize("dvcyaml", [True, False])
+def test_end(tmp_dir, dvc_repo, report, dvcyaml):
+    dvclive = Live(report=report, dvcyaml=dvcyaml)
+    dvclive.log_metric("m1", 1)
+    dvclive.end()
+
+    report_path = tmp_dir / dvclive.dir / "report.html"
+    dvcyaml_path = tmp_dir / dvclive.dir / "dvc.yaml"
+    stage_template_path = tmp_dir / dvclive.dir / "stage_template.yaml"
+    summary_path = tmp_dir / dvclive.metrics_file
+
+    assert bool(report_path.is_file()) == bool(report)
+    assert dvcyaml_path.is_file() == dvcyaml
+    assert stage_template_path.is_file()
+    assert summary_path.is_file()
