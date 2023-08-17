@@ -41,6 +41,7 @@ from .utils import (
 )
 
 logger = logging.getLogger("dvclive")
+logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "WARNING").upper())
 handler = logging.StreamHandler()
 formatter = logging.Formatter("%(levelname)s:%(name)s:%(message)s")
 handler.setFormatter(formatter)
@@ -469,7 +470,7 @@ class Live:
                     return  # skip caching
                 logger.warning(
                     f"To track '{path}' automatically during `dvc exp run`:"
-                    f"\n1. Run `dvc exp remove {existing_stage.addressing}` "
+                    f"\n1. Run `dvc remove {existing_stage.addressing}` "
                     "to stop tracking it outside the pipeline."
                     "\n2. Add it as an output of the pipeline stage."
                 )

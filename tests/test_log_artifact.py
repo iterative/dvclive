@@ -251,7 +251,7 @@ def test_log_artifact_inside_exp(tmp_dir, mocker, dvc_repo, tracked):
     elif tracked == "data_source":
         msg = (
             "To track 'data' automatically during `dvc exp run`:"
-            "\n1. Run `dvc exp remove data.dvc` "
+            "\n1. Run `dvc remove data.dvc` "
             "to stop tracking it outside the pipeline."
             "\n2. Add it as an output of the pipeline stage."
         )
@@ -264,3 +264,24 @@ def test_log_artifact_inside_exp(tmp_dir, mocker, dvc_repo, tracked):
         )
         logger.warning.assert_called_with(msg)
         spy.assert_called_once()
+
+
+def test_log_artifact_inside_exp_subdir(tmp_dir, mocker, dvc_repo):
+    logger = mocker.patch("dvclive.live.logger")
+    subdir = tmp_dir / "subdir"
+    subdir.mkdir()
+    data = subdir / "data"
+    data.touch()
+    dvc_repo.add(subdir)
+    live = Live()
+    spy = mocker.spy(live._dvc_repo, "add")
+    live._inside_dvc_exp = True
+    live.log_artifact("subdir/data")
+    msg = (
+        "To track 'subdir/data' automatically during `dvc exp run`:"
+        "\n1. Run `dvc remove subdir.dvc` "
+        "to stop tracking it outside the pipeline."
+        "\n2. Add it as an output of the pipeline stage."
+    )
+    logger.warning.assert_called_with(msg)
+    spy.assert_called_once()
