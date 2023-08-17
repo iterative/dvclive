@@ -14,6 +14,7 @@ from . import env
 from .dvc import (
     find_overlapping_stage,
     get_dvc_repo,
+    get_dvc_stage_template,
     get_random_exp_name,
     make_dvcyaml,
     mark_dvclive_only_ended,
@@ -70,6 +71,7 @@ class Live:
         self._params: Dict[str, Any] = {}
         self._plots: Dict[str, Any] = {}
         self._artifacts: Dict[str, Dict] = {}
+        self._outs: List[str] = []
         self._inside_with = False
         self._dvcyaml = dvcyaml
         self._cache_images = cache_images
@@ -98,6 +100,8 @@ class Live:
         self._studio_events_to_skip: Set[str] = set()
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
+
+        self._stage_template_file = Path(self._dir) / "stage_template.yaml"
 
     def _init_resume(self):
         self._read_params()
@@ -436,6 +440,7 @@ class Live:
 
             if cache:
                 self.cache(path)
+                self._outs.append(path)
 
             if any((type, name, desc, labels, meta)):
                 name = name or Path(path).stem
@@ -563,6 +568,9 @@ class Live:
             self._studio_events_to_skip.add("data")
         else:
             self.make_report()
+
+        stage_content = get_dvc_stage_template(self)
+        dump_yaml(stage_content, self._stage_template_file)
 
     def read_step(self):
         if Path(self.metrics_file).exists():
