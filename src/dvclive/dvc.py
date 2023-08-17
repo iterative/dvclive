@@ -150,3 +150,19 @@ def find_overlapping_stage(dvc_repo: "Repo", path: StrPath) -> Optional["Stage"]
             if str(out.fs_path) in abs_path:
                 return stage
     return None
+
+
+def ensure_dir_is_tracked(directory: str, dvc_repo: "Repo") -> None:
+    from pathspec import PathSpec
+
+    dir_spec = PathSpec.from_lines("gitwildmatch", [directory])
+    outs_spec = PathSpec.from_lines(
+        "gitwildmatch", [str(o) for o in dvc_repo.index.outs]
+    )
+    paths_to_track = [
+        f
+        for f in dvc_repo.scm.untracked_files()
+        if (dir_spec.match_file(f) and not outs_spec.match_file(f))
+    ]
+    if paths_to_track:
+        dvc_repo.scm.add(paths_to_track)
