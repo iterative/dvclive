@@ -443,7 +443,7 @@ class Live:
 
             if cache:
                 self.cache(path)
-                self._outs.append(path)
+                self._outs.append(str(path))
 
             if any((type, name, desc, labels, meta)):
                 name = name or Path(path).stem
