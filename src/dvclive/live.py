@@ -5,13 +5,14 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
+from dvc.exceptions import DvcException
 from dvc_studio_client.post_live_metrics import post_live_metrics
 from funcy import set_in
-from pathspec import PathSpec
 from ruamel.yaml.representer import RepresenterError
 
 from . import env
 from .dvc import (
+    ensure_dir_is_tracked,
     find_overlapping_stage,
     get_dvc_repo,
     get_dvc_stage_template,
@@ -32,6 +33,7 @@ from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, get_studio_updates
 from .utils import (
     StrPath,
+    catch_and_warn,
     clean_and_copy_into,
     env2bool,
     inside_notebook,
@@ -128,6 +130,7 @@ class Live:
         if self.dvc_file and os.path.exists(self.dvc_file):
             os.remove(self.dvc_file)
 
+    @catch_and_warn(DvcException, logger)
     def _init_dvc(self):
         from dvc.scm import NoSCM
 
@@ -458,35 +461,31 @@ class Live:
                         name,
                     )
 
+    @catch_and_warn(DvcException, logger)
     def cache(self, path):
-        try:
-            if self._inside_dvc_exp:
-                existing_stage = find_overlapping_stage(self._dvc_repo, path)
+        if self._inside_dvc_exp:
+            existing_stage = find_overlapping_stage(self._dvc_repo, path)
 
-                if existing_stage:
-                    if existing_stage.cmd:
-                        logger.info(
-                            f"Skipping `dvc add {path}` because it is already being"
-                            " tracked automatically as an output of `dvc exp run`."
-                        )
-                        return  # skip caching
-                    logger.warning(
-                        f"To track '{path}' automatically during `dvc exp run`:"
-                        f"\n1. Run `dvc remove {existing_stage.addressing}` "
-                        "to stop tracking it outside the pipeline."
-                        "\n2. Add it as an output of the pipeline stage."
+            if existing_stage:
+                if existing_stage.cmd:
+                    logger.info(
+                        f"Skipping `dvc add {path}` because it is already being"
+                        " tracked automatically as an output of `dvc exp run`."
                     )
-                else:
-                    logger.warning(
-                        f"To track '{path}' automatically during `dvc exp run`, "
-                        "add it as an output of the pipeline stage."
-                    )
+                    return  # skip caching
+                logger.warning(
+                    f"To track '{path}' automatically during `dvc exp run`:"
+                    f"\n1. Run `dvc exp remove {existing_stage.addressing}` "
+                    "to stop tracking it outside the pipeline."
+                    "\n2. Add it as an output of the pipeline stage."
+                )
+            else:
+                logger.warning(
+                    f"To track '{path}' automatically during `dvc exp run`, "
+                    "add it as an output of the pipeline stage."
+                )
 
-            stage = self._dvc_repo.add(str(path))
-
-        except Exception as e:  # noqa: BLE001
-            logger.warning(f"Failed to dvc add {path}: {e}")
-            return
+        stage = self._dvc_repo.add(str(path))
 
         dvc_file = stage[0].addressing
 
@@ -531,6 +530,11 @@ class Live:
     def make_dvcyaml(self):
         make_dvcyaml(self)
 
+    @catch_and_warn(Exception, logger)
+    def make_stage_template(self):
+        stage_content = get_dvc_stage_template(self)
+        dump_yaml(stage_content, self._stage_template_file)
+
     def end(self):
         if self._inside_with:
             # Prevent `live.end` calls inside context manager
@@ -544,7 +548,10 @@ class Live:
         if self._dvcyaml:
             self.make_dvcyaml()
 
-        self._ensure_paths_are_tracked_in_dvc_exp()
+        if self._inside_dvc_exp and self._dvc_repo:
+            catch_and_warn(DvcException, logger)(ensure_dir_is_tracked)(
+                self.dir, self._dvc_repo
+            )
 
         self.save_dvc_exp()
 
@@ -569,8 +576,7 @@ class Live:
         else:
             self.make_report()
 
-        stage_content = get_dvc_stage_template(self)
-        dump_yaml(stage_content, self._stage_template_file)
+        self.make_stage_template()
 
     def read_step(self):
         if Path(self.metrics_file).exists():
@@ -590,35 +596,12 @@ class Live:
         self._inside_with = False
         self.end()
 
-    def _ensure_paths_are_tracked_in_dvc_exp(self):
-        if self._inside_dvc_exp and self._dvc_repo:
-            dir_spec = PathSpec.from_lines("gitwildmatch", [self.dir])
-            outs_spec = PathSpec.from_lines(
-                "gitwildmatch", [str(o) for o in self._dvc_repo.index.outs]
-            )
-            try:
-                paths_to_track = [
-                    f
-                    for f in self._dvc_repo.scm.untracked_files()
-                    if (dir_spec.match_file(f) and not outs_spec.match_file(f))
-                ]
-                if paths_to_track:
-                    self._dvc_repo.scm.add(paths_to_track)
-            except Exception as e:  # noqa: BLE001
-                logger.warning(f"Failed to git add paths:\n{e}")
-
+    @catch_and_warn(DvcException, logger, mark_dvclive_only_ended)
     def save_dvc_exp(self):
         if self._save_dvc_exp:
-            from dvc.exceptions import DvcException
-
-            try:
-                self._experiment_rev = self._dvc_repo.experiments.save(
-                    name=self._exp_name,
-                    include_untracked=self._include_untracked,
-                    force=True,
-                    message=self._exp_message,
-                )
-            except DvcException as e:
-                logger.warning(f"Failed to save experiment:\n{e}")
-            finally:
-                mark_dvclive_only_ended()
+            self._experiment_rev = self._dvc_repo.experiments.save(
+                name=self._exp_name,
+                include_untracked=self._include_untracked,
+                force=True,
+                message=self._exp_message,
+            )

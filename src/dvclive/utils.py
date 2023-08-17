@@ -155,3 +155,19 @@ def isinstance_without_import(val, module, name):
         if (cls.__module__, cls.__name__) == (module, name):
             return True
     return False
+
+
+def catch_and_warn(exception, logger, on_finally=None):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except exception as e:
+                logger.warning(f"Error in {func.__name__}: {e}")
+            finally:
+                if on_finally is not None:
+                    on_finally()
+
+        return wrapper
+
+    return decorator
