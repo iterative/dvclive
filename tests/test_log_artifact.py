@@ -277,7 +277,7 @@ def test_log_artifact_inside_exp_subdir(tmp_dir, mocker, dvc_repo):
     live._inside_dvc_exp = True
     live.log_artifact("subdir/data")
     msg = (
-        "\nTo track 'subdir/data' automatically during `dvc exp run`:"
+        "To track 'subdir/data' automatically during `dvc exp run`:"
         "\n1. Run `dvc remove subdir.dvc` "
         "to stop tracking it outside the pipeline."
         "\n2. Add it as an output of the pipeline stage."
