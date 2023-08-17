@@ -15,7 +15,6 @@ from .dvc import (
     find_overlapping_stage,
     get_dvc_repo,
     get_random_exp_name,
-    make_checkpoint,
     make_dvcyaml,
     mark_dvclive_only_ended,
     mark_dvclive_only_started,
@@ -291,7 +290,6 @@ class Live:
             self.make_dvcyaml()
 
         self.make_report()
-        self.make_checkpoint()
         self.step += 1
 
     def log_metric(
@@ -564,10 +562,6 @@ class Live:
             self._studio_events_to_skip.add("data")
         else:
             self.make_report()
-
-    def make_checkpoint(self):
-        if env2bool(env.DVC_CHECKPOINT):
-            make_checkpoint()
 
     def read_step(self):
         if Path(self.metrics_file).exists():

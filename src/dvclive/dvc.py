@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Optional
 
-from dvclive import env
 from dvclive.plots import Image, Metric
 from dvclive.serialize import dump_yaml
 from dvclive.utils import StrPath
@@ -12,9 +11,6 @@ from dvclive.utils import StrPath
 if TYPE_CHECKING:
     from dvc.repo import Repo
     from dvc.stage import Stage
-
-
-_CHECKPOINT_SLEEP = 0.1
 
 
 def _dvc_dir(dirname: StrPath) -> str:
@@ -58,21 +54,6 @@ def _write_file(file: str, contents=""):
         fobj.write(str(contents))
         fobj.flush()
         os.fsync(fobj.fileno())
-
-
-def make_checkpoint():
-    from time import sleep
-
-    root_dir = _find_dvc_root()
-    if not root_dir:
-        return
-
-    signal_file = os.path.join(root_dir, ".dvc", "tmp", env.DVC_CHECKPOINT)
-
-    _write_file(signal_file)
-
-    while os.path.exists(signal_file):
-        sleep(_CHECKPOINT_SLEEP)
 
 
 def get_dvc_repo() -> Optional["Repo"]:
