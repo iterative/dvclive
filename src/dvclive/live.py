@@ -39,6 +39,7 @@ from .utils import (
 )
 
 logger = logging.getLogger("dvclive")
+logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "WARNING").upper())
 handler = logging.StreamHandler()
 formatter = logging.Formatter("%(levelname)s:%(name)s:%(message)s")
 handler.setFormatter(formatter)
