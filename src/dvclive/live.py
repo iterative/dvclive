@@ -12,9 +12,9 @@ from ruamel.yaml.representer import RepresenterError
 
 from . import env
 from .dvc import (
+    find_overlapping_stage,
     get_dvc_repo,
     get_random_exp_name,
-    make_checkpoint,
     make_dvcyaml,
     mark_dvclive_only_ended,
     mark_dvclive_only_started,
@@ -123,17 +123,6 @@ class Live:
         if self.dvc_file and os.path.exists(self.dvc_file):
             os.remove(self.dvc_file)
 
-    def _init_check_dvcyaml_overlap(self):
-        for stage in self._dvc_repo.index.stages:
-            for out in stage.outs:
-                if str(out.fs_path) in str(Path(self.dvc_file).absolute()):
-                    msg = (
-                        f"'{self.dvc_file}' is in outputs of stage "
-                        f"'{stage.addressing}'.\n"
-                        f"Remove it from outputs to make DVCLive work as expected."
-                    )
-                    logger.warning(msg)
-
     def _init_dvc(self):
         from dvc.scm import NoSCM
 
@@ -168,8 +157,13 @@ class Live:
                 self._save_dvc_exp = False
             return
 
-        if self._dvcyaml:
-            self._init_check_dvcyaml_overlap()
+        if self._dvcyaml and (
+            stage := find_overlapping_stage(self._dvc_repo, self.dvc_file)
+        ):
+            logger.warning(
+                f"'{self.dvc_file}' is in outputs of stage '{stage.addressing}'."
+                "\nRemove it from outputs to make DVCLive work as expected."
+            )
 
         if self._inside_dvc_exp:
             return
@@ -296,7 +290,6 @@ class Live:
             self.make_dvcyaml()
 
         self.make_report()
-        self.make_checkpoint()
         self.step += 1
 
     def log_metric(
@@ -462,33 +455,26 @@ class Live:
     def cache(self, path):
         try:
             if self._inside_dvc_exp:
-                path_stage = None
-                for stage in self._dvc_repo.index.stages:
-                    for out in stage.outs:
-                        if out.fspath in str(Path(path).absolute()):
-                            path_stage = stage
-                            break
-                if path_stage and path_stage.cmd:
-                    msg = (
-                        f"Skipping `dvc add {path}` because it is already being tracked"
-                        " automatically as an output of `dvc exp run`."
-                    )
-                    logger.info(msg)
-                    return  # skip caching
-                if path_stage:
-                    msg = (
-                        f"\nTo track '{path}' automatically during `dvc exp run`:"
-                        f"\n1. Run `dvc remove {path_stage.addressing}` "
+                existing_stage = find_overlapping_stage(self._dvc_repo, path)
+
+                if existing_stage:
+                    if existing_stage.cmd:
+                        logger.info(
+                            f"Skipping `dvc add {path}` because it is already being"
+                            " tracked automatically as an output of `dvc exp run`."
+                        )
+                        return  # skip caching
+                    logger.warning(
+                        f"To track '{path}' automatically during `dvc exp run`:"
+                        f"\n1. Run `dvc remove {existing_stage.addressing}` "
                         "to stop tracking it outside the pipeline."
                         "\n2. Add it as an output of the pipeline stage."
                     )
-                    logger.warning(msg)
                 else:
-                    msg = (
-                        f"\nTo track '{path}' automatically during `dvc exp run`, "
+                    logger.warning(
+                        f"To track '{path}' automatically during `dvc exp run`, "
                         "add it as an output of the pipeline stage."
                     )
-                    logger.warning(msg)
 
             stage = self._dvc_repo.add(str(path))
 
@@ -576,10 +562,6 @@ class Live:
             self._studio_events_to_skip.add("data")
         else:
             self.make_report()
-
-    def make_checkpoint(self):
-        if env2bool(env.DVC_CHECKPOINT):
-            make_checkpoint()
 
     def read_step(self):
         if Path(self.metrics_file).exists():

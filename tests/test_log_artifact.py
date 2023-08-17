@@ -249,7 +249,7 @@ def test_log_artifact_inside_exp(tmp_dir, mocker, dvc_repo, tracked):
         spy.assert_not_called()
     elif tracked == "data_source":
         msg = (
-            "\nTo track 'data' automatically during `dvc exp run`:"
+            "To track 'data' automatically during `dvc exp run`:"
             "\n1. Run `dvc remove data.dvc` "
             "to stop tracking it outside the pipeline."
             "\n2. Add it as an output of the pipeline stage."
@@ -258,7 +258,7 @@ def test_log_artifact_inside_exp(tmp_dir, mocker, dvc_repo, tracked):
         spy.assert_called_once()
     else:
         msg = (
-            "\nTo track 'data' automatically during `dvc exp run`, "
+            "To track 'data' automatically during `dvc exp run`, "
             "add it as an output of the pipeline stage."
         )
         logger.warning.assert_called_with(msg)
