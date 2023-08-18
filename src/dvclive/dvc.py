@@ -180,8 +180,7 @@ def get_dvc_stage_template(live):
         images_path = (plots_path / Image.subfolder).as_posix()
         outs.append(images_path)
     for o, cache in live._outs.items():
-        artifact_path = Path(os.getcwd()) / o
-        artifact_path = artifact_path.relative_to(root_dir).as_posix()
+        artifact_path = Path(os.path.relpath(o, root_dir)).as_posix()
         if cache:
             outs.append(artifact_path)
         else:
