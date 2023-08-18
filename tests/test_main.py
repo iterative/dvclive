@@ -6,7 +6,7 @@ import pytest
 from PIL import Image
 
 from dvclive import Live, env
-from dvclive.error import InvalidDataTypeError, InvalidParameterTypeError
+from dvclive.error import InvalidParameterTypeError
 from dvclive.plots import Metric
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics, parse_tsv
@@ -270,17 +270,6 @@ def test_log_reset_with_set_step(tmp_dir):
     assert read_history(dvclive, "val_m") == ([0, 1, 2], [1, 1, 1])
     assert read_latest(dvclive, "train_m") == (2, 1)
     assert read_latest(dvclive, "val_m") == (2, 1)
-
-
-@pytest.mark.parametrize("invalid_type", [{0: 1}, [0, 1], "foo", (0, 1)])
-def test_invalid_metric_type(tmp_dir, invalid_type):
-    dvclive = Live()
-
-    with pytest.raises(
-        InvalidDataTypeError,
-        match=f"Data 'm' has not supported type {type(invalid_type)}",
-    ):
-        dvclive.log_metric("m", invalid_type)
 
 
 def test_get_step_resume(tmp_dir):

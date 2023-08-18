@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os
 import shutil
 from pathlib import Path
@@ -299,12 +300,15 @@ class Live:
     def log_metric(
         self,
         name: str,
-        val: Union[int, float],
+        val: Union[int, float, str],
         timestamp: bool = False,
         plot: bool = True,
     ):
         if not Metric.could_log(val):
             raise InvalidDataTypeError(name, type(val))
+
+        if not isinstance(val, str) and (math.isnan(val) or math.isinf(val)):
+            val = str(val)
 
         if name in self._metrics:
             metric = self._metrics[name]
