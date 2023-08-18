@@ -531,10 +531,16 @@ class Live:
     def make_dvcyaml(self):
         make_dvcyaml(self)
 
-    @catch_and_warn(Exception, logger)
+    @catch_and_warn(DvcException, logger)
     def make_stage_template(self):
-        stage_content = get_dvc_stage_template(self)
-        dump_yaml(stage_content, self._stage_template_file)
+        if self._dvc_repo:
+            stage_content = get_dvc_stage_template(self)
+            dump_yaml(stage_content, self._stage_template_file)
+        else:
+            logger.warning(
+                "Can't make stage template without a DVC repo."
+                "\nRun `dvc init` to initialize a DVC repo."
+            )
 
     def end(self):
         if self._inside_with:

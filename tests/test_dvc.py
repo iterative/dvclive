@@ -342,6 +342,10 @@ def test_warn_on_dvcyaml_output_overlap(tmp_dir, mocker, mocked_dvc_repo, dvcyam
 
 def test_get_dvc_stage_template_empty(tmp_dir, mocked_dvc_repo):
     live = Live()
+    live.log_param("foo", 1)
+    live.log_metric("bar", 1)
+    live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
+    live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
     template = get_dvc_stage_template(live)
 
     assert template == {
@@ -425,10 +429,6 @@ def test_get_dvc_stage_template_chdir(tmp_dir, mocked_dvc_repo, monkeypatch):
     d.mkdir(parents=True)
     monkeypatch.chdir(d)
     live = Live("live")
-    live.log_param("foo", 1)
-    live.log_metric("bar", 1)
-    live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
-    live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
     live.log_artifact("artifact.txt")
     template = get_dvc_stage_template(live)
 
@@ -438,6 +438,40 @@ def test_get_dvc_stage_template_chdir(tmp_dir, mocked_dvc_repo, monkeypatch):
                 "cmd": "<python my_code_file.py my_args>",
                 "deps": ["<my_code_file.py>"],
                 "outs": ["sub/dir/artifact.txt"],
+            }
+        }
+    }
+
+
+def test_get_dvc_stage_template_subdir(tmp_dir, dvc_repo_subdir):
+    d = dvc_repo_subdir.root_dir
+    os.chdir(d)
+    live = Live("live")
+    live.log_artifact("artifact.txt")
+    template = get_dvc_stage_template(live)
+
+    assert template == {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": ["artifact.txt"],
+            }
+        }
+    }
+
+
+def test_get_dvc_stage_template_no_scm(tmp_dir, dvc_repo_no_scm):
+    live = Live("live")
+    live.log_artifact("artifact.txt")
+    template = get_dvc_stage_template(live)
+
+    assert template == {
+        "stages": {
+            "dvclive": {
+                "cmd": "<python my_code_file.py my_args>",
+                "deps": ["<my_code_file.py>"],
+                "outs": ["artifact.txt"],
             }
         }
     }

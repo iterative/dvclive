@@ -484,6 +484,23 @@ def test_make_stage_template(tmp_dir, dvc_repo):
     assert stage_template_path.is_file()
 
 
+def test_make_stage_template_no_repo(tmp_dir, mocker):
+    logger = mocker.patch("dvclive.live.logger")
+    dvclive = Live("logs")
+    dvclive.log_metric("m1", 1)
+
+    dvclive.make_stage_template()
+
+    logger.warning.assert_called_with(
+        "Can't make stage template without a DVC repo."
+        "\nRun `dvc init` to initialize a DVC repo."
+    )
+
+    stage_template_path = tmp_dir / dvclive.dir / "stage_template.yaml"
+
+    assert not stage_template_path.is_file()
+
+
 @pytest.mark.parametrize("report", ["html", None])
 @pytest.mark.parametrize("dvcyaml", [True, False])
 def test_end(tmp_dir, dvc_repo, report, dvcyaml):

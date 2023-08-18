@@ -36,6 +36,26 @@ def dvc_repo(tmp_dir):
     return repo
 
 
+@pytest.fixture()
+def dvc_repo_subdir(tmp_dir):
+    from dvc.repo import Repo
+    from scmrepo.git import Git
+
+    Git.init(tmp_dir)
+    subdir = tmp_dir / "subdir"
+    subdir.mkdir()
+    repo = Repo.init(subdir, subdir=True)
+    repo.scm.add_commit(".", "init")
+    return repo
+
+
+@pytest.fixture()
+def dvc_repo_no_scm(tmp_dir):
+    from dvc.repo import Repo
+
+    return Repo.init(tmp_dir, no_scm=True)
+
+
 @pytest.fixture(autouse=True)
 def _capture_wrap():
     # https://github.com/pytest-dev/pytest/issues/5502#issuecomment-678368525
