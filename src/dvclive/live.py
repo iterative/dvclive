@@ -441,6 +441,8 @@ class Live:
             if copy:
                 path = clean_and_copy_into(path, self.artifacts_dir)
 
+            self._outs[str(path)] = cache
+
             if cache:
                 self.cache(path)
 
@@ -459,8 +461,6 @@ class Live:
                         " It will not be included in the `artifacts` section.",
                         name,
                     )
-
-        self._outs[str(path)] = cache
 
     @catch_and_warn(DvcException, logger)
     def cache(self, path):
