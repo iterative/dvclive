@@ -14,7 +14,7 @@ class Metric(Data):
 
     @staticmethod
     def could_log(val: object) -> bool:
-        if isinstance(val, (int, float)):
+        if isinstance(val, (int, float, str)):
             return True
         if (
             val.__class__.__module__ == "numpy"

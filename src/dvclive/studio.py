@@ -1,5 +1,6 @@
 # ruff: noqa: SLF001
 import base64
+import math
 import os
 from pathlib import Path
 
@@ -21,7 +22,11 @@ def _cast_to_numbers(datapoints):
             elif k == "timestamp":
                 continue
             else:
-                datapoint[k] = float(v)
+                float_v = float(v)
+                if math.isnan(float_v) or math.isinf(float_v):
+                    datapoint[k] = str(v)
+                else:
+                    datapoint[k] = float_v
     return datapoints
 
 
