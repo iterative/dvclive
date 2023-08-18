@@ -7,7 +7,6 @@ try:
     from lightning.fabric.utilities.logger import (
         _convert_params,
         _sanitize_callable_params,
-        _sanitize_params,
     )
     from lightning.pytorch.callbacks.model_checkpoint import ModelCheckpoint
     from lightning.pytorch.loggers.logger import Logger, rank_zero_experiment
@@ -17,7 +16,6 @@ except ImportError:
     from lightning_fabric.utilities.logger import (
         _convert_params,
         _sanitize_callable_params,
-        _sanitize_params,
     )
     from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
     from pytorch_lightning.loggers.logger import Logger, rank_zero_experiment
@@ -92,20 +90,8 @@ class DVCLiveLogger(Logger):
 
     @rank_zero_only
     def log_hyperparams(self, params, *args, **kwargs):
-        def sanitize_dict(params):
-            dict_values = {}
-            non_dict_values = {}
-            for k, v in params.items():
-                if isinstance(v, dict):
-                    dict_values[k] = sanitize_dict(v)
-                else:
-                    non_dict_values[k] = v
-            non_dict_values = _sanitize_params(non_dict_values)
-            return {**dict_values, **non_dict_values}
-
         params = _convert_params(params)
         params = _sanitize_callable_params(params)
-        params = sanitize_dict(params)
         self.experiment.log_params(params)
 
     @property  # type: ignore

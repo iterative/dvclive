@@ -38,7 +38,11 @@ class XORDataset(Dataset):
 
 class LitXOR(LightningModule):
     def __init__(
-        self, latent_dims=4, optim=SGD, optim_params={"lr": 0.01}  # noqa: B006
+        self,
+        latent_dims=4,
+        optim=SGD,
+        optim_params={"lr": 0.01},  # noqa: B006
+        input_size=[256, 256, 256],  # noqa: B006
     ):
         super().__init__()
 
@@ -93,7 +97,9 @@ class LitXOR(LightningModule):
 
 def test_lightning_integration(tmp_dir, mocker):
     # init model
-    model = LitXOR(latent_dims=8, optim=Adam, optim_params={"lr": 0.02})
+    model = LitXOR(
+        latent_dims=8, optim=Adam, optim_params={"lr": 0.02}, input_size=[128, 128, 128]
+    )
     # init logger
     dvclive_logger = DVCLiveLogger("test_run", dir="logs")
     live = dvclive_logger.experiment
@@ -124,6 +130,7 @@ def test_lightning_integration(tmp_dir, mocker):
         "latent_dims": 8,
         "optim": "Adam",
         "optim_params": {"lr": 0.02},
+        "input_size": [128, 128, 128],
     }
 
 
