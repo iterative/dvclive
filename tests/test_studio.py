@@ -593,3 +593,43 @@ def test_post_to_studio_max_consecutive_failures(
         live.next_step()
 
     assert mocked_post.call_count == MAX_CONSECUTIVE_FAILURES + 1
+
+
+def test_post_to_studio_max_number_of_datapoints(
+    mocker, tmp_dir, mocked_dvc_repo, mocked_studio_post
+):
+    mocker.patch("dvclive.studio.MAX_NUMBER_OF_DATAPOINTS", 2)
+    live = Live(save_dvc_exp=True, report=None)
+
+    dvc_path = Path(live.dvc_file).as_posix()
+    metrics_path = Path(live.metrics_file).as_posix()
+    foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
+
+    mocked_post, _ = mocked_studio_post
+
+    for i in range(5):
+        live.log_metric("foo", i)
+        live.next_step()
+    time.sleep(MIN_SECONDS_BETWEEN_CALLS)
+    live.log_metric("foo", 5)
+    live.next_step()
+
+    datapoints = [{"step": 4, "foo": 4.0}, {"step": 5, "foo": 5.0}]
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        json={
+            "type": "data",
+            "repo_url": "STUDIO_REPO_URL",
+            "baseline_sha": "f" * 40,
+            "name": live._exp_name,
+            "step": 5,
+            "metrics": {metrics_path: {"data": {"step": 5, "foo": 5}}},
+            "plots": {f"{dvc_path}::{foo_path}": {"data": datapoints}},
+            "client": "dvclive",
+        },
+        headers={
+            "Authorization": "token STUDIO_TOKEN",
+            "Content-type": "application/json",
+        },
+        timeout=(30, 5),
+    )
