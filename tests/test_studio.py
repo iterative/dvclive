@@ -10,6 +10,7 @@ from dvclive import Live
 from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME
 from dvclive.plots import Image, Metric
 from dvclive.studio import (
+    MAX_CONSECUTIVE_FAILURES,
     MIN_SECONDS_BETWEEN_CALLS,
     _adapt_image,
     get_dvc_studio_config,
@@ -576,3 +577,19 @@ def test_post_to_studio_skips_too_frequent_calls(
         },
         timeout=(30, 5),
     )
+
+
+def test_post_to_studio_max_consecutive_failures(
+    mocker, tmp_dir, mocked_dvc_repo, mocked_studio_post
+):
+    live = Live(save_dvc_exp=True)
+
+    error_response = mocker.MagicMock()
+    error_response.status_code = 400
+    mocked_post = mocker.patch("requests.post", return_value=error_response)
+
+    for i in range(MAX_CONSECUTIVE_FAILURES * 2):
+        live.log_metric("foo", i)
+        live.next_step()
+
+    assert mocked_post.call_count == MAX_CONSECUTIVE_FAILURES + 1

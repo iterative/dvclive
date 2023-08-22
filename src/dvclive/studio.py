@@ -9,6 +9,7 @@ from dvc_studio_client.post_live_metrics import get_studio_config
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics
 
+MAX_CONSECUTIVE_FAILURES = 5
 MIN_SECONDS_BETWEEN_CALLS = 3
 
 

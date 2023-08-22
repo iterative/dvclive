@@ -33,7 +33,12 @@ from .error import (
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
-from .studio import MIN_SECONDS_BETWEEN_CALLS, get_dvc_studio_config, get_studio_updates
+from .studio import (
+    MAX_CONSECUTIVE_FAILURES,
+    MIN_SECONDS_BETWEEN_CALLS,
+    get_dvc_studio_config,
+    get_studio_updates,
+)
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -105,6 +110,7 @@ class Live:
             seconds=MIN_SECONDS_BETWEEN_CALLS
         )
         self._studio_events_to_skip: Set[str] = set()
+        self._studio_post_failures = 0
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
 
@@ -523,11 +529,21 @@ class Live:
                     dvc_studio_config=self._dvc_studio_config,
                 )
             if not response:
-                logger.warning(
-                    "`post_to_studio` `data` event failed."
-                    " Data will be resent on next call."
-                )
+                self._studio_post_failures += 1
+                if self._studio_post_failures > MAX_CONSECUTIVE_FAILURES:
+                    logger.warning(
+                        "`post_to_studio` `data` event failed "
+                        f" {MAX_CONSECUTIVE_FAILURES} times."
+                        " Data will stop being sent."
+                    )
+                    self._studio_events_to_skip.add("data")
+                else:
+                    logger.warning(
+                        "`post_to_studio` `data` event failed."
+                        " Data will be resent on next call."
+                    )
             else:
+                self._studio_post_failures = 0
                 self._latest_studio_post = datetime.now()
                 self._latest_studio_step = self.step
 
