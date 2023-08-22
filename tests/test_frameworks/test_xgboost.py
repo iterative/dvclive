@@ -8,7 +8,6 @@ from dvclive.plots.metric import Metric
 from dvclive.utils import parse_metrics
 
 try:
-    import numpy as np
     import pandas as pd
     import xgboost as xgb
     from sklearn import datasets
@@ -78,21 +77,6 @@ def test_xgb_integration(
     assert all(
         os.path.join(scalars, subdir, "mlogloss.tsv") in logs for subdir in subdirs
     )
-
-
-def test_xgb_model_file(tmp_dir, train_params, iris_data):
-    model = xgb.train(
-        train_params,
-        iris_data,
-        callbacks=[DVCLiveCallback("eval_data", model_file="model_xgb.json")],
-        num_boost_round=5,
-        evals=[(iris_data, "eval_data")],
-    )
-
-    preds = model.predict(iris_data)
-    model2 = xgb.Booster(model_file="model_xgb.json")
-    preds2 = model2.predict(iris_data)
-    assert np.sum(np.abs(preds2 - preds)) == 0
 
 
 def test_xgb_pass_logger():

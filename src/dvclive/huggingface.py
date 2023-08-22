@@ -26,12 +26,6 @@ class DVCLiveCallback(TrainerCallback):
     ):
         super().__init__()
         self._log_model = log_model
-        self.model_file = kwargs.pop("model_file", None)
-        if self.model_file:
-            logger.warning(
-                "model_file is deprecated and will be removed"
-                " in the next major version, use log_model instead"
-            )
         self.live = live if live is not None else Live(**kwargs)
 
     def on_train_begin(
@@ -64,21 +58,6 @@ class DVCLiveCallback(TrainerCallback):
     ):
         if self._log_model == "all" and state.is_world_process_zero:
             self.live.log_artifact(args.output_dir)
-
-    def on_epoch_end(
-        self,
-        args: TrainingArguments,
-        state: TrainerState,
-        control: TrainerControl,
-        **kwargs,
-    ):
-        if self.model_file:
-            model = kwargs["model"]
-            model.save_pretrained(self.model_file)
-            tokenizer = kwargs.get("tokenizer")
-            if tokenizer:
-                tokenizer.save_pretrained(self.model_file)
-            self.live.log_artifact(self.model_file)
 
     def on_train_end(
         self,
