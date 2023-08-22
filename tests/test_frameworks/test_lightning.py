@@ -1,4 +1,5 @@
 import os
+import time
 
 import pytest
 
@@ -10,7 +11,7 @@ try:
     import torch
     from lightning import LightningModule
     from lightning.pytorch import Trainer
-    from lightning.pytorch.callbacks import ModelCheckpoint
+    from lightning.pytorch.callbacks import Callback, ModelCheckpoint
     from torch import nn
     from torch.nn import functional as F  # noqa: N812
     from torch.optim import SGD, Adam
@@ -18,6 +19,7 @@ try:
 
     from dvclive import Live
     from dvclive.lightning import DVCLiveLogger
+    from dvclive.studio import MIN_SECONDS_BETWEEN_CALLS
 except ImportError:
     pytest.skip("skipping lightning tests", allow_module_level=True)
 
@@ -262,6 +264,11 @@ class ValLitXOR(LitXOR):
 
 def test_lightning_val_udpates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     """Test the `self.experiment._latest_studio_step -= 1` logic."""
+
+    class SleepCallback(Callback):
+        def on_train_batch_end(self, *args, **kwargs) -> None:
+            time.sleep(MIN_SECONDS_BETWEEN_CALLS)
+
     mocked_post, _ = mocked_studio_post
 
     model = ValLitXOR()
@@ -272,7 +279,9 @@ def test_lightning_val_udpates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio
         val_check_interval=2,
         log_every_n_steps=1,
         enable_checkpointing=False,
+        callbacks=[SleepCallback()],
     )
+
     trainer.fit(model)
 
     calls = mocked_post.call_args_list

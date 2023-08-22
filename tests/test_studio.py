@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 import pytest
@@ -8,7 +9,11 @@ from PIL import Image as ImagePIL
 from dvclive import Live
 from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME
 from dvclive.plots import Image, Metric
-from dvclive.studio import _adapt_image, get_dvc_studio_config
+from dvclive.studio import (
+    MIN_SECONDS_BETWEEN_CALLS,
+    _adapt_image,
+    get_dvc_studio_config,
+)
 
 
 def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
@@ -61,9 +66,10 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
         timeout=(30, 5),
     )
 
+    time.sleep(MIN_SECONDS_BETWEEN_CALLS)
     live.log_metric("foo", 2)
-
     live.next_step()
+
     mocked_post.assert_called_with(
         "https://0.0.0.0/api/live",
         json={
@@ -478,6 +484,91 @@ def test_post_to_studio_message(tmp_dir, mocked_dvc_repo, mocked_studio_post):
             "name": live._exp_name,
             "client": "dvclive",
             "message": "Custom message",
+        },
+        headers={
+            "Authorization": "token STUDIO_TOKEN",
+            "Content-type": "application/json",
+        },
+        timeout=(30, 5),
+    )
+
+
+def test_post_to_studio_skips_too_frequent_calls(
+    tmp_dir, mocked_dvc_repo, mocked_studio_post
+):
+    live = Live(save_dvc_exp=True)
+    live.log_param("fooparam", 1)
+
+    dvc_path = Path(live.dvc_file).as_posix()
+    metrics_path = Path(live.metrics_file).as_posix()
+    params_path = Path(live.params_file).as_posix()
+    foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
+
+    mocked_post, _ = mocked_studio_post
+
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        json={
+            "type": "start",
+            "repo_url": "STUDIO_REPO_URL",
+            "baseline_sha": "f" * 40,
+            "name": live._exp_name,
+            "client": "dvclive",
+        },
+        headers={
+            "Authorization": "token STUDIO_TOKEN",
+            "Content-type": "application/json",
+        },
+        timeout=(30, 5),
+    )
+
+    live.log_metric("foo", 1)
+
+    live.next_step()
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        json={
+            "type": "data",
+            "repo_url": "STUDIO_REPO_URL",
+            "baseline_sha": "f" * 40,
+            "name": live._exp_name,
+            "step": 0,
+            "metrics": {metrics_path: {"data": {"step": 0, "foo": 1}}},
+            "params": {params_path: {"fooparam": 1}},
+            "plots": {f"{dvc_path}::{foo_path}": {"data": [{"step": 0, "foo": 1.0}]}},
+            "client": "dvclive",
+        },
+        headers={
+            "Authorization": "token STUDIO_TOKEN",
+            "Content-type": "application/json",
+        },
+        timeout=(30, 5),
+    )
+
+    live.log_metric("foo", 2)
+    live.next_step()
+
+    time.sleep(MIN_SECONDS_BETWEEN_CALLS)
+
+    live.log_metric("foo", 3)
+    live.next_step()
+
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        json={
+            "type": "data",
+            "repo_url": "STUDIO_REPO_URL",
+            "baseline_sha": "f" * 40,
+            "name": live._exp_name,
+            "step": 2,
+            "metrics": {metrics_path: {"data": {"step": 2, "foo": 3}}},
+            "params": {params_path: {"fooparam": 1}},
+            "plots": {
+                f"{dvc_path}::{foo_path}": {
+                    "data": [{"step": 1, "foo": 2.0}, {"step": 2, "foo": 3.0}]
+                }
+            },
+            "client": "dvclive",
         },
         headers={
             "Authorization": "token STUDIO_TOKEN",

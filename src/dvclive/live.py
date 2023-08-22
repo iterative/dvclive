@@ -3,6 +3,7 @@ import logging
 import math
 import os
 import shutil
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
@@ -32,7 +33,7 @@ from .error import (
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
-from .studio import get_dvc_studio_config, get_studio_updates
+from .studio import MIN_SECONDS_BETWEEN_CALLS, get_dvc_studio_config, get_studio_updates
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -100,6 +101,9 @@ class Live:
         self._init_dvc()
 
         self._latest_studio_step = self.step if resume else -1
+        self._latest_studio_post = datetime.now() - timedelta(
+            seconds=MIN_SECONDS_BETWEEN_CALLS
+        )
         self._studio_events_to_skip: Set[str] = set()
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
@@ -503,7 +507,9 @@ class Live:
     def make_report(self):
         if "data" not in self._studio_events_to_skip:
             response = False
-            if post_live_metrics is not None:
+            if (datetime.now() - self._latest_studio_post) > timedelta(
+                seconds=MIN_SECONDS_BETWEEN_CALLS
+            ):
                 metrics, params, plots = get_studio_updates(self)
                 response = post_live_metrics(
                     "data",
@@ -522,6 +528,7 @@ class Live:
                     " Data will be resent on next call."
                 )
             else:
+                self._latest_studio_post = datetime.now()
                 self._latest_studio_step = self.step
 
         if self._report_mode is not None:
@@ -554,18 +561,17 @@ class Live:
 
         if "done" not in self._studio_events_to_skip:
             response = False
-            if post_live_metrics is not None:
-                kwargs = {}
-                if self._experiment_rev:
-                    kwargs["experiment_rev"] = self._experiment_rev
-                response = post_live_metrics(
-                    "done",
-                    self._baseline_rev,
-                    self._exp_name,
-                    "dvclive",
-                    dvc_studio_config=self._dvc_studio_config,
-                    **kwargs,
-                )
+            kwargs = {}
+            if self._experiment_rev:
+                kwargs["experiment_rev"] = self._experiment_rev
+            response = post_live_metrics(
+                "done",
+                self._baseline_rev,
+                self._exp_name,
+                "dvclive",
+                dvc_studio_config=self._dvc_studio_config,
+                **kwargs,
+            )
             if not response:
                 logger.warning("`post_to_studio` `done` event failed.")
             self._studio_events_to_skip.add("done")
