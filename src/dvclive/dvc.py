@@ -1,8 +1,9 @@
 # ruff: noqa: SLF001
 import copy
+import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from dvclive.plots import Image, Metric
 from dvclive.serialize import dump_yaml
@@ -45,13 +46,13 @@ def _find_dvc_root(root: Optional[StrPath] = None) -> Optional[str]:
     return None
 
 
-def _write_file(file: str, contents=""):
+def _write_file(file: str, contents: Dict[str, Union[str, int]]):
     import builtins
 
     with builtins.open(file, "w", encoding="utf-8") as fobj:
         # NOTE: force flushing/writing empty file to disk, otherwise when
         # run in certain contexts (pytest) file may not actually be written
-        fobj.write(str(contents))
+        fobj.write(json.dumps(contents, sort_keys=True, ensure_ascii=False))
         fobj.flush()
         os.fsync(fobj.fileno())
 
@@ -105,7 +106,7 @@ def make_dvcyaml(live) -> None:
     dump_yaml(dvcyaml, live.dvc_file)
 
 
-def mark_dvclive_only_started() -> None:
+def mark_dvclive_only_started(exp_name: str) -> None:
     """
     Signal DVC VS Code extension that
     an experiment is running in the workspace.
@@ -119,7 +120,7 @@ def mark_dvclive_only_started() -> None:
 
     signal_file = _dvclive_only_signal_file(root_dir)
 
-    _write_file(signal_file, os.getpid())
+    _write_file(signal_file, {"pid": os.getpid(), "exp_name": exp_name})
 
 
 def mark_dvclive_only_ended() -> None:
