@@ -425,7 +425,7 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
     if dvc_root:
         assert os.path.exists(signal_file)
         with open(signal_file, encoding="utf-8") as f:
-            assert f.read() == str(test_pid)
+            assert json.load(f) == {"pid": test_pid, "exp_name": dvclive._exp_name}
 
     else:
         assert not os.path.exists(signal_file)
