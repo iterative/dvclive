@@ -1,11 +1,12 @@
 # ruff: noqa: SLF001
 import copy
 import os
+from collections import ChainMap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Optional
 
 from dvclive.plots import Image, Metric
-from dvclive.serialize import dump_yaml
+from dvclive.serialize import dump_yaml, load_yaml
 from dvclive.utils import StrPath
 
 if TYPE_CHECKING:
@@ -72,24 +73,30 @@ def get_dvc_repo() -> Optional["Repo"]:
 
 
 def make_dvcyaml(live) -> None:
+    from dvc.utils.hydra import apply_overrides
+
     dvcyaml = {}
+    dvcyaml_dir = os.path.abspath(os.path.dirname(live.dvc_file))
+    dvclive_dir = os.path.relpath(live.dir, dvcyaml_dir)
     if live._params:
-        dvcyaml["params"] = [os.path.relpath(live.params_file, live.dir)]
+        params_file = os.path.abspath(live.params_file)
+        dvcyaml["params"] = [os.path.relpath(params_file, dvcyaml_dir)]
     if live._metrics or live.summary:
-        dvcyaml["metrics"] = [os.path.relpath(live.metrics_file, live.dir)]
+        metrics_file = os.path.abspath(live.metrics_file)
+        dvcyaml["metrics"] = [os.path.relpath(metrics_file, dvcyaml_dir)]
     plots: List[Any] = []
     plots_path = Path(live.plots_dir)
-    metrics_path = plots_path / Metric.subfolder
-    if metrics_path.exists():
-        metrics_relpath = metrics_path.relative_to(live.dir).as_posix()
+    plots_metrics_path = (plots_path / Metric.subfolder).resolve()
+    if plots_metrics_path.exists():
+        metrics_relpath = plots_metrics_path.relative_to(dvcyaml_dir).as_posix()
         metrics_config = {metrics_relpath: {"x": "step"}}
         plots.append(metrics_config)
     if live._images:
-        images_path = (plots_path / Image.subfolder).relative_to(live.dir)
+        images_path = (plots_path / Image.subfolder).resolve().relative_to(dvcyaml_dir)
         plots.append(images_path.as_posix())
     if live._plots:
         for plot in live._plots.values():
-            plot_path = plot.output_path.relative_to(live.dir)
+            plot_path = plot.output_path.resolve().relative_to(dvcyaml_dir)
             plots.append({plot_path.as_posix(): plot.plot_config})
     if plots:
         dvcyaml["plots"] = plots
@@ -98,11 +105,46 @@ def make_dvcyaml(live) -> None:
         dvcyaml["artifacts"] = copy.deepcopy(live._artifacts)
         for artifact in dvcyaml["artifacts"].values():  # type: ignore
             abs_path = os.path.abspath(artifact["path"])
-            abs_dir = os.path.realpath(live.dir)
+            abs_dir = os.path.abspath(dvcyaml_dir)
             relative_path = os.path.relpath(abs_path, abs_dir)
             artifact["path"] = Path(relative_path).as_posix()
 
-    dump_yaml(dvcyaml, live.dvc_file)
+    if not os.path.exists(live.dvc_file):
+        dump_yaml(dvcyaml, live.dvc_file)
+    else:
+
+        def _update_list(old, new):
+            non_dvclive = []
+            for e in old:
+                if isinstance(e, str):
+                    if dvclive_dir not in e:
+                        non_dvclive.append(e)
+                elif isinstance(e, dict) and len(e) == 1:
+                    if dvclive_dir not in list(e.keys())[0]:
+                        non_dvclive.append(e)
+                else:
+                    non_dvclive.append(e)
+            return non_dvclive + new
+
+        def _format_overrides(name, overrides):
+            overrides_str = f"{overrides}".replace("'", "")
+            return f"++{name}={overrides_str}"
+
+        orig = load_yaml(live.dvc_file)
+        params = _update_list(orig.get("params", []), dvcyaml.get("params", []))
+        overrides = []
+        if params:
+            overrides.append(_format_overrides("params", params))
+        metrics = _update_list(orig.get("metrics", []), dvcyaml.get("metrics", []))
+        if metrics:
+            overrides.append(_format_overrides("metrics", metrics))
+        plots = _update_list(orig.get("plots", []), dvcyaml.get("plots", []))
+        if plots:
+            overrides.append(_format_overrides("plots", plots))
+        artifacts = {**orig.get("artifacts", {}), **dvcyaml.get("artifacts", {})}
+        if artifacts:
+            overrides.append(_format_overrides("artifacts", artifacts))
+        apply_overrides(live.dvc_file, overrides)
 
 
 def mark_dvclive_only_started() -> None:

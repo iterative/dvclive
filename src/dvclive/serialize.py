@@ -1,4 +1,5 @@
 import json
+import os
 from collections import OrderedDict
 
 from dvclive.error import DvcLiveError
@@ -39,11 +40,13 @@ def get_yaml():
 
 def dump_yaml(content, output_file):
     yaml = get_yaml()
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as fd:
         yaml.dump(content, fd)
 
 
 def dump_json(content, output_file, indent=4, **kwargs):
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(content, f, indent=indent, **kwargs)
         f.write("\n")

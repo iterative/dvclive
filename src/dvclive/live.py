@@ -58,7 +58,7 @@ class Live:
         resume: bool = False,
         report: Optional[str] = "auto",
         save_dvc_exp: bool = False,
-        dvcyaml: bool = True,
+        dvcyaml: Union[str, bool] = True,
         cache_images: bool = False,
         exp_message: Optional[str] = None,
     ):
@@ -83,11 +83,6 @@ class Live:
         self._report_notebook = None
         self._init_report()
 
-        if self._resume:
-            self._init_resume()
-        else:
-            self._init_cleanup()
-
         self._baseline_rev: Optional[str] = None
         self._exp_name: Optional[str] = None
         self._exp_message: Optional[str] = exp_message
@@ -96,6 +91,11 @@ class Live:
         self._dvc_repo = None
         self._include_untracked: List[str] = []
         self._init_dvc()
+
+        if self._resume:
+            self._init_resume()
+        else:
+            self._init_cleanup()
 
         self._latest_studio_step = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
@@ -123,9 +123,6 @@ class Live:
         ):
             if f and os.path.exists(f):
                 os.remove(f)
-
-        if self.dvc_file and os.path.exists(self.dvc_file):
-            os.remove(self.dvc_file)
 
     @catch_and_warn(DvcException, logger)
     def _init_dvc(self):
@@ -259,7 +256,10 @@ class Live:
 
     @property
     def dvc_file(self) -> str:
-        return os.path.join(self.dir, "dvc.yaml")
+        if isinstance(self._dvcyaml, str):
+            return self._dvcyaml
+        if self._dvc_repo is not None:
+            return os.path.join(self._dvc_repo.root_dir, "dvc.yaml")
 
     @property
     def plots_dir(self) -> str:
