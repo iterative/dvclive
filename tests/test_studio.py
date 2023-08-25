@@ -12,7 +12,7 @@ from dvclive.studio import _adapt_image, get_dvc_studio_config
 
 
 def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
-    live = Live(save_dvc_exp=True)
+    live = Live()
     live.log_param("fooparam", 1)
 
     dvc_path = Path(live.dvc_file).as_posix()
@@ -108,7 +108,7 @@ def test_post_to_studio_failed_data_request(
 ):
     mocked_post, valid_response = mocked_studio_post
 
-    live = Live(save_dvc_exp=True)
+    live = Live()
 
     dvc_path = Path(live.dvc_file).as_posix()
     metrics_path = Path(live.metrics_file).as_posix()
@@ -157,7 +157,7 @@ def test_post_to_studio_failed_start_request(
     mocked_response.status_code = 400
     mocked_post = mocker.patch("requests.post", return_value=mocked_response)
 
-    live = Live(save_dvc_exp=True)
+    live = Live()
 
     live.log_metric("foo", 1)
     live.next_step()
@@ -170,7 +170,7 @@ def test_post_to_studio_failed_start_request(
 
 def test_post_to_studio_end_only_once(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     mocked_post, _ = mocked_studio_post
-    with Live(save_dvc_exp=True) as live:
+    with Live() as live:
         live.log_metric("foo", 1)
         live.next_step()
 
@@ -237,7 +237,9 @@ def test_post_to_studio_include_prefix_if_needed(
 ):
     mocked_post, _ = mocked_studio_post
     # Create dvclive/dvc.yaml
-    live = Live("custom_dir", save_dvc_exp=True)
+    live = Live(
+        "custom_dir",
+    )
     live.log_metric("foo", 1)
     live.next_step()
 
@@ -268,7 +270,7 @@ def test_post_to_studio_include_prefix_if_needed(
 def test_post_to_studio_shorten_names(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     mocked_post, _ = mocked_studio_post
 
-    live = Live(save_dvc_exp=True)
+    live = Live()
     live.log_metric("eval/loss", 1)
     live.next_step()
 
@@ -322,7 +324,7 @@ def test_post_to_studio_inside_subdir(
     subdir.mkdir()
     monkeypatch.chdir(subdir)
 
-    live = Live(save_dvc_exp=True)
+    live = Live()
     live.log_metric("foo", 1)
     live.next_step()
 
@@ -399,8 +401,8 @@ def test_post_to_studio_inside_subdir_dvc_exp(
 
 
 def test_post_to_studio_requires_exp(tmp_dir, mocked_dvc_repo, mocked_studio_post):
-    assert Live()._studio_events_to_skip == {"start", "data", "done"}
-    assert not Live(save_dvc_exp=True)._studio_events_to_skip
+    assert Live(save_dvc_exp=False)._studio_events_to_skip == {"start", "data", "done"}
+    assert not Live()._studio_events_to_skip
 
 
 def test_get_dvc_studio_config_none(mocker):
@@ -434,7 +436,7 @@ def test_get_dvc_studio_config_dvc_repo(mocked_dvc_repo):
 def test_post_to_studio_images(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     mocked_post, _ = mocked_studio_post
 
-    live = Live(save_dvc_exp=True)
+    live = Live()
     live.log_image("foo.png", ImagePIL.new("RGB", (10, 10), (0, 0, 0)))
     live.next_step()
 
@@ -465,7 +467,7 @@ def test_post_to_studio_images(tmp_dir, mocked_dvc_repo, mocked_studio_post):
 
 
 def test_post_to_studio_message(tmp_dir, mocked_dvc_repo, mocked_studio_post):
-    live = Live(save_dvc_exp=True, exp_message="Custom message")
+    live = Live(exp_message="Custom message")
 
     mocked_post, _ = mocked_studio_post
 

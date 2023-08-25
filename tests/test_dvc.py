@@ -158,7 +158,7 @@ def test_exp_save_skip_on_env_vars(tmp_dir, monkeypatch, mocker):
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
 
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=None):
-        live = Live(save_dvc_exp=True)
+        live = Live()
         live.end()
 
     assert live._dvc_repo is None
@@ -177,7 +177,7 @@ def test_exp_save_run_on_dvc_repro(tmp_dir, mocker):
     dvc_repo.scm.no_commits = False
     dvc_repo.config = {}
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
-        live = Live(save_dvc_exp=True)
+        live = Live()
         assert live._save_dvc_exp
         assert live._baseline_rev is not None
         assert live._exp_name is not None
@@ -219,7 +219,7 @@ def test_exp_save_with_dvc_files(tmp_dir, mocker):
     dvc_repo.config = {}
 
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
-        live = Live(save_dvc_exp=True)
+        live = Live()
         live.end()
 
     dvc_repo.experiments.save.assert_called_with(
@@ -238,7 +238,7 @@ def test_exp_save_dvcexception_is_ignored(tmp_dir, mocker):
     dvc_repo.experiments.save.side_effect = DvcException("foo")
     mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
 
-    with Live(save_dvc_exp=True):
+    with Live():
         pass
 
 
@@ -252,7 +252,7 @@ def test_untracked_dvclive_files_inside_dvc_exp_run_are_added(
         "dvclive/metrics.json",
         plot_file,
     ]
-    with Live(report=None) as live:
+    with Live() as live:
         live.log_metric("foo", 1)
         live.next_step()
     live._dvc_repo.scm.add.assert_called_with(["dvclive/metrics.json", plot_file])
@@ -269,7 +269,7 @@ def test_dvc_outs_are_not_added(tmp_dir, mocked_dvc_repo, monkeypatch):
         plot_file,
     ]
 
-    with Live(report=None) as live:
+    with Live() as live:
         live.log_metric("foo", 1)
         live.next_step()
 
@@ -282,7 +282,7 @@ def test_errors_on_git_add_are_catched(tmp_dir, mocked_dvc_repo, monkeypatch):
     mocked_dvc_repo.scm.untracked_files.return_value = ["dvclive/metrics.json"]
     mocked_dvc_repo.scm.add.side_effect = DvcException("foo")
 
-    with Live(report=None) as live:
+    with Live() as live:
         live.summary["foo"] = 1
 
 
@@ -302,7 +302,7 @@ def test_make_dvcyaml_idempotent(tmp_dir, mocked_dvc_repo):
 
 
 def test_exp_save_message(tmp_dir, mocked_dvc_repo):
-    live = Live(save_dvc_exp=True, exp_message="Custom message")
+    live = Live(exp_message="Custom message")
     live.end()
     mocked_dvc_repo.experiments.save.assert_called_with(
         name=live._exp_name,
@@ -320,7 +320,7 @@ def test_no_scm_repo(tmp_dir, mocker):
         live = Live()
         assert live._dvc_repo == dvc_repo
 
-        live = Live(save_dvc_exp=True)
+        live = Live()
         assert live._save_dvc_exp is False
 
 

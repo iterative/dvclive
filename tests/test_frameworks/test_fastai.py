@@ -68,19 +68,6 @@ def test_fastai_callback(tmp_dir, data_loader, mocker):
     assert not (metrics_path / "epoch.tsv").exists()
 
 
-def test_fastai_model_file(tmp_dir, data_loader, mocker):
-    learn = tabular_learner(data_loader, metrics=accuracy)
-    learn.remove_cb(ProgressCallback)
-    learn.model_dir = os.path.abspath("./")
-    save = mocker.spy(learn, "save")
-    live_callback = DVCLiveCallback("model", with_opt=True)
-    log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
-    learn.fit_one_cycle(2, cbs=[live_callback])
-    assert (tmp_dir / "model.pth").is_file()
-    save.assert_called_with("model", with_opt=True)
-    log_artifact.assert_called_with(str(tmp_dir / "model.pth"))
-
-
 def test_fastai_pass_logger():
     logger = Live("train_logs")
 

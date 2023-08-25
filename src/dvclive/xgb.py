@@ -11,7 +11,6 @@ class DVCLiveCallback(TrainingCallback):
     def __init__(
         self,
         metric_data: Optional[str] = None,
-        model_file=None,
         live: Optional[Live] = None,
         **kwargs,
     ):
@@ -23,7 +22,6 @@ class DVCLiveCallback(TrainingCallback):
                 stacklevel=2,
             )
         self._metric_data = metric_data
-        self.model_file = model_file
         self.live = live if live is not None else Live(**kwargs)
 
     def after_iteration(self, model, epoch, evals_log):
@@ -32,8 +30,6 @@ class DVCLiveCallback(TrainingCallback):
         for subdir, data in evals_log.items():
             for key, values in data.items():
                 self.live.log_metric(f"{subdir}/{key}" if subdir else key, values[-1])
-        if self.model_file:
-            model.save_model(self.model_file)
         self.live.next_step()
 
     def after_training(self, model):

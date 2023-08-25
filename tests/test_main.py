@@ -379,7 +379,7 @@ def test_make_summary_on_end_dont_increment_step(tmp_dir):
 
 
 def test_context_manager(tmp_dir):
-    with Live() as live:
+    with Live(report="html") as live:
         live.summary["foo"] = 1.0
 
     assert json.loads((tmp_dir / live.metrics_file).read_text()) == {
@@ -420,7 +420,7 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo), mocker.patch(
         "dvclive.live.os.getpid", return_value=test_pid
     ):
-        dvclive = Live(save_dvc_exp=True)
+        dvclive = Live()
 
     if dvc_root:
         assert os.path.exists(signal_file)
@@ -457,7 +457,7 @@ def test_suppress_dvc_logs(tmp_dir, mocked_dvc_repo):
 
 @pytest.mark.parametrize("cache", [False, True])
 def test_cache_images(tmp_dir, dvc_repo, cache):
-    live = Live(cache_images=cache)
+    live = Live(save_dvc_exp=False, cache_images=cache)
     img = Image.new("RGB", (10, 10), (250, 250, 250))
     live.log_image("image.png", img)
     live.end()
