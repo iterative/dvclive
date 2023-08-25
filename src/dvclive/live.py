@@ -265,8 +265,8 @@ class Live:
             return os.path.join(self._dvc_repo.root_dir, "dvc.yaml")
         self._dvcyaml = False
         logger.warning(
-            "Can't infer dvcyaml path without a DVC repo."
-            "dvcyaml file will not be written."
+            "Can't infer dvcyaml path without a DVC repo. "
+            "`dvc.yaml` file will not be written."
         )
         return ""
 
@@ -539,12 +539,6 @@ class Live:
     def make_dvcyaml(self):
         if self.dvc_file:
             make_dvcyaml(self)
-        else:
-            self._dvcyaml = False
-            logger.warning(
-                "Can't infer dvcyaml path without a DVC repo."
-                "dvcyaml file will not be written."
-            )
 
     def end(self):
         if self._inside_with:

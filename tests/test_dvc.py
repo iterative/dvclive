@@ -11,7 +11,7 @@ from scmrepo.git import Git
 from dvclive import Live
 from dvclive.dvc import get_dvc_repo, make_dvcyaml
 from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME
-from dvclive.serialize import load_yaml
+from dvclive.serialize import dump_yaml, load_yaml
 
 YAML_LOADER = YAML(typ="safe")
 
@@ -132,6 +132,97 @@ def test_make_dvcyaml_all_plots(tmp_dir):
             },
         ],
     }
+
+
+def test_make_dvcyaml_relpath(tmp_dir, mocked_dvc_repo):
+    (tmp_dir / "model.pth").touch()
+    live = Live(dvcyaml="dir/dvc.yaml")
+    live.log_metric("foo", 1)
+    live.log_artifact("model.pth", type="model")
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == {
+        "metrics": ["../dvclive/metrics.json"],
+        "plots": [{"../dvclive/plots/metrics": {"x": "step"}}],
+        "artifacts": {
+            "model": {"path": "../model.pth", "type": "model"},
+        },
+    }
+
+
+def test_make_dvcyaml_update(tmp_dir, mocked_dvc_repo):
+    orig_yaml = {
+        "stages": {"train": {"cmd": "train.py"}},
+        "metrics": [
+            "dvclive/metrics.json",
+            "dvclive/metrics.yaml",
+            "other/metrics.json",
+        ],
+        "params": ["dvclive/params.yaml"],
+        "plots": [
+            {"dvclive/plots/metrics": {"x": "step", "y": "foo"}},
+            "dvclive/plots/images",
+            "other/plots",
+            {
+                "custom": {
+                    "x": "step",
+                    "y": {"dvclive/plots/metrics": "foo"},
+                    "title": "custom",
+                }
+            },
+            {
+                "dvclive/plots/sklearn/confusion_matrix.json": {
+                    "template": "confusion",
+                    "x": "actual",
+                    "y": "predicted",
+                    "title": "Confusion Matrix",
+                    "x_label": "True Label",
+                    "y_label": "Predicted Label",
+                },
+            },
+        ],
+        "artifacts": {
+            "model": {"path": "dvclive/artifacts/model.pth", "type": "model"},
+            "duplicate": {"path": "dvclive/artifacts/model.pth"},
+            "data": {"path": "data.csv", "desc": "source data"},
+            "other": {"path": "other.pth"},
+        },
+    }
+
+    updated_yaml = {
+        "stages": {"train": {"cmd": "train.py"}},
+        "metrics": ["other/metrics.json", "dvclive/metrics.json"],
+        "plots": [
+            "other/plots",
+            {
+                "custom": {
+                    "x": "step",
+                    "y": {"dvclive/plots/metrics": "foo"},
+                    "title": "custom",
+                }
+            },
+            {"dvclive/plots/metrics": {"x": "step"}},
+            "dvclive/plots/images",
+        ],
+        "artifacts": {
+            "model": {"path": "dvclive/artifacts/model.pth", "type": "model"},
+            "data": {"path": "data.csv", "desc": "source data"},
+            "other": {"path": "other.pth"},
+        },
+    }
+
+    dump_yaml(orig_yaml, "dvc.yaml")
+    (tmp_dir / "model.pth").touch()
+    (tmp_dir / "data.csv").touch()
+
+    live = Live(dvcyaml="dvc.yaml")
+    live.log_metric("foo", 2)
+    live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
+    live.log_artifact("model.pth", type="model", copy=True)
+    live.log_artifact("data.csv", desc="source data")
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == updated_yaml
 
 
 @pytest.mark.parametrize("save", [True, False])

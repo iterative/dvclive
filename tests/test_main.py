@@ -1,13 +1,12 @@
 import json
 import logging
 import os
-from pathlib import Path
 
 import pytest
 from PIL import Image
 
 from dvclive import Live, env
-from dvclive.error import InvalidParameterTypeError
+from dvclive.error import InvalidDvcyamlError, InvalidParameterTypeError
 from dvclive.plots import Metric
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics, parse_tsv
@@ -437,17 +436,39 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
 
 @pytest.mark.parametrize(
     "dvcyaml",
-    [False, "dvc.yaml"],
+    [True, False, "dvc.yaml"],
 )
-def test_make_dvcyaml(tmp_dir, dvcyaml):
+def test_make_dvcyaml(tmp_dir, mocked_dvc_repo, dvcyaml):
     dvclive = Live("logs", dvcyaml=dvcyaml)
     dvclive.log_metric("m1", 1)
-    dvclive.make_dvcyaml()
+    dvclive.next_step()
 
     if dvcyaml:
-        assert Path(dvclive.dvc_file).is_file()
+        assert "metrics" in load_yaml(dvclive.dvc_file)
     else:
-        assert not Path(dvclive.dvc_file).is_file()
+        assert not os.path.exists(dvclive.dvc_file)
+
+    dvclive.make_dvcyaml()
+    assert "metrics" in load_yaml(dvclive.dvc_file)
+
+
+def test_make_dvcyaml_no_repo(tmp_dir, mocker):
+    logger = mocker.patch("dvclive.live.logger")
+    dvclive = Live("logs")
+    dvclive.make_dvcyaml()
+
+    assert not os.path.exists("dvc.yaml")
+    assert dvclive._dvcyaml is False
+    logger.warning.assert_called_with(
+        "Can't infer dvcyaml path without a DVC repo. "
+        "`dvc.yaml` file will not be written."
+    )
+
+
+def test_make_dvcyaml_invalid(tmp_dir, mocker):
+    dvclive = Live("logs", dvcyaml="invalid")
+    with pytest.raises(InvalidDvcyamlError):
+        dvclive.make_dvcyaml()
 
 
 def test_suppress_dvc_logs(tmp_dir, mocked_dvc_repo):
