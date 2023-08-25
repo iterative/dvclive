@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 
 import pytest
 from PIL import Image
@@ -159,7 +160,7 @@ def test_nested_logging(tmp_dir):
     [True, False],
 )
 def test_cleanup(tmp_dir, html):
-    dvclive = Live("logs", report="html" if html else None)
+    dvclive = Live("logs", report="html" if html else None, dvcyaml="dvc.yaml")
     dvclive.log_metric("m1", 1)
     dvclive.next_step()
 
@@ -179,7 +180,6 @@ def test_cleanup(tmp_dir, html):
     assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
     assert not (tmp_dir / dvclive.plots_dir / Metric.subfolder).exists()
     assert not (tmp_dir / dvclive.metrics_file).is_file()
-    assert not (tmp_dir / dvclive.dvc_file).is_file()
     assert not (html_path).is_file()
 
 
@@ -437,16 +437,17 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
 
 @pytest.mark.parametrize(
     "dvcyaml",
-    [True, False],
+    [False, "dvc.yaml"],
 )
 def test_make_dvcyaml(tmp_dir, dvcyaml):
     dvclive = Live("logs", dvcyaml=dvcyaml)
     dvclive.log_metric("m1", 1)
     dvclive.make_dvcyaml()
 
-    dvcyaml_path = tmp_dir / dvclive.dir / "dvc.yaml"
-
-    assert dvcyaml_path.is_file()
+    if dvcyaml:
+        assert Path(dvclive.dvc_file).is_file()
+    else:
+        assert not Path(dvclive.dvc_file).is_file()
 
 
 def test_suppress_dvc_logs(tmp_dir, mocked_dvc_repo):

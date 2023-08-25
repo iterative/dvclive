@@ -40,13 +40,19 @@ def get_yaml():
 
 def dump_yaml(content, output_file):
     yaml = get_yaml()
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    make_dir(output_file)
     with open(output_file, "w", encoding="utf-8") as fd:
         yaml.dump(content, fd)
 
 
 def dump_json(content, output_file, indent=4, **kwargs):
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    make_dir(output_file)
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(content, f, indent=indent, **kwargs)
         f.write("\n")
+
+
+def make_dir(output_file):
+    output_dir = os.path.dirname(output_file)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)

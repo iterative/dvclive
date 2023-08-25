@@ -31,55 +31,55 @@ def test_get_dvc_repo_subdir(tmp_dir):
 
 
 def test_make_dvcyaml_empty(tmp_dir):
-    live = Live()
+    live = Live(dvcyaml="dvc.yaml")
     make_dvcyaml(live)
 
     assert load_yaml(live.dvc_file) == {}
 
 
 def test_make_dvcyaml_param(tmp_dir):
-    live = Live()
+    live = Live(dvcyaml="dvc.yaml")
     live.log_param("foo", 1)
     make_dvcyaml(live)
 
     assert load_yaml(live.dvc_file) == {
-        "params": ["params.yaml"],
+        "params": ["dvclive/params.yaml"],
     }
 
 
 def test_make_dvcyaml_metrics(tmp_dir):
-    live = Live()
+    live = Live(dvcyaml="dvc.yaml")
     live.log_metric("bar", 2)
     make_dvcyaml(live)
 
     assert load_yaml(live.dvc_file) == {
-        "metrics": ["metrics.json"],
-        "plots": [{"plots/metrics": {"x": "step"}}],
+        "metrics": ["dvclive/metrics.json"],
+        "plots": [{"dvclive/plots/metrics": {"x": "step"}}],
     }
 
 
 def test_make_dvcyaml_metrics_no_plots(tmp_dir):
-    live = Live()
+    live = Live(dvcyaml="dvc.yaml")
     live.log_metric("bar", 2, plot=False)
     make_dvcyaml(live)
 
     assert load_yaml(live.dvc_file) == {
-        "metrics": ["metrics.json"],
+        "metrics": ["dvclive/metrics.json"],
     }
 
 
 def test_make_dvcyaml_summary(tmp_dir):
-    live = Live()
+    live = Live(dvcyaml="dvc.yaml")
     live.summary["bar"] = 2
     make_dvcyaml(live)
 
     assert load_yaml(live.dvc_file) == {
-        "metrics": ["metrics.json"],
+        "metrics": ["dvclive/metrics.json"],
     }
 
 
 def test_make_dvcyaml_all_plots(tmp_dir):
-    live = Live()
+    live = Live(dvcyaml="dvc.yaml")
     live.log_param("foo", 1)
     live.log_metric("bar", 2)
     live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
@@ -95,13 +95,13 @@ def test_make_dvcyaml_all_plots(tmp_dir):
     make_dvcyaml(live)
 
     assert load_yaml(live.dvc_file) == {
-        "metrics": ["metrics.json"],
-        "params": ["params.yaml"],
+        "metrics": ["dvclive/metrics.json"],
+        "params": ["dvclive/params.yaml"],
         "plots": [
-            {"plots/metrics": {"x": "step"}},
-            "plots/images",
+            {"dvclive/plots/metrics": {"x": "step"}},
+            "dvclive/plots/images",
             {
-                "plots/sklearn/confusion_matrix.json": {
+                "dvclive/plots/sklearn/confusion_matrix.json": {
                     "template": "confusion",
                     "x": "actual",
                     "y": "predicted",
@@ -111,7 +111,7 @@ def test_make_dvcyaml_all_plots(tmp_dir):
                 },
             },
             {
-                "plots/sklearn/confusion_matrix_normalized.json": {
+                "dvclive/plots/sklearn/confusion_matrix_normalized.json": {
                     "template": "confusion_normalized",
                     "title": "Confusion Matrix",
                     "x": "actual",
@@ -121,7 +121,7 @@ def test_make_dvcyaml_all_plots(tmp_dir):
                 }
             },
             {
-                "plots/sklearn/custom_name_roc.json": {
+                "dvclive/plots/sklearn/custom_name_roc.json": {
                     "template": "simple",
                     "x": "fpr",
                     "y": "tpr",
@@ -296,7 +296,7 @@ def test_make_dvcyaml_idempotent(tmp_dir, mocked_dvc_repo):
 
     assert load_yaml(live.dvc_file) == {
         "artifacts": {
-            "model": {"path": "../model.pth", "type": "model"},
+            "model": {"path": "model.pth", "type": "model"},
         }
     }
 
@@ -324,7 +324,7 @@ def test_no_scm_repo(tmp_dir, mocker):
         assert live._save_dvc_exp is False
 
 
-@pytest.mark.parametrize("dvcyaml", [True, False])
+@pytest.mark.parametrize("dvcyaml", [True, False, "dvclive/dvc.yaml"])
 def test_warn_on_dvcyaml_output_overlap(tmp_dir, mocker, mocked_dvc_repo, dvcyaml):
     logger = mocker.patch("dvclive.live.logger")
     dvc_stage = mocker.MagicMock()
@@ -335,7 +335,7 @@ def test_warn_on_dvcyaml_output_overlap(tmp_dir, mocker, mocked_dvc_repo, dvcyam
     mocked_dvc_repo.index.stages = [dvc_stage]
     live = Live(dvcyaml=dvcyaml)
 
-    if dvcyaml:
+    if dvcyaml == "dvclive/dvc.yaml":
         msg = f"'{live.dvc_file}' is in outputs of stage 'train'.\n"
         msg += "Remove it from outputs to make DVCLive work as expected."
         logger.warning.assert_called_with(msg)

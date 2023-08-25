@@ -23,6 +23,7 @@ from .dvc import (
 )
 from .error import (
     InvalidDataTypeError,
+    InvalidDvcyamlError,
     InvalidParameterTypeError,
     InvalidPlotTypeError,
     InvalidReportModeError,
@@ -257,9 +258,17 @@ class Live:
     @property
     def dvc_file(self) -> str:
         if isinstance(self._dvcyaml, str):
-            return self._dvcyaml
+            if os.path.basename(self._dvcyaml) == "dvc.yaml":
+                return self._dvcyaml
+            raise InvalidDvcyamlError
         if self._dvc_repo is not None:
             return os.path.join(self._dvc_repo.root_dir, "dvc.yaml")
+        self._dvcyaml = False
+        logger.warning(
+            "Can't infer dvcyaml path without a DVC repo."
+            "dvcyaml file will not be written."
+        )
+        return ""
 
     @property
     def plots_dir(self) -> str:
@@ -526,8 +535,16 @@ class Live:
             if self._report_mode == "html" and env2bool(env.DVCLIVE_OPEN):
                 open_file_in_browser(self.report_file)
 
+    @catch_and_warn(DvcException, logger)
     def make_dvcyaml(self):
-        make_dvcyaml(self)
+        if self.dvc_file:
+            make_dvcyaml(self)
+        else:
+            self._dvcyaml = False
+            logger.warning(
+                "Can't infer dvcyaml path without a DVC repo."
+                "dvcyaml file will not be written."
+            )
 
     def end(self):
         if self._inside_with:
