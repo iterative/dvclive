@@ -1,12 +1,11 @@
 # ruff: noqa: SLF001
 import copy
 import os
-from collections import ChainMap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Optional
 
 from dvclive.plots import Image, Metric
-from dvclive.serialize import dump_yaml, load_yaml
+from dvclive.serialize import dump_yaml
 from dvclive.utils import StrPath
 
 if TYPE_CHECKING:
@@ -72,12 +71,9 @@ def get_dvc_repo() -> Optional["Repo"]:
             return None
 
 
-def make_dvcyaml(live) -> None:
-    from dvc.utils.hydra import apply_overrides
-
+def make_dvcyaml(live) -> None:  # noqa: C901
     dvcyaml = {}
     dvcyaml_dir = os.path.abspath(os.path.dirname(live.dvc_file))
-    dvclive_dir = os.path.relpath(live.dir, dvcyaml_dir)
     if live._params:
         params_file = os.path.abspath(live.params_file)
         dvcyaml["params"] = [os.path.relpath(params_file, dvcyaml_dir)]
@@ -112,39 +108,46 @@ def make_dvcyaml(live) -> None:
     if not os.path.exists(live.dvc_file):
         dump_yaml(dvcyaml, live.dvc_file)
     else:
+        update_dvcyaml(live, dvcyaml)
 
-        def _update_list(old, new):
-            non_dvclive = []
-            for e in old:
-                if isinstance(e, str):
-                    if dvclive_dir not in e:
-                        non_dvclive.append(e)
-                elif isinstance(e, dict) and len(e) == 1:
-                    if dvclive_dir not in list(e.keys())[0]:
-                        non_dvclive.append(e)
-                else:
+
+def update_dvcyaml(live, updates):  # noqa: C901
+    from dvc.utils.serialize import modify_yaml
+
+    dvcyaml_dir = os.path.abspath(os.path.dirname(live.dvc_file))
+    dvclive_dir = os.path.relpath(live.dir, dvcyaml_dir)
+
+    def _drop_stale_dvclive_entries(entries):
+        non_dvclive = []
+        for e in entries:
+            if isinstance(e, str):
+                if dvclive_dir not in e:
                     non_dvclive.append(e)
-            return non_dvclive + new
+            elif isinstance(e, dict) and len(e) == 1:
+                if dvclive_dir not in next(iter(e.keys())):
+                    non_dvclive.append(e)
+            else:
+                non_dvclive.append(e)
+        return non_dvclive
 
-        def _format_overrides(name, overrides):
-            overrides_str = f"{overrides}".replace("'", "")
-            return f"++{name}={overrides_str}"
+    def _update_entries(old, new, key):
+        keepers = _drop_stale_dvclive_entries(old.get(key, []))
+        old[key] = keepers + new.get(key, [])
+        if not old[key]:
+            del old[key]
+        return old
 
-        orig = load_yaml(live.dvc_file)
-        params = _update_list(orig.get("params", []), dvcyaml.get("params", []))
-        overrides = []
-        if params:
-            overrides.append(_format_overrides("params", params))
-        metrics = _update_list(orig.get("metrics", []), dvcyaml.get("metrics", []))
-        if metrics:
-            overrides.append(_format_overrides("metrics", metrics))
-        plots = _update_list(orig.get("plots", []), dvcyaml.get("plots", []))
-        if plots:
-            overrides.append(_format_overrides("plots", plots))
-        artifacts = {**orig.get("artifacts", {}), **dvcyaml.get("artifacts", {})}
-        if artifacts:
-            overrides.append(_format_overrides("artifacts", artifacts))
-        apply_overrides(live.dvc_file, overrides)
+    with modify_yaml(live.dvc_file) as orig:
+        orig = _update_entries(orig, updates, "params")  # noqa: PLW2901
+        orig = _update_entries(orig, updates, "metrics")  # noqa: PLW2901
+        orig = _update_entries(orig, updates, "plots")  # noqa: PLW2901
+        old_artifacts = {}
+        for name, meta in orig.get("artifacts", {}).items():
+            if dvclive_dir not in meta.get("path", dvclive_dir):
+                old_artifacts[name] = meta
+        orig["artifacts"] = {**old_artifacts, **updates.get("artifacts", {})}
+        if not orig["artifacts"]:
+            del orig["artifacts"]
 
 
 def mark_dvclive_only_started() -> None:
