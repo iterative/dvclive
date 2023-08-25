@@ -150,7 +150,225 @@ def test_make_dvcyaml_relpath(tmp_dir, mocked_dvc_repo):
     }
 
 
-def test_make_dvcyaml_update(tmp_dir, mocked_dvc_repo):
+def test_make_dvcyaml_update_stages(tmp_dir):
+    orig_yaml = {
+        "stages": {"train": {"cmd": "train.py"}},
+    }
+
+    updated_yaml = {
+        "stages": {"train": {"cmd": "train.py"}},
+        "metrics": ["dvclive/metrics.json"],
+        "plots": [
+            {"dvclive/plots/metrics": {"x": "step"}},
+        ],
+    }
+
+    dump_yaml(orig_yaml, "dvc.yaml")
+
+    live = Live(dvcyaml="dvc.yaml")
+    live.log_metric("foo", 2)
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == updated_yaml
+
+
+def test_make_dvcyaml_update_keep_custom_metrics(tmp_dir):
+    orig_yaml = {
+        "metrics": [
+            "other/metrics.json",
+        ],
+    }
+
+    updated_yaml = {
+        "metrics": ["other/metrics.json", "dvclive/metrics.json"],
+        "plots": [
+            {"dvclive/plots/metrics": {"x": "step"}},
+        ],
+    }
+
+    dump_yaml(orig_yaml, "dvc.yaml")
+
+    live = Live(dvcyaml="dvc.yaml")
+    live.log_metric("foo", 2)
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == updated_yaml
+
+
+def test_make_dvcyaml_update_drop_extra_sections(tmp_dir):
+    orig_yaml = {
+        "params": ["dvclive/params.yaml"],
+    }
+
+    updated_yaml = {
+        "metrics": ["dvclive/metrics.json"],
+        "plots": [
+            {"dvclive/plots/metrics": {"x": "step"}},
+        ],
+    }
+
+    dump_yaml(orig_yaml, "dvc.yaml")
+
+    live = Live(dvcyaml="dvc.yaml")
+    live.log_metric("foo", 2)
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == updated_yaml
+
+
+def test_make_dvcyaml_update_drop_unlogged_plots(tmp_dir):
+    orig_yaml = {
+        "plots": [
+            "dvclive/plots/images",
+        ]
+    }
+
+    updated_yaml = {
+        "metrics": ["dvclive/metrics.json"],
+        "plots": [
+            {"dvclive/plots/metrics": {"x": "step"}},
+        ],
+    }
+
+    dump_yaml(orig_yaml, "dvc.yaml")
+
+    live = Live(dvcyaml="dvc.yaml")
+    live.log_metric("foo", 2)
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == updated_yaml
+
+
+def test_make_dvcyaml_update_plot_props(tmp_dir):
+    orig_yaml = {
+        "plots": [
+            {"dvclive/plots/metrics": {"x": "step", "y": "foo"}},
+        ]
+    }
+
+    updated_yaml = {
+        "metrics": ["dvclive/metrics.json"],
+        "plots": [
+            {"dvclive/plots/metrics": {"x": "step"}},
+        ],
+    }
+
+    dump_yaml(orig_yaml, "dvc.yaml")
+
+    live = Live(dvcyaml="dvc.yaml")
+    live.log_metric("foo", 2)
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == updated_yaml
+
+
+def test_make_dvcyaml_keep_custom_plots(tmp_dir):
+    orig_yaml = {
+        "plots": [
+            {
+                "custom": {
+                    "x": "step",
+                    "y": {"dvclive/plots/metrics": "foo"},
+                    "title": "custom",
+                }
+            },
+        ],
+    }
+
+    updated_yaml = {
+        "metrics": ["dvclive/metrics.json"],
+        "plots": [
+            {
+                "custom": {
+                    "x": "step",
+                    "y": {"dvclive/plots/metrics": "foo"},
+                    "title": "custom",
+                }
+            },
+            {"dvclive/plots/metrics": {"x": "step"}},
+        ],
+    }
+
+    dump_yaml(orig_yaml, "dvc.yaml")
+
+    live = Live(dvcyaml="dvc.yaml")
+    live.log_metric("foo", 2)
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == updated_yaml
+
+
+def test_make_dvcyaml_update_artifact_props(tmp_dir, mocked_dvc_repo):
+    orig_yaml = {
+        "artifacts": {
+            "model": {"path": "model.pth", "type": "model", "desc": "best model"},
+        },
+    }
+
+    updated_yaml = {
+        "artifacts": {
+            "model": {"path": "dvclive/artifacts/model.pth", "type": "model"},
+        },
+    }
+
+    dump_yaml(orig_yaml, "dvc.yaml")
+    (tmp_dir / "model.pth").touch()
+
+    live = Live(dvcyaml="dvc.yaml")
+    live.log_artifact("model.pth", type="model", copy=True)
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == updated_yaml
+
+
+def test_make_dvcyaml_update_drop_duplicate_artifact(tmp_dir, mocked_dvc_repo):
+    orig_yaml = {
+        "artifacts": {
+            "duplicate": {"path": "dvclive/artifacts/model.pth"},
+        },
+    }
+
+    updated_yaml = {
+        "artifacts": {
+            "model": {"path": "dvclive/artifacts/model.pth", "type": "model"},
+        },
+    }
+
+    dump_yaml(orig_yaml, "dvc.yaml")
+    (tmp_dir / "model.pth").touch()
+
+    live = Live(dvcyaml="dvc.yaml")
+    live.log_artifact("model.pth", type="model", copy=True)
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == updated_yaml
+
+
+def test_make_dvcyaml_update_keep_extra_artifact(tmp_dir, mocked_dvc_repo):
+    orig_yaml = {
+        "artifacts": {
+            "data": {"path": "data.csv", "desc": "source data"},
+        },
+    }
+
+    updated_yaml = {
+        "artifacts": {
+            "model": {"path": "dvclive/artifacts/model.pth", "type": "model"},
+            "data": {"path": "data.csv", "desc": "source data"},
+        },
+    }
+
+    dump_yaml(orig_yaml, "dvc.yaml")
+    (tmp_dir / "model.pth").touch()
+
+    live = Live(dvcyaml="dvc.yaml")
+    live.log_artifact("model.pth", type="model", copy=True)
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == updated_yaml
+
+
+def test_make_dvcyaml_update_all(tmp_dir, mocked_dvc_repo):
     orig_yaml = {
         "stages": {"train": {"cmd": "train.py"}},
         "metrics": [
