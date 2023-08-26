@@ -72,10 +72,10 @@ def get_dvc_repo() -> Optional["Repo"]:
 
 
 def make_dvcyaml(live) -> None:  # noqa: C901
-    dvcyaml_dir = Path(live.dvc_file).parent.resolve().as_posix()
+    dvcyaml_dir = Path(live.dvc_file).parent.absolute().as_posix()
 
     def _get_relpath(path):
-        path = Path(path).resolve().as_posix()
+        path = Path(path).absolute().as_posix()
         return os.path.relpath(path, dvcyaml_dir)
 
     dvcyaml = {}
