@@ -172,16 +172,29 @@ def test_make_dvcyaml_update_stages(tmp_dir):
     assert load_yaml(live.dvc_file) == updated_yaml
 
 
-def test_make_dvcyaml_update_keep_custom_metrics(tmp_dir):
+def test_make_dvcyaml_update_keep_custom_plots(tmp_dir):
     orig_yaml = {
-        "metrics": [
-            "other/metrics.json",
+        "plots": [
+            {
+                "dvclive_custom_title": {
+                    "x": "step",
+                    "y": {"dvclive/metrics/acc.tsv": "acc"},
+                    "title": "Accuracy",
+                }
+            }
         ],
     }
 
     updated_yaml = {
-        "metrics": ["other/metrics.json", "dvclive/metrics.json"],
+        "metrics": ["dvclive/metrics.json"],
         "plots": [
+            {
+                "dvclive_custom_title": {
+                    "x": "step",
+                    "y": {"dvclive/metrics/acc.tsv": "acc"},
+                    "title": "Accuracy",
+                }
+            },
             {"dvclive/plots/metrics": {"x": "step"}},
         ],
     }
