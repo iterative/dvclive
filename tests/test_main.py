@@ -176,7 +176,7 @@ def test_cleanup(tmp_dir, html):
 
     dvclive = Live("logs")
 
-    assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
+    assert not (tmp_dir / "logs" / "some_user_file.txt").is_file()
     assert not (tmp_dir / dvclive.plots_dir / Metric.subfolder).exists()
     assert not (tmp_dir / dvclive.metrics_file).is_file()
     assert not (html_path).is_file()

@@ -28,7 +28,7 @@ from .error import (
     InvalidPlotTypeError,
     InvalidReportModeError,
 )
-from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
+from .plots import SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, get_studio_updates
@@ -112,19 +112,7 @@ class Live:
         logger.debug(f"{self._step=}")
 
     def _init_cleanup(self):
-        for plot_type in PLOT_TYPES:
-            shutil.rmtree(
-                Path(self.plots_dir) / plot_type.subfolder, ignore_errors=True
-            )
-
-        for f in (
-            self.metrics_file,
-            self.params_file,
-            os.path.join(self.dir, "report.html"),
-            os.path.join(self.dir, "report.md"),
-        ):
-            if f and os.path.exists(f):
-                os.remove(f)
+        shutil.rmtree(self.dir)
 
     @catch_and_warn(DvcException, logger)
     def _init_dvc(self):
