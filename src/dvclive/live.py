@@ -13,6 +13,7 @@ from ruamel.yaml.representer import RepresenterError
 
 from . import env
 from .dvc import (
+    cleanup_dvclive_step_completed,
     ensure_dir_is_tracked,
     find_overlapping_stage,
     get_dvc_repo,
@@ -20,6 +21,7 @@ from .dvc import (
     make_dvcyaml,
     mark_dvclive_only_ended,
     mark_dvclive_only_started,
+    mark_dvclive_step_completed,
 )
 from .error import (
     InvalidDataTypeError,
@@ -295,6 +297,7 @@ class Live:
             self.make_dvcyaml()
 
         self.make_report()
+        mark_dvclive_step_completed(self.step)
         self.step += 1
 
     def log_metric(
@@ -569,6 +572,8 @@ class Live:
             self._studio_events_to_skip.add("data")
         else:
             self.make_report()
+
+        cleanup_dvclive_step_completed()
 
     def read_step(self):
         if Path(self.metrics_file).exists():
