@@ -53,6 +53,10 @@ def _find_dvc_root(root: Optional[StrPath] = None) -> Optional[str]:
     return None
 
 
+def _find_non_queue_root() -> Optional[str]:
+    return os.getenv(env.DVC_ROOT) or _find_dvc_root()
+
+
 def _write_file(file: str, contents: Dict[str, Union[str, int]]):
     import builtins
 
@@ -119,7 +123,7 @@ def mark_dvclive_step_completed(step: int) -> None:
     Signal DVC VS Code extension that
     a step has been completed for an experiment running in the queue
     """
-    non_queue_root_dir = os.getenv(env.DVC_ROOT)
+    non_queue_root_dir = _find_non_queue_root()
 
     if not non_queue_root_dir:
         return
@@ -133,7 +137,7 @@ def mark_dvclive_step_completed(step: int) -> None:
 
 
 def cleanup_dvclive_step_completed() -> None:
-    non_queue_root_dir = os.getenv(env.DVC_ROOT)
+    non_queue_root_dir = _find_non_queue_root()
 
     if not non_queue_root_dir:
         return
