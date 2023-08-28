@@ -15,7 +15,7 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     live = Live()
     live.log_param("fooparam", 1)
 
-    dvc_path = Path(live.dvc_file).as_posix()
+    dvc_path = Path(live.dvc_file).relative_to(mocked_dvc_repo.root_dir).as_posix()
     metrics_path = Path(live.metrics_file).as_posix()
     params_path = Path(live.params_file).as_posix()
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
@@ -110,7 +110,7 @@ def test_post_to_studio_failed_data_request(
 
     live = Live()
 
-    dvc_path = Path(live.dvc_file).as_posix()
+    dvc_path = Path(live.dvc_file).relative_to(mocked_dvc_repo.root_dir).as_posix()
     metrics_path = Path(live.metrics_file).as_posix()
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
 
@@ -243,7 +243,7 @@ def test_post_to_studio_include_prefix_if_needed(
     live.log_metric("foo", 1)
     live.next_step()
 
-    dvc_path = Path(live.dvc_file).as_posix()
+    dvc_path = Path(live.dvc_file).relative_to(mocked_dvc_repo.root_dir).as_posix()
     metrics_path = Path(live.metrics_file).as_posix()
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
 
@@ -274,7 +274,7 @@ def test_post_to_studio_shorten_names(tmp_dir, mocked_dvc_repo, mocked_studio_po
     live.log_metric("eval/loss", 1)
     live.next_step()
 
-    dvc_path = Path(live.dvc_file).as_posix()
+    dvc_path = Path(live.dvc_file).relative_to(mocked_dvc_repo.root_dir).as_posix()
     metrics_path = Path(live.metrics_file).as_posix()
     plots_path = Path(live.plots_dir)
     loss_path = (plots_path / Metric.subfolder / "eval/loss.tsv").as_posix()
@@ -317,7 +317,7 @@ def test_post_to_studio_inside_dvc_exp(
 
 @pytest.mark.studio()
 def test_post_to_studio_inside_subdir(
-    tmp_dir, dvc_repo, mocker, monkeypatch, mocked_studio_post
+    tmp_dir, dvc_repo, mocker, monkeypatch, mocked_studio_post, mocked_dvc_repo
 ):
     mocked_post, _ = mocked_studio_post
     subdir = tmp_dir / "subdir"
@@ -328,7 +328,7 @@ def test_post_to_studio_inside_subdir(
     live.log_metric("foo", 1)
     live.next_step()
 
-    dvc_path = Path(live.dvc_file).as_posix()
+    dvc_path = Path(live.dvc_file).relative_to(mocked_dvc_repo.root_dir).as_posix()
     metrics_path = Path(live.metrics_file).as_posix()
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
 
@@ -342,9 +342,7 @@ def test_post_to_studio_inside_subdir(
             "step": 0,
             "metrics": {f"subdir/{metrics_path}": {"data": {"step": 0, "foo": 1}}},
             "plots": {
-                f"subdir/{dvc_path}::subdir/{foo_path}": {
-                    "data": [{"step": 0, "foo": 1.0}]
-                }
+                f"{dvc_path}::subdir/{foo_path}": {"data": [{"step": 0, "foo": 1.0}]}
             },
             "client": "dvclive",
         },
@@ -358,7 +356,7 @@ def test_post_to_studio_inside_subdir(
 
 @pytest.mark.studio()
 def test_post_to_studio_inside_subdir_dvc_exp(
-    tmp_dir, dvc_repo, monkeypatch, mocked_studio_post
+    tmp_dir, dvc_repo, monkeypatch, mocked_studio_post, mocked_dvc_repo
 ):
     mocked_post, _ = mocked_studio_post
     subdir = tmp_dir / "subdir"
@@ -372,7 +370,7 @@ def test_post_to_studio_inside_subdir_dvc_exp(
     live.log_metric("foo", 1)
     live.next_step()
 
-    dvc_path = Path(live.dvc_file).as_posix()
+    dvc_path = Path(live.dvc_file).relative_to(mocked_dvc_repo.root_dir).as_posix()
     metrics_path = Path(live.metrics_file).as_posix()
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
 
@@ -386,9 +384,7 @@ def test_post_to_studio_inside_subdir_dvc_exp(
             "step": 0,
             "metrics": {f"subdir/{metrics_path}": {"data": {"step": 0, "foo": 1}}},
             "plots": {
-                f"subdir/{dvc_path}::subdir/{foo_path}": {
-                    "data": [{"step": 0, "foo": 1.0}]
-                }
+                f"{dvc_path}::subdir/{foo_path}": {"data": [{"step": 0, "foo": 1.0}]}
             },
             "client": "dvclive",
         },
@@ -440,7 +436,7 @@ def test_post_to_studio_images(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     live.log_image("foo.png", ImagePIL.new("RGB", (10, 10), (0, 0, 0)))
     live.next_step()
 
-    dvc_path = Path(live.dvc_file).as_posix()
+    dvc_path = Path(live.dvc_file).relative_to(mocked_dvc_repo.root_dir).as_posix()
     metrics_path = Path(live.metrics_file).as_posix()
     foo_path = (Path(live.plots_dir) / Image.subfolder / "foo.png").as_posix()
 
