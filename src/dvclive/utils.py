@@ -171,3 +171,8 @@ def catch_and_warn(exception, logger, on_finally=None):
         return wrapper
 
     return decorator
+
+
+def rel_path(path, dvc_root_path):
+    absolute_path = Path(path).absolute()
+    return str(Path(os.path.relpath(absolute_path, dvc_root_path)).as_posix())

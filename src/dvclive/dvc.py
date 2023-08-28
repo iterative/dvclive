@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, List, Optional
 
 from dvclive.plots import Image, Metric
 from dvclive.serialize import dump_yaml
-from dvclive.utils import StrPath
+from dvclive.utils import StrPath, rel_path
 
 if TYPE_CHECKING:
     from dvc.repo import Repo
@@ -74,27 +74,23 @@ def get_dvc_repo() -> Optional["Repo"]:
 def make_dvcyaml(live) -> None:  # noqa: C901
     dvcyaml_dir = Path(live.dvc_file).parent.absolute().as_posix()
 
-    def _get_relpath(path):
-        path = Path(path).absolute().as_posix()
-        return os.path.relpath(path, dvcyaml_dir)
-
     dvcyaml = {}
     if live._params:
-        dvcyaml["params"] = [_get_relpath(live.params_file)]
+        dvcyaml["params"] = [rel_path(live.params_file, dvcyaml_dir)]
     if live._metrics or live.summary:
-        dvcyaml["metrics"] = [_get_relpath(live.metrics_file)]
+        dvcyaml["metrics"] = [rel_path(live.metrics_file, dvcyaml_dir)]
     plots: List[Any] = []
     plots_path = Path(live.plots_dir)
     plots_metrics_path = plots_path / Metric.subfolder
     if plots_metrics_path.exists():
-        metrics_config = {_get_relpath(plots_metrics_path): {"x": "step"}}
+        metrics_config = {rel_path(plots_metrics_path, dvcyaml_dir): {"x": "step"}}
         plots.append(metrics_config)
     if live._images:
-        images_path = _get_relpath(plots_path / Image.subfolder)
+        images_path = rel_path(plots_path / Image.subfolder, dvcyaml_dir)
         plots.append(images_path)
     if live._plots:
         for plot in live._plots.values():
-            plot_path = _get_relpath(plot.output_path)
+            plot_path = rel_path(plot.output_path, dvcyaml_dir)
             plots.append({plot_path: plot.plot_config})
     if plots:
         dvcyaml["plots"] = plots
@@ -102,7 +98,7 @@ def make_dvcyaml(live) -> None:  # noqa: C901
     if live._artifacts:
         dvcyaml["artifacts"] = copy.deepcopy(live._artifacts)
         for artifact in dvcyaml["artifacts"].values():  # type: ignore
-            artifact["path"] = _get_relpath(artifact["path"])
+            artifact["path"] = rel_path(artifact["path"], dvcyaml_dir)
 
     if not os.path.exists(live.dvc_file):
         dump_yaml(dvcyaml, live.dvc_file)
