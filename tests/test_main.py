@@ -402,7 +402,9 @@ def test_context_manager_skips_end_calls(tmp_dir):
 
 @pytest.mark.vscode()
 @pytest.mark.parametrize("dvc_root", [True, False])
-def test_vscode_dvclive_step_completed_signal_file(tmp_dir, dvc_root, mocker):
+def test_vscode_dvclive_step_completed_signal_file(
+    tmp_dir, dvc_root, mocker, monkeypatch
+):
     signal_file = os.path.join(
         tmp_dir, ".dvc", "tmp", "exps", "run", "DVCLIVE_STEP_COMPLETED"
     )
@@ -411,6 +413,7 @@ def test_vscode_dvclive_step_completed_signal_file(tmp_dir, dvc_root, mocker):
 
     if dvc_root:
         cwd = tmp_dir / ".dvc" / "tmp" / "exps" / "asdasasf"
+        monkeypatch.setenv(env.DVC_ROOT, tmp_dir)
         (cwd / ".dvc").mkdir(parents=True)
 
     assert not os.path.exists(signal_file)
@@ -423,7 +426,7 @@ def test_vscode_dvclive_step_completed_signal_file(tmp_dir, dvc_root, mocker):
     dvc_repo.scm.no_commits = False
     with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo), mocker.patch(
         "dvclive.live.os.getpid", return_value=test_pid
-    ), mocker.patch("dvclive.live.os.getcwd", return_value=cwd):
+    ):
         dvclive = Live(save_dvc_exp=True)
         assert not os.path.exists(signal_file)
         dvclive.next_step()
