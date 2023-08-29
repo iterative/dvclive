@@ -459,6 +459,11 @@ class Live:
                         " It will not be included in the `artifacts` section.",
                         name,
                     )
+        else:
+            logger.warning(
+                "A DVC repo is required to log artifacts. "
+                f"Skipping `log_artifact({path})`."
+            )
 
     @catch_and_warn(DvcException, logger)
     def cache(self, path):
