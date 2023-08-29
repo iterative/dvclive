@@ -179,7 +179,7 @@ class Live:
         self._baseline_rev = self._dvc_repo.scm.get_rev()
         if self._save_dvc_exp:
             self._exp_name = get_random_exp_name(self._dvc_repo.scm, self._baseline_rev)
-            mark_dvclive_only_started()
+            mark_dvclive_only_started(self._exp_name)
             self._include_untracked.append(self.dir)
 
     def _init_studio(self):
