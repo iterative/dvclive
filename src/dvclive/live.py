@@ -13,15 +13,11 @@ from ruamel.yaml.representer import RepresenterError
 
 from . import env
 from .dvc import (
-    cleanup_dvclive_step_completed,
     ensure_dir_is_tracked,
     find_overlapping_stage,
     get_dvc_repo,
     get_random_exp_name,
     make_dvcyaml,
-    mark_dvclive_only_ended,
-    mark_dvclive_only_started,
-    mark_dvclive_step_completed,
 )
 from .error import (
     InvalidDataTypeError,
@@ -41,6 +37,12 @@ from .utils import (
     inside_notebook,
     matplotlib_installed,
     open_file_in_browser,
+)
+from .vscode import (
+    cleanup_dvclive_step_completed,
+    mark_dvclive_only_ended,
+    mark_dvclive_only_started,
+    mark_dvclive_step_completed,
 )
 
 logger = logging.getLogger("dvclive")
