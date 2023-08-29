@@ -9,6 +9,8 @@ from dvclive.plots import Image, Metric
 from dvclive.serialize import dump_yaml
 from dvclive.utils import StrPath
 
+from . import env
+
 if TYPE_CHECKING:
     from dvc.repo import Repo
     from dvc.stage import Stage
@@ -25,6 +27,11 @@ def _dvc_exps_run_dir(dirname: StrPath) -> str:
 def _dvclive_only_signal_file(root_dir: StrPath) -> str:
     dvc_exps_run_dir = _dvc_exps_run_dir(root_dir)
     return os.path.join(dvc_exps_run_dir, "DVCLIVE_ONLY")
+
+
+def _dvclive_step_completed_signal_file(root_dir: StrPath) -> str:
+    dvc_exps_run_dir = _dvc_exps_run_dir(root_dir)
+    return os.path.join(dvc_exps_run_dir, "DVCLIVE_STEP_COMPLETED")
 
 
 def _find_dvc_root(root: Optional[StrPath] = None) -> Optional[str]:
@@ -44,6 +51,10 @@ def _find_dvc_root(root: Optional[StrPath] = None) -> Optional[str]:
         root = os.path.dirname(root)
 
     return None
+
+
+def _find_non_queue_root() -> Optional[str]:
+    return os.getenv(env.DVC_ROOT) or _find_dvc_root()
 
 
 def _write_file(file: str, contents: Dict[str, Union[str, int]]):
@@ -104,6 +115,39 @@ def make_dvcyaml(live) -> None:
             artifact["path"] = Path(relative_path).as_posix()
 
     dump_yaml(dvcyaml, live.dvc_file)
+
+
+def mark_dvclive_step_completed(step: int) -> None:
+    """
+    https://github.com/iterative/vscode-dvc/issues/4528
+    Signal DVC VS Code extension that
+    a step has been completed for an experiment running in the queue
+    """
+    non_queue_root_dir = _find_non_queue_root()
+
+    if not non_queue_root_dir:
+        return
+
+    exp_run_dir = _dvc_exps_run_dir(non_queue_root_dir)
+    os.makedirs(exp_run_dir, exist_ok=True)
+
+    signal_file = _dvclive_step_completed_signal_file(non_queue_root_dir)
+
+    _write_file(signal_file, {"pid": os.getpid(), "step": step})
+
+
+def cleanup_dvclive_step_completed() -> None:
+    non_queue_root_dir = _find_non_queue_root()
+
+    if not non_queue_root_dir:
+        return
+
+    signal_file = _dvclive_step_completed_signal_file(non_queue_root_dir)
+
+    if not os.path.exists(signal_file):
+        return
+
+    os.remove(signal_file)
 
 
 def mark_dvclive_only_started(exp_name: str) -> None:
