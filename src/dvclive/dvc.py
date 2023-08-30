@@ -17,15 +17,6 @@ def _dvc_dir(dirname: StrPath) -> str:
     return os.path.join(dirname, ".dvc")
 
 
-def _dvc_exps_run_dir(dirname: StrPath) -> str:
-    return os.path.join(dirname, ".dvc", "tmp", "exps", "run")
-
-
-def _dvclive_only_signal_file(root_dir: StrPath) -> str:
-    dvc_exps_run_dir = _dvc_exps_run_dir(root_dir)
-    return os.path.join(dvc_exps_run_dir, "DVCLIVE_ONLY")
-
-
 def _find_dvc_root(root: Optional[StrPath] = None) -> Optional[str]:
     if not root:
         root = os.getcwd()
@@ -43,17 +34,6 @@ def _find_dvc_root(root: Optional[StrPath] = None) -> Optional[str]:
         root = os.path.dirname(root)
 
     return None
-
-
-def _write_file(file: str, contents=""):
-    import builtins
-
-    with builtins.open(file, "w", encoding="utf-8") as fobj:
-        # NOTE: force flushing/writing empty file to disk, otherwise when
-        # run in certain contexts (pytest) file may not actually be written
-        fobj.write(str(contents))
-        fobj.flush()
-        os.fsync(fobj.fileno())
 
 
 def get_dvc_repo() -> Optional["Repo"]:
@@ -103,36 +83,6 @@ def make_dvcyaml(live) -> None:
             artifact["path"] = Path(relative_path).as_posix()
 
     dump_yaml(dvcyaml, live.dvc_file)
-
-
-def mark_dvclive_only_started() -> None:
-    """
-    Signal DVC VS Code extension that
-    an experiment is running in the workspace.
-    """
-    root_dir = _find_dvc_root()
-    if not root_dir:
-        return
-
-    exp_run_dir = _dvc_exps_run_dir(root_dir)
-    os.makedirs(exp_run_dir, exist_ok=True)
-
-    signal_file = _dvclive_only_signal_file(root_dir)
-
-    _write_file(signal_file, os.getpid())
-
-
-def mark_dvclive_only_ended() -> None:
-    root_dir = _find_dvc_root()
-    if not root_dir:
-        return
-
-    signal_file = _dvclive_only_signal_file(root_dir)
-
-    if not os.path.exists(signal_file):
-        return
-
-    os.remove(signal_file)
 
 
 def get_random_exp_name(scm, baseline_rev) -> str:

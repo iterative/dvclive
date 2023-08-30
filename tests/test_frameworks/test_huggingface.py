@@ -139,11 +139,17 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker):
 
 @pytest.mark.parametrize("log_model", ["all", True, None])
 @pytest.mark.parametrize("best", [True, False])
-def test_huggingface_log_model(tmp_dir, model, args, data, mocker, log_model, best):
+def test_huggingface_log_model(tmp_dir, model, data, mocker, log_model, best):
     live_callback = DVCLiveCallback(log_model=log_model)
     log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
 
-    args.load_best_model_at_end = best
+    args = TrainingArguments(
+        "foo",
+        evaluation_strategy="epoch",
+        num_train_epochs=2,
+        save_strategy="epoch",
+        load_best_model_at_end=best,
+    )
     trainer = Trainer(
         model,
         args,

@@ -400,41 +400,6 @@ def test_context_manager_skips_end_calls(tmp_dir):
     assert (tmp_dir / live.metrics_file).exists()
 
 
-@pytest.mark.vscode()
-@pytest.mark.parametrize("dvc_root", [True, False])
-def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
-    signal_file = os.path.join(tmp_dir, ".dvc", "tmp", "exps", "run", "DVCLIVE_ONLY")
-    test_pid = 12345
-
-    if dvc_root:
-        (tmp_dir / ".dvc").mkdir(parents=True)
-
-    assert not os.path.exists(signal_file)
-
-    dvc_repo = mocker.MagicMock()
-    dvc_repo.index.stages = []
-    dvc_repo.config = {}
-    dvc_repo.scm.get_rev.return_value = "current_rev"
-    dvc_repo.scm.get_ref.return_value = None
-    dvc_repo.scm.no_commits = False
-    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo), mocker.patch(
-        "dvclive.live.os.getpid", return_value=test_pid
-    ):
-        dvclive = Live()
-
-    if dvc_root:
-        assert os.path.exists(signal_file)
-        with open(signal_file, encoding="utf-8") as f:
-            assert f.read() == str(test_pid)
-
-    else:
-        assert not os.path.exists(signal_file)
-
-    dvclive.end()
-
-    assert not os.path.exists(signal_file)
-
-
 @pytest.mark.parametrize(
     "dvcyaml",
     [True, False],
