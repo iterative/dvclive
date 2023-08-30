@@ -19,8 +19,6 @@ from .dvc import (
     get_dvc_repo,
     get_random_exp_name,
     make_dvcyaml,
-    mark_dvclive_only_ended,
-    mark_dvclive_only_started,
 )
 from .error import (
     InvalidDataTypeError,
@@ -41,6 +39,12 @@ from .utils import (
     inside_notebook,
     matplotlib_installed,
     open_file_in_browser,
+)
+from .vscode import (
+    cleanup_dvclive_step_completed,
+    mark_dvclive_only_ended,
+    mark_dvclive_only_started,
+    mark_dvclive_step_completed,
 )
 
 logger = logging.getLogger("dvclive")
@@ -308,6 +312,7 @@ class Live:
             self.make_dvcyaml()
 
         self.make_report()
+        mark_dvclive_step_completed(self.step)
         self.step += 1
 
     def log_metric(
@@ -472,6 +477,11 @@ class Live:
                         " It will not be included in the `artifacts` section.",
                         name,
                     )
+        else:
+            logger.warning(
+                "A DVC repo is required to log artifacts. "
+                f"Skipping `log_artifact({path})`."
+            )
 
     @catch_and_warn(DvcException, logger)
     def cache(self, path):
@@ -584,6 +594,8 @@ class Live:
             self._studio_events_to_skip.add("data")
         else:
             self.make_report()
+
+        cleanup_dvclive_step_completed()
 
     def read_step(self):
         if Path(self.metrics_file).exists():

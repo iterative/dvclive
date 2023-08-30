@@ -285,3 +285,13 @@ def test_log_artifact_inside_exp_subdir(tmp_dir, mocker, dvc_repo):
     )
     logger.warning.assert_called_with(msg)
     spy.assert_called_once()
+
+
+def test_log_artifact_no_repo(tmp_dir, mocker):
+    logger = mocker.patch("dvclive.live.logger")
+    (tmp_dir / "data").touch()
+    live = Live()
+    live.log_artifact("data")
+    logger.warning.assert_called_with(
+        "A DVC repo is required to log artifacts. Skipping `log_artifact(data)`."
+    )

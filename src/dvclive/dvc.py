@@ -1,9 +1,8 @@
 # ruff: noqa: SLF001
 import copy
-import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from dvclive.plots import Image, Metric
 from dvclive.serialize import dump_yaml
@@ -16,15 +15,6 @@ if TYPE_CHECKING:
 
 def _dvc_dir(dirname: StrPath) -> str:
     return os.path.join(dirname, ".dvc")
-
-
-def _dvc_exps_run_dir(dirname: StrPath) -> str:
-    return os.path.join(dirname, ".dvc", "tmp", "exps", "run")
-
-
-def _dvclive_only_signal_file(root_dir: StrPath) -> str:
-    dvc_exps_run_dir = _dvc_exps_run_dir(root_dir)
-    return os.path.join(dvc_exps_run_dir, "DVCLIVE_ONLY")
 
 
 def _find_dvc_root(root: Optional[StrPath] = None) -> Optional[str]:
@@ -44,17 +34,6 @@ def _find_dvc_root(root: Optional[StrPath] = None) -> Optional[str]:
         root = os.path.dirname(root)
 
     return None
-
-
-def _write_file(file: str, contents: Dict[str, Union[str, int]]):
-    import builtins
-
-    with builtins.open(file, "w", encoding="utf-8") as fobj:
-        # NOTE: force flushing/writing empty file to disk, otherwise when
-        # run in certain contexts (pytest) file may not actually be written
-        fobj.write(json.dumps(contents, sort_keys=True, ensure_ascii=False))
-        fobj.flush()
-        os.fsync(fobj.fileno())
 
 
 def get_dvc_repo() -> Optional["Repo"]:
@@ -144,36 +123,6 @@ def update_dvcyaml(live, updates):  # noqa: C901
         orig["artifacts"] = {**old_artifacts, **updates.get("artifacts", {})}
         if not orig["artifacts"]:
             del orig["artifacts"]
-
-
-def mark_dvclive_only_started(exp_name: str) -> None:
-    """
-    Signal DVC VS Code extension that
-    an experiment is running in the workspace.
-    """
-    root_dir = _find_dvc_root()
-    if not root_dir:
-        return
-
-    exp_run_dir = _dvc_exps_run_dir(root_dir)
-    os.makedirs(exp_run_dir, exist_ok=True)
-
-    signal_file = _dvclive_only_signal_file(root_dir)
-
-    _write_file(signal_file, {"pid": os.getpid(), "exp_name": exp_name})
-
-
-def mark_dvclive_only_ended() -> None:
-    root_dir = _find_dvc_root()
-    if not root_dir:
-        return
-
-    signal_file = _dvclive_only_signal_file(root_dir)
-
-    if not os.path.exists(signal_file):
-        return
-
-    os.remove(signal_file)
 
 
 def get_random_exp_name(scm, baseline_rev) -> str:
