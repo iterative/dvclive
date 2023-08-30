@@ -67,7 +67,7 @@ def test_log_artifact_with_save_dvc_exp(tmp_dir, mocker, mocked_dvc_repo):
 def test_log_artifact_type_model(tmp_dir, mocked_dvc_repo):
     (tmp_dir / "model.pth").touch()
 
-    with Live(dvcyaml="dvc.yaml") as live:
+    with Live() as live:
         live.log_artifact("model.pth", type="model")
 
     assert load_yaml(live.dvc_file) == {
