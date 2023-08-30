@@ -112,6 +112,10 @@ line_length = 88
 
 [tool.pytest.ini_options]
 addopts = "-ra"
+markers = """
+    vscode: mark a test that verifies behavior that VS Code relies on
+    studio: mark a test that verifies behavior that Studio relies on
+"""
 
 [tool.coverage.run]
 branch = true
