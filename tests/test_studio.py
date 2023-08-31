@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import pytest
+from dvc_studio_client import DEFAULT_STUDIO_URL
 from dvc_studio_client.env import DVC_STUDIO_REPO_URL, DVC_STUDIO_TOKEN
-from dvc_studio_client.post_live_metrics import STUDIO_URL
 from PIL import Image as ImagePIL
 
 from dvclive import Live
@@ -417,7 +417,7 @@ def test_get_dvc_studio_config_env_var(monkeypatch, mocker):
     assert get_dvc_studio_config(live) == {
         "token": "token",
         "repo_url": "repo_url",
-        "url": STUDIO_URL,
+        "url": DEFAULT_STUDIO_URL,
     }
 
 
@@ -427,7 +427,7 @@ def test_get_dvc_studio_config_dvc_repo(mocked_dvc_repo):
     assert get_dvc_studio_config(live) == {
         "token": "token",
         "repo_url": "repo_url",
-        "url": STUDIO_URL,
+        "url": DEFAULT_STUDIO_URL,
     }
 
 
