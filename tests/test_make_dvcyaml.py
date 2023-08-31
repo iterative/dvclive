@@ -340,6 +340,30 @@ def test_make_dvcyaml_update_all(tmp_dir, mocked_dvc_repo):
     assert load_yaml(live.dvc_file) == updated_yaml
 
 
+def test_make_dvcyaml_update_multiple(tmp_dir, mocked_dvc_repo):
+    (tmp_dir / "model.pth").touch()
+
+    live = Live("train", dvcyaml="dvc.yaml")
+    live.log_metric("foo", 2)
+    live.log_artifact("model.pth", type="model", copy=True)
+    make_dvcyaml(live)
+
+    live = Live("eval", dvcyaml="dvc.yaml")
+    live.log_metric("bar", 3)
+    make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == {
+        "metrics": ["train/metrics.json", "eval/metrics.json"],
+        "plots": [
+            {"train/plots/metrics": {"x": "step"}},
+            {"eval/plots/metrics": {"x": "step"}},
+        ],
+        "artifacts": {
+            "model": {"path": "train/artifacts/model.pth", "type": "model"},
+        },
+    }
+
+
 @pytest.mark.parametrize("dvcyaml", [True, False])
 def test_dvcyaml_on_next_step(tmp_dir, dvcyaml, mocked_dvc_repo):
     live = Live(dvcyaml=dvcyaml)
