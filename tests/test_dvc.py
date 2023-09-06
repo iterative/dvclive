@@ -157,9 +157,9 @@ def test_exp_save_skip_on_env_vars(tmp_dir, monkeypatch, mocker):
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
 
-    with mocker.patch("dvclive.live.get_dvc_repo", return_value=None):
-        live = Live()
-        live.end()
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=None)
+    live = Live()
+    live.end()
 
     assert live._dvc_repo is None
     assert live._baseline_rev == "foo"
@@ -176,12 +176,12 @@ def test_exp_save_run_on_dvc_repro(tmp_dir, mocker):
     dvc_repo.scm.get_ref.return_value = None
     dvc_repo.scm.no_commits = False
     dvc_repo.config = {}
-    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
-        live = Live()
-        assert live._save_dvc_exp
-        assert live._baseline_rev is not None
-        assert live._exp_name is not None
-        live.end()
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
+    live = Live()
+    assert live._save_dvc_exp
+    assert live._baseline_rev is not None
+    assert live._exp_name is not None
+    live.end()
 
     dvc_repo.experiments.save.assert_called_with(
         name=live._exp_name, include_untracked=[live.dir], force=True, message=None
@@ -218,9 +218,9 @@ def test_exp_save_with_dvc_files(tmp_dir, mocker):
     dvc_repo.scm.no_commits = False
     dvc_repo.config = {}
 
-    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
-        live = Live()
-        live.end()
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
+    live = Live()
+    live.end()
 
     dvc_repo.experiments.save.assert_called_with(
         name=live._exp_name, include_untracked=[live.dir], force=True, message=None
@@ -316,9 +316,9 @@ def test_no_scm_repo(tmp_dir, mocker):
     dvc_repo = mocker.MagicMock()
     dvc_repo.scm = NoSCM()
 
-    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo):
-        live = Live()
-        assert live._dvc_repo == dvc_repo
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
+    live = Live()
+    assert live._dvc_repo == dvc_repo
 
-        live = Live()
-        assert live._save_dvc_exp is False
+    live = Live()
+    assert live._save_dvc_exp is False

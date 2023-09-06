@@ -122,7 +122,7 @@ def test_make_report_open(tmp_dir, mocker, monkeypatch):
 
     assert not mocked_open.called
 
-    monkeypatch.setenv(DVCLIVE_OPEN, True)
+    monkeypatch.setenv(DVCLIVE_OPEN, "true")
 
     live = Live(report="html")
     live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
