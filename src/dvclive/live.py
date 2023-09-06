@@ -152,6 +152,8 @@ class Live:
         dvc_logger = logging.getLogger("dvc")
         dvc_logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "WARNING").upper())
 
+        self._dvc_file = self._init_dvc_file()
+
         if (self._dvc_repo is None) or isinstance(self._dvc_repo.scm, NoSCM):
             if self._save_dvc_exp:
                 logger.warning(
@@ -185,6 +187,19 @@ class Live:
             self._exp_name = get_random_exp_name(self._dvc_repo.scm, self._baseline_rev)
             mark_dvclive_only_started(self._exp_name)
             self._include_untracked.append(self.dir)
+
+    def _init_dvc_file(self) -> str:
+        if isinstance(self._dvcyaml, str):
+            if os.path.basename(self._dvcyaml) == "dvc.yaml":
+                return self._dvcyaml
+            raise InvalidDvcyamlError
+        if self._dvc_repo is not None:
+            return os.path.join(self._dvc_repo.root_dir, "dvc.yaml")
+        logger.warning(
+            "Can't infer dvcyaml path without a DVC repo. "
+            "`dvc.yaml` file will not be written."
+        )
+        return ""
 
     def _init_studio(self):
         self._dvc_studio_config = get_dvc_studio_config(self)
@@ -265,18 +280,7 @@ class Live:
 
     @property
     def dvc_file(self) -> str:
-        if isinstance(self._dvcyaml, str):
-            if os.path.basename(self._dvcyaml) == "dvc.yaml":
-                return self._dvcyaml
-            raise InvalidDvcyamlError
-        if self._dvc_repo is not None:
-            return os.path.join(self._dvc_repo.root_dir, "dvc.yaml")
-        self._dvcyaml = False
-        logger.warning(
-            "Can't infer dvcyaml path without a DVC repo. "
-            "`dvc.yaml` file will not be written."
-        )
-        return ""
+        return self._dvc_file
 
     @property
     def plots_dir(self) -> str:
