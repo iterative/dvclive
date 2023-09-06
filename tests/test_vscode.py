@@ -19,7 +19,7 @@ def test_vscode_dvclive_step_completed_signal_file(
 
     if dvc_root:
         cwd = tmp_dir / ".dvc" / "tmp" / "exps" / "asdasasf"
-        monkeypatch.setenv(env.DVC_ROOT, tmp_dir)
+        monkeypatch.setenv(env.DVC_ROOT, tmp_dir.as_posix())
         (cwd / ".dvc").mkdir(parents=True)
 
     assert not os.path.exists(signal_file)
@@ -30,28 +30,28 @@ def test_vscode_dvclive_step_completed_signal_file(
     dvc_repo.scm.get_rev.return_value = "current_rev"
     dvc_repo.scm.get_ref.return_value = None
     dvc_repo.scm.no_commits = False
-    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo), mocker.patch(
-        "dvclive.live.os.getpid", return_value=test_pid
-    ):
-        dvclive = Live(save_dvc_exp=True)
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
+    mocker.patch("dvclive.live.os.getpid", return_value=test_pid)
+
+    dvclive = Live(save_dvc_exp=True)
+    assert not os.path.exists(signal_file)
+    dvclive.next_step()
+    assert dvclive.step == 1
+
+    if dvc_root:
+        assert os.path.exists(signal_file)
+        with open(signal_file, encoding="utf-8") as f:
+            assert json.load(f) == {"pid": test_pid, "step": 0}
+
+    else:
         assert not os.path.exists(signal_file)
-        dvclive.next_step()
-        assert dvclive.step == 1
 
-        if dvc_root:
-            assert os.path.exists(signal_file)
-            with open(signal_file, encoding="utf-8") as f:
-                assert json.load(f) == {"pid": test_pid, "step": 0}
+    dvclive.next_step()
+    assert dvclive.step == 2
 
-        else:
-            assert not os.path.exists(signal_file)
-
-        dvclive.next_step()
-        assert dvclive.step == 2
-
-        if dvc_root:
-            with open(signal_file, encoding="utf-8") as f:
-                assert json.load(f) == {"pid": test_pid, "step": 1}
+    if dvc_root:
+        with open(signal_file, encoding="utf-8") as f:
+            assert json.load(f) == {"pid": test_pid, "step": 1}
 
     dvclive.end()
 
@@ -75,10 +75,10 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
     dvc_repo.scm.get_rev.return_value = "current_rev"
     dvc_repo.scm.get_ref.return_value = None
     dvc_repo.scm.no_commits = False
-    with mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo), mocker.patch(
-        "dvclive.live.os.getpid", return_value=test_pid
-    ):
-        dvclive = Live(save_dvc_exp=True)
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
+    mocker.patch("dvclive.live.os.getpid", return_value=test_pid)
+
+    dvclive = Live(save_dvc_exp=True)
 
     if dvc_root:
         assert os.path.exists(signal_file)

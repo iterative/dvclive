@@ -234,7 +234,7 @@ def test_resume_on_first_init(tmp_dir):
 def test_resume_env_var(tmp_dir, monkeypatch):
     assert not Live()._resume
 
-    monkeypatch.setenv(env.DVCLIVE_RESUME, True)
+    monkeypatch.setenv(env.DVCLIVE_RESUME, "true")
     assert Live()._resume
 
 
