@@ -1,8 +1,11 @@
+import os
+
 import pytest
 from PIL import Image
 
 from dvclive import Live
 from dvclive.dvc import make_dvcyaml
+from dvclive.error import InvalidDvcyamlError
 from dvclive.serialize import dump_yaml, load_yaml
 
 
@@ -416,3 +419,39 @@ def test_warn_on_dvcyaml_output_overlap(tmp_dir, mocker, mocked_dvc_repo, dvcyam
         logger.warning.assert_called_with(msg)
     else:
         logger.warning.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "dvcyaml",
+    [True, False, "dvc.yaml"],
+)
+def test_make_dvcyaml(tmp_dir, mocked_dvc_repo, dvcyaml):
+    dvclive = Live("logs", dvcyaml=dvcyaml)
+    dvclive.log_metric("m1", 1)
+    dvclive.next_step()
+
+    if dvcyaml:
+        assert "metrics" in load_yaml(dvclive.dvc_file)
+    else:
+        assert not os.path.exists(dvclive.dvc_file)
+
+    dvclive.make_dvcyaml()
+    assert "metrics" in load_yaml(dvclive.dvc_file)
+
+
+def test_make_dvcyaml_no_repo(tmp_dir, mocker):
+    logger = mocker.patch("dvclive.live.logger")
+    dvclive = Live("logs")
+    dvclive.make_dvcyaml()
+
+    assert not os.path.exists("dvc.yaml")
+    assert not dvclive.dvc_file
+    logger.warning.assert_any_call(
+        "Can't infer dvcyaml path without a DVC repo. "
+        "`dvc.yaml` file will not be written."
+    )
+
+
+def test_make_dvcyaml_invalid(tmp_dir, mocker):
+    with pytest.raises(InvalidDvcyamlError):
+        Live("logs", dvcyaml="invalid")
