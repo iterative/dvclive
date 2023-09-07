@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
 from dvc.exceptions import DvcException
-from dvc_studio_client.post_live_metrics import post_live_metrics
 from funcy import set_in
 from ruamel.yaml.representer import RepresenterError
 
@@ -30,7 +29,7 @@ from .error import (
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
-from .studio import get_dvc_studio_config, get_studio_updates
+from .studio import get_dvc_studio_config, post_to_studio
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -229,22 +228,7 @@ class Live:
             self._studio_events_to_skip.add("data")
             self._studio_events_to_skip.add("done")
         else:
-            response = post_live_metrics(
-                "start",
-                self._baseline_rev,
-                self._exp_name,
-                "dvclive",
-                dvc_studio_config=self._dvc_studio_config,
-                message=self._exp_message,
-            )
-            if not response:
-                logger.debug(
-                    "`studio` report `start` event failed. "
-                    "`studio` report cancelled."
-                )
-                self._studio_events_to_skip.add("start")
-                self._studio_events_to_skip.add("data")
-                self._studio_events_to_skip.add("done")
+            self.post_to_studio("start")
 
     def _init_report(self):
         if self._report_mode not in {None, "html", "notebook", "md"}:
@@ -321,6 +305,9 @@ class Live:
             self.make_dvcyaml()
 
         self.make_report()
+
+        self.post_to_studio("data")
+
         mark_dvclive_step_completed(self.step)
         self.step += 1
 
@@ -530,29 +517,6 @@ class Live:
         dump_json(self.summary, self.metrics_file, cls=NumpyEncoder)
 
     def make_report(self):
-        if "data" not in self._studio_events_to_skip:
-            response = False
-            if post_live_metrics is not None:
-                metrics, params, plots = get_studio_updates(self)
-                response = post_live_metrics(
-                    "data",
-                    self._baseline_rev,
-                    self._exp_name,
-                    "dvclive",
-                    step=self.step,
-                    metrics=metrics,
-                    params=params,
-                    plots=plots,
-                    dvc_studio_config=self._dvc_studio_config,
-                )
-            if not response:
-                logger.warning(
-                    "`post_to_studio` `data` event failed."
-                    " Data will be resent on next call."
-                )
-            else:
-                self._latest_studio_step = self.step
-
         if self._report_mode is not None:
             make_report(self)
             if self._report_mode == "html" and env2bool(env.DVCLIVE_OPEN):
@@ -562,6 +526,10 @@ class Live:
     def make_dvcyaml(self):
         if self.dvc_file:
             make_dvcyaml(self)
+
+    @catch_and_warn(DvcException, logger)
+    def post_to_studio(self, event):
+        post_to_studio(self, event)
 
     def end(self):
         if self._inside_with:
@@ -581,28 +549,11 @@ class Live:
                 self.dir, self._dvc_repo
             )
 
+        self.make_report()
+
         self.save_dvc_exp()
 
-        if "done" not in self._studio_events_to_skip:
-            response = False
-            if post_live_metrics is not None:
-                kwargs = {}
-                if self._experiment_rev:
-                    kwargs["experiment_rev"] = self._experiment_rev
-                response = post_live_metrics(
-                    "done",
-                    self._baseline_rev,
-                    self._exp_name,
-                    "dvclive",
-                    dvc_studio_config=self._dvc_studio_config,
-                    **kwargs,
-                )
-            if not response:
-                logger.warning("`post_to_studio` `done` event failed.")
-            self._studio_events_to_skip.add("done")
-            self._studio_events_to_skip.add("data")
-        else:
-            self.make_report()
+        self.post_to_studio("done")
 
         cleanup_dvclive_step_completed()
 
