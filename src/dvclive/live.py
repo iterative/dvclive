@@ -247,12 +247,9 @@ class Live:
                 self._studio_events_to_skip.add("done")
 
     def _init_report(self):
-        if self._report_mode == "auto":
-            if env2bool("CI") and matplotlib_installed():
-                self._report_mode = "md"
-            else:
-                self._report_mode = "html"
-        elif self._report_mode == "notebook":
+        if self._report_mode not in {None, "html", "notebook", "md"}:
+            raise InvalidReportModeError(self._report_mode)
+        if self._report_mode == "notebook":
             if inside_notebook():
                 from IPython.display import Markdown, display
 
@@ -261,9 +258,17 @@ class Live:
                     Markdown(BLANK_NOTEBOOK_REPORT), display_id=True
                 )
             else:
-                self._report_mode = "html"
-        elif self._report_mode not in {None, "html", "notebook", "md"}:
-            raise InvalidReportModeError(self._report_mode)
+                logger.warning(
+                    "Report mode 'notebook' requires to be"
+                    " inside a notebook. Disabling report."
+                )
+                self._report_mode = None
+        if self._report_mode != "html" and not matplotlib_installed():
+            logger.warning(
+                f"Report mode '{self._report_mode}' requires 'matplotlib'"
+                " to be installed. Disabling report."
+            )
+            self._report_mode = None
         logger.debug(f"{self._report_mode=}")
 
     @property

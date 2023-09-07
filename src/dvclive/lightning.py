@@ -58,7 +58,7 @@ class DVCLiveLogger(Logger):
         experiment=None,
         dir: Optional[str] = None,  # noqa: A002
         resume: bool = False,
-        report: Optional[str] = "auto",
+        report: Optional[str] = None,
         save_dvc_exp: bool = False,
         dvcyaml: bool = True,
         cache_images: bool = False,
