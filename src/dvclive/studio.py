@@ -1,12 +1,16 @@
 # ruff: noqa: SLF001
 import base64
+import logging
 import math
 import os
 
-from dvc_studio_client.post_live_metrics import get_studio_config
+from dvc_studio_client.config import get_studio_config
+from dvc_studio_client.post_live_metrics import post_live_metrics
 
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics, rel_path
+
+logger = logging.getLogger("dvclive")
 
 
 def _get_unsent_datapoints(plot, latest_step):
@@ -92,3 +96,41 @@ def get_dvc_studio_config(live):
     if live._dvc_repo:
         config = live._dvc_repo.config.get("studio")
     return get_studio_config(dvc_studio_config=config)
+
+
+def post_to_studio(live, event):
+    if event in live._studio_events_to_skip:
+        return
+
+    kwargs = {}
+    if event == "start" and live._exp_message:
+        kwargs["message"] = live._exp_message
+    elif event == "data":
+        metrics, params, plots = get_studio_updates(live)
+        kwargs["step"] = live.step
+        kwargs["metrics"] = metrics
+        kwargs["params"] = params
+        kwargs["plots"] = plots
+    elif event == "done" and live._experiment_rev:
+        kwargs["experiment_rev"] = live._experiment_rev
+
+    response = post_live_metrics(
+        event,
+        live._baseline_rev,
+        live._exp_name,
+        "dvclive",
+        dvc_studio_config=live._dvc_studio_config,
+        **kwargs,
+    )
+    if not response:
+        logger.warning(f"`post_to_studio` `{event}` failed.")
+        if event == "start":
+            live._studio_events_to_skip.add("start")
+            live._studio_events_to_skip.add("data")
+            live._studio_events_to_skip.add("done")
+    elif event == "data":
+        live._latest_studio_step = live.step
+
+    if event == "done":
+        live._studio_events_to_skip.add("done")
+        live._studio_events_to_skip.add("data")

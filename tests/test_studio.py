@@ -146,7 +146,7 @@ def test_post_to_studio_end_only_once(tmp_dir, mocked_dvc_repo, mocked_studio_po
 
 
 @pytest.mark.studio()
-def test_post_to_studio_skip_on_env_var(
+def test_post_to_studio_skip_start_and_done_on_env_var(
     tmp_dir, mocked_dvc_repo, mocked_studio_post, monkeypatch
 ):
     mocked_post, _ = mocked_studio_post
@@ -156,6 +156,7 @@ def test_post_to_studio_skip_on_env_var(
 
     with Live() as live:
         live.log_metric("foo", 1)
+        live.next_step()
 
     assert mocked_post.call_count == 2
 
@@ -173,6 +174,7 @@ def test_post_to_studio_dvc_studio_config(
 
     with Live() as live:
         live.log_metric("foo", 1)
+        live.next_step()
 
     assert mocked_post.call_count == 2
 
@@ -184,7 +186,7 @@ def test_post_to_studio_skip_if_no_token(
     monkeypatch,
     mocked_dvc_repo,
 ):
-    mocked_post = mocker.patch("dvclive.live.post_live_metrics", return_value=None)
+    mocked_post = mocker.patch("dvclive.studio.post_live_metrics", return_value=None)
 
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
@@ -232,6 +234,7 @@ def test_post_to_studio_inside_dvc_exp(
 
     with Live() as live:
         live.log_metric("foo", 1)
+        live.next_step()
 
     assert mocked_post.call_count == 2
 
