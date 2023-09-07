@@ -247,7 +247,7 @@ class Live:
                     " inside a notebook. Disabling report."
                 )
                 self._report_mode = None
-        if self._report_mode != "html" and not matplotlib_installed():
+        if self._report_mode in ("notebook", "md") and not matplotlib_installed():
             logger.warning(
                 f"Report mode '{self._report_mode}' requires 'matplotlib'"
                 " to be installed. Disabling report."
