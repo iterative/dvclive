@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, List, Optional
 
 from dvclive.plots import Image, Metric
 from dvclive.serialize import dump_yaml
-from dvclive.utils import StrPath
+from dvclive.utils import StrPath, rel_path
 
 if TYPE_CHECKING:
     from dvc.repo import Repo
@@ -51,38 +51,78 @@ def get_dvc_repo() -> Optional["Repo"]:
             return None
 
 
-def make_dvcyaml(live) -> None:
+def make_dvcyaml(live) -> None:  # noqa: C901
+    dvcyaml_dir = Path(live.dvc_file).parent.absolute().as_posix()
+
     dvcyaml = {}
     if live._params:
-        dvcyaml["params"] = [os.path.relpath(live.params_file, live.dir)]
+        dvcyaml["params"] = [rel_path(live.params_file, dvcyaml_dir)]
     if live._metrics or live.summary:
-        dvcyaml["metrics"] = [os.path.relpath(live.metrics_file, live.dir)]
+        dvcyaml["metrics"] = [rel_path(live.metrics_file, dvcyaml_dir)]
     plots: List[Any] = []
     plots_path = Path(live.plots_dir)
-    metrics_path = plots_path / Metric.subfolder
-    if metrics_path.exists():
-        metrics_relpath = metrics_path.relative_to(live.dir).as_posix()
-        metrics_config = {metrics_relpath: {"x": "step"}}
+    plots_metrics_path = plots_path / Metric.subfolder
+    if plots_metrics_path.exists():
+        metrics_config = {rel_path(plots_metrics_path, dvcyaml_dir): {"x": "step"}}
         plots.append(metrics_config)
     if live._images:
-        images_path = (plots_path / Image.subfolder).relative_to(live.dir)
-        plots.append(images_path.as_posix())
+        images_path = rel_path(plots_path / Image.subfolder, dvcyaml_dir)
+        plots.append(images_path)
     if live._plots:
         for plot in live._plots.values():
-            plot_path = plot.output_path.relative_to(live.dir)
-            plots.append({plot_path.as_posix(): plot.plot_config})
+            plot_path = rel_path(plot.output_path, dvcyaml_dir)
+            plots.append({plot_path: plot.plot_config})
     if plots:
         dvcyaml["plots"] = plots
 
     if live._artifacts:
         dvcyaml["artifacts"] = copy.deepcopy(live._artifacts)
         for artifact in dvcyaml["artifacts"].values():  # type: ignore
-            abs_path = os.path.abspath(artifact["path"])
-            abs_dir = os.path.realpath(live.dir)
-            relative_path = os.path.relpath(abs_path, abs_dir)
-            artifact["path"] = Path(relative_path).as_posix()
+            artifact["path"] = rel_path(artifact["path"], dvcyaml_dir)
 
-    dump_yaml(dvcyaml, live.dvc_file)
+    if not os.path.exists(live.dvc_file):
+        dump_yaml(dvcyaml, live.dvc_file)
+    else:
+        update_dvcyaml(live, dvcyaml)
+
+
+def update_dvcyaml(live, updates):  # noqa: C901
+    from dvc.utils.serialize import modify_yaml
+
+    dvcyaml_dir = os.path.abspath(os.path.dirname(live.dvc_file))
+    dvclive_dir = os.path.relpath(live.dir, dvcyaml_dir) + "/"
+
+    def _drop_stale_dvclive_entries(entries):
+        non_dvclive = []
+        for e in entries:
+            if isinstance(e, str):
+                if dvclive_dir not in e:
+                    non_dvclive.append(e)
+            elif isinstance(e, dict) and len(e) == 1:
+                if dvclive_dir not in next(iter(e.keys())):
+                    non_dvclive.append(e)
+            else:
+                non_dvclive.append(e)
+        return non_dvclive
+
+    def _update_entries(old, new, key):
+        keepers = _drop_stale_dvclive_entries(old.get(key, []))
+        old[key] = keepers + new.get(key, [])
+        if not old[key]:
+            del old[key]
+        return old
+
+    with modify_yaml(live.dvc_file) as orig:
+        orig = _update_entries(orig, updates, "params")  # noqa: PLW2901
+        orig = _update_entries(orig, updates, "metrics")  # noqa: PLW2901
+        orig = _update_entries(orig, updates, "plots")  # noqa: PLW2901
+        old_artifacts = {}
+        for name, meta in orig.get("artifacts", {}).items():
+            if dvclive_dir not in meta.get("path", dvclive_dir):
+                old_artifacts[name] = meta
+        orig["artifacts"] = {**old_artifacts, **updates.get("artifacts", {})}
+        if not orig["artifacts"]:
+            del orig["artifacts"]
 
 
 def get_random_exp_name(scm, baseline_rev) -> str:

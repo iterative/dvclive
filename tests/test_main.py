@@ -6,7 +6,7 @@ import pytest
 from PIL import Image
 
 from dvclive import Live, env
-from dvclive.error import InvalidParameterTypeError
+from dvclive.error import InvalidDvcyamlError, InvalidParameterTypeError
 from dvclive.plots import Metric
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics, parse_tsv
@@ -158,8 +158,12 @@ def test_nested_logging(tmp_dir):
     "html",
     [True, False],
 )
-def test_cleanup(tmp_dir, html):
-    dvclive = Live("logs", report="html" if html else None)
+@pytest.mark.parametrize(
+    "dvcyaml",
+    ["dvc.yaml", "logs/dvc.yaml"],
+)
+def test_cleanup(tmp_dir, html, dvcyaml):
+    dvclive = Live("logs", report="html" if html else None, dvcyaml=dvcyaml)
     dvclive.log_metric("m1", 1)
     dvclive.next_step()
 
@@ -168,6 +172,7 @@ def test_cleanup(tmp_dir, html):
         html_path.touch()
 
     (tmp_dir / "logs" / "some_user_file.txt").touch()
+    (tmp_dir / "dvc.yaml").touch()
 
     assert (tmp_dir / dvclive.plots_dir / Metric.subfolder / "m1.tsv").is_file()
     assert (tmp_dir / dvclive.metrics_file).is_file()
@@ -179,7 +184,10 @@ def test_cleanup(tmp_dir, html):
     assert (tmp_dir / "logs" / "some_user_file.txt").is_file()
     assert not (tmp_dir / dvclive.plots_dir / Metric.subfolder).exists()
     assert not (tmp_dir / dvclive.metrics_file).is_file()
-    assert not (tmp_dir / dvclive.dvc_file).is_file()
+    if dvcyaml == "dvc.yaml":
+        assert (tmp_dir / dvcyaml).is_file()
+    if dvcyaml == "logs/dvc.yaml":
+        assert not (tmp_dir / dvcyaml).is_file()
     assert not (html_path).is_file()
 
 
@@ -402,16 +410,38 @@ def test_context_manager_skips_end_calls(tmp_dir):
 
 @pytest.mark.parametrize(
     "dvcyaml",
-    [True, False],
+    [True, False, "dvc.yaml"],
 )
-def test_make_dvcyaml(tmp_dir, dvcyaml):
+def test_make_dvcyaml(tmp_dir, mocked_dvc_repo, dvcyaml):
     dvclive = Live("logs", dvcyaml=dvcyaml)
     dvclive.log_metric("m1", 1)
+    dvclive.next_step()
+
+    if dvcyaml:
+        assert "metrics" in load_yaml(dvclive.dvc_file)
+    else:
+        assert not os.path.exists(dvclive.dvc_file)
+
+    dvclive.make_dvcyaml()
+    assert "metrics" in load_yaml(dvclive.dvc_file)
+
+
+def test_make_dvcyaml_no_repo(tmp_dir, mocker):
+    logger = mocker.patch("dvclive.live.logger")
+    dvclive = Live("logs")
     dvclive.make_dvcyaml()
 
-    dvcyaml_path = tmp_dir / dvclive.dir / "dvc.yaml"
+    assert not os.path.exists("dvc.yaml")
+    assert not dvclive.dvc_file
+    logger.warning.assert_any_call(
+        "Can't infer dvcyaml path without a DVC repo. "
+        "`dvc.yaml` file will not be written."
+    )
 
-    assert dvcyaml_path.is_file()
+
+def test_make_dvcyaml_invalid(tmp_dir, mocker):
+    with pytest.raises(InvalidDvcyamlError):
+        Live("logs", dvcyaml="invalid")
 
 
 def test_suppress_dvc_logs(tmp_dir, mocked_dvc_repo):

@@ -4,16 +4,11 @@ import pytest
 from dvc.exceptions import DvcException
 from dvc.repo import Repo
 from dvc.scm import NoSCM
-from PIL import Image
-from ruamel.yaml import YAML
 from scmrepo.git import Git
 
 from dvclive import Live
-from dvclive.dvc import get_dvc_repo, make_dvcyaml
+from dvclive.dvc import get_dvc_repo
 from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME
-from dvclive.serialize import load_yaml
-
-YAML_LOADER = YAML(typ="safe")
 
 
 def test_get_dvc_repo(tmp_dir):
@@ -28,110 +23,6 @@ def test_get_dvc_repo_subdir(tmp_dir):
     subdir.mkdir()
     os.chdir(subdir)
     assert get_dvc_repo().root_dir == str(tmp_dir)
-
-
-def test_make_dvcyaml_empty(tmp_dir):
-    live = Live()
-    make_dvcyaml(live)
-
-    assert load_yaml(live.dvc_file) == {}
-
-
-def test_make_dvcyaml_param(tmp_dir):
-    live = Live()
-    live.log_param("foo", 1)
-    make_dvcyaml(live)
-
-    assert load_yaml(live.dvc_file) == {
-        "params": ["params.yaml"],
-    }
-
-
-def test_make_dvcyaml_metrics(tmp_dir):
-    live = Live()
-    live.log_metric("bar", 2)
-    make_dvcyaml(live)
-
-    assert load_yaml(live.dvc_file) == {
-        "metrics": ["metrics.json"],
-        "plots": [{"plots/metrics": {"x": "step"}}],
-    }
-
-
-def test_make_dvcyaml_metrics_no_plots(tmp_dir):
-    live = Live()
-    live.log_metric("bar", 2, plot=False)
-    make_dvcyaml(live)
-
-    assert load_yaml(live.dvc_file) == {
-        "metrics": ["metrics.json"],
-    }
-
-
-def test_make_dvcyaml_summary(tmp_dir):
-    live = Live()
-    live.summary["bar"] = 2
-    make_dvcyaml(live)
-
-    assert load_yaml(live.dvc_file) == {
-        "metrics": ["metrics.json"],
-    }
-
-
-def test_make_dvcyaml_all_plots(tmp_dir):
-    live = Live()
-    live.log_param("foo", 1)
-    live.log_metric("bar", 2)
-    live.log_image("img.png", Image.new("RGB", (10, 10), (250, 250, 250)))
-    live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [0, 1, 1, 0])
-    live.log_sklearn_plot(
-        "confusion_matrix",
-        [0, 0, 1, 1],
-        [0, 1, 1, 0],
-        name="confusion_matrix_normalized",
-        normalized=True,
-    )
-    live.log_sklearn_plot("roc", [0, 0, 1, 1], [0.0, 0.5, 0.5, 0.0], "custom_name_roc")
-    make_dvcyaml(live)
-
-    assert load_yaml(live.dvc_file) == {
-        "metrics": ["metrics.json"],
-        "params": ["params.yaml"],
-        "plots": [
-            {"plots/metrics": {"x": "step"}},
-            "plots/images",
-            {
-                "plots/sklearn/confusion_matrix.json": {
-                    "template": "confusion",
-                    "x": "actual",
-                    "y": "predicted",
-                    "title": "Confusion Matrix",
-                    "x_label": "True Label",
-                    "y_label": "Predicted Label",
-                },
-            },
-            {
-                "plots/sklearn/confusion_matrix_normalized.json": {
-                    "template": "confusion_normalized",
-                    "title": "Confusion Matrix",
-                    "x": "actual",
-                    "x_label": "True Label",
-                    "y": "predicted",
-                    "y_label": "Predicted Label",
-                }
-            },
-            {
-                "plots/sklearn/custom_name_roc.json": {
-                    "template": "simple",
-                    "x": "fpr",
-                    "y": "tpr",
-                    "title": "Receiver operating characteristic (ROC)",
-                    "x_label": "False Positive Rate",
-                    "y_label": "True Positive Rate",
-                }
-            },
-        ],
-    }
 
 
 @pytest.mark.parametrize("save", [True, False])
@@ -186,26 +77,6 @@ def test_exp_save_run_on_dvc_repro(tmp_dir, mocker):
     dvc_repo.experiments.save.assert_called_with(
         name=live._exp_name, include_untracked=[live.dir], force=True, message=None
     )
-
-
-@pytest.mark.parametrize("dvcyaml", [True, False])
-def test_dvcyaml_on_next_step(tmp_dir, dvcyaml, mocked_dvc_repo):
-    live = Live(dvcyaml=dvcyaml)
-    live.next_step()
-    if dvcyaml:
-        assert (tmp_dir / live.dvc_file).exists()
-    else:
-        assert not (tmp_dir / live.dvc_file).exists()
-
-
-@pytest.mark.parametrize("dvcyaml", [True, False])
-def test_dvcyaml_on_end(tmp_dir, dvcyaml, mocked_dvc_repo):
-    live = Live(dvcyaml=dvcyaml)
-    live.end()
-    if dvcyaml:
-        assert (tmp_dir / live.dvc_file).exists()
-    else:
-        assert not (tmp_dir / live.dvc_file).exists()
 
 
 def test_exp_save_with_dvc_files(tmp_dir, mocker):
@@ -284,21 +155,6 @@ def test_errors_on_git_add_are_catched(tmp_dir, mocked_dvc_repo, monkeypatch):
 
     with Live() as live:
         live.summary["foo"] = 1
-
-
-def test_make_dvcyaml_idempotent(tmp_dir, mocked_dvc_repo):
-    (tmp_dir / "model.pth").touch()
-
-    with Live() as live:
-        live.log_artifact("model.pth", type="model")
-
-    live.make_dvcyaml()
-
-    assert load_yaml(live.dvc_file) == {
-        "artifacts": {
-            "model": {"path": "../model.pth", "type": "model"},
-        }
-    }
 
 
 def test_exp_save_message(tmp_dir, mocked_dvc_repo):
