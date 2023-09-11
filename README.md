@@ -22,19 +22,11 @@ metadata in simple file formats, which is fully compatible with DVC.
 
 ______________________________________________________________________
 
-# Quickstart (Google Colab)
+# Quickstart
 
-<p align='center'>
-<a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-Quickstart.ipynb">
-Python API Overview
-</a>
-</p>
-
-<p align='center'>
-<a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-PyTorch-Lightning.ipynb">
-PyTorch Lightning Example
-</a>
-</p>
+| Python API Overview | PyTorch Lightning | Scikit-learn | Ultralytics YOLO v8 |
+|--------|--------|--------|--------|
+| <a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-Quickstart.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> | <a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-PyTorch-Lightning.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> | <a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLIve-scikit-learn.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> | <a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-YOLO.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> |
 
 ## Install *dvclive*
 
@@ -62,7 +54,7 @@ from dvclive import Live
 
 params = {"learning_rate": 0.002, "optimizer": "Adam", "epochs": 20}
 
-with Live(save_dvc_exp=True) as live:
+with Live() as live:
 
     # log a parameters
     for param in params:

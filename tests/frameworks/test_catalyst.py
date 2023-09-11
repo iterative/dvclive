@@ -85,24 +85,6 @@ def test_catalyst_callback(tmp_dir, runner, runner_params, mocker):
     assert any("accuracy" in x.name for x in valid_path.iterdir())
 
 
-def test_catalyst_model_file(tmp_dir, runner, runner_params):
-    runner.train(
-        **runner_params,
-        num_epochs=2,
-        callbacks=[
-            dl.AccuracyCallback(input_key="logits", target_key="targets"),
-            DVCLiveCallback("model.pth"),
-        ],
-        logdir="./logs",
-        valid_loader="valid",
-        valid_metric="loss",
-        minimize_valid_metric=True,
-        verbose=True,
-        load_best_on_end=True,
-    )
-    assert (tmp_dir / "model.pth").is_file()
-
-
 def test_catalyst_pass_logger():
     logger = Live("train_logs")
 

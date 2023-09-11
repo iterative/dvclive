@@ -38,7 +38,11 @@ class XORDataset(Dataset):
 
 class LitXOR(LightningModule):
     def __init__(
-        self, latent_dims=4, optim=SGD, optim_params={"lr": 0.01}  # noqa: B006
+        self,
+        latent_dims=4,
+        optim=SGD,
+        optim_params={"lr": 0.01},  # noqa: B006
+        input_size=[256, 256, 256],  # noqa: B006
     ):
         super().__init__()
 
@@ -93,7 +97,9 @@ class LitXOR(LightningModule):
 
 def test_lightning_integration(tmp_dir, mocker):
     # init model
-    model = LitXOR(latent_dims=8, optim=Adam, optim_params={"lr": 0.02})
+    model = LitXOR(
+        latent_dims=8, optim=Adam, optim_params={"lr": 0.02}, input_size=[128, 128, 128]
+    )
     # init logger
     dvclive_logger = DVCLiveLogger("test_run", dir="logs")
     live = dvclive_logger.experiment
@@ -124,6 +130,7 @@ def test_lightning_integration(tmp_dir, mocker):
         "latent_dims": 8,
         "optim": "Adam",
         "optim_params": {"lr": 0.02},
+        "input_size": [128, 128, 128],
     }
 
 
@@ -192,6 +199,9 @@ def test_lightning_log_model(tmp_dir, mocker, log_model, save_top_k):
     if log_model in [True, "all"]:
         trainer.fit(model)
         assert len(os.listdir(tmp_dir / "model")) == num_checkpoints
+        log_artifact.assert_any_call(
+            checkpoint.best_model_path, name="best", type="model", copy=True
+        )
 
 
 def test_lightning_steps(tmp_dir, mocker):
@@ -255,7 +265,7 @@ def test_lightning_val_udpates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio
     mocked_post, _ = mocked_studio_post
 
     model = ValLitXOR()
-    dvclive_logger = DVCLiveLogger(save_dvc_exp=True)
+    dvclive_logger = DVCLiveLogger()
     trainer = Trainer(
         logger=dvclive_logger,
         max_steps=4,

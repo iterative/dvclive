@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from IPython import display
 from PIL import Image
 
 from dvclive import Live
@@ -71,21 +70,20 @@ def test_get_renderers(tmp_dir, mocker):
 
 
 def test_report_init(monkeypatch, mocker):
-    monkeypatch.setenv("CI", "false")
-    live = Live()
-    assert live._report_mode == "html"
-
-    monkeypatch.setenv("CI", "true")
-    live = Live()
-    assert live._report_mode == "md"
+    mocker.patch("dvclive.live.inside_notebook", return_value=False)
+    live = Live(report="notebook")
+    assert live._report_mode is None
 
     mocker.patch("dvclive.live.matplotlib_installed", return_value=False)
-    live = Live()
-    assert live._report_mode == "html"
+    live = Live(report="md")
+    assert live._report_mode is None
 
-    for report in (None, "html", "md"):
-        live = Live(report=report)
-        assert live._report_mode == report
+    mocker.patch("dvclive.live.matplotlib_installed", return_value=True)
+    live = Live(report="md")
+    assert live._report_mode == "md"
+
+    live = Live(report="html")
+    assert live._report_mode == "html"
 
     with pytest.raises(InvalidReportModeError, match="Got foo instead."):
         Live(report="foo")
@@ -116,15 +114,15 @@ def test_make_report_open(tmp_dir, mocker, monkeypatch):
 
     assert not mocked_open.called
 
-    live = Live(report=None)
+    live = Live(report="html")
     live.log_metric("foo", 1)
     live.next_step()
 
     assert not mocked_open.called
 
-    monkeypatch.setenv(DVCLIVE_OPEN, True)
+    monkeypatch.setenv(DVCLIVE_OPEN, "true")
 
-    live = Live()
+    live = Live(report="html")
     live.log_sklearn_plot("confusion_matrix", [0, 0, 1, 1], [1, 0, 0, 1])
     live.make_report()
 
@@ -202,20 +200,6 @@ def test_get_plot_renderers_custom(tmp_dir):
             {"rev": "workspace", "x": 3, "y": 4},
         ]
         assert plot_renderer.properties == live._plots[name].plot_config
-
-
-def test_report_auto_doesnt_set_notebook(tmp_dir, mocker):
-    mocker.patch("dvclive.live.inside_notebook", return_value=True)
-    live = Live()
-    assert live._report_mode != "notebook"
-
-
-def test_report_notebook_fallsback_to_html(tmp_dir, mocker):
-    mocker.patch("dvclive.live.inside_notebook", return_value=False)
-    spy = mocker.spy(display, "display")
-    live = Live(report="notebook")
-    assert live._report_mode == "html"
-    assert not spy.called
 
 
 def test_report_notebook(tmp_dir, mocker):

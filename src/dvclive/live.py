@@ -1,26 +1,27 @@
+import glob
 import json
 import logging
+import math
 import os
 import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
-from dvc_studio_client.post_live_metrics import post_live_metrics
+from dvc.exceptions import DvcException
 from funcy import set_in
-from pathspec import PathSpec
 from ruamel.yaml.representer import RepresenterError
 
 from . import env
 from .dvc import (
+    ensure_dir_is_tracked,
+    find_overlapping_stage,
     get_dvc_repo,
     get_random_exp_name,
-    make_checkpoint,
     make_dvcyaml,
-    mark_dvclive_only_ended,
-    mark_dvclive_only_started,
 )
 from .error import (
     InvalidDataTypeError,
+    InvalidDvcyamlError,
     InvalidParameterTypeError,
     InvalidPlotTypeError,
     InvalidReportModeError,
@@ -28,17 +29,25 @@ from .error import (
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
-from .studio import get_dvc_studio_config, get_studio_updates
+from .studio import get_dvc_studio_config, post_to_studio
 from .utils import (
     StrPath,
+    catch_and_warn,
     clean_and_copy_into,
     env2bool,
     inside_notebook,
     matplotlib_installed,
     open_file_in_browser,
 )
+from .vscode import (
+    cleanup_dvclive_step_completed,
+    mark_dvclive_only_ended,
+    mark_dvclive_only_started,
+    mark_dvclive_step_completed,
+)
 
 logger = logging.getLogger("dvclive")
+logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "WARNING").upper())
 handler = logging.StreamHandler()
 formatter = logging.Formatter("%(levelname)s:%(name)s:%(message)s")
 handler.setFormatter(formatter)
@@ -52,9 +61,9 @@ class Live:
         self,
         dir: str = "dvclive",  # noqa: A002
         resume: bool = False,
-        report: Optional[str] = "auto",
-        save_dvc_exp: bool = False,
-        dvcyaml: bool = True,
+        report: Optional[str] = None,
+        save_dvc_exp: bool = True,
+        dvcyaml: Union[str, bool] = True,
         cache_images: bool = False,
         exp_message: Optional[str] = None,
     ):
@@ -79,11 +88,6 @@ class Live:
         self._report_notebook = None
         self._init_report()
 
-        if self._resume:
-            self._init_resume()
-        else:
-            self._init_cleanup()
-
         self._baseline_rev: Optional[str] = None
         self._exp_name: Optional[str] = None
         self._exp_message: Optional[str] = exp_message
@@ -92,6 +96,11 @@ class Live:
         self._dvc_repo = None
         self._include_untracked: List[str] = []
         self._init_dvc()
+
+        if self._resume:
+            self._init_resume()
+        else:
+            self._init_cleanup()
 
         self._latest_studio_step = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
@@ -114,16 +123,18 @@ class Live:
 
         for f in (
             self.metrics_file,
-            self.report_file,
             self.params_file,
+            os.path.join(self.dir, "report.html"),
+            os.path.join(self.dir, "report.md"),
         ):
             if f and os.path.exists(f):
                 os.remove(f)
 
-        if self.dvc_file and os.path.exists(self.dvc_file):
-            os.remove(self.dvc_file)
+        for dvc_file in glob.glob(os.path.join(self.dir, "**dvc.yaml")):
+            os.remove(dvc_file)
 
-    def _init_dvc(self):
+    @catch_and_warn(DvcException, logger)
+    def _init_dvc(self):  # noqa: C901
         from dvc.scm import NoSCM
 
         self._dvc_repo = get_dvc_repo()
@@ -144,6 +155,8 @@ class Live:
         dvc_logger = logging.getLogger("dvc")
         dvc_logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "WARNING").upper())
 
+        self._dvc_file = self._init_dvc_file()
+
         if (self._dvc_repo is None) or isinstance(self._dvc_repo.scm, NoSCM):
             if self._save_dvc_exp:
                 logger.warning(
@@ -161,14 +174,35 @@ class Live:
                 self._save_dvc_exp = False
             return
 
+        if self._dvcyaml and (
+            stage := find_overlapping_stage(self._dvc_repo, self.dvc_file)
+        ):
+            logger.warning(
+                f"'{self.dvc_file}' is in outputs of stage '{stage.addressing}'."
+                "\nRemove it from outputs to make DVCLive work as expected."
+            )
+
         if self._inside_dvc_exp:
             return
 
         self._baseline_rev = self._dvc_repo.scm.get_rev()
 
         if self._save_dvc_exp:
-            mark_dvclive_only_started()
+            mark_dvclive_only_started(self._exp_name)
             self._include_untracked.append(self.dir)
+
+    def _init_dvc_file(self) -> str:
+        if isinstance(self._dvcyaml, str):
+            if os.path.basename(self._dvcyaml) == "dvc.yaml":
+                return self._dvcyaml
+            raise InvalidDvcyamlError
+        if self._dvc_repo is not None:
+            return os.path.join(self._dvc_repo.root_dir, "dvc.yaml")
+        logger.warning(
+            "Can't infer dvcyaml path without a DVC repo. "
+            "`dvc.yaml` file will not be written."
+        )
+        return ""
 
     def _init_studio(self):
         self._dvc_studio_config = get_dvc_studio_config(self)
@@ -182,30 +216,12 @@ class Live:
             self._studio_events_to_skip.add("start")
             self._studio_events_to_skip.add("done")
         else:
-            response = post_live_metrics(
-                "start",
-                self._baseline_rev,
-                self._exp_name,
-                "dvclive",
-                dvc_studio_config=self._dvc_studio_config,
-                message=self._exp_message,
-            )
-            if not response:
-                logger.debug(
-                    "`studio` report `start` event failed. "
-                    "`studio` report cancelled."
-                )
-                self._studio_events_to_skip.add("start")
-                self._studio_events_to_skip.add("data")
-                self._studio_events_to_skip.add("done")
+            self.post_to_studio("start")
 
     def _init_report(self):
-        if self._report_mode == "auto":
-            if env2bool("CI") and matplotlib_installed():
-                self._report_mode = "md"
-            else:
-                self._report_mode = "html"
-        elif self._report_mode == "notebook":
+        if self._report_mode not in {None, "html", "notebook", "md"}:
+            raise InvalidReportModeError(self._report_mode)
+        if self._report_mode == "notebook":
             if inside_notebook():
                 from IPython.display import Markdown, display
 
@@ -214,9 +230,17 @@ class Live:
                     Markdown(BLANK_NOTEBOOK_REPORT), display_id=True
                 )
             else:
-                self._report_mode = "html"
-        elif self._report_mode not in {None, "html", "notebook", "md"}:
-            raise InvalidReportModeError(self._report_mode)
+                logger.warning(
+                    "Report mode 'notebook' requires to be"
+                    " inside a notebook. Disabling report."
+                )
+                self._report_mode = None
+        if self._report_mode in ("notebook", "md") and not matplotlib_installed():
+            logger.warning(
+                f"Report mode '{self._report_mode}' requires 'matplotlib'"
+                " to be installed. Disabling report."
+            )
+            self._report_mode = None
         logger.debug(f"{self._report_mode=}")
 
     @property
@@ -233,7 +257,7 @@ class Live:
 
     @property
     def dvc_file(self) -> str:
-        return os.path.join(self.dir, "dvc.yaml")
+        return self._dvc_file
 
     @property
     def plots_dir(self) -> str:
@@ -269,18 +293,24 @@ class Live:
             self.make_dvcyaml()
 
         self.make_report()
-        self.make_checkpoint()
+
+        self.post_to_studio("data")
+
+        mark_dvclive_step_completed(self.step)
         self.step += 1
 
     def log_metric(
         self,
         name: str,
-        val: Union[int, float],
+        val: Union[int, float, str],
         timestamp: bool = False,
         plot: bool = True,
     ):
         if not Metric.could_log(val):
             raise InvalidDataTypeError(name, type(val))
+
+        if not isinstance(val, str) and (math.isnan(val) or math.isinf(val)):
+            val = str(val)
 
         if name in self._metrics:
             metric = self._metrics[name]
@@ -431,41 +461,37 @@ class Live:
                         " It will not be included in the `artifacts` section.",
                         name,
                     )
+        else:
+            logger.warning(
+                "A DVC repo is required to log artifacts. "
+                f"Skipping `log_artifact({path})`."
+            )
 
+    @catch_and_warn(DvcException, logger)
     def cache(self, path):
-        try:
-            if self._inside_dvc_exp:
-                msg = f"Skipping dvc add {path} because `dvc exp run` is running."
-                path_stage = None
-                for stage in self._dvc_repo.index.stages:
-                    for out in stage.outs:
-                        if out.fspath == str(Path(path).absolute()):
-                            path_stage = stage
-                            break
-                if not path_stage:
-                    msg += (
-                        "\nTo track it automatically during `dvc exp run`, "
-                        "add it as an output of the pipeline stage."
-                    )
-                    logger.warning(msg)
-                elif path_stage.cmd:
-                    msg += "\nIt is already being tracked automatically."
-                    logger.info(msg)
-                else:
-                    msg += (
-                        "\nTo track it automatically during `dvc exp run`:"
-                        f"\n1. Run `dvc exp remove {path_stage.addressing}` "
-                        "to stop tracking it outside the pipeline."
-                        "\n2. Add it as an output of the pipeline stage."
-                    )
-                    logger.warning(msg)
-                return
+        if self._inside_dvc_exp:
+            existing_stage = find_overlapping_stage(self._dvc_repo, path)
 
-            stage = self._dvc_repo.add(str(path))
+            if existing_stage:
+                if existing_stage.cmd:
+                    logger.info(
+                        f"Skipping `dvc add {path}` because it is already being"
+                        " tracked automatically as an output of `dvc exp run`."
+                    )
+                    return  # skip caching
+                logger.warning(
+                    f"To track '{path}' automatically during `dvc exp run`:"
+                    f"\n1. Run `dvc remove {existing_stage.addressing}` "
+                    "to stop tracking it outside the pipeline."
+                    "\n2. Add it as an output of the pipeline stage."
+                )
+            else:
+                logger.warning(
+                    f"To track '{path}' automatically during `dvc exp run`, "
+                    "add it as an output of the pipeline stage."
+                )
 
-        except Exception as e:  # noqa: BLE001
-            logger.warning(f"Failed to dvc add {path}: {e}")
-            return
+        stage = self._dvc_repo.add(str(path))
 
         dvc_file = stage[0].addressing
 
@@ -479,36 +505,19 @@ class Live:
         dump_json(self.summary, self.metrics_file, cls=NumpyEncoder)
 
     def make_report(self):
-        if "data" not in self._studio_events_to_skip:
-            response = False
-            if post_live_metrics is not None:
-                metrics, params, plots = get_studio_updates(self)
-                response = post_live_metrics(
-                    "data",
-                    self._baseline_rev,
-                    self._exp_name,
-                    "dvclive",
-                    step=self.step,
-                    metrics=metrics,
-                    params=params,
-                    plots=plots,
-                    dvc_studio_config=self._dvc_studio_config,
-                )
-            if not response:
-                logger.warning(
-                    "`post_to_studio` `data` event failed."
-                    " Data will be resent on next call."
-                )
-            else:
-                self._latest_studio_step = self.step
-
         if self._report_mode is not None:
             make_report(self)
             if self._report_mode == "html" and env2bool(env.DVCLIVE_OPEN):
                 open_file_in_browser(self.report_file)
 
+    @catch_and_warn(DvcException, logger)
     def make_dvcyaml(self):
-        make_dvcyaml(self)
+        if self.dvc_file:
+            make_dvcyaml(self)
+
+    @catch_and_warn(DvcException, logger)
+    def post_to_studio(self, event):
+        post_to_studio(self, event)
 
     def end(self):
         if self._inside_with:
@@ -523,34 +532,18 @@ class Live:
         if self._dvcyaml:
             self.make_dvcyaml()
 
-        self._ensure_paths_are_tracked_in_dvc_exp()
+        if self._inside_dvc_exp and self._dvc_repo:
+            catch_and_warn(DvcException, logger)(ensure_dir_is_tracked)(
+                self.dir, self._dvc_repo
+            )
+
+        self.make_report()
 
         self.save_dvc_exp()
 
-        if "done" not in self._studio_events_to_skip:
-            response = False
-            if post_live_metrics is not None:
-                kwargs = {}
-                if self._experiment_rev:
-                    kwargs["experiment_rev"] = self._experiment_rev
-                response = post_live_metrics(
-                    "done",
-                    self._baseline_rev,
-                    self._exp_name,
-                    "dvclive",
-                    dvc_studio_config=self._dvc_studio_config,
-                    **kwargs,
-                )
-            if not response:
-                logger.warning("`post_to_studio` `done` event failed.")
-            self._studio_events_to_skip.add("done")
-            self._studio_events_to_skip.add("data")
-        else:
-            self.make_report()
+        self.post_to_studio("done")
 
-    def make_checkpoint(self):
-        if env2bool(env.DVC_CHECKPOINT):
-            make_checkpoint()
+        cleanup_dvclive_step_completed()
 
     def read_step(self):
         if Path(self.metrics_file).exists():
@@ -570,35 +563,12 @@ class Live:
         self._inside_with = False
         self.end()
 
-    def _ensure_paths_are_tracked_in_dvc_exp(self):
-        if self._inside_dvc_exp and self._dvc_repo:
-            dir_spec = PathSpec.from_lines("gitwildmatch", [self.dir])
-            outs_spec = PathSpec.from_lines(
-                "gitwildmatch", [str(o) for o in self._dvc_repo.index.outs]
-            )
-            try:
-                paths_to_track = [
-                    f
-                    for f in self._dvc_repo.scm.untracked_files()
-                    if (dir_spec.match_file(f) and not outs_spec.match_file(f))
-                ]
-                if paths_to_track:
-                    self._dvc_repo.scm.add(paths_to_track)
-            except Exception as e:  # noqa: BLE001
-                logger.warning(f"Failed to git add paths:\n{e}")
-
+    @catch_and_warn(DvcException, logger, mark_dvclive_only_ended)
     def save_dvc_exp(self):
         if self._save_dvc_exp:
-            from dvc.exceptions import DvcException
-
-            try:
-                self._experiment_rev = self._dvc_repo.experiments.save(
-                    name=self._exp_name,
-                    include_untracked=self._include_untracked,
-                    force=True,
-                    message=self._exp_message,
-                )
-            except DvcException as e:
-                logger.warning(f"Failed to save experiment:\n{e}")
-            finally:
-                mark_dvclive_only_ended()
+            self._experiment_rev = self._dvc_repo.experiments.save(
+                name=self._exp_name,
+                include_untracked=self._include_untracked,
+                force=True,
+                message=self._exp_message,
+            )

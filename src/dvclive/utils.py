@@ -148,3 +148,49 @@ def clean_and_copy_into(src: StrPath, dst: StrPath) -> str:
         shutil.copy2(src, dst_path)
 
     return str(dst_path)
+
+
+def isinstance_without_import(val, module, name):
+    for cls in type(val).mro():
+        if (cls.__module__, cls.__name__) == (module, name):
+            return True
+    return False
+
+
+def catch_and_warn(exception, logger, on_finally=None):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except exception as e:
+                logger.warning(f"Error in {func.__name__}: {e}")
+            finally:
+                if on_finally is not None:
+                    on_finally()
+
+        return wrapper
+
+    return decorator
+
+
+def rel_path(path, dvc_root_path):
+    absolute_path = Path(path).absolute()
+    return str(Path(os.path.relpath(absolute_path, dvc_root_path)).as_posix())
+
+
+def read_history(live, metric):
+    from dvclive.plots.metric import Metric
+
+    history, _ = parse_metrics(live)
+    steps = []
+    values = []
+    name = os.path.join(live.plots_dir, Metric.subfolder, f"{metric}.tsv")
+    for e in history[name]:
+        steps.append(int(e["step"]))
+        values.append(float(e[metric]))
+    return steps, values
+
+
+def read_latest(live, metric_name):
+    _, latest = parse_metrics(live)
+    return latest["step"], latest[metric_name]
