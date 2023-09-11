@@ -37,7 +37,7 @@ def _adapt_plot_name(live, name):
     root = None
     if live._dvc_repo is not None:
         root = live._dvc_repo.root_dir
-        name = rel_path(name, root)
+    name = rel_path(name, root)
     if os.path.isfile(live.dvc_file):
         dvc_file = live.dvc_file
         dvc_file = rel_path(live.dvc_file, root)
