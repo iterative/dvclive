@@ -36,11 +36,6 @@ def _cast_to_numbers(datapoints):
 def _adapt_plot_name(live, name):
     if live._dvc_repo is not None:
         name = rel_path(name, live._dvc_repo.root_dir)
-    if os.path.isfile(live.dvc_file):
-        dvc_file = live.dvc_file
-        if live._dvc_repo is not None:
-            dvc_file = rel_path(live.dvc_file, live._dvc_repo.root_dir)
-        name = f"{dvc_file}::{name}"
     return name
 
 
