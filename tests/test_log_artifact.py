@@ -58,7 +58,7 @@ def test_log_artifact_with_save_dvc_exp(tmp_dir, mocker, mocked_dvc_repo):
         live.log_artifact("data")
     mocked_dvc_repo.experiments.save.assert_called_with(
         name=live._exp_name,
-        include_untracked=[live.dir, "data", ".gitignore"],
+        include_untracked=[live.dir, "data", ".gitignore", "dvc.yaml"],
         force=True,
         message=None,
     )
