@@ -193,7 +193,7 @@ class Live:
                 return self._dvcyaml
             raise InvalidDvcyamlError
         if self._dvc_repo is not None:
-            return os.path.relpath(os.path.join(self._dvc_repo.root_dir, "dvc.yaml"))
+            return os.path.join(self._dvc_repo.root_dir, "dvc.yaml")
         logger.warning(
             "Can't infer dvcyaml path without a DVC repo. "
             "`dvc.yaml` file will not be written."
