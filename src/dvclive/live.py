@@ -186,6 +186,9 @@ class Live:
                 self._save_dvc_exp = False
         elif os.getenv(env.DVC_ROOT, None):
             # `dvc repro` execution
+            if self._save_dvc_exp:
+                logger.info("Ignoring `save_dvc_exp` because `dvc repro` is running")
+                self._save_dvc_exp = False
             logger.warning(
                 "Some DVCLive features are unsupported in `dvc repro`."
                 "\nTo use DVCLive with a DVC Pipeline, run it with `dvc exp run`."
