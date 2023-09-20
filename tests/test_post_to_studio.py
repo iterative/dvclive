@@ -33,10 +33,9 @@ def get_studio_call(event_type, exp_name, **kwargs):
 
 
 def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
-    live = Live(save_dvc_exp=True)
+    live = Live()
     live.log_param("fooparam", 1)
 
-    dvc_path = Path(live.dvc_file).as_posix()
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
 
     mocked_post, _ = mocked_studio_post
@@ -54,7 +53,7 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
             "data",
             exp_name=live._exp_name,
             step=0,
-            plots={f"{dvc_path}::{foo_path}": {"data": [{"step": 0, "foo": 1.0}]}},
+            plots={f"{foo_path}": {"data": [{"step": 0, "foo": 1.0}]}},
         ),
     )
 
@@ -67,7 +66,7 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
             "data",
             exp_name=live._exp_name,
             step=1,
-            plots={f"{dvc_path}::{foo_path}": {"data": [{"step": 1, "foo": 2.0}]}},
+            plots={f"{foo_path}": {"data": [{"step": 1, "foo": 2.0}]}},
         ),
     )
 
@@ -87,9 +86,8 @@ def test_post_to_studio_failed_data_request(
 ):
     mocked_post, valid_response = mocked_studio_post
 
-    live = Live(save_dvc_exp=True)
+    live = Live()
 
-    dvc_path = Path(live.dvc_file).as_posix()
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
 
     error_response = mocker.MagicMock()
@@ -108,7 +106,7 @@ def test_post_to_studio_failed_data_request(
             exp_name=live._exp_name,
             step=1,
             plots={
-                f"{dvc_path}::{foo_path}": {
+                f"{foo_path}": {
                     "data": [{"step": 0, "foo": 1.0}, {"step": 1, "foo": 2.0}]
                 }
             },
@@ -123,7 +121,7 @@ def test_post_to_studio_failed_start_request(
     mocked_response.status_code = 400
     mocked_post = mocker.patch("requests.post", return_value=mocked_response)
 
-    live = Live(save_dvc_exp=True)
+    live = Live()
 
     live.log_metric("foo", 1)
     live.next_step()
@@ -136,7 +134,7 @@ def test_post_to_studio_failed_start_request(
 
 def test_post_to_studio_end_only_once(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     mocked_post, _ = mocked_studio_post
-    with Live(save_dvc_exp=True) as live:
+    with Live() as live:
         live.log_metric("foo", 1)
         live.next_step()
 
@@ -146,7 +144,7 @@ def test_post_to_studio_end_only_once(tmp_dir, mocked_dvc_repo, mocked_studio_po
 
 
 @pytest.mark.studio()
-def test_post_to_studio_skip_on_env_var(
+def test_post_to_studio_skip_start_and_done_on_env_var(
     tmp_dir, mocked_dvc_repo, mocked_studio_post, monkeypatch
 ):
     mocked_post, _ = mocked_studio_post
@@ -156,6 +154,7 @@ def test_post_to_studio_skip_on_env_var(
 
     with Live() as live:
         live.log_metric("foo", 1)
+        live.next_step()
 
     assert mocked_post.call_count == 2
 
@@ -173,6 +172,7 @@ def test_post_to_studio_dvc_studio_config(
 
     with Live() as live:
         live.log_metric("foo", 1)
+        live.next_step()
 
     assert mocked_post.call_count == 2
 
@@ -184,7 +184,7 @@ def test_post_to_studio_skip_if_no_token(
     monkeypatch,
     mocked_dvc_repo,
 ):
-    mocked_post = mocker.patch("dvclive.live.post_live_metrics", return_value=None)
+    mocked_post = mocker.patch("dvclive.studio.post_live_metrics", return_value=None)
 
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
@@ -201,11 +201,10 @@ def test_post_to_studio_skip_if_no_token(
 def test_post_to_studio_shorten_names(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     mocked_post, _ = mocked_studio_post
 
-    live = Live(save_dvc_exp=True)
+    live = Live()
     live.log_metric("eval/loss", 1)
     live.next_step()
 
-    dvc_path = Path(live.dvc_file).as_posix()
     plots_path = Path(live.plots_dir)
     loss_path = (plots_path / Metric.subfolder / "eval/loss.tsv").as_posix()
 
@@ -215,7 +214,7 @@ def test_post_to_studio_shorten_names(tmp_dir, mocked_dvc_repo, mocked_studio_po
             "data",
             exp_name=live._exp_name,
             step=0,
-            plots={f"{dvc_path}::{loss_path}": {"data": [{"step": 0, "loss": 1.0}]}},
+            plots={f"{loss_path}": {"data": [{"step": 0, "loss": 1.0}]}},
         ),
     )
 
@@ -232,24 +231,24 @@ def test_post_to_studio_inside_dvc_exp(
 
     with Live() as live:
         live.log_metric("foo", 1)
+        live.next_step()
 
     assert mocked_post.call_count == 2
 
 
 @pytest.mark.studio()
 def test_post_to_studio_inside_subdir(
-    tmp_dir, dvc_repo, mocker, monkeypatch, mocked_studio_post
+    tmp_dir, dvc_repo, mocker, monkeypatch, mocked_studio_post, mocked_dvc_repo
 ):
     mocked_post, _ = mocked_studio_post
     subdir = tmp_dir / "subdir"
     subdir.mkdir()
     monkeypatch.chdir(subdir)
 
-    live = Live(save_dvc_exp=True)
+    live = Live()
     live.log_metric("foo", 1)
     live.next_step()
 
-    dvc_path = Path(live.dvc_file).as_posix()
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
 
     mocked_post.assert_called_with(
@@ -259,18 +258,14 @@ def test_post_to_studio_inside_subdir(
             baseline_sha=live._baseline_rev,
             exp_name=live._exp_name,
             step=0,
-            plots={
-                f"subdir/{dvc_path}::subdir/{foo_path}": {
-                    "data": [{"step": 0, "foo": 1.0}]
-                }
-            },
+            plots={f"subdir/{foo_path}": {"data": [{"step": 0, "foo": 1.0}]}},
         ),
     )
 
 
 @pytest.mark.studio()
 def test_post_to_studio_inside_subdir_dvc_exp(
-    tmp_dir, dvc_repo, monkeypatch, mocked_studio_post
+    tmp_dir, dvc_repo, monkeypatch, mocked_studio_post, mocked_dvc_repo
 ):
     mocked_post, _ = mocked_studio_post
     subdir = tmp_dir / "subdir"
@@ -284,7 +279,6 @@ def test_post_to_studio_inside_subdir_dvc_exp(
     live.log_metric("foo", 1)
     live.next_step()
 
-    dvc_path = Path(live.dvc_file).as_posix()
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
 
     mocked_post.assert_called_with(
@@ -294,18 +288,14 @@ def test_post_to_studio_inside_subdir_dvc_exp(
             baseline_sha=live._baseline_rev,
             exp_name=live._exp_name,
             step=0,
-            plots={
-                f"subdir/{dvc_path}::subdir/{foo_path}": {
-                    "data": [{"step": 0, "foo": 1.0}]
-                }
-            },
+            plots={f"subdir/{foo_path}": {"data": [{"step": 0, "foo": 1.0}]}},
         ),
     )
 
 
 def test_post_to_studio_requires_exp(tmp_dir, mocked_dvc_repo, mocked_studio_post):
-    assert Live()._studio_events_to_skip == {"start", "data", "done"}
-    assert not Live(save_dvc_exp=True)._studio_events_to_skip
+    assert Live(save_dvc_exp=False)._studio_events_to_skip == {"start", "data", "done"}
+    assert not Live()._studio_events_to_skip
 
 
 def test_get_dvc_studio_config_none(mocker):
@@ -339,11 +329,10 @@ def test_get_dvc_studio_config_dvc_repo(mocked_dvc_repo):
 def test_post_to_studio_images(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     mocked_post, _ = mocked_studio_post
 
-    live = Live(save_dvc_exp=True)
+    live = Live()
     live.log_image("foo.png", ImagePIL.new("RGB", (10, 10), (0, 0, 0)))
     live.next_step()
 
-    dvc_path = Path(live.dvc_file).as_posix()
     foo_path = (Path(live.plots_dir) / Image.subfolder / "foo.png").as_posix()
 
     mocked_post.assert_called_with(
@@ -353,13 +342,13 @@ def test_post_to_studio_images(tmp_dir, mocked_dvc_repo, mocked_studio_post):
             baseline_sha=live._baseline_rev,
             exp_name=live._exp_name,
             step=0,
-            plots={f"{dvc_path}::{foo_path}": {"image": _adapt_image(foo_path)}},
+            plots={f"{foo_path}": {"image": _adapt_image(foo_path)}},
         ),
     )
 
 
 def test_post_to_studio_message(tmp_dir, mocked_dvc_repo, mocked_studio_post):
-    live = Live(save_dvc_exp=True, exp_message="Custom message")
+    live = Live(exp_message="Custom message")
 
     mocked_post, _ = mocked_studio_post
 

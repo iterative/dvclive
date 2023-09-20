@@ -12,6 +12,11 @@ class InvalidDataTypeError(DvcLiveError):
         super().__init__(f"Data '{name}' has not supported type {val}")
 
 
+class InvalidDvcyamlError(DvcLiveError):
+    def __init__(self):
+        super().__init__("`dvcyaml` path must have filename 'dvc.yaml'")
+
+
 class InvalidPlotTypeError(DvcLiveError):
     def __init__(self, name):
         from .plots import SKLEARN_PLOTS

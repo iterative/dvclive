@@ -91,23 +91,3 @@ def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
     dvclive.end()
 
     assert not os.path.exists(signal_file)
-
-
-@pytest.mark.vscode()
-@pytest.mark.parametrize("dvcyaml", [True, False])
-def test_warn_on_dvcyaml_output_overlap(tmp_dir, mocker, mocked_dvc_repo, dvcyaml):
-    logger = mocker.patch("dvclive.live.logger")
-    dvc_stage = mocker.MagicMock()
-    dvc_stage.addressing = "train"
-    dvc_out = mocker.MagicMock()
-    dvc_out.fs_path = tmp_dir / "dvclive"
-    dvc_stage.outs = [dvc_out]
-    mocked_dvc_repo.index.stages = [dvc_stage]
-    live = Live(dvcyaml=dvcyaml)
-
-    if dvcyaml:
-        msg = f"'{live.dvc_file}' is in outputs of stage 'train'.\n"
-        msg += "Remove it from outputs to make DVCLive work as expected."
-        logger.warning.assert_called_with(msg)
-    else:
-        logger.warning.assert_not_called()

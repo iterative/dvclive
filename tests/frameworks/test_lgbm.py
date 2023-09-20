@@ -8,7 +8,6 @@ from dvclive.utils import parse_metrics
 
 try:
     import lightgbm as lgbm
-    import numpy as np
     import pandas as pd
     from sklearn import datasets
     from sklearn.model_selection import train_test_split
@@ -80,26 +79,6 @@ def test_lgbm_integration_multi_eval(tmp_dir, model_params, iris_data):
     assert "dvclive/plots/metrics/valid_1/multi_logloss.tsv" in logs
     assert len(logs) == 2
     assert len(next(iter(logs.values()))) == 5
-
-
-@pytest.mark.skipif(platform == "darwin", reason="LIBOMP Segmentation fault on MacOS")
-def test_lgbm_model_file(tmp_dir, model_params, iris_data):
-    model = lgbm.LGBMClassifier()
-    model.set_params(**model_params)
-
-    model.fit(
-        iris_data[0][0],
-        iris_data[0][1],
-        eval_set=(iris_data[1][0], iris_data[1][1]),
-        eval_metric=["multi_logloss"],
-        callbacks=[DVCLiveCallback("lgbm_model")],
-    )
-
-    preds = model.predict(iris_data[1][0])
-    model2 = lgbm.Booster(model_file="lgbm_model")
-    preds2 = model2.predict(iris_data[1][0])
-    preds2 = np.argmax(preds2, axis=1)
-    assert np.sum(np.abs(preds2 - preds)) == 0
 
 
 def test_lgbm_pass_logger():

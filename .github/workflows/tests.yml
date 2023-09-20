@@ -92,4 +92,4 @@ jobs:
           pip install -e '.[tests]'
 
       - name: Run tests
-        run: pytest -v tests --ignore=tests/test_frameworks
+        run: pytest -v tests --ignore=tests/frameworks

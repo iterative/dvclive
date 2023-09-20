@@ -10,7 +10,7 @@ class DVCLiveCallback:
         self.live_kwargs = kwargs
 
     def __call__(self, study, trial) -> None:
-        with Live(save_dvc_exp=True, **self.live_kwargs) as live:
+        with Live(**self.live_kwargs) as live:
             self._log_metrics(trial.values, live)
             live.log_params(trial.params)
 

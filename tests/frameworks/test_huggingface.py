@@ -182,33 +182,3 @@ def test_huggingface_pass_logger():
 
     assert DVCLiveCallback().live is not logger
     assert DVCLiveCallback(live=logger).live is logger
-
-
-def test_huggingface_model_file(tmp_dir, model, args, data, mocker):
-    logger = mocker.patch("dvclive.huggingface.logger")
-
-    model_path = tmp_dir / "model_hf"
-
-    live_callback = DVCLiveCallback(model_file=model_path)
-    log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
-
-    trainer = Trainer(
-        model,
-        args,
-        train_dataset=data[0],
-        eval_dataset=data[1],
-        compute_metrics=compute_metrics,
-    )
-    trainer.add_callback(live_callback)
-    trainer.train()
-
-    assert model_path.is_dir()
-
-    assert (model_path / "pytorch_model.bin").exists()
-    assert (model_path / "config.json").exists()
-    log_artifact.assert_called_with(model_path)
-
-    logger.warning.assert_called_with(
-        "model_file is deprecated and will be removed"
-        " in the next major version, use log_model instead"
-    )

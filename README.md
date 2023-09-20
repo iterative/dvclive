@@ -54,7 +54,7 @@ from dvclive import Live
 
 params = {"learning_rate": 0.002, "optimizer": "Adam", "epochs": 20}
 
-with Live(save_dvc_exp=True) as live:
+with Live() as live:
 
     # log a parameters
     for param in params:

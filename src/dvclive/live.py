@@ -1,3 +1,4 @@
+import glob
 import json
 import logging
 import math
@@ -7,7 +8,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
 from dvc.exceptions import DvcException
-from dvc_studio_client.post_live_metrics import post_live_metrics
 from funcy import set_in
 from ruamel.yaml.representer import RepresenterError
 
@@ -21,6 +21,7 @@ from .dvc import (
 )
 from .error import (
     InvalidDataTypeError,
+    InvalidDvcyamlError,
     InvalidParameterTypeError,
     InvalidPlotTypeError,
     InvalidReportModeError,
@@ -28,7 +29,7 @@ from .error import (
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
-from .studio import get_dvc_studio_config, get_studio_updates
+from .studio import get_dvc_studio_config, post_to_studio
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -60,9 +61,9 @@ class Live:
         self,
         dir: str = "dvclive",  # noqa: A002
         resume: bool = False,
-        report: Optional[str] = "auto",
-        save_dvc_exp: bool = False,
-        dvcyaml: bool = True,
+        report: Optional[str] = None,
+        save_dvc_exp: bool = True,
+        dvcyaml: Union[str, bool] = True,
         cache_images: bool = False,
         exp_message: Optional[str] = None,
     ):
@@ -87,11 +88,6 @@ class Live:
         self._report_notebook = None
         self._init_report()
 
-        if self._resume:
-            self._init_resume()
-        else:
-            self._init_cleanup()
-
         self._baseline_rev: Optional[str] = None
         self._exp_name: Optional[str] = None
         self._exp_message: Optional[str] = exp_message
@@ -100,6 +96,11 @@ class Live:
         self._dvc_repo = None
         self._include_untracked: List[str] = []
         self._init_dvc()
+
+        if self._resume:
+            self._init_resume()
+        else:
+            self._init_cleanup()
 
         self._latest_studio_step = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
@@ -122,14 +123,15 @@ class Live:
 
         for f in (
             self.metrics_file,
-            self.report_file,
             self.params_file,
+            os.path.join(self.dir, "report.html"),
+            os.path.join(self.dir, "report.md"),
         ):
             if f and os.path.exists(f):
                 os.remove(f)
 
-        if self.dvc_file and os.path.exists(self.dvc_file):
-            os.remove(self.dvc_file)
+        for dvc_file in glob.glob(os.path.join(self.dir, "**dvc.yaml")):
+            os.remove(dvc_file)
 
     @catch_and_warn(DvcException, logger)
     def _init_dvc(self):
@@ -140,6 +142,8 @@ class Live:
 
         dvc_logger = logging.getLogger("dvc")
         dvc_logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "WARNING").upper())
+
+        self._dvc_file = self._init_dvc_file()
 
         if (self._dvc_repo is None) or isinstance(self._dvc_repo.scm, NoSCM):
             if self._save_dvc_exp:
@@ -174,6 +178,19 @@ class Live:
             self._exp_name = get_random_exp_name(self._dvc_repo.scm, self._baseline_rev)
             mark_dvclive_only_started(self._exp_name)
             self._include_untracked.append(self.dir)
+
+    def _init_dvc_file(self) -> str:
+        if isinstance(self._dvcyaml, str):
+            if os.path.basename(self._dvcyaml) == "dvc.yaml":
+                return self._dvcyaml
+            raise InvalidDvcyamlError
+        if self._dvc_repo is not None:
+            return os.path.join(self._dvc_repo.root_dir, "dvc.yaml")
+        logger.warning(
+            "Can't infer dvcyaml path without a DVC repo. "
+            "`dvc.yaml` file will not be written."
+        )
+        return ""
 
     def _init_dvc_pipeline(self):
         if os.getenv(env.DVC_EXP_BASELINE_REV, None):
@@ -217,36 +234,17 @@ class Live:
             logger.warning(
                 "Can't connect to Studio without creating a DVC experiment."
                 "\nIf you have a DVC Pipeline, run it with `dvc exp run`."
-                "\nIf you are using DVCLive alone, use `save_dvc_exp=True`."
             )
             self._studio_events_to_skip.add("start")
             self._studio_events_to_skip.add("data")
             self._studio_events_to_skip.add("done")
         else:
-            response = post_live_metrics(
-                "start",
-                self._baseline_rev,
-                self._exp_name,
-                "dvclive",
-                dvc_studio_config=self._dvc_studio_config,
-                message=self._exp_message,
-            )
-            if not response:
-                logger.debug(
-                    "`studio` report `start` event failed. "
-                    "`studio` report cancelled."
-                )
-                self._studio_events_to_skip.add("start")
-                self._studio_events_to_skip.add("data")
-                self._studio_events_to_skip.add("done")
+            self.post_to_studio("start")
 
     def _init_report(self):
-        if self._report_mode == "auto":
-            if env2bool("CI") and matplotlib_installed():
-                self._report_mode = "md"
-            else:
-                self._report_mode = "html"
-        elif self._report_mode == "notebook":
+        if self._report_mode not in {None, "html", "notebook", "md"}:
+            raise InvalidReportModeError(self._report_mode)
+        if self._report_mode == "notebook":
             if inside_notebook():
                 from IPython.display import Markdown, display
 
@@ -255,9 +253,17 @@ class Live:
                     Markdown(BLANK_NOTEBOOK_REPORT), display_id=True
                 )
             else:
-                self._report_mode = "html"
-        elif self._report_mode not in {None, "html", "notebook", "md"}:
-            raise InvalidReportModeError(self._report_mode)
+                logger.warning(
+                    "Report mode 'notebook' requires to be"
+                    " inside a notebook. Disabling report."
+                )
+                self._report_mode = None
+        if self._report_mode in ("notebook", "md") and not matplotlib_installed():
+            logger.warning(
+                f"Report mode '{self._report_mode}' requires 'matplotlib'"
+                " to be installed. Disabling report."
+            )
+            self._report_mode = None
         logger.debug(f"{self._report_mode=}")
 
     @property
@@ -274,7 +280,7 @@ class Live:
 
     @property
     def dvc_file(self) -> str:
-        return os.path.join(self.dir, "dvc.yaml")
+        return self._dvc_file
 
     @property
     def plots_dir(self) -> str:
@@ -310,6 +316,9 @@ class Live:
             self.make_dvcyaml()
 
         self.make_report()
+
+        self.post_to_studio("data")
+
         mark_dvclive_step_completed(self.step)
         self.step += 1
 
@@ -519,36 +528,19 @@ class Live:
         dump_json(self.summary, self.metrics_file, cls=NumpyEncoder)
 
     def make_report(self):
-        if "data" not in self._studio_events_to_skip:
-            response = False
-            if post_live_metrics is not None:
-                metrics, params, plots = get_studio_updates(self)
-                response = post_live_metrics(
-                    "data",
-                    self._baseline_rev,
-                    self._exp_name,
-                    "dvclive",
-                    step=self.step,
-                    metrics=metrics,
-                    params=params,
-                    plots=plots,
-                    dvc_studio_config=self._dvc_studio_config,
-                )
-            if not response:
-                logger.warning(
-                    "`post_to_studio` `data` event failed."
-                    " Data will be resent on next call."
-                )
-            else:
-                self._latest_studio_step = self.step
-
         if self._report_mode is not None:
             make_report(self)
             if self._report_mode == "html" and env2bool(env.DVCLIVE_OPEN):
                 open_file_in_browser(self.report_file)
 
+    @catch_and_warn(DvcException, logger)
     def make_dvcyaml(self):
-        make_dvcyaml(self)
+        if self.dvc_file:
+            make_dvcyaml(self)
+
+    @catch_and_warn(DvcException, logger)
+    def post_to_studio(self, event):
+        post_to_studio(self, event)
 
     def end(self):
         if self._inside_with:
@@ -568,28 +560,11 @@ class Live:
                 self.dir, self._dvc_repo
             )
 
+        self.make_report()
+
         self.save_dvc_exp()
 
-        if "done" not in self._studio_events_to_skip:
-            response = False
-            if post_live_metrics is not None:
-                kwargs = {}
-                if self._experiment_rev:
-                    kwargs["experiment_rev"] = self._experiment_rev
-                response = post_live_metrics(
-                    "done",
-                    self._baseline_rev,
-                    self._exp_name,
-                    "dvclive",
-                    dvc_studio_config=self._dvc_studio_config,
-                    **kwargs,
-                )
-            if not response:
-                logger.warning("`post_to_studio` `done` event failed.")
-            self._studio_events_to_skip.add("done")
-            self._studio_events_to_skip.add("data")
-        else:
-            self.make_report()
+        self.post_to_studio("done")
 
         cleanup_dvclive_step_completed()
 

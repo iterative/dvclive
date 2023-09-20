@@ -115,3 +115,12 @@ def test_matplotlib(tmp_dir):
     assert not plt.fignum_exists(fig.number)
 
     assert (tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png").exists()
+
+
+@pytest.mark.parametrize("cache", [False, True])
+def test_cache_images(tmp_dir, dvc_repo, cache):
+    live = Live(save_dvc_exp=False, cache_images=cache)
+    img = Image.new("RGB", (10, 10), (250, 250, 250))
+    live.log_image("image.png", img)
+    live.end()
+    assert (tmp_dir / "dvclive" / "plots" / "images.dvc").exists() == cache
