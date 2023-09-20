@@ -566,8 +566,6 @@ class Live:
 
         self.make_report()
 
-        self.make_report()
-
         self.save_dvc_exp()
 
         self.post_to_studio("done")
