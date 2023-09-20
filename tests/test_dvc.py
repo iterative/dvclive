@@ -10,7 +10,7 @@ from scmrepo.git import Git
 
 from dvclive import Live
 from dvclive.dvc import get_dvc_repo, make_dvcyaml
-from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME
+from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME, DVC_ROOT
 from dvclive.serialize import load_yaml
 
 YAML_LOADER = YAML(typ="safe")
@@ -322,3 +322,10 @@ def test_no_scm_repo(tmp_dir, mocker):
 
     live = Live(save_dvc_exp=True)
     assert live._save_dvc_exp is False
+
+
+def test_dvc_repro(tmp_dir, monkeypatch, mocker):
+    monkeypatch.setenv(DVC_ROOT, "root")
+    mocker.patch("dvclive.live.get_dvc_repo", return_value=None)
+    live = Live(save_dvc_exp=True)
+    assert not live._save_dvc_exp
