@@ -137,15 +137,7 @@ class Live:
     def _init_dvc(self):
         from dvc.scm import NoSCM
 
-        if os.getenv(env.DVC_EXP_BASELINE_REV, None):
-            # `dvc exp` execution
-            self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV, "")
-            self._exp_name = os.getenv(env.DVC_EXP_NAME, "")
-            self._inside_dvc_exp = True
-            if self._save_dvc_exp:
-                logger.info("Ignoring `save_dvc_exp` because `dvc exp run` is running")
-                self._save_dvc_exp = False
-
+        self._init_dvc_pipeline()
         self._dvc_repo = get_dvc_repo()
 
         dvc_logger = logging.getLogger("dvc")
@@ -199,6 +191,25 @@ class Live:
             "`dvc.yaml` file will not be written."
         )
         return ""
+
+    def _init_dvc_pipeline(self):
+        if os.getenv(env.DVC_EXP_BASELINE_REV, None):
+            # `dvc exp` execution
+            self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV, "")
+            self._exp_name = os.getenv(env.DVC_EXP_NAME, "")
+            self._inside_dvc_exp = True
+            if self._save_dvc_exp:
+                logger.info("Ignoring `save_dvc_exp` because `dvc exp run` is running")
+                self._save_dvc_exp = False
+        elif os.getenv(env.DVC_ROOT, None):
+            # `dvc repro` execution
+            if self._save_dvc_exp:
+                logger.info("Ignoring `save_dvc_exp` because `dvc repro` is running")
+                self._save_dvc_exp = False
+            logger.warning(
+                "Some DVCLive features are unsupported in `dvc repro`."
+                "\nTo use DVCLive with a DVC Pipeline, run it with `dvc exp run`."
+            )
 
     def _init_studio(self):
         self._dvc_studio_config = get_dvc_studio_config(self)
@@ -552,6 +563,8 @@ class Live:
                 catch_and_warn(DvcException, logger)(self._dvc_repo.scm.add)(
                     self.dvc_file
                 )
+
+        self.make_report()
 
         self.make_report()
 
