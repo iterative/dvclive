@@ -135,6 +135,7 @@ def test_untracked_dvclive_files_inside_dvc_exp_run_are_added(
         live.log_metric("foo", 1)
         live.next_step()
     live._dvc_repo.scm.add.assert_any_call(["dvclive/metrics.json", plot_file])
+    live._dvc_repo.scm.add.assert_any_call(live.dvc_file)
 
 
 def test_dvc_outs_are_not_added(tmp_dir, mocked_dvc_repo, monkeypatch):
