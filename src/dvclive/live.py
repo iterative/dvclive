@@ -559,6 +559,10 @@ class Live:
             catch_and_warn(DvcException, logger)(ensure_dir_is_tracked)(
                 self.dir, self._dvc_repo
             )
+            if self._dvcyaml:
+                catch_and_warn(DvcException, logger)(self._dvc_repo.scm.add)(
+                    self.dvc_file
+                )
 
         self.make_report()
 
@@ -589,6 +593,8 @@ class Live:
     @catch_and_warn(DvcException, logger, mark_dvclive_only_ended)
     def save_dvc_exp(self):
         if self._save_dvc_exp:
+            if self._dvcyaml:
+                self._include_untracked.append(self.dvc_file)
             self._experiment_rev = self._dvc_repo.experiments.save(
                 name=self._exp_name,
                 include_untracked=self._include_untracked,
