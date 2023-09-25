@@ -461,7 +461,8 @@ class Live:
             raise InvalidDataTypeError(path, type(path))
 
         if self._dvc_repo is not None:
-            from dvc.repo.artifacts import name_is_compatible
+            from gto.constants import assert_name_is_valid
+            from gto.exceptions import ValidationError
 
             if copy:
                 path = clean_and_copy_into(path, self.artifacts_dir)
@@ -471,14 +472,15 @@ class Live:
 
             if any((type, name, desc, labels, meta)):
                 name = name or Path(path).stem
-                if name_is_compatible(name):
+                try:
+                    assert_name_is_valid(name)
                     self._artifacts[name] = {
                         k: v
                         for k, v in locals().items()
                         if k in ("path", "type", "desc", "labels", "meta")
                         and v is not None
                     }
-                else:
+                except ValidationError:
                     logger.warning(
                         "Can't use '%s' as artifact name (ID)."
                         " It will not be included in the `artifacts` section.",
