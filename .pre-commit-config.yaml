@@ -1,6 +1,10 @@
 default_language_version:
   python: python3
 repos:
+  - repo: https://github.com/psf/black
+    rev: 23.9.1
+    hooks:
+      - id: black
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -10,30 +14,26 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-json
       - id: check-merge-conflict
-        args: ['--assume-in-merge']
+        args: ["--assume-in-merge"]
       - id: check-toml
       - id: check-yaml
       - id: debug-statements
       - id: end-of-file-fixer
       - id: mixed-line-ending
-        args: ['--fix=lf']
+        args: ["--fix=lf"]
       - id: sort-simple-yaml
       - id: trailing-whitespace
-  - repo: https://github.com/psf/black
-    rev: 23.9.1
-    hooks:
-      - id: black
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.5
     hooks:
       - id: codespell
         additional_dependencies: ["tomli"]
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: 'v0.0.291'
+    rev: "v0.0.291"
     hooks:
       - id: ruff
