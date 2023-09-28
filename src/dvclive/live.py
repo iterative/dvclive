@@ -93,6 +93,7 @@ class Live:
         self._exp_message: Optional[str] = exp_message
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
+        self._inside_dvc_pipeline: bool = False
         self._dvc_repo = None
         self._include_untracked: List[str] = []
         self._init_dvc()
@@ -137,7 +138,9 @@ class Live:
     def _init_dvc(self):
         from dvc.scm import NoSCM
 
-        self._init_dvc_pipeline()
+        if os.getenv(env.DVC_ROOT, None):
+            self._inside_dvc_pipeline = True
+            self._init_dvc_pipeline()
         self._dvc_repo = get_dvc_repo()
 
         dvc_logger = logging.getLogger("dvc")
@@ -170,7 +173,7 @@ class Live:
                 "\nRemove it from outputs to make DVCLive work as expected."
             )
 
-        if self._inside_dvc_exp:
+        if self._inside_dvc_pipeline:
             return
 
         self._baseline_rev = self._dvc_repo.scm.get_rev()
@@ -200,16 +203,15 @@ class Live:
             self._inside_dvc_exp = True
             if self._save_dvc_exp:
                 logger.info("Ignoring `save_dvc_exp` because `dvc exp run` is running")
-                self._save_dvc_exp = False
-        elif os.getenv(env.DVC_ROOT, None):
+        else:
             # `dvc repro` execution
             if self._save_dvc_exp:
                 logger.info("Ignoring `save_dvc_exp` because `dvc repro` is running")
-                self._save_dvc_exp = False
             logger.warning(
                 "Some DVCLive features are unsupported in `dvc repro`."
                 "\nTo use DVCLive with a DVC Pipeline, run it with `dvc exp run`."
             )
+        self._save_dvc_exp = False
 
     def _init_studio(self):
         self._dvc_studio_config = get_dvc_studio_config(self)
@@ -494,25 +496,25 @@ class Live:
 
     @catch_and_warn(DvcException, logger)
     def cache(self, path):
-        if self._inside_dvc_exp:
+        if self._inside_dvc_pipeline:
             existing_stage = find_overlapping_stage(self._dvc_repo, path)
 
             if existing_stage:
                 if existing_stage.cmd:
                     logger.info(
                         f"Skipping `dvc add {path}` because it is already being"
-                        " tracked automatically as an output of `dvc exp run`."
+                        " tracked automatically as an output of the DVC pipeline."
                     )
                     return  # skip caching
                 logger.warning(
-                    f"To track '{path}' automatically during `dvc exp run`:"
+                    f"To track '{path}' automatically in the DVC pipeline:"
                     f"\n1. Run `dvc remove {existing_stage.addressing}` "
                     "to stop tracking it outside the pipeline."
                     "\n2. Add it as an output of the pipeline stage."
                 )
             else:
                 logger.warning(
-                    f"To track '{path}' automatically during `dvc exp run`, "
+                    f"To track '{path}' automatically in the DVC pipeline, "
                     "add it as an output of the pipeline stage."
                 )
 
