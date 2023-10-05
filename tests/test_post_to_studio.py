@@ -6,7 +6,7 @@ from dvc_studio_client.env import DVC_STUDIO_REPO_URL, DVC_STUDIO_TOKEN
 from PIL import Image as ImagePIL
 
 from dvclive import Live
-from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME
+from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME, DVC_ROOT
 from dvclive.plots import Image, Metric
 from dvclive.studio import _adapt_image, get_dvc_studio_config
 
@@ -151,6 +151,7 @@ def test_post_to_studio_skip_start_and_done_on_env_var(
 
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
+    monkeypatch.setenv(DVC_ROOT, tmp_dir)
 
     with Live() as live:
         live.log_metric("foo", 1)
@@ -167,6 +168,7 @@ def test_post_to_studio_dvc_studio_config(
 
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
+    monkeypatch.setenv(DVC_ROOT, tmp_dir)
 
     mocked_dvc_repo.config = {"studio": {"token": "token"}}
 
@@ -228,6 +230,7 @@ def test_post_to_studio_inside_dvc_exp(
 
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
+    monkeypatch.setenv(DVC_ROOT, tmp_dir)
 
     with Live() as live:
         live.log_metric("foo", 1)

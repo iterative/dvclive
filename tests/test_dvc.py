@@ -47,6 +47,7 @@ def test_exp_save_on_end(tmp_dir, save, mocked_dvc_repo):
 def test_exp_save_skip_on_env_vars(tmp_dir, monkeypatch, mocker):
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
+    monkeypatch.setenv(DVC_ROOT, tmp_dir)
 
     mocker.patch("dvclive.live.get_dvc_repo", return_value=None)
     live = Live()
@@ -56,6 +57,7 @@ def test_exp_save_skip_on_env_vars(tmp_dir, monkeypatch, mocker):
     assert live._baseline_rev == "foo"
     assert live._exp_name == "bar"
     assert live._inside_dvc_exp
+    assert live._inside_dvc_pipeline
 
 
 def test_exp_save_run_on_dvc_repro(tmp_dir, mocker):
@@ -126,6 +128,7 @@ def test_untracked_dvclive_files_inside_dvc_exp_run_are_added(
 ):
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
+    monkeypatch.setenv(DVC_ROOT, tmp_dir)
     plot_file = os.path.join("dvclive", "plots", "metrics", "foo.tsv")
     mocked_dvc_repo.scm.untracked_files.return_value = [
         "dvclive/metrics.json",
@@ -142,6 +145,7 @@ def test_dvc_outs_are_not_added(tmp_dir, mocked_dvc_repo, monkeypatch):
     """Regression test for https://github.com/iterative/dvclive/issues/516"""
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "foo")
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
+    monkeypatch.setenv(DVC_ROOT, tmp_dir)
     mocked_dvc_repo.index.outs = ["dvclive/plots"]
     plot_file = os.path.join("dvclive", "plots", "metrics", "foo.tsv")
     mocked_dvc_repo.scm.untracked_files.return_value = [
