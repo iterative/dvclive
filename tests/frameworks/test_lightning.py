@@ -277,10 +277,11 @@ def test_lightning_val_updates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio
 
     calls = mocked_post.call_args_list
     # 0: start
-    # 1: update_train_step_metrics
-    # 2: update_train_step_metrics
-    # 3: log_eval_end_metrics
-    plots = calls[3][1]["json"]["plots"]
+    # 1: first data event
+    # ...: data events
+    # -2: last data event
+    # -1: done
+    plots = calls[-2][1]["json"]["plots"]
     val_loss = plots["dvclive/plots/metrics/val/loss.tsv"]
     # Without `self.experiment._latest_studio_step -= 1`
     # This would be empty
