@@ -181,6 +181,17 @@ def test_exp_save_message(tmp_dir, mocked_dvc_repo):
     )
 
 
+def test_exp_save_name(tmp_dir, mocked_dvc_repo):
+    live = Live(exp_name="custom-name")
+    live.end()
+    mocked_dvc_repo.experiments.save.assert_called_with(
+        name="custom-name",
+        include_untracked=[live.dir, str(tmp_dir / "dvc.yaml")],
+        force=True,
+        message=None,
+    )
+
+
 def test_no_scm_repo(tmp_dir, mocker):
     dvc_repo = mocker.MagicMock()
     dvc_repo.scm = NoSCM()
