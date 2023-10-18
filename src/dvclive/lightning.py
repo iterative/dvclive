@@ -56,12 +56,13 @@ class DVCLiveLogger(Logger):
         prefix="",
         log_model: Union[str, bool] = False,
         experiment=None,
-        dir: Optional[str] = None,  # noqa: A002
+        dir: str = "dvclive",  # noqa: A002
         resume: bool = False,
         report: Optional[str] = None,
-        save_dvc_exp: bool = False,
-        dvcyaml: bool = True,
+        save_dvc_exp: bool = True,
+        dvcyaml: Union[str, bool] = True,
         cache_images: bool = False,
+        exp_message: Optional[str] = None,
     ):
         super().__init__()
         self._prefix = prefix

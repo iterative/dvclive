@@ -260,7 +260,7 @@ class ValLitXOR(LitXOR):
         return loss
 
 
-def test_lightning_val_udpates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
+def test_lightning_val_updates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     """Test the `self.experiment._latest_studio_step -= 1` logic."""
     mocked_post, _ = mocked_studio_post
 
@@ -281,7 +281,7 @@ def test_lightning_val_udpates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio
     # 2: update_train_step_metrics
     # 3: log_eval_end_metrics
     plots = calls[3][1]["json"]["plots"]
-    val_loss = plots["dvclive/dvc.yaml::dvclive/plots/metrics/val/loss.tsv"]
+    val_loss = plots["dvclive/plots/metrics/val/loss.tsv"]
     # Without `self.experiment._latest_studio_step -= 1`
     # This would be empty
     assert len(val_loss["data"]) == 1
