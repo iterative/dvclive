@@ -16,7 +16,7 @@ from .dvc import (
     ensure_dir_is_tracked,
     find_overlapping_stage,
     get_dvc_repo,
-    get_random_exp_name,
+    get_exp_name,
     make_dvcyaml,
 )
 from .error import (
@@ -179,10 +179,10 @@ class Live:
 
         self._baseline_rev = self._dvc_repo.scm.get_rev()
         if self._save_dvc_exp:
-            if not self._exp_name:
-                self._exp_name = get_random_exp_name(
-                    self._dvc_repo.scm, self._baseline_rev
-                )
+            self._exp_name = get_exp_name(
+                self._exp_name, self._dvc_repo.scm, self._baseline_rev
+            )
+            logger.info(f"Logging to experiment '{self._exp_name}'")
             mark_dvclive_only_started(self._exp_name)
             self._include_untracked.append(self.dir)
 

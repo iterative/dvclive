@@ -1,5 +1,6 @@
 # ruff: noqa: SLF001
 import copy
+import logging
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Optional
@@ -11,6 +12,8 @@ from dvclive.utils import StrPath, rel_path
 if TYPE_CHECKING:
     from dvc.repo import Repo
     from dvc.stage import Stage
+
+logger = logging.getLogger("dvclive")
 
 
 def _dvc_dir(dirname: StrPath) -> str:
@@ -125,12 +128,23 @@ def update_dvcyaml(live, updates):  # noqa: C901
             del orig["artifacts"]
 
 
-def get_random_exp_name(scm, baseline_rev) -> str:
-    from dvc.repo.experiments.utils import (
-        get_random_exp_name as dvc_get_random_exp_name,
-    )
+def get_exp_name(name, scm, baseline_rev) -> str:
+    from dvc.exceptions import InvalidArgumentError
+    from dvc.repo.experiments.refs import ExpRefInfo
+    from dvc.repo.experiments.utils import check_ref_format, get_random_exp_name
 
-    return dvc_get_random_exp_name(scm, baseline_rev)
+    if name:
+        ref = ExpRefInfo(baseline_sha=baseline_rev, name=name)
+        if scm.get_ref(str(ref)):
+            logger.warning(f"Experiment conflicts with existing experiment '{name}'.")
+        else:
+            try:
+                check_ref_format(scm, ref)
+            except InvalidArgumentError as e:
+                logger.warning(e)
+            else:
+                return name
+    return get_random_exp_name(scm, baseline_rev)
 
 
 def find_overlapping_stage(dvc_repo: "Repo", path: StrPath) -> Optional["Stage"]:
