@@ -181,6 +181,17 @@ def test_exp_save_message(tmp_dir, mocked_dvc_repo):
     )
 
 
+def test_exp_save_name(tmp_dir, mocked_dvc_repo):
+    live = Live(exp_name="custom-name")
+    live.end()
+    mocked_dvc_repo.experiments.save.assert_called_with(
+        name="custom-name",
+        include_untracked=[live.dir, str(tmp_dir / "dvc.yaml")],
+        force=True,
+        message=None,
+    )
+
+
 def test_no_scm_repo(tmp_dir, mocker):
     dvc_repo = mocker.MagicMock()
     dvc_repo.scm = NoSCM()
@@ -198,3 +209,38 @@ def test_dvc_repro(tmp_dir, monkeypatch, mocker):
     mocker.patch("dvclive.live.get_dvc_repo", return_value=None)
     live = Live(save_dvc_exp=True)
     assert not live._save_dvc_exp
+
+
+def test_get_exp_name_valid(tmp_dir, mocked_dvc_repo):
+    live = Live(exp_name="name")
+    assert live._exp_name == "name"
+
+
+def test_get_exp_name_random(tmp_dir, mocked_dvc_repo, mocker):
+    mocker.patch(
+        "dvc.repo.experiments.utils.get_random_exp_name", return_value="random"
+    )
+    live = Live()
+    assert live._exp_name == "random"
+
+
+def test_get_exp_name_invalid(tmp_dir, mocked_dvc_repo, mocker, caplog):
+    mocker.patch(
+        "dvc.repo.experiments.utils.get_random_exp_name", return_value="random"
+    )
+    with caplog.at_level("WARNING"):
+        live = Live(exp_name="invalid//name")
+    assert live._exp_name == "random"
+    assert caplog.text
+
+
+def test_get_exp_name_duplicate(tmp_dir, mocked_dvc_repo, mocker, caplog):
+    mocker.patch(
+        "dvc.repo.experiments.utils.get_random_exp_name", return_value="random"
+    )
+    mocked_dvc_repo.scm.get_ref.return_value = "duplicate"
+    with caplog.at_level("WARNING"):
+        live = Live(exp_name="duplicate")
+    assert live._exp_name == "random"
+    msg = "Experiment conflicts with existing experiment 'duplicate'."
+    assert msg in caplog.text

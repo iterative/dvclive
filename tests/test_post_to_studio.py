@@ -359,3 +359,14 @@ def test_post_to_studio_message(tmp_dir, mocked_dvc_repo, mocked_studio_post):
         "https://0.0.0.0/api/live",
         **get_studio_call("start", exp_name=live._exp_name, message="Custom message"),
     )
+
+
+def test_post_to_studio_name(tmp_dir, mocked_dvc_repo, mocked_studio_post):
+    Live(exp_name="custom-name")
+
+    mocked_post, _ = mocked_studio_post
+
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        **get_studio_call("start", exp_name="custom-name"),
+    )

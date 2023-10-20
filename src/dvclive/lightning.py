@@ -62,6 +62,7 @@ class DVCLiveLogger(Logger):
         save_dvc_exp: bool = False,
         dvcyaml: bool = True,
         cache_images: bool = False,
+        exp_name: Optional[str] = None,
     ):
         super().__init__()
         self._prefix = prefix
