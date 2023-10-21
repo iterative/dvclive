@@ -1,6 +1,10 @@
 import os
+from contextlib import redirect_stdout
+from io import StringIO
+from unittest import mock
 
 import pytest
+import yaml
 
 from dvclive.plots.metric import Metric
 from dvclive.serialize import load_yaml
@@ -11,6 +15,8 @@ try:
     from lightning import LightningModule
     from lightning.pytorch import Trainer
     from lightning.pytorch.callbacks import ModelCheckpoint
+    from lightning.pytorch.cli import LightningCLI
+    from lightning.pytorch.demos.boring_classes import BoringModel
     from torch import nn
     from torch.nn import functional as F  # noqa: N812
     from torch.optim import SGD, Adam
@@ -260,7 +266,7 @@ class ValLitXOR(LitXOR):
         return loss
 
 
-def test_lightning_val_udpates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
+def test_lightning_val_updates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     """Test the `self.experiment._latest_studio_step -= 1` logic."""
     mocked_post, _ = mocked_studio_post
 
@@ -277,22 +283,62 @@ def test_lightning_val_udpates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio
 
     calls = mocked_post.call_args_list
     # 0: start
-    # 1: update_train_step_metrics
-    # 2: update_train_step_metrics
-    # 3: log_eval_end_metrics
-    plots = calls[3][1]["json"]["plots"]
-    val_loss = plots["dvclive/dvc.yaml::dvclive/plots/metrics/val/loss.tsv"]
+    # 1: first data event
+    # ...: data events
+    # -2: last data event
+    # -1: done
+    plots = calls[-2][1]["json"]["plots"]
+    val_loss = plots["dvclive/plots/metrics/val/loss.tsv"]
     # Without `self.experiment._latest_studio_step -= 1`
     # This would be empty
     assert len(val_loss["data"]) == 1
 
 
 def test_lightning_force_init(tmp_dir, mocker):
-    """Regression test for https://github.com/iterative/dvclive/issues/594
-    Only call Live.__init__ when report is notebook.
+    """Related to https://github.com/iterative/dvclive/issues/594
+    Don't call Live.__init__ on rank-nonzero processes.
     """
     init = mocker.spy(Live, "__init__")
     DVCLiveLogger()
     init.assert_not_called()
-    DVCLiveLogger(report="notebook")
-    init.assert_called_once()
+
+
+# LightningCLI tests
+# Copied from https://github.com/Lightning-AI/lightning/blob/e7afe04ee86b64c76a5446088b3b75d9c275e5bf/tests/tests_pytorch/test_cli.py
+class TestModel(BoringModel):
+    def __init__(self, foo, bar=5):
+        super().__init__()
+        self.foo = foo
+        self.bar = bar
+
+
+def _test_logger_init_args(logger_name, init, unresolved={}):  # noqa: B006
+    cli_args = [f"--trainer.logger={logger_name}"]
+    cli_args += [f"--trainer.logger.{k}={v}" for k, v in init.items()]
+    cli_args += [f"--trainer.logger.dict_kwargs.{k}={v}" for k, v in unresolved.items()]
+    cli_args.append("--print_config")
+
+    out = StringIO()
+    with mock.patch(
+        "sys.argv", ["any.py"] + cli_args  # noqa: RUF005
+    ), redirect_stdout(  # noqa: RUF100
+        out
+    ), pytest.raises(
+        SystemExit
+    ):
+        LightningCLI(TestModel, run=False)
+
+    data = yaml.safe_load(out.getvalue())["trainer"]["logger"]
+    assert {k: data["init_args"][k] for k in init} == init
+    if unresolved:
+        assert data["dict_kwargs"] == unresolved
+
+
+def test_dvclive_logger_init_args():
+    _test_logger_init_args(
+        "dvclive.lightning.DVCLiveLogger",
+        {
+            "run_name": "test_run",  # Resolve from DVCLiveLogger.__init__
+            "dir": "results",  # Resolve from Live.__init__
+        },
+    )
