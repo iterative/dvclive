@@ -34,7 +34,7 @@ def test_exp_save_on_end(tmp_dir, save, mocked_dvc_repo):
         assert live._exp_name is not None
         mocked_dvc_repo.experiments.save.assert_called_with(
             name=live._exp_name,
-            include_untracked=[live.dir, str(tmp_dir / "dvc.yaml")],
+            include_untracked=[live.dir, "dvc.yaml"],
             force=True,
             message=None,
         )
@@ -79,7 +79,7 @@ def test_exp_save_run_on_dvc_repro(tmp_dir, mocker):
 
     dvc_repo.experiments.save.assert_called_with(
         name=live._exp_name,
-        include_untracked=[live.dir, str(tmp_dir / "dvc.yaml")],
+        include_untracked=[live.dir, "dvc.yaml"],
         force=True,
         message=None,
     )
@@ -102,7 +102,7 @@ def test_exp_save_with_dvc_files(tmp_dir, mocker):
 
     dvc_repo.experiments.save.assert_called_with(
         name=live._exp_name,
-        include_untracked=[live.dir, str(tmp_dir / "dvc.yaml")],
+        include_untracked=[live.dir, "dvc.yaml"],
         force=True,
         message=None,
     )
@@ -175,7 +175,7 @@ def test_exp_save_message(tmp_dir, mocked_dvc_repo):
     live.end()
     mocked_dvc_repo.experiments.save.assert_called_with(
         name=live._exp_name,
-        include_untracked=[live.dir, str(tmp_dir / "dvc.yaml")],
+        include_untracked=[live.dir, "dvc.yaml"],
         force=True,
         message="Custom message",
     )
@@ -186,7 +186,7 @@ def test_exp_save_name(tmp_dir, mocked_dvc_repo):
     live.end()
     mocked_dvc_repo.experiments.save.assert_called_with(
         name="custom-name",
-        include_untracked=[live.dir, str(tmp_dir / "dvc.yaml")],
+        include_untracked=[live.dir, "dvc.yaml"],
         force=True,
         message=None,
     )

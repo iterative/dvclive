@@ -155,7 +155,7 @@ def test_lightning_default_dir(tmp_dir):
     assert os.path.exists("dvclive")
 
 
-def test_lightning_kwargs(tmp_dir):
+def test_lightning_kwargs_e2e(tmp_dir):
     model = LitXOR()
     # Handle kwargs passed to Live.
     dvclive_logger = DVCLiveLogger(
@@ -301,6 +301,15 @@ def test_lightning_force_init(tmp_dir, mocker):
     init = mocker.spy(Live, "__init__")
     DVCLiveLogger()
     init.assert_not_called()
+
+
+def test_lightning_kwargs(tmp_dir, mocker):
+    dvclive_logger = DVCLiveLogger(save_dvc_exp=False)
+    assert dvclive_logger.experiment._save_dvc_exp is False
+
+    live = Live(save_dvc_exp=False)
+    dvclive_logger = DVCLiveLogger(experiment=live)
+    assert dvclive_logger.experiment._save_dvc_exp is False
 
 
 # LightningCLI tests

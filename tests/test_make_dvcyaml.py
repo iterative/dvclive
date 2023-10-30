@@ -440,18 +440,33 @@ def test_make_dvcyaml(tmp_dir, mocked_dvc_repo, dvcyaml):
 
 
 def test_make_dvcyaml_no_repo(tmp_dir, mocker):
-    logger = mocker.patch("dvclive.live.logger")
     dvclive = Live("logs")
     dvclive.make_dvcyaml()
 
-    assert not os.path.exists("dvc.yaml")
-    assert not dvclive.dvc_file
-    logger.warning.assert_any_call(
-        "Can't infer dvcyaml path without a DVC repo. "
-        "`dvc.yaml` file will not be written."
-    )
+    assert os.path.exists("dvc.yaml")
 
 
 def test_make_dvcyaml_invalid(tmp_dir, mocker):
     with pytest.raises(InvalidDvcyamlError):
         Live("logs", dvcyaml="invalid")
+
+
+def test_make_dvcyaml_on_end(tmp_dir, mocker):
+    dvclive = Live("logs")
+    dvclive.end()
+
+    assert os.path.exists("dvc.yaml")
+
+
+def test_make_dvcyaml_false(tmp_dir, mocker):
+    dvclive = Live("logs", dvcyaml=False)
+    dvclive.end()
+
+    assert not os.path.exists("dvc.yaml")
+
+
+def test_make_dvcyaml_none(tmp_dir, mocker):
+    dvclive = Live("logs", dvcyaml=None)
+    dvclive.end()
+
+    assert not os.path.exists("dvc.yaml")
