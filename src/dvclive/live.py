@@ -63,7 +63,7 @@ class Live:
         resume: bool = False,
         report: Optional[str] = None,
         save_dvc_exp: bool = True,
-        dvcyaml: Union[str, bool] = True,
+        dvcyaml: Union[str, bool] = "dvc.yaml",
         cache_images: bool = False,
         exp_name: Optional[str] = None,
         exp_message: Optional[str] = None,
@@ -109,9 +109,6 @@ class Live:
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
 
-        # Fail fast for invalid dvc.yaml path.
-        self.dvc_file  # noqa: B018
-
     def _init_resume(self):
         self._read_params()
         self._step = self.read_step()
@@ -150,6 +147,8 @@ class Live:
         dvc_logger = logging.getLogger("dvc")
         dvc_logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "WARNING").upper())
 
+        self._dvc_file = self._init_dvc_file()
+
         if (self._dvc_repo is None) or isinstance(self._dvc_repo.scm, NoSCM):
             if self._save_dvc_exp:
                 logger.warning(
@@ -186,6 +185,13 @@ class Live:
             logger.info(f"Logging to experiment '{self._exp_name}'")
             mark_dvclive_only_started(self._exp_name)
             self._include_untracked.append(self.dir)
+
+    def _init_dvc_file(self) -> str:
+        if isinstance(self._dvcyaml, str):
+            if os.path.basename(self._dvcyaml) == "dvc.yaml":
+                return self._dvcyaml
+            raise InvalidDvcyamlError
+        return "dvc.yaml"
 
     def _init_dvc_pipeline(self):
         if os.getenv(env.DVC_EXP_BASELINE_REV, None):
@@ -274,11 +280,7 @@ class Live:
 
     @property
     def dvc_file(self) -> str:
-        if isinstance(self._dvcyaml, str):
-            if os.path.basename(self._dvcyaml) == "dvc.yaml":
-                return self._dvcyaml
-            raise InvalidDvcyamlError
-        return "dvc.yaml"
+        return self._dvc_file
 
     @property
     def plots_dir(self) -> str:
