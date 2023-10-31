@@ -63,7 +63,7 @@ class Live:
         resume: bool = False,
         report: Optional[str] = None,
         save_dvc_exp: bool = True,
-        dvcyaml: Union[str, bool] = True,
+        dvcyaml: Union[str, bool] = "dvc.yaml",
         cache_images: bool = False,
         exp_name: Optional[str] = None,
         exp_message: Optional[str] = None,
@@ -191,13 +191,7 @@ class Live:
             if os.path.basename(self._dvcyaml) == "dvc.yaml":
                 return self._dvcyaml
             raise InvalidDvcyamlError
-        if self._dvc_repo is not None:
-            return os.path.join(self._dvc_repo.root_dir, "dvc.yaml")
-        logger.warning(
-            "Can't infer dvcyaml path without a DVC repo. "
-            "`dvc.yaml` file will not be written."
-        )
-        return ""
+        return "dvc.yaml"
 
     def _init_dvc_pipeline(self):
         if os.getenv(env.DVC_EXP_BASELINE_REV, None):
@@ -543,8 +537,7 @@ class Live:
 
     @catch_and_warn(DvcException, logger)
     def make_dvcyaml(self):
-        if self.dvc_file:
-            make_dvcyaml(self)
+        make_dvcyaml(self)
 
     @catch_and_warn(DvcException, logger)
     def post_to_studio(self, event):
