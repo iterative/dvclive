@@ -3,6 +3,7 @@ import logging
 import os
 from typing import Literal, Optional, Union
 
+from accelerate.tracking import GeneralTracker, on_main_process
 from transformers import (
     TrainerCallback,
     TrainerControl,
@@ -74,4 +75,33 @@ class DVCLiveCallback(TrainerCallback):
             output_dir = os.path.join(args.output_dir, name)
             fake_trainer.save_model(output_dir)
             self.live.log_artifact(output_dir, name=name, type="model", copy=True)
+        self.live.end()
+
+
+class DVCLiveTracker(GeneralTracker):
+    name = "dvclive"
+    requires_logging_directory = False
+
+    @on_main_process
+    def __init__(self, live: Optional[Live] = None, **kwargs):
+        super().__init__()
+        self.live = live if live is not None else Live(**kwargs)
+
+    @property
+    def tracker(self):
+        return self.live
+
+    @on_main_process
+    def store_init_configuration(self, values: dict):
+        self.live.log_params(values)
+
+    @on_main_process
+    def log(self, values: dict, step: Optional[int] = None, **kwargs):
+        if step:
+            self.live.step = step
+        for k, v in values.items():
+            self.live.log_metric(k, v, **kwargs)
+
+    @on_main_process
+    def finish(self):
         self.live.end()
