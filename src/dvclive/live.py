@@ -271,6 +271,12 @@ class Live:
         logger.debug(f"{self._report_mode=}")
 
     def _init_test(self):
+        """
+        Enables test mode that writes to temp paths and doesn't depend on repo.
+
+        Needed to run integration tests in external libraries like huggingface
+        accelerate.
+        """
         with tempfile.TemporaryDirectory() as dirpath:
             self._dir = os.path.join(dirpath, self._dir)
             if isinstance(self._dvcyaml, str):
