@@ -284,7 +284,7 @@ class Live:
             self._save_dvc_exp = False
             logger.warning(
                 "DVCLive testing mode enabled."
-                "Repo will be ignored and output will be written to {dirpath}."
+                f"Repo will be ignored and output will be written to {dirpath}."
             )
 
     @property
