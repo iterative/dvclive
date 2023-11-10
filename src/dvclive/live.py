@@ -4,6 +4,7 @@ import logging
 import math
 import os
 import shutil
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
@@ -83,8 +84,6 @@ class Live:
         self._dvcyaml = dvcyaml
         self._cache_images = cache_images
 
-        os.makedirs(self.dir, exist_ok=True)
-
         self._report_mode: Optional[str] = report
         self._report_notebook = None
         self._init_report()
@@ -97,7 +96,12 @@ class Live:
         self._inside_dvc_pipeline: bool = False
         self._dvc_repo = None
         self._include_untracked: List[str] = []
-        self._init_dvc()
+        if env2bool(env.DVCLIVE_TEST):
+            self._init_test()
+        else:
+            self._init_dvc()
+
+        os.makedirs(self.dir, exist_ok=True)
 
         if self._resume:
             self._init_resume()
@@ -265,6 +269,17 @@ class Live:
             )
             self._report_mode = None
         logger.debug(f"{self._report_mode=}")
+
+    def _init_test(self):
+        with tempfile.TemporaryDirectory() as dirpath:
+            self._dir = os.path.join(dirpath, self._dir)
+            if isinstance(self._dvcyaml, str):
+                self._dvc_file = os.path.join(dirpath, self._dvcyaml)
+            self._save_dvc_exp = False
+            logger.warning(
+                "DVCLive testing mode enabled."
+                "Repo will be ignored and output will be written to {dirpath}."
+            )
 
     @property
     def dir(self) -> str:  # noqa: A003
