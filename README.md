@@ -26,7 +26,7 @@ ______________________________________________________________________
 
 | Python API Overview | PyTorch Lightning | Scikit-learn | Ultralytics YOLO v8 |
 |--------|--------|--------|--------|
-| <a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-Quickstart.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> | <a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-PyTorch-Lightning.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> | <a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLIve-scikit-learn.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> | <a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-YOLO.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> |
+| <a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-Quickstart.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> | <a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-PyTorch-Lightning.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> | <a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-scikit-learn.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> | <a href="https://colab.research.google.com/github/iterative/dvclive/blob/main/examples/DVCLive-YOLO.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> |
 
 ## Install *dvclive*
 
