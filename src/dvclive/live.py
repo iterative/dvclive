@@ -590,6 +590,9 @@ class Live:
 
         self.save_dvc_exp()
 
+        # Post any data that hasn't been sent
+        self.post_to_studio("data")
+        # Mark experiment as done
         self.post_to_studio("done")
 
         cleanup_dvclive_step_completed()
