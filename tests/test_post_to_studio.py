@@ -132,15 +132,24 @@ def test_post_to_studio_failed_start_request(
     assert mocked_post.call_count == 1
 
 
-def test_post_to_studio_end_only_once(tmp_dir, mocked_dvc_repo, mocked_studio_post):
+def test_post_to_studio_done_only_once(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     mocked_post, _ = mocked_studio_post
     with Live() as live:
         live.log_metric("foo", 1)
         live.next_step()
 
-    assert mocked_post.call_count == 4
+    expected_done_calls = [
+        call
+        for call in mocked_post.call_args_list
+        if call.kwargs["json"]["type"] == "done"
+    ]
     live.end()
-    assert mocked_post.call_count == 4
+    actual_done_calls = [
+        call
+        for call in mocked_post.call_args_list
+        if call.kwargs["json"]["type"] == "done"
+    ]
+    assert expected_done_calls == actual_done_calls
 
 
 @pytest.mark.studio()
@@ -157,7 +166,9 @@ def test_post_to_studio_skip_start_and_done_on_env_var(
         live.log_metric("foo", 1)
         live.next_step()
 
-    assert mocked_post.call_count == 2
+    call_types = [call.kwargs["json"]["type"] for call in mocked_post.call_args_list]
+    assert "start" not in call_types
+    assert "done" not in call_types
 
 
 @pytest.mark.studio()
@@ -176,7 +187,7 @@ def test_post_to_studio_dvc_studio_config(
         live.log_metric("foo", 1)
         live.next_step()
 
-    assert mocked_post.call_count == 2
+    assert mocked_post.call_count == 4
 
 
 @pytest.mark.studio()
@@ -236,7 +247,9 @@ def test_post_to_studio_inside_dvc_exp(
         live.log_metric("foo", 1)
         live.next_step()
 
-    assert mocked_post.call_count == 2
+    call_types = [call.kwargs["json"]["type"] for call in mocked_post.call_args_list]
+    assert "start" not in call_types
+    assert "done" not in call_types
 
 
 @pytest.mark.studio()
@@ -370,3 +383,15 @@ def test_post_to_studio_name(tmp_dir, mocked_dvc_repo, mocked_studio_post):
         "https://0.0.0.0/api/live",
         **get_studio_call("start", exp_name="custom-name"),
     )
+
+
+def test_post_to_studio_if_done_skipped(tmp_dir, mocked_dvc_repo, mocked_studio_post):
+    live = Live()
+    live._studio_events_to_skip.add("start")
+    live._studio_events_to_skip.add("done")
+    live.log_metric("foo", 1)
+    live.end()
+
+    mocked_post, _ = mocked_studio_post
+    call_types = [call.kwargs["json"]["type"] for call in mocked_post.call_args_list]
+    assert "data" in call_types
