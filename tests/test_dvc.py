@@ -8,7 +8,7 @@ from scmrepo.git import Git
 
 from dvclive import Live
 from dvclive.dvc import get_dvc_repo
-from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME, DVC_ROOT
+from dvclive.env import DVC_EXP_BASELINE_REV, DVC_EXP_NAME, DVC_ROOT, DVCLIVE_TEST
 
 
 def test_get_dvc_repo(tmp_dir):
@@ -244,3 +244,14 @@ def test_get_exp_name_duplicate(tmp_dir, mocked_dvc_repo, mocker, caplog):
     assert live._exp_name == "random"
     msg = "Experiment conflicts with existing experiment 'duplicate'."
     assert msg in caplog.text
+
+
+def test_test_mode(tmp_dir, monkeypatch, mocked_dvc_repo):
+    monkeypatch.setenv(DVCLIVE_TEST, "true")
+    live = Live("dir", dvcyaml="dvc.yaml")
+    live.make_dvcyaml()
+    assert live._dir != "dir"
+    assert live._dvc_file != "dvc.yaml"
+    assert live._save_dvc_exp is False
+    assert not os.path.exists("dir")
+    assert not os.path.exists("dvc.yaml")
