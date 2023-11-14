@@ -180,6 +180,7 @@ def test_post_to_studio_dvc_studio_config(
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
     monkeypatch.setenv(DVC_ROOT, tmp_dir)
+    monkeypatch.delenv(DVC_STUDIO_TOKEN)
 
     mocked_dvc_repo.config = {"studio": {"token": "token"}}
 
@@ -187,7 +188,7 @@ def test_post_to_studio_dvc_studio_config(
         live.log_metric("foo", 1)
         live.next_step()
 
-    assert mocked_post.call_count == 4
+    assert mocked_post.call_args.kwargs["headers"]["Authorization"] == "token token"
 
 
 @pytest.mark.studio()
