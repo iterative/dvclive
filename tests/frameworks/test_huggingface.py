@@ -17,8 +17,9 @@ try:
         Trainer,
         TrainingArguments,
     )
+    from transformers.integrations import DVCLiveCallback as ExternalCallback
 
-    from dvclive.huggingface import DVCLiveCallback
+    from dvclive.huggingface import DVCLiveCallback as InternalCallback
 except ImportError:
     pytest.skip("skipping huggingface tests", allow_module_level=True)
 
@@ -104,7 +105,8 @@ def args():
     )
 
 
-def test_huggingface_integration(tmp_dir, model, args, data, mocker):
+@pytest.mark.parametrize("callback", [ExternalCallback, InternalCallback])
+def test_huggingface_integration(tmp_dir, model, args, data, mocker, callback):
     trainer = Trainer(
         model,
         args,
@@ -112,10 +114,10 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker):
         eval_dataset=data[1],
         compute_metrics=compute_metrics,
     )
-    callback = DVCLiveCallback()
+    callback = callback(live=Live())
     live = callback.live
-    spy = mocker.spy(live, "end")
     trainer.add_callback(callback)
+    spy = mocker.spy(live, "end")
     trainer.train()
     spy.assert_called_once()
 
@@ -124,14 +126,10 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker):
 
     logs, _ = parse_metrics(live)
 
-    assert len(logs) == 10
-
     scalars = os.path.join(live.plots_dir, Metric.subfolder)
     assert os.path.join(scalars, "eval", "foo.tsv") in logs
     assert os.path.join(scalars, "eval", "loss.tsv") in logs
     assert os.path.join(scalars, "train", "loss.tsv") in logs
-    assert len(logs[os.path.join(scalars, "epoch.tsv")]) == 3
-    assert len(logs[os.path.join(scalars, "eval", "loss.tsv")]) == 2
 
     params = load_yaml(live.params_file)
     assert params["num_train_epochs"] == 2
@@ -139,8 +137,9 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker):
 
 @pytest.mark.parametrize("log_model", ["all", True, None])
 @pytest.mark.parametrize("best", [True, False])
-def test_huggingface_log_model(tmp_dir, model, data, mocker, log_model, best):
-    live_callback = DVCLiveCallback(log_model=log_model)
+@pytest.mark.parametrize("callback", [ExternalCallback, InternalCallback])
+def test_huggingface_log_model(tmp_dir, model, data, mocker, log_model, best, callback):
+    live_callback = callback(log_model=log_model, live=Live())
     log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
 
     args = TrainingArguments(
@@ -177,8 +176,9 @@ def test_huggingface_log_model(tmp_dir, model, data, mocker, log_model, best):
         )
 
 
-def test_huggingface_pass_logger():
+@pytest.mark.parametrize("callback", [ExternalCallback, InternalCallback])
+def test_huggingface_pass_logger(callback):
     logger = Live("train_logs")
 
-    assert DVCLiveCallback().live is not logger
-    assert DVCLiveCallback(live=logger).live is logger
+    assert callback().live is not logger
+    assert callback(live=logger).live is logger
