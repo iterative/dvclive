@@ -379,12 +379,12 @@ class Live:
 
         # If the provided image name does not have a format on it,
         # try to infer the format from PIL Image.
-        if len(name.split(".")) <= 1:
-            if (
-                isinstance_without_import(val, "PIL.Image", "Image")
-                and f".{str(val.format).lower()}" in Image.suffixes
-            ):
-                name = f"{name}.{str(val.format).lower()}"
+        if (
+            len(name.split(".")) <= 1
+            and isinstance_without_import(val, "PIL.Image", "Image")
+            and f".{str(val.format).lower()}" in Image.suffixes
+        ):
+            name = f"{name}.{str(val.format).lower()}"
 
         # See if the image format and image name are valid
         if not Image.could_log(name, val):
