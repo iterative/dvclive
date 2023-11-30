@@ -16,18 +16,21 @@ class Image(Data):
         return _path
 
     @staticmethod
-    def could_log(val: object) -> bool:
+    def could_log(name: str, val: object) -> bool:
         acceptable = {
             ("numpy", "ndarray"),
             ("matplotlib.figure", "Figure"),
             ("PIL.Image", "Image"),
         }
+
+        supported_format = False
         for cls in type(val).mro():
             if any(isinstance_without_import(val, *cls) for cls in acceptable):
-                return True
+                supported_format = True
         if isinstance(val, (PurePath, str)):
-            return True
-        return False
+            supported_format = True
+
+        return supported_format and f".{name.split('.')[-1]}" in Image.suffixes
 
     def dump(self, val, **kwargs) -> None:  # noqa: ARG002
         if isinstance_without_import(val, "numpy", "ndarray"):
