@@ -24,6 +24,29 @@ def test_pil(tmp_dir):
     assert (tmp_dir / live.plots_dir / LiveImage.subfolder / "image.png").exists()
 
 
+def test_pil_omitting_extension_doesnt_save_without_valid_format(tmp_dir):
+    live = Live()
+    img = Image.new("RGB", (10, 10), (250, 250, 250))
+    with pytest.raises(ValueError, match="unknown file extension"):
+        live.log_image("whoops", img)
+
+
+def test_pil_omitting_extension_sets_the_format_if_path_given(tmp_dir):
+    live = Live()
+    img = Image.new("RGB", (10, 10), (250, 250, 250))
+
+    # Save it first, we'll reload it and pass it's path to log_image again
+    live.log_image("saved_with_format.png", img)
+
+    # Now try saving without explicit format and check if the format is set correctly.
+    live.log_image(
+        "whoops",
+        (tmp_dir / live.plots_dir / LiveImage.subfolder / "saved_with_format.png"),
+    )
+
+    assert (tmp_dir / live.plots_dir / LiveImage.subfolder / "whoops.png").exists()
+
+
 def test_invalid_extension(tmp_dir):
     live = Live()
     img = Image.new("RGB", (10, 10), (250, 250, 250))

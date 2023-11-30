@@ -37,6 +37,7 @@ from .utils import (
     clean_and_copy_into,
     env2bool,
     inside_notebook,
+    isinstance_without_import,
     matplotlib_installed,
     open_file_in_browser,
 )
@@ -377,6 +378,15 @@ class Live:
             from PIL import Image as ImagePIL
 
             val = ImagePIL.open(val)
+
+        # If the provided image name does not have a format on it,
+        # try to infer the format from PIL Image.
+        if len(name.split(".")) <= 1:
+            if (
+                isinstance_without_import(val, "PIL.Image", "Image")
+                and f".{str(val.format).lower()}" in Image.suffixes
+            ):
+                name = f"{name}.{str(val.format).lower()}"
 
         if name in self._images:
             image = self._images[name]

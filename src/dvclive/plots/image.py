@@ -7,7 +7,7 @@ from .base import Data
 
 class Image(Data):
     suffixes = (".jpg", ".jpeg", ".gif", ".png")
-    subfolder = "images"
+    subfolder: str = "images"
 
     @property
     def output_path(self) -> Path:
