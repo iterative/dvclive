@@ -1,4 +1,4 @@
-from typing import Any, Dict, Mapping, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Union
 
 try:
     from lightning.fabric.loggers.logger import Logger, rank_zero_experiment
@@ -19,9 +19,11 @@ except ImportError:
 
 from torch import is_tensor
 
-from dvclive import Live
 from dvclive.plots import Metric
 from dvclive.utils import standardize_metric_name
+
+if TYPE_CHECKING:
+    from dvclive import Live
 
 
 class DVCLiveLogger(Logger):
@@ -31,7 +33,7 @@ class DVCLiveLogger(Logger):
         self,
         run_name: Optional[str] = None,
         prefix: str = "",
-        experiment: Optional[Live] = None,
+        experiment: Optional["Live"] = None,
         **kwargs: Any,
     ):
         super().__init__()
@@ -57,6 +59,8 @@ class DVCLiveLogger(Logger):
         assert (  # noqa: S101
             rank_zero_only.rank == 0
         ), "tried to init DVCLive in non global_rank=0"
+
+        from dvclive import Live
 
         self._experiment = Live(**self._kwargs)
 
@@ -96,12 +100,28 @@ class DVCLiveLogger(Logger):
         """
         params = _convert_params(params)
         params = _sanitize_callable_params(params)
+        params = self._sanitize_params(params)
         self.experiment.log_params(params)
 
     @rank_zero_only
     def finalize(self, status: str) -> None:  # noqa: ARG002
         if self._experiment is not None:
             self.experiment.end()
+
+    @staticmethod
+    def _sanitize_params(params: Dict[str, Any]) -> Dict[str, Any]:
+        from argparse import Namespace
+
+        # logging of arrays with dimension > 1 is not supported, sanitize as string
+        params = {
+            k: str(v) if hasattr(v, "ndim") and v.ndim > 1 else v
+            for k, v in params.items()
+        }
+
+        # logging of argparse.Namespace is not supported, sanitize as string
+        params = {k: str(v) if type(v) == Namespace else v for k, v in params.items()}
+
+        return params  # noqa: RET504
 
     def __getstate__(self) -> Dict[str, Any]:
         state = self.__dict__.copy()
