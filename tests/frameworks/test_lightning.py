@@ -281,17 +281,25 @@ def test_lightning_val_updates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio
     )
     trainer.fit(model)
 
+    val_loss = "dvclive/plots/metrics/val/loss.tsv"
+    logs, _ = parse_metrics(dvclive_logger.experiment)
+    latest = logs[val_loss][-1]
     calls = mocked_post.call_args_list
-    # 0: start
-    # 1: first data event
-    # ...: data events
-    # -2: last data event
-    # -1: done
-    plots = calls[-2][1]["json"]["plots"]
-    val_loss = plots["dvclive/plots/metrics/val/loss.tsv"]
     # Without `self.experiment._latest_studio_step -= 1`
-    # This would be empty
-    assert len(val_loss["data"]) == 1
+    # Latest data would not be posted
+    latest_called = False
+    for call in calls:
+        try:
+            data = call[1]["json"]["plots"][val_loss]["data"][0]
+            # data read from file is read as str
+            for k, v in data.items():
+                data[k] = str(v)
+            if data == latest:
+                latest_called = True
+                break
+        except (IndexError, KeyError):
+            pass
+    assert latest_called is True
 
 
 def test_lightning_force_init(tmp_dir, mocker):
