@@ -1,7 +1,6 @@
 # ruff: noqa: ARG002
-import inspect
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from typing_extensions import override
 
@@ -24,24 +23,6 @@ except ImportError:
 from dvclive.fabric import DVCLiveLogger as FabricDVCLiveLogger
 
 
-def _should_call_next_step():
-    """
-    Find out if pytorch_lightning is calling `log_metrics` from the functions
-    where we actually want to call `next_step`.
-    For example, prevents calling next_step when external callbacks call
-    `log_metrics` or during the multiple `update_eval_step_metrics`.
-    """
-    return any(
-        frame.function
-        in (
-            "update_train_step_metrics",
-            "update_train_epoch_metrics",
-            "log_eval_end_metrics",
-        )
-        for frame in inspect.stack()
-    )
-
-
 class DVCLiveLogger(Logger, FabricDVCLiveLogger):
     def __init__(
         self,
@@ -61,18 +42,6 @@ class DVCLiveLogger(Logger, FabricDVCLiveLogger):
         self._logged_model_time: Dict[str, float] = {}
         self._checkpoint_callback: Optional[ModelCheckpoint] = None
         self._all_checkpoint_paths: List[str] = []
-
-    @override
-    @rank_zero_only
-    def log_metrics(self, metrics: Dict[str, Any], step: Optional[int] = None):
-        super().log_metrics(metrics=metrics, step=step)
-        if _should_call_next_step():
-            if step == self.experiment._latest_studio_step:  # noqa: SLF001
-                # We are in log_eval_end_metrics but there has been already
-                # a studio request sent with `step`.
-                # We decrease the number to bypass `live.studio._get_unsent_datapoints`
-                self.experiment._latest_studio_step -= 1  # noqa: SLF001
-            self.experiment.next_step()
 
     @override
     def after_save_checkpoint(self, checkpoint_callback: ModelCheckpoint) -> None:
