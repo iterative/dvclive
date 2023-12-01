@@ -29,9 +29,8 @@ class InvalidPlotTypeError(DvcLiveError):
 
 
 class InvalidParameterTypeError(DvcLiveError):
-    def __init__(self, val: Any):
-        self.val = val
-        super().__init__(f"Parameter type {type(val)} is not supported.")
+    def __init__(self, msg: Any):
+        super().__init__(msg)
 
 
 class InvalidReportModeError(DvcLiveError):
