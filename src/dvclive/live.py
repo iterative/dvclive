@@ -454,7 +454,7 @@ class Live:
         try:
             dump_yaml(self._params, self.params_file)
         except RepresenterError as exc:
-            raise InvalidParameterTypeError(exc.args) from exc
+            raise InvalidParameterTypeError(exc.args[0]) from exc
 
     def log_params(self, params: Dict[str, ParamLike]):
         """Saves the given set of parameters (dict) to yaml"""
