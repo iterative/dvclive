@@ -215,7 +215,7 @@ def test_lightning_steps(tmp_dir, mocker):
     # Handle kwargs passed to Live.
     dvclive_logger = DVCLiveLogger(dir="logs")
     live = dvclive_logger.experiment
-    spy = mocker.spy(live, "next_step")
+    spy = mocker.spy(live, "sync")
     trainer = Trainer(
         logger=dvclive_logger,
         max_epochs=2,
@@ -235,10 +235,11 @@ def test_lightning_steps(tmp_dir, mocker):
     assert len(epoch_loss) == 2
     assert len(step_loss) == 2
 
-    # call next_step:
+    # call sync:
     # - 2x epoch end
     # - 2x log_every_n_steps
-    assert spy.call_count == 4
+    # - 1x experiment end
+    assert spy.call_count == 5
 
 
 class ValLitXOR(LitXOR):
