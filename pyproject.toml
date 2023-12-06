@@ -31,9 +31,9 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "dvc>=3.22.1",
-    "dvc-render>=0.6.0,<1.0",
-    "dvc-studio-client>=0.15.0,<1",
+    "dvc>=3.33.0",
+    "dvc-render>=1.0.0,<2",
+    "dvc-studio-client>=0.17.1,<1",
     "funcy",
     "gto",
     "ruamel.yaml",
