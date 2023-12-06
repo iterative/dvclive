@@ -60,7 +60,7 @@ def test_dvclive_finalize(monkeypatch, tmp_path):
     logger.experiment.assert_not_called()
 
     logger = DVCLiveLogger(dir=tmp_path)
-    logger.log_metrics({"flush_me": 11.1})  # trigger creation of an experiment
+    logger.log_hyperparams({"flush_me": 11.1})  # trigger creation of an experiment
     logger.finalize("any")
 
     # finalize flushes to experiment directory

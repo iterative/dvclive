@@ -77,7 +77,10 @@ class DVCLiveLogger(Logger):
             rank_zero_only.rank == 0
         ), "experiment tried to log from global_rank != 0"
 
-        self.experiment.step = step
+        if step:
+            self.experiment.step = step
+        else:
+            self.experiment.step = self.experiment.step + 1
 
         metrics = _add_prefix(metrics, self._prefix, self.LOGGER_JOIN_CHAR)
 
