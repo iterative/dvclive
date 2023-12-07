@@ -48,6 +48,8 @@ class DVCLiveLogger(Logger):
 
     @property
     def version(self) -> Union[int, str]:
+        if self._version is None:
+            self._version = ""
         return self._version
 
     @property
@@ -69,7 +71,7 @@ class DVCLiveLogger(Logger):
     @rank_zero_only
     def log_metrics(
         self,
-        metrics: Mapping[str, float],
+        metrics: Mapping[str, Any],
         step: Optional[int] = None,
         sync: Optional[bool] = True,
     ) -> None:

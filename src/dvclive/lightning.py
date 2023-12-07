@@ -76,7 +76,6 @@ class DVCLiveLogger(Logger, FabricDVCLiveLogger):
             sync = True
         super().log_metrics(metrics, step, sync)
 
-    @override
     def after_save_checkpoint(self, checkpoint_callback: ModelCheckpoint) -> None:
         if self._log_model in [True, "all"]:
             self._checkpoint_callback = checkpoint_callback
@@ -110,7 +109,7 @@ class DVCLiveLogger(Logger, FabricDVCLiveLogger):
 
     def _save_checkpoints(self, checkpoint_callback: ModelCheckpoint) -> None:
         # drop unused checkpoints
-        if not self._experiment._resume:  # noqa: SLF001
+        if not self.experiment._resume:  # noqa: SLF001
             for p in Path(checkpoint_callback.dirpath).iterdir():
                 if str(p) not in self._all_checkpoint_paths:
                     p.unlink(missing_ok=True)
