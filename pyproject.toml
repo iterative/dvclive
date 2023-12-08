@@ -31,13 +31,15 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "dvc>=3.17.0",
-    "dvc-render>=0.5.0,<1.0",
-    "dvc-studio-client>=0.15.0,<1",
+    "dvc>=3.33.3",
+    "dvc-render>=1.0.0,<2",
+    "dvc-studio-client>=0.17.1,<1",
     "funcy",
+    "gto",
     "ruamel.yaml",
     "scmrepo",
 ]
+
 [project.optional-dependencies]
 image = ["numpy", "pillow"]
 sklearn = ["scikit-learn"]
@@ -53,7 +55,8 @@ tests = [
 ]
 dev = [
     "dvclive[all,tests]",
-    "mypy>=1.1.1"
+    "mypy>=1.1.1",
+    "types-PyYAML",
 ]
 mmcv = ["mmcv"]
 tf = ["tensorflow"]
@@ -86,29 +89,6 @@ platforms = ["any"]
 
 [tool.setuptools_scm]
 write_to = "src/dvclive/_dvclive_version.py"
-
-[tool.black]
-line-length = 88
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
-
-[tool.isort]
-profile = "black"
-known_first_party = ["dvclive"]
-line_length = 88
 
 [tool.pytest.ini_options]
 addopts = "-ra"

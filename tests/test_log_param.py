@@ -84,5 +84,6 @@ def test_log_param_custom_obj(tmp_dir):
 
     param_value = Dummy()
 
-    with pytest.raises(InvalidParameterTypeError):
+    with pytest.raises(InvalidParameterTypeError) as excinfo:
         dvclive.log_param("param_complex", param_value)
+    assert "Dummy" in excinfo.value.args[0]

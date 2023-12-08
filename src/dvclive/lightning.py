@@ -50,35 +50,19 @@ def _should_call_next_step():
 
 
 class DVCLiveLogger(Logger):
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         run_name: Optional[str] = "dvclive_run",
         prefix="",
         log_model: Union[str, bool] = False,
         experiment=None,
-        dir: Optional[str] = None,  # noqa: A002
-        resume: bool = False,
-        report: Optional[str] = None,
-        save_dvc_exp: bool = False,
-        dvcyaml: bool = True,
-        cache_images: bool = False,
+        **kwargs,
     ):
         super().__init__()
         self._prefix = prefix
-        self._live_init: Dict[str, Any] = {
-            "resume": resume,
-            "report": report,
-            "save_dvc_exp": save_dvc_exp,
-            "dvcyaml": dvcyaml,
-            "cache_images": cache_images,
-        }
-        if dir is not None:
-            self._live_init["dir"] = dir
+        self._live_init: Dict[str, Any] = kwargs
         self._experiment = experiment
         self._version = run_name
-        if report == "notebook":
-            # Force Live instantiation
-            self.experiment  # noqa: B018
         self._log_model = log_model
         self._logged_model_time: Dict[str, float] = {}
         self._checkpoint_callback: Optional[ModelCheckpoint] = None

@@ -58,7 +58,7 @@ def test_log_artifact_with_save_dvc_exp(tmp_dir, mocker, mocked_dvc_repo):
         live.log_artifact("data")
     mocked_dvc_repo.experiments.save.assert_called_with(
         name=live._exp_name,
-        include_untracked=[live.dir, "data", ".gitignore"],
+        include_untracked=[live.dir, "data", ".gitignore", "dvc.yaml"],
         force=True,
         message=None,
     )
@@ -227,7 +227,7 @@ def test_log_artifact_type_model_when_dvc_add_fails(tmp_dir, mocker, mocked_dvc_
 
 
 @pytest.mark.parametrize("tracked", ["data_source", "stage", None])
-def test_log_artifact_inside_exp(tmp_dir, mocker, dvc_repo, tracked):
+def test_log_artifact_inside_pipeline(tmp_dir, mocker, dvc_repo, tracked):
     logger = mocker.patch("dvclive.live.logger")
     data = tmp_dir / "data"
     data.touch()
@@ -239,18 +239,18 @@ def test_log_artifact_inside_exp(tmp_dir, mocker, dvc_repo, tracked):
             f.write(dvcyaml)
     live = Live(save_dvc_exp=False)
     spy = mocker.spy(live._dvc_repo, "add")
-    live._inside_dvc_exp = True
+    live._inside_dvc_pipeline = True
     live.log_artifact("data")
     if tracked == "stage":
         msg = (
             "Skipping `dvc add data` because it is already being tracked"
-            " automatically as an output of `dvc exp run`."
+            " automatically as an output of the DVC pipeline."
         )
         logger.info.assert_called_with(msg)
         spy.assert_not_called()
     elif tracked == "data_source":
         msg = (
-            "To track 'data' automatically during `dvc exp run`:"
+            "To track 'data' automatically in the DVC pipeline:"
             "\n1. Run `dvc remove data.dvc` "
             "to stop tracking it outside the pipeline."
             "\n2. Add it as an output of the pipeline stage."
@@ -259,14 +259,14 @@ def test_log_artifact_inside_exp(tmp_dir, mocker, dvc_repo, tracked):
         spy.assert_called_once()
     else:
         msg = (
-            "To track 'data' automatically during `dvc exp run`, "
+            "To track 'data' automatically in the DVC pipeline, "
             "add it as an output of the pipeline stage."
         )
         logger.warning.assert_called_with(msg)
         spy.assert_called_once()
 
 
-def test_log_artifact_inside_exp_subdir(tmp_dir, mocker, dvc_repo):
+def test_log_artifact_inside_pipeline_subdir(tmp_dir, mocker, dvc_repo):
     logger = mocker.patch("dvclive.live.logger")
     subdir = tmp_dir / "subdir"
     subdir.mkdir()
@@ -275,10 +275,10 @@ def test_log_artifact_inside_exp_subdir(tmp_dir, mocker, dvc_repo):
     dvc_repo.add(subdir)
     live = Live()
     spy = mocker.spy(live._dvc_repo, "add")
-    live._inside_dvc_exp = True
+    live._inside_dvc_pipeline = True
     live.log_artifact("subdir/data")
     msg = (
-        "To track 'subdir/data' automatically during `dvc exp run`:"
+        "To track 'subdir/data' automatically in the DVC pipeline:"
         "\n1. Run `dvc remove subdir.dvc` "
         "to stop tracking it outside the pipeline."
         "\n2. Add it as an output of the pipeline stage."

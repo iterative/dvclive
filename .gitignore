@@ -137,4 +137,6 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+.dvc/
+.dvcignore
 src/dvclive/_dvclive_version.py

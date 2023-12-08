@@ -4,6 +4,7 @@ import logging
 import math
 import os
 import shutil
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 
@@ -16,7 +17,7 @@ from .dvc import (
     ensure_dir_is_tracked,
     find_overlapping_stage,
     get_dvc_repo,
-    get_random_exp_name,
+    get_exp_name,
     make_dvcyaml,
 )
 from .error import (
@@ -63,8 +64,9 @@ class Live:
         resume: bool = False,
         report: Optional[str] = None,
         save_dvc_exp: bool = True,
-        dvcyaml: Union[str, bool] = True,
+        dvcyaml: Union[str, bool] = "dvc.yaml",
         cache_images: bool = False,
+        exp_name: Optional[str] = None,
         exp_message: Optional[str] = None,
     ):
         self.summary: Dict[str, Any] = {}
@@ -82,20 +84,24 @@ class Live:
         self._dvcyaml = dvcyaml
         self._cache_images = cache_images
 
-        os.makedirs(self.dir, exist_ok=True)
-
         self._report_mode: Optional[str] = report
         self._report_notebook = None
         self._init_report()
 
-        self._baseline_rev: Optional[str] = None
-        self._exp_name: Optional[str] = None
+        self._baseline_rev: Optional[str] = os.getenv(env.DVC_EXP_BASELINE_REV)
+        self._exp_name: Optional[str] = exp_name or os.getenv(env.DVC_EXP_NAME)
         self._exp_message: Optional[str] = exp_message
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
+        self._inside_dvc_pipeline: bool = False
         self._dvc_repo = None
         self._include_untracked: List[str] = []
-        self._init_dvc()
+        if env2bool(env.DVCLIVE_TEST):
+            self._init_test()
+        else:
+            self._init_dvc()
+
+        os.makedirs(self.dir, exist_ok=True)
 
         if self._resume:
             self._init_resume()
@@ -137,27 +143,25 @@ class Live:
     def _init_dvc(self):  # noqa: C901
         from dvc.scm import NoSCM
 
+        if os.getenv(env.DVC_ROOT, None):
+            self._inside_dvc_pipeline = True
+            self._init_dvc_pipeline()
         self._dvc_repo = get_dvc_repo()
 
-        self._exp_name = os.getenv(env.DVC_EXP_NAME)
-        self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV)
-        if not self._exp_name:
-            scm = self._dvc_repo.scm if self._dvc_repo else None
-            self._exp_name = get_random_exp_name(scm, self._baseline_rev)
-
-        if self._dvc_repo and self._baseline_rev and self._exp_name:
-            # `dvc exp` execution
-            self._inside_dvc_exp = True
-            if self._save_dvc_exp:
-                logger.info("Ignoring `save_dvc_exp` because `dvc exp run` is running")
-                self._save_dvc_exp = False
+        scm = self._dvc_repo.scm if self._dvc_repo else None
+        if isinstance(scm, NoSCM):
+            scm = None
+        if scm:
+            self._baseline_rev = scm.get_rev()
+        self._exp_name = get_exp_name(self._exp_name, scm, self._baseline_rev)
+        logger.info(f"Logging to experiment '{self._exp_name}'")
 
         dvc_logger = logging.getLogger("dvc")
         dvc_logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "WARNING").upper())
 
         self._dvc_file = self._init_dvc_file()
 
-        if (self._dvc_repo is None) or isinstance(self._dvc_repo.scm, NoSCM):
+        if not scm:
             if self._save_dvc_exp:
                 logger.warning(
                     "Can't save experiment without a Git Repo."
@@ -165,7 +169,7 @@ class Live:
                 )
                 self._save_dvc_exp = False
             return
-        if self._dvc_repo.scm.no_commits:
+        if scm.no_commits:
             if self._save_dvc_exp:
                 logger.warning(
                     "Can't save experiment to an empty Git Repo."
@@ -182,10 +186,8 @@ class Live:
                 "\nRemove it from outputs to make DVCLive work as expected."
             )
 
-        if self._inside_dvc_exp:
+        if self._inside_dvc_pipeline:
             return
-
-        self._baseline_rev = self._dvc_repo.scm.get_rev()
 
         if self._save_dvc_exp:
             mark_dvclive_only_started(self._exp_name)
@@ -196,13 +198,23 @@ class Live:
             if os.path.basename(self._dvcyaml) == "dvc.yaml":
                 return self._dvcyaml
             raise InvalidDvcyamlError
-        if self._dvc_repo is not None:
-            return os.path.join(self._dvc_repo.root_dir, "dvc.yaml")
-        logger.warning(
-            "Can't infer dvcyaml path without a DVC repo. "
-            "`dvc.yaml` file will not be written."
-        )
-        return ""
+        return "dvc.yaml"
+
+    def _init_dvc_pipeline(self):
+        if os.getenv(env.DVC_EXP_BASELINE_REV, None):
+            # `dvc exp` execution
+            self._inside_dvc_exp = True
+            if self._save_dvc_exp:
+                logger.info("Ignoring `save_dvc_exp` because `dvc exp run` is running")
+        else:
+            # `dvc repro` execution
+            if self._save_dvc_exp:
+                logger.info("Ignoring `save_dvc_exp` because `dvc repro` is running")
+            logger.warning(
+                "Some DVCLive features are unsupported in `dvc repro`."
+                "\nTo use DVCLive with a DVC Pipeline, run it with `dvc exp run`."
+            )
+        self._save_dvc_exp = False
 
     def _init_studio(self):
         self._dvc_studio_config = get_dvc_studio_config(self)
@@ -242,6 +254,23 @@ class Live:
             )
             self._report_mode = None
         logger.debug(f"{self._report_mode=}")
+
+    def _init_test(self):
+        """
+        Enables test mode that writes to temp paths and doesn't depend on repo.
+
+        Needed to run integration tests in external libraries like huggingface
+        accelerate.
+        """
+        with tempfile.TemporaryDirectory() as dirpath:
+            self._dir = os.path.join(dirpath, self._dir)
+            if isinstance(self._dvcyaml, str):
+                self._dvc_file = os.path.join(dirpath, self._dvcyaml)
+            self._save_dvc_exp = False
+            logger.warning(
+                "DVCLive testing mode enabled."
+                f"Repo will be ignored and output will be written to {dirpath}."
+            )
 
     @property
     def dir(self) -> str:  # noqa: A003
@@ -410,7 +439,7 @@ class Live:
         try:
             dump_yaml(self._params, self.params_file)
         except RepresenterError as exc:
-            raise InvalidParameterTypeError(exc.args) from exc
+            raise InvalidParameterTypeError(exc.args[0]) from exc
 
     def log_params(self, params: Dict[str, ParamLike]):
         """Saves the given set of parameters (dict) to yaml"""
@@ -438,7 +467,8 @@ class Live:
             raise InvalidDataTypeError(path, type(path))
 
         if self._dvc_repo is not None:
-            from dvc.repo.artifacts import name_is_compatible
+            from gto.constants import assert_name_is_valid
+            from gto.exceptions import ValidationError
 
             if copy:
                 path = clean_and_copy_into(path, self.artifacts_dir)
@@ -448,14 +478,15 @@ class Live:
 
             if any((type, name, desc, labels, meta)):
                 name = name or Path(path).stem
-                if name_is_compatible(name):
+                try:
+                    assert_name_is_valid(name)
                     self._artifacts[name] = {
                         k: v
                         for k, v in locals().items()
                         if k in ("path", "type", "desc", "labels", "meta")
                         and v is not None
                     }
-                else:
+                except ValidationError:
                     logger.warning(
                         "Can't use '%s' as artifact name (ID)."
                         " It will not be included in the `artifacts` section.",
@@ -469,25 +500,25 @@ class Live:
 
     @catch_and_warn(DvcException, logger)
     def cache(self, path):
-        if self._inside_dvc_exp:
+        if self._inside_dvc_pipeline:
             existing_stage = find_overlapping_stage(self._dvc_repo, path)
 
             if existing_stage:
                 if existing_stage.cmd:
                     logger.info(
                         f"Skipping `dvc add {path}` because it is already being"
-                        " tracked automatically as an output of `dvc exp run`."
+                        " tracked automatically as an output of the DVC pipeline."
                     )
                     return  # skip caching
                 logger.warning(
-                    f"To track '{path}' automatically during `dvc exp run`:"
+                    f"To track '{path}' automatically in the DVC pipeline:"
                     f"\n1. Run `dvc remove {existing_stage.addressing}` "
                     "to stop tracking it outside the pipeline."
                     "\n2. Add it as an output of the pipeline stage."
                 )
             else:
                 logger.warning(
-                    f"To track '{path}' automatically during `dvc exp run`, "
+                    f"To track '{path}' automatically in the DVC pipeline, "
                     "add it as an output of the pipeline stage."
                 )
 
@@ -536,11 +567,20 @@ class Live:
             catch_and_warn(DvcException, logger)(ensure_dir_is_tracked)(
                 self.dir, self._dvc_repo
             )
+            if self._dvcyaml:
+                catch_and_warn(DvcException, logger)(self._dvc_repo.scm.add)(
+                    self.dvc_file
+                )
+
+        self.make_report()
 
         self.make_report()
 
         self.save_dvc_exp()
 
+        # Post any data that hasn't been sent
+        self.post_to_studio("data")
+        # Mark experiment as done
         self.post_to_studio("done")
 
         cleanup_dvclive_step_completed()
@@ -566,6 +606,8 @@ class Live:
     @catch_and_warn(DvcException, logger, mark_dvclive_only_ended)
     def save_dvc_exp(self):
         if self._save_dvc_exp:
+            if self._dvcyaml:
+                self._include_untracked.append(self.dvc_file)
             self._experiment_rev = self._dvc_repo.experiments.save(
                 name=self._exp_name,
                 include_untracked=self._include_untracked,
