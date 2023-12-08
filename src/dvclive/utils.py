@@ -4,7 +4,7 @@ import os
 import re
 import shutil
 import webbrowser
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from platform import uname
 from typing import Union
 
@@ -177,6 +177,8 @@ def rel_path(path, dvc_root_path):
     if dvc_root_path:
         absolute_path = Path(path).absolute()
         path = os.path.relpath(absolute_path, dvc_root_path)
+    if os.name == "nt":
+        path = PureWindowsPath(path)
     return str(Path(path).as_posix())
 
 
