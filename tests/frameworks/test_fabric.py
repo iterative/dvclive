@@ -5,7 +5,10 @@ import numpy as np
 import pytest
 import torch
 
-from dvclive.fabric import DVCLiveLogger
+try:
+    from dvclive.fabric import DVCLiveLogger
+except ImportError:
+    pytest.skip("skipping lightning tests", allow_module_level=True)
 
 
 class BoringModel(torch.nn.Module):

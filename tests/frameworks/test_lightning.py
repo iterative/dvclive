@@ -329,12 +329,11 @@ def _test_logger_init_args(logger_name, init, unresolved={}):  # noqa: B006
 
     out = StringIO()
     with mock.patch(
-        "sys.argv", ["any.py"] + cli_args  # noqa: RUF005
+        "sys.argv",
+        ["any.py"] + cli_args,  # noqa: RUF005
     ), redirect_stdout(  # noqa: RUF100
         out
-    ), pytest.raises(
-        SystemExit
-    ):
+    ), pytest.raises(SystemExit):
         LightningCLI(TestModel, run=False)
 
     data = yaml.safe_load(out.getvalue())["trainer"]["logger"]
