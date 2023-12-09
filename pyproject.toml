@@ -68,7 +68,7 @@ fastai = ["fastai"]
 lightning = ["lightning>=2.0", "torch"]
 optuna = ["optuna"]
 all = [
-   "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,pytorch-lightning,optuna,plots,markdown]"
+   "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,lightning,optuna,plots,markdown]"
 ]
 
 [project.urls]
