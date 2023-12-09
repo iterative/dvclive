@@ -130,7 +130,6 @@ warn_redundant_casts = true
 warn_unreachable = true
 ignore_missing_imports = true
 files = ["src", "tests"]
-enable_recursive_aliases = true
 
 [tool.codespell]
 ignore-words-list = "fpr"
