@@ -2,7 +2,9 @@ import glob
 import json
 import logging
 import math
+import numpy as np
 import os
+import pandas as pd
 import shutil
 import tempfile
 from pathlib import Path
@@ -35,6 +37,7 @@ from .utils import (
     StrPath,
     catch_and_warn,
     clean_and_copy_into,
+    convert_datapoints_to_list_of_dicts,
     env2bool,
     inside_notebook,
     matplotlib_installed,
@@ -391,14 +394,19 @@ class Live:
     def log_plot(
         self,
         name: str,
-        datapoints: List[Dict],
+        datapoints: pd.DataFrame | np.ndarray | List[Dict],
         x: str,
         y: str,
         template: Optional[str] = None,
         title: Optional[str] = None,
         x_label: Optional[str] = None,
         y_label: Optional[str] = None,
+        columns: Optional[List[str]] = None,
     ):
+        
+        # Convert the given datapoints to List[Dict]
+        datapoints = convert_datapoints_to_list_of_dicts(datapoints=datapoints, columns=columns)
+
         if not CustomPlot.could_log(datapoints):
             raise InvalidDataTypeError(name, type(datapoints))
 

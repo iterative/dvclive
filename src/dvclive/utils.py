@@ -1,12 +1,14 @@
 import csv
 import json
+import numpy as np
 import os
+import pandas as pd
 import re
 import shutil
-import webbrowser
 from pathlib import Path
 from platform import uname
-from typing import Union
+from typing import Union, List, Dict, Optional
+import webbrowser
 
 StrPath = Union[str, Path]
 
@@ -194,3 +196,29 @@ def read_history(live, metric):
 def read_latest(live, metric_name):
     _, latest = parse_metrics(live)
     return latest["step"], latest[metric_name]
+
+
+def convert_datapoints_to_list_of_dicts(
+        datapoints: pd.DataFrame | np.ndarray | List[Dict], 
+        columns: Optional[List[str]] = None
+        ) -> List[Dict]:
+    """
+    Convert the given datapoints to a list of dictionaries.
+
+    Args:
+        datapoints: The input datapoints to be converted.
+        columns: The column columns for the datapoints. Applied only for np.ndarray inputs.
+
+    Returns:
+        A list of dictionaries representing the datapoints.
+
+    Raises:
+        None
+    """
+    if isinstance(datapoints, pd.DataFrame):
+        return datapoints.to_dict(orient='records')
+    elif isinstance(datapoints, np.ndarray):
+        return pd.DataFrame(datapoints, columns=columns).to_dict(orient='records')
+    else:
+        return datapoints
+
