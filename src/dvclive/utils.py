@@ -199,9 +199,9 @@ def read_latest(live, metric_name):
 
 
 def convert_datapoints_to_list_of_dicts(
-        datapoints: pd.DataFrame | np.ndarray | List[Dict], 
-        columns: Optional[List[str]] = None
-        ) -> List[Dict]:
+    datapoints: pd.DataFrame | np.ndarray | List[Dict],
+    columns: Optional[List[str]] = None,
+) -> List[Dict]:
     """
     Convert the given datapoints to a list of dictionaries.
 
@@ -216,9 +216,8 @@ def convert_datapoints_to_list_of_dicts(
         None
     """
     if isinstance(datapoints, pd.DataFrame):
-        return datapoints.to_dict(orient='records')
+        return datapoints.to_dict(orient="records")
     elif isinstance(datapoints, np.ndarray):
-        return pd.DataFrame(datapoints, columns=columns).to_dict(orient='records')
+        return pd.DataFrame(datapoints, columns=columns).to_dict(orient="records")
     else:
         return datapoints
-

@@ -403,9 +403,10 @@ class Live:
         y_label: Optional[str] = None,
         columns: Optional[List[str]] = None,
     ):
-        
         # Convert the given datapoints to List[Dict]
-        datapoints = convert_datapoints_to_list_of_dicts(datapoints=datapoints, columns=columns)
+        datapoints = convert_datapoints_to_list_of_dicts(
+            datapoints=datapoints, columns=columns
+        )
 
         if not CustomPlot.could_log(datapoints):
             raise InvalidDataTypeError(name, type(datapoints))

@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-from typing import List, Dict, Optional
 
 from dvclive.utils import standardize_metric_name, convert_datapoints_to_list_of_dicts
 
@@ -20,17 +19,16 @@ def test_standardize_metric_name(framework, logged, standardized):
     assert standardize_metric_name(logged, framework) == standardized
 
 
-
 class TestConvertDatapointsToListOfDicts:
     def test_dataframe(self):
-        df = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
-        expected_output = [{'A': 1, 'B': 3}, {'A': 2, 'B': 4}]
+        df = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
+        expected_output = [{"A": 1, "B": 3}, {"A": 2, "B": 4}]
         assert convert_datapoints_to_list_of_dicts(df) == expected_output
 
     def test_ndarray_with_columns(self):
         arr = np.array([[1, 3], [2, 4]])
-        columns = ['A', 'B']
-        expected_output = [{'A': 1, 'B': 3}, {'A': 2, 'B': 4}]
+        columns = ["A", "B"]
+        expected_output = [{"A": 1, "B": 3}, {"A": 2, "B": 4}]
         assert convert_datapoints_to_list_of_dicts(arr, columns) == expected_output
 
     def test_ndarray_without_columns(self):
@@ -39,5 +37,5 @@ class TestConvertDatapointsToListOfDicts:
         assert convert_datapoints_to_list_of_dicts(arr) == expected_output
 
     def test_list_of_dicts(self):
-        list_of_dicts = [{'A': 1, 'B': 3}, {'A': 2, 'B': 4}]
+        list_of_dicts = [{"A": 1, "B": 3}, {"A": 2, "B": 4}]
         assert convert_datapoints_to_list_of_dicts(list_of_dicts) == list_of_dicts
