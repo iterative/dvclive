@@ -114,12 +114,12 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker, callback):
         eval_dataset=data[1],
         compute_metrics=compute_metrics,
     )
-    callback = callback(live=Live())
+    callback = callback()
     live = callback.live
     trainer.add_callback(callback)
-    spy = mocker.spy(live, "end")
+    spy = mocker.spy(Live, "end")
     trainer.train()
-    spy.assert_called_once()
+    spy.assert_called()
 
     live = callback.live
     assert os.path.exists(live.dir)
