@@ -7,7 +7,6 @@ import shutil
 from pathlib import Path
 from platform import uname
 from typing import Union, List, Dict, TYPE_CHECKING
-from typing import Union, List, Dict, TYPE_CHECKING
 import webbrowser
 
 if TYPE_CHECKING:
@@ -209,8 +208,6 @@ def read_latest(live, metric_name):
 def convert_datapoints_to_list_of_dicts(
     datapoints: List[Dict] | pd.DataFrame | np.ndarray,
 ) -> List[Dict]:
-    datapoints: List[Dict] | pd.DataFrame | np.ndarray,
-) -> List[Dict]:
     """
     Convert the given datapoints to a list of dictionaries.
 
@@ -226,17 +223,17 @@ def convert_datapoints_to_list_of_dicts(
     if isinstance(datapoints, list):
         return datapoints
 
-    import pandas as pd
-
-
-    if isinstance(datapoints, pd.DataFrame):
+    if isinstance_without_import(datapoints, "pandas.core.frame", "DataFrame"):
         return datapoints.to_dict(orient="records")
         return datapoints.to_dict(orient="records")
 
-    import numpy as np
+    if isinstance_without_import(datapoints, "numpy", "ndarray"):
+        # This is a structured array
+        if datapoints.dtype.names is not None:
+            return [dict(zip(datapoints.dtype.names, row)) for row in datapoints]
 
+        # This is a regular array
+        return [dict(enumerate(row)) for row in datapoints]
 
-    if isinstance(datapoints, np.ndarray):
-        return pd.DataFrame(datapoints).to_dict(orient="records")
-
-    return datapoints
+    # Raise an error if the input is not a supported type
+    raise InvalidDataTypeError("datapoints", type(datapoints))

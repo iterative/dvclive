@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 
 from dvclive.utils import standardize_metric_name, convert_datapoints_to_list_of_dicts
+from dvclive.error import InvalidDataTypeError
 
 
 @pytest.mark.parametrize(
@@ -39,3 +40,9 @@ class TestConvertDatapointsToListOfDicts:
     def test_list_of_dicts(self):
         list_of_dicts = [{"A": 1, "B": 3}, {"A": 2, "B": 4}]
         assert convert_datapoints_to_list_of_dicts(list_of_dicts) == list_of_dicts
+
+    def test_unsupported_format(self):
+        with pytest.raises(InvalidDataTypeError) as exc_info:
+            convert_datapoints_to_list_of_dicts("unsupported data format")
+
+        assert "not supported type" in str(exc_info.value)
