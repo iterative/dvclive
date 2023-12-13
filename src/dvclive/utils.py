@@ -6,7 +6,7 @@ import re
 import shutil
 from pathlib import Path
 from platform import uname
-from typing import Union, List, Dict, Optional, TYPE_CHECKING
+from typing import Union, List, Dict, TYPE_CHECKING
 import webbrowser
 
 if TYPE_CHECKING:
@@ -202,8 +202,8 @@ def read_latest(live, metric_name):
 
 
 def convert_datapoints_to_list_of_dicts(
-        datapoints:  List[Dict] | pd.DataFrame | np.ndarray,
-        ) -> List[Dict]:
+    datapoints: List[Dict] | pd.DataFrame | np.ndarray,
+) -> List[Dict]:
     """
     Convert the given datapoints to a list of dictionaries.
 
@@ -220,14 +220,18 @@ def convert_datapoints_to_list_of_dicts(
         return datapoints
 
     import pandas as pd
+
     if isinstance(datapoints, pd.DataFrame):
-        return datapoints.to_dict(orient='records')
+        return datapoints.to_dict(orient="records")
 
     import numpy as np
+
     if isinstance(datapoints, np.ndarray):
-        return pd.DataFrame(datapoints).to_dict(orient='records')
+        return pd.DataFrame(datapoints).to_dict(orient="records")
     else:
-        raise ValueError("""
+        raise ValueError(
+            """
             Unexpected format for `datapoints`. \
             Supported formats: pd.DataFrame, np.ndarray, or List[Dict].
-            """)
+            """
+        )

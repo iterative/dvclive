@@ -31,9 +31,9 @@ class TestConvertDatapointsToListOfDicts:
         assert convert_datapoints_to_list_of_dicts(arr) == expected_output
 
     def test_structured_array(self):
-        dtype = [('A', 'i4'), ('B', 'i4')]
+        dtype = [("A", "i4"), ("B", "i4")]
         structured_array = np.array([(1, 3), (2, 4)], dtype=dtype)
-        expected_output = [{'A': 1, 'B': 3}, {'A': 2, 'B': 4}]
+        expected_output = [{"A": 1, "B": 3}, {"A": 2, "B": 4}]
         assert convert_datapoints_to_list_of_dicts(structured_array) == expected_output
 
     def test_list_of_dicts(self):
