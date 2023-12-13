@@ -1,14 +1,17 @@
+from __future__ import annotations
 import glob
 import json
 import logging
 import math
-import numpy as np
 import os
-import pandas as pd
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import numpy as np
+    import pandas as pd
 
 from dvc.exceptions import DvcException
 from funcy import set_in
@@ -401,12 +404,9 @@ class Live:
         title: Optional[str] = None,
         x_label: Optional[str] = None,
         y_label: Optional[str] = None,
-        columns: Optional[List[str]] = None,
     ):
         # Convert the given datapoints to List[Dict]
-        datapoints = convert_datapoints_to_list_of_dicts(
-            datapoints=datapoints, columns=columns
-        )
+        datapoints = convert_datapoints_to_list_of_dicts(datapoints=datapoints)
 
         if not CustomPlot.could_log(datapoints):
             raise InvalidDataTypeError(name, type(datapoints))

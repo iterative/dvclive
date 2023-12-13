@@ -1,14 +1,17 @@
+from __future__ import annotations
 import csv
 import json
-import numpy as np
 import os
-import pandas as pd
 import re
 import shutil
 from pathlib import Path
 from platform import uname
-from typing import Union, List, Dict, Optional
+from typing import Union, List, Dict, Optional, TYPE_CHECKING
 import webbrowser
+
+if TYPE_CHECKING:
+    import numpy as np
+    import pandas as pd
 
 StrPath = Union[str, Path]
 
@@ -199,25 +202,32 @@ def read_latest(live, metric_name):
 
 
 def convert_datapoints_to_list_of_dicts(
-    datapoints: pd.DataFrame | np.ndarray | List[Dict],
-    columns: Optional[List[str]] = None,
-) -> List[Dict]:
+        datapoints:  List[Dict] | pd.DataFrame | np.ndarray,
+        ) -> List[Dict]:
     """
     Convert the given datapoints to a list of dictionaries.
 
     Args:
         datapoints: The input datapoints to be converted.
-        columns: The column columns for the datapoints. Applied only for np.ndarray inputs.
 
     Returns:
         A list of dictionaries representing the datapoints.
 
     Raises:
-        None
+        ValueError: If the `datapoints` argument is not of type pd.DataFrame, np.ndarray, or List[Dict].
     """
-    if isinstance(datapoints, pd.DataFrame):
-        return datapoints.to_dict(orient="records")
-    elif isinstance(datapoints, np.ndarray):
-        return pd.DataFrame(datapoints, columns=columns).to_dict(orient="records")
-    else:
+    if isinstance(datapoints, list):
         return datapoints
+
+    import pandas as pd
+    if isinstance(datapoints, pd.DataFrame):
+        return datapoints.to_dict(orient='records')
+
+    import numpy as np
+    if isinstance(datapoints, np.ndarray):
+        return pd.DataFrame(datapoints).to_dict(orient='records')
+    else:
+        raise ValueError("""
+            Unexpected format for `datapoints`. \
+            Supported formats: pd.DataFrame, np.ndarray, or List[Dict].
+            """)

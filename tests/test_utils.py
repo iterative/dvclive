@@ -25,17 +25,23 @@ class TestConvertDatapointsToListOfDicts:
         expected_output = [{"A": 1, "B": 3}, {"A": 2, "B": 4}]
         assert convert_datapoints_to_list_of_dicts(df) == expected_output
 
-    def test_ndarray_with_columns(self):
-        arr = np.array([[1, 3], [2, 4]])
-        columns = ["A", "B"]
-        expected_output = [{"A": 1, "B": 3}, {"A": 2, "B": 4}]
-        assert convert_datapoints_to_list_of_dicts(arr, columns) == expected_output
-
-    def test_ndarray_without_columns(self):
+    def test_ndarray(self):
         arr = np.array([[1, 3], [2, 4]])
         expected_output = [{0: 1, 1: 3}, {0: 2, 1: 4}]
         assert convert_datapoints_to_list_of_dicts(arr) == expected_output
 
+    def test_structured_array(self):
+        dtype = [('A', 'i4'), ('B', 'i4')]
+        structured_array = np.array([(1, 3), (2, 4)], dtype=dtype)
+        expected_output = [{'A': 1, 'B': 3}, {'A': 2, 'B': 4}]
+        assert convert_datapoints_to_list_of_dicts(structured_array) == expected_output
+
     def test_list_of_dicts(self):
         list_of_dicts = [{"A": 1, "B": 3}, {"A": 2, "B": 4}]
         assert convert_datapoints_to_list_of_dicts(list_of_dicts) == list_of_dicts
+
+    def test_unsupported_format(self):
+        with pytest.raises(ValueError) as exc_info:
+            convert_datapoints_to_list_of_dicts("unsupported data format")
+
+        assert "Unexpected format for `datapoints`" in str(exc_info.value)
