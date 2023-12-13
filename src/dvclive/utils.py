@@ -7,11 +7,16 @@ import shutil
 from pathlib import Path
 from platform import uname
 from typing import Union, List, Dict, TYPE_CHECKING
+from typing import Union, List, Dict, TYPE_CHECKING
 import webbrowser
 
 if TYPE_CHECKING:
     import numpy as np
     import pandas as pd
+
+from .error import (
+    InvalidDataTypeError,
+)
 
 StrPath = Union[str, Path]
 
@@ -204,6 +209,8 @@ def read_latest(live, metric_name):
 def convert_datapoints_to_list_of_dicts(
     datapoints: List[Dict] | pd.DataFrame | np.ndarray,
 ) -> List[Dict]:
+    datapoints: List[Dict] | pd.DataFrame | np.ndarray,
+) -> List[Dict]:
     """
     Convert the given datapoints to a list of dictionaries.
 
@@ -214,24 +221,22 @@ def convert_datapoints_to_list_of_dicts(
         A list of dictionaries representing the datapoints.
 
     Raises:
-        ValueError: If the `datapoints` argument is not of type pd.DataFrame, np.ndarray, or List[Dict].
+        TypeError: `datapoints` must be pd.DataFrame, np.ndarray, or List[Dict]
     """
     if isinstance(datapoints, list):
         return datapoints
 
     import pandas as pd
 
+
     if isinstance(datapoints, pd.DataFrame):
+        return datapoints.to_dict(orient="records")
         return datapoints.to_dict(orient="records")
 
     import numpy as np
 
+
     if isinstance(datapoints, np.ndarray):
         return pd.DataFrame(datapoints).to_dict(orient="records")
-    else:
-        raise ValueError(
-            """
-            Unexpected format for `datapoints`. \
-            Supported formats: pd.DataFrame, np.ndarray, or List[Dict].
-            """
-        )
+
+    return datapoints

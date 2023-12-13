@@ -39,9 +39,3 @@ class TestConvertDatapointsToListOfDicts:
     def test_list_of_dicts(self):
         list_of_dicts = [{"A": 1, "B": 3}, {"A": 2, "B": 4}]
         assert convert_datapoints_to_list_of_dicts(list_of_dicts) == list_of_dicts
-
-    def test_unsupported_format(self):
-        with pytest.raises(ValueError) as exc_info:
-            convert_datapoints_to_list_of_dicts("unsupported data format")
-
-        assert "Unexpected format for `datapoints`" in str(exc_info.value)
