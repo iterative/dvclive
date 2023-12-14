@@ -12,6 +12,16 @@ import webbrowser
 if TYPE_CHECKING:
     import numpy as np
     import pandas as pd
+else:
+    try:
+        import pandas as pd
+    except ImportError:
+        pd = None
+
+    try:
+        import numpy as np
+    except ImportError:
+        np = None
 
 from .error import (
     InvalidDataTypeError,
@@ -223,10 +233,10 @@ def convert_datapoints_to_list_of_dicts(
     if isinstance(datapoints, list):
         return datapoints
 
-    if isinstance_without_import(datapoints, "pandas.core.frame", "DataFrame"):
+    if pd and isinstance(datapoints, pd.DataFrame):
         return datapoints.to_dict(orient="records")
 
-    if isinstance_without_import(datapoints, "numpy", "ndarray"):
+    if np and isinstance(datapoints, np.ndarray):
         # This is a structured array
         if datapoints.dtype.names is not None:
             return [dict(zip(datapoints.dtype.names, row)) for row in datapoints]
