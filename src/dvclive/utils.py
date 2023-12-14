@@ -9,6 +9,8 @@ from platform import uname
 from typing import Union, List, Dict, TYPE_CHECKING
 import webbrowser
 
+from .error import InvalidDataTypeError
+
 if TYPE_CHECKING:
     import numpy as np
     import pandas as pd
@@ -23,9 +25,7 @@ else:
     except ImportError:
         np = None
 
-from .error import (
-    InvalidDataTypeError,
-)
+
 
 StrPath = Union[str, Path]
 
