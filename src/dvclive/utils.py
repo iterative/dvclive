@@ -26,7 +26,6 @@ else:
         np = None
 
 
-
 StrPath = Union[str, Path]
 
 
