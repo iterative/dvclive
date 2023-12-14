@@ -1,3 +1,4 @@
+from __future__ import annotations
 import glob
 import json
 import logging
@@ -6,7 +7,11 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import numpy as np
+    import pandas as pd
 
 from dvc.exceptions import DvcException
 from funcy import set_in
@@ -35,6 +40,7 @@ from .utils import (
     StrPath,
     catch_and_warn,
     clean_and_copy_into,
+    convert_datapoints_to_list_of_dicts,
     env2bool,
     inside_notebook,
     matplotlib_installed,
@@ -391,7 +397,7 @@ class Live:
     def log_plot(
         self,
         name: str,
-        datapoints: List[Dict],
+        datapoints: pd.DataFrame | np.ndarray | List[Dict],
         x: str,
         y: str,
         template: Optional[str] = None,
@@ -399,6 +405,9 @@ class Live:
         x_label: Optional[str] = None,
         y_label: Optional[str] = None,
     ):
+        # Convert the given datapoints to List[Dict]
+        datapoints = convert_datapoints_to_list_of_dicts(datapoints=datapoints)
+
         if not CustomPlot.could_log(datapoints):
             raise InvalidDataTypeError(name, type(datapoints))
 
