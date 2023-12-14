@@ -225,7 +225,6 @@ def convert_datapoints_to_list_of_dicts(
 
     if isinstance_without_import(datapoints, "pandas.core.frame", "DataFrame"):
         return datapoints.to_dict(orient="records")
-        return datapoints.to_dict(orient="records")
 
     if isinstance_without_import(datapoints, "numpy", "ndarray"):
         # This is a structured array
