@@ -1,4 +1,5 @@
 # ruff: noqa: ARG002
+# mypy: disable-error-code="no-redef"
 import inspect
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Union
@@ -11,14 +12,14 @@ try:
     from lightning.pytorch.loggers.utilities import _scan_checkpoints
     from lightning.pytorch.utilities import rank_zero_only
 except ImportError:
-    from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
+    from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint  # type: ignore[assignment]
     from pytorch_lightning.loggers.logger import Logger
     from pytorch_lightning.utilities import rank_zero_only
 
     try:
         from pytorch_lightning.utilities.logger import _scan_checkpoints
     except ImportError:
-        from pytorch_lightning.loggers.utilities import _scan_checkpoints
+        from pytorch_lightning.loggers.utilities import _scan_checkpoints  # type: ignore[assignment]
 
 
 from dvclive.fabric import DVCLiveLogger as FabricDVCLiveLogger
@@ -64,10 +65,12 @@ class DVCLiveLogger(Logger, FabricDVCLiveLogger):
 
     @rank_zero_only
     def log_metrics(
-        self, metrics: Mapping[str, float], step: Optional[int] = None
+        self,
+        metrics: Mapping[str, Union[int, float, str]],
+        step: Optional[int] = None,
+        sync: Optional[bool] = False,
     ) -> None:
-        sync = False
-        if _should_sync():
+        if not sync and _should_sync():
             if step == self.experiment._latest_studio_step:  # noqa: SLF001
                 # We are in log_eval_end_metrics but there has been already
                 # a studio request sent with `step`.
@@ -109,7 +112,7 @@ class DVCLiveLogger(Logger, FabricDVCLiveLogger):
 
     def _save_checkpoints(self, checkpoint_callback: ModelCheckpoint) -> None:
         # drop unused checkpoints
-        if not self.experiment._resume:  # noqa: SLF001
+        if not self.experiment._resume and checkpoint_callback.dirpath:  # noqa: SLF001
             for p in Path(checkpoint_callback.dirpath).iterdir():
                 if str(p) not in self._all_checkpoint_paths:
                     p.unlink(missing_ok=True)

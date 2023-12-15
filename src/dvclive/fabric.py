@@ -1,3 +1,5 @@
+# mypy: disable-error-code="no-redef"
+from argparse import Namespace
 from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Union
 
 try:
@@ -59,8 +61,8 @@ class DVCLiveLogger(Logger):
             return self._experiment
 
         assert (  # noqa: S101
-            rank_zero_only.rank == 0
-        ), "tried to init DVCLive in non global_rank=0"
+            rank_zero_only.rank == 0  # type: ignore[attr-defined]
+        ), "tried to init DVCLive in non global_rank=0"  # type: ignore[attr-defined]
 
         from dvclive import Live
 
@@ -71,12 +73,12 @@ class DVCLiveLogger(Logger):
     @rank_zero_only
     def log_metrics(
         self,
-        metrics: Mapping[str, Any],
+        metrics: Mapping[str, Union[int, float, str]],
         step: Optional[int] = None,
         sync: Optional[bool] = True,
     ) -> None:
         assert (  # noqa: S101
-            rank_zero_only.rank == 0
+            rank_zero_only.rank == 0  # type: ignore[attr-defined]
         ), "experiment tried to log from global_rank != 0"
 
         if step:
@@ -84,12 +86,12 @@ class DVCLiveLogger(Logger):
         else:
             self.experiment.step = self.experiment.step + 1
 
-        metrics = _add_prefix(metrics, self._prefix, self.LOGGER_JOIN_CHAR)
+        metrics = _add_prefix(metrics, self._prefix, self.LOGGER_JOIN_CHAR)  # type: ignore[assignment,arg-type]
 
         for metric_name, metric_val in metrics.items():
             val = metric_val
             if is_tensor(val):
-                val = val.cpu().detach().item()
+                val = val.cpu().detach().item()  # type: ignore[union-attr]
             name = standardize_metric_name(metric_name, __name__)
             if Metric.could_log(val):
                 self.experiment.log_metric(name=name, val=val)
@@ -103,7 +105,7 @@ class DVCLiveLogger(Logger):
             self.experiment.sync()
 
     @rank_zero_only
-    def log_hyperparams(self, params: Union[Dict[str, Any]]) -> None:
+    def log_hyperparams(self, params: Union[Dict[str, Any], Namespace]) -> None:
         """Record hyperparameters.
 
         Args:
