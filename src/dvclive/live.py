@@ -121,6 +121,7 @@ class Live:
 
     def _init_resume(self):
         self._read_params()
+        self.summary = self.read_latest()
         self._step = self.read_step()
         if self._step != 0:
             logger.info(f"Resuming from step {self._step}")
@@ -607,14 +608,14 @@ class Live:
         cleanup_dvclive_step_completed()
 
     def read_step(self):
-        if Path(self.metrics_file).exists():
-            latest = self.read_latest()
-            return latest.get("step", 0)
-        return 0
+        latest = self.read_latest()
+        return latest.get("step", 0)
 
     def read_latest(self):
-        with open(self.metrics_file, encoding="utf-8") as fobj:
-            return json.load(fobj)
+        if Path(self.metrics_file).exists():
+            with open(self.metrics_file, encoding="utf-8") as fobj:
+                return json.load(fobj)
+        return {}
 
     def __enter__(self):
         self._inside_with = True

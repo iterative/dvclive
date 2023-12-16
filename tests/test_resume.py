@@ -15,6 +15,8 @@ def test_resume(tmp_dir, resume, steps, metrics):
     for metric in [0.9, 0.8]:
         dvclive.log_metric("metric", metric)
         dvclive.next_step()
+    dvclive.log_metric("summary", 1)
+    dvclive.end()
 
     assert read_history(dvclive, "metric") == ([0, 1], [0.9, 0.8])
     assert read_latest(dvclive, "metric") == (1, 0.8)
@@ -24,9 +26,14 @@ def test_resume(tmp_dir, resume, steps, metrics):
     for new_metric in [0.7, 0.6]:
         dvclive.log_metric("metric", new_metric)
         dvclive.next_step()
+    dvclive.end()
 
     assert read_history(dvclive, "metric") == (steps, metrics)
     assert read_latest(dvclive, "metric") == (steps[-1], metrics[-1])
+    if resume:
+        assert dvclive.read_latest()["summary"] == 1
+    else:
+        assert "summary" not in dvclive.read_latest()
 
 
 def test_resume_on_first_init(tmp_dir):
