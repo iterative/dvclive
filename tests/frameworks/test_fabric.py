@@ -3,9 +3,9 @@ from unittest.mock import Mock
 
 import numpy as np
 import pytest
-import torch
 
 try:
+    import torch
     from dvclive.fabric import DVCLiveLogger
 except ImportError:
     pytest.skip("skipping lightning tests", allow_module_level=True)
