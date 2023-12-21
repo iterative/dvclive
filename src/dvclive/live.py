@@ -334,10 +334,7 @@ class Live:
         self._step = value
         logger.debug(f"Step: {self.step}")
 
-    def next_step(self):
-        if self._step is None:
-            self._step = 0
-
+    def sync(self):
         self.make_summary()
 
         if self._dvcyaml:
@@ -347,6 +344,11 @@ class Live:
 
         self.post_to_studio("data")
 
+    def next_step(self):
+        if self._step is None:
+            self._step = 0
+
+        self.sync()
         mark_dvclive_step_completed(self.step)
         self.step += 1
 
@@ -555,8 +557,8 @@ class Live:
             self._include_untracked.append(dvc_file)
             self._include_untracked.append(str(Path(dvc_file).parent / ".gitignore"))
 
-    def make_summary(self, update_step: bool = True):
-        if self._step is not None and update_step:
+    def make_summary(self):
+        if self._step is not None:
             self.summary["step"] = self.step
         dump_json(self.summary, self.metrics_file, cls=NumpyEncoder)
 
@@ -583,9 +585,10 @@ class Live:
             images_path = Path(self.plots_dir) / Image.subfolder
             self.cache(images_path)
 
-        self.make_summary(update_step=False)
-        if self._dvcyaml:
-            self.make_dvcyaml()
+        # If next_step called before end, don't want to update step number
+        if self._step is not None:
+            self.step = self.summary["step"]
+        self.sync()
 
         if self._inside_dvc_exp and self._dvc_repo:
             catch_and_warn(DvcException, logger)(ensure_dir_is_tracked)(
@@ -596,12 +599,8 @@ class Live:
                     self.dvc_file
                 )
 
-        self.make_report()
-
         self.save_dvc_exp()
 
-        # Post any data that hasn't been sent
-        self.post_to_studio("data")
         # Mark experiment as done
         self.post_to_studio("done")
 

@@ -78,10 +78,10 @@ def standardize_metric_name(metric_name: str, framework: str) -> str:
         else:
             metric_name = f"train/{metric_name}"
 
-    elif framework == "dvclive.lightning":
+    elif framework in ["dvclive.lightning", "dvclive.fabric"]:
         parts = metric_name.split("_")
         split, freq, rest = None, None, None
-        if parts[0] in ["train", "val", "test"]:
+        if any(parts[0].endswith(split) for split in ["train", "val", "test"]):
             split = parts.pop(0)
             # Only set freq if split was also found.
             # Otherwise we end up conflicting with out internal `step` property.
