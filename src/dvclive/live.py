@@ -586,7 +586,7 @@ class Live:
             self.cache(images_path)
 
         # If next_step called before end, don't want to update step number
-        if self._step is not None:
+        if "step" in self.summary:
             self.step = self.summary["step"]
         self.sync()
 
