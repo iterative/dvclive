@@ -65,7 +65,7 @@ lgbm = ["lightgbm"]
 huggingface = ["transformers", "datasets"]
 catalyst = ["catalyst>22"]
 fastai = ["fastai"]
-lightning = ["lightning>=2.0", "torch"]
+lightning = ["lightning>=2.0", "torch", "jsonargparse[signatures]>=4.26.1"]
 optuna = ["optuna"]
 all = [
    "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,lightning,optuna,plots,markdown]"
