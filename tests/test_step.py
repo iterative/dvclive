@@ -86,3 +86,23 @@ def test_get_step_control_flow(tmp_dir):
     steps, values = read_history(dvclive, "i")
     assert steps == list(range(10))
     assert values == [float(x) for x in range(10)]
+
+
+def test_set_step_only(tmp_dir):
+    dvclive = Live()
+    dvclive.step = 1
+    dvclive.end()
+
+    assert dvclive.read_latest() == {"step": 1}
+    assert not os.path.exists(os.path.join(tmp_dir, "dvclive", "plots"))
+
+
+def test_step_on_end(tmp_dir):
+    dvclive = Live()
+    for metric in range(3):
+        dvclive.log_metric("m", metric)
+        dvclive.next_step()
+    dvclive.end()
+    assert dvclive.step == metric
+
+    assert dvclive.read_latest() == {"step": metric, "m": metric}
