@@ -4,7 +4,7 @@ import pytest
 from PIL import Image
 
 from dvclive import Live
-from dvclive.error import InvalidDataTypeError
+from dvclive.error import InvalidImageNameError
 from dvclive.plots import Image as LiveImage
 
 
@@ -28,7 +28,9 @@ def test_pil(tmp_dir):
 def test_pil_omitting_extension_doesnt_save_without_valid_format(tmp_dir):
     live = Live()
     img = Image.new("RGB", (10, 10), (250, 250, 250))
-    with pytest.raises(InvalidDataTypeError, match="has not supported type"):
+    with pytest.raises(
+        InvalidImageNameError, match="Cannot log image with name 'whoops'"
+    ):
         live.log_image("whoops", img)
 
 
@@ -51,7 +53,9 @@ def test_pil_omitting_extension_sets_the_format_if_path_given(tmp_dir):
 def test_invalid_extension(tmp_dir):
     live = Live()
     img = Image.new("RGB", (10, 10), (250, 250, 250))
-    with pytest.raises(InvalidDataTypeError, match="has not supported type"):
+    with pytest.raises(
+        InvalidImageNameError, match="Cannot log image with name 'image.foo'"
+    ):
         live.log_image("image.foo", img)
 
 

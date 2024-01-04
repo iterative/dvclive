@@ -28,6 +28,7 @@ from .dvc import (
 from .error import (
     InvalidDataTypeError,
     InvalidDvcyamlError,
+    InvalidImageNameError,
     InvalidParameterTypeError,
     InvalidPlotTypeError,
     InvalidReportModeError,
@@ -43,7 +44,6 @@ from .utils import (
     convert_datapoints_to_list_of_dicts,
     env2bool,
     inside_notebook,
-    isinstance_without_import,
     matplotlib_installed,
     open_file_in_browser,
 )
@@ -380,24 +380,22 @@ class Live:
         logger.debug(f"Logged {name}: {val}")
 
     def log_image(self, name: str, val):
+        if not Image.could_log(val):
+            raise InvalidDataTypeError(name, type(val))
+
         # If we're given a path, try loading the image first. This might error out.
         if isinstance(val, (str, Path)):
             from PIL import Image as ImagePIL
 
+            suffix = Path(val).suffix
+            if not Path(name).suffix and suffix in Image.suffixes:
+                name = f"{name}{suffix}"
+
             val = ImagePIL.open(val)
 
-        # If the provided image name does not have a format on it,
-        # try to infer the format from PIL Image.
-        if (
-            len(name.split(".")) <= 1
-            and isinstance_without_import(val, "PIL.Image", "Image")
-            and f".{str(val.format).lower()}" in Image.suffixes
-        ):
-            name = f"{name}.{str(val.format).lower()}"
-
-        # See if the image format and image name are valid
-        if not Image.could_log(name, val):
-            raise InvalidDataTypeError(name, type(val))
+        # See if the image name is valid
+        if Path(name).suffix not in Image.suffixes:
+            raise InvalidImageNameError(name)
 
         if name in self._images:
             image = self._images[name]

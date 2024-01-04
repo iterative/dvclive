@@ -7,7 +7,7 @@ from .base import Data
 
 class Image(Data):
     suffixes = (".jpg", ".jpeg", ".gif", ".png")
-    subfolder: str = "images"
+    subfolder = "images"
 
     @property
     def output_path(self) -> Path:
@@ -16,21 +16,18 @@ class Image(Data):
         return _path
 
     @staticmethod
-    def could_log(name: str, val: object) -> bool:
+    def could_log(val: object) -> bool:
         acceptable = {
             ("numpy", "ndarray"),
             ("matplotlib.figure", "Figure"),
             ("PIL.Image", "Image"),
         }
-
-        supported_format = False
         for cls in type(val).mro():
             if any(isinstance_without_import(val, *cls) for cls in acceptable):
-                supported_format = True
+                return True
         if isinstance(val, (PurePath, str)):
-            supported_format = True
-
-        return supported_format and f".{name.split('.')[-1]}" in Image.suffixes
+            return True
+        return False
 
     def dump(self, val, **kwargs) -> None:  # noqa: ARG002
         if isinstance_without_import(val, "numpy", "ndarray"):
