@@ -1,4 +1,5 @@
 from __future__ import annotations
+import builtins
 import glob
 import json
 import logging
@@ -491,7 +492,7 @@ class Live:
     ):
         """Tracks a local file or directory with DVC"""
         if not isinstance(path, (str, Path)):
-            raise InvalidDataTypeError(path, type(path))
+            raise InvalidDataTypeError(path, builtins.type(path))
 
         if self._dvc_repo is not None:
             from gto.constants import assert_name_is_valid
