@@ -1,41 +1,35 @@
 # ruff: noqa: ARG002
+# mypy: disable-error-code="no-redef"
 import inspect
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Mapping, Optional, Union
+
+from typing_extensions import override
 
 try:
-    from lightning.fabric.utilities.logger import (
-        _convert_params,
-        _sanitize_callable_params,
-    )
     from lightning.pytorch.callbacks.model_checkpoint import ModelCheckpoint
-    from lightning.pytorch.loggers.logger import Logger, rank_zero_experiment
+    from lightning.pytorch.loggers.logger import Logger
     from lightning.pytorch.loggers.utilities import _scan_checkpoints
     from lightning.pytorch.utilities import rank_zero_only
 except ImportError:
-    from lightning_fabric.utilities.logger import (
-        _convert_params,
-        _sanitize_callable_params,
-    )
-    from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
-    from pytorch_lightning.loggers.logger import Logger, rank_zero_experiment
+    from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint  # type: ignore[assignment]
+    from pytorch_lightning.loggers.logger import Logger
     from pytorch_lightning.utilities import rank_zero_only
 
     try:
         from pytorch_lightning.utilities.logger import _scan_checkpoints
     except ImportError:
-        from pytorch_lightning.loggers.utilities import _scan_checkpoints
-from torch import is_tensor
-
-from dvclive import Live
-from dvclive.utils import standardize_metric_name
+        from pytorch_lightning.loggers.utilities import _scan_checkpoints  # type: ignore[assignment]
 
 
-def _should_call_next_step():
+from dvclive.fabric import DVCLiveLogger as FabricDVCLiveLogger
+
+
+def _should_sync():
     """
     Find out if pytorch_lightning is calling `log_metrics` from the functions
-    where we actually want to call `next_step`.
-    For example, prevents calling next_step when external callbacks call
+    where we actually want to sync.
+    For example, prevents calling sync when external callbacks call
     `log_metrics` or during the multiple `update_eval_step_metrics`.
     """
     return any(
@@ -49,7 +43,7 @@ def _should_call_next_step():
     )
 
 
-class DVCLiveLogger(Logger):
+class DVCLiveLogger(Logger, FabricDVCLiveLogger):
     def __init__(
         self,
         run_name: Optional[str] = "dvclive_run",
@@ -58,61 +52,32 @@ class DVCLiveLogger(Logger):
         experiment=None,
         **kwargs,
     ):
-        super().__init__()
-        self._prefix = prefix
-        self._live_init: Dict[str, Any] = kwargs
-        self._experiment = experiment
-        self._version = run_name
+        super().__init__(
+            run_name=run_name,
+            prefix=prefix,
+            experiment=experiment,
+            **kwargs,
+        )
         self._log_model = log_model
         self._logged_model_time: Dict[str, float] = {}
         self._checkpoint_callback: Optional[ModelCheckpoint] = None
         self._all_checkpoint_paths: List[str] = []
 
-    @property
-    def name(self):
-        return "DvcLiveLogger"
-
     @rank_zero_only
-    def log_hyperparams(self, params, *args, **kwargs):
-        params = _convert_params(params)
-        params = _sanitize_callable_params(params)
-        self.experiment.log_params(params)
-
-    @property  # type: ignore
-    @rank_zero_experiment
-    def experiment(self):
-        r"""
-        Actual DVCLive object. To use DVCLive features in your
-        :class:`~LightningModule` do the following.
-        Example::
-            self.logger.experiment.some_dvclive_function()
-        """
-        if self._experiment is not None:
-            return self._experiment
-        self._experiment = Live(**self._live_init)
-
-        return self._experiment
-
-    @property
-    def version(self):
-        return self._version
-
-    @rank_zero_only
-    def log_metrics(self, metrics: Dict[str, Any], step: Optional[int] = None):
-        self.experiment.step = step
-        for metric_name, metric_val in metrics.items():
-            val = metric_val
-            if is_tensor(val):
-                val = val.cpu().detach().item()
-            name = standardize_metric_name(metric_name, __name__)
-            self.experiment.log_metric(name=name, val=val)
-        if _should_call_next_step():
+    def log_metrics(
+        self,
+        metrics: Mapping[str, Union[int, float, str]],
+        step: Optional[int] = None,
+        sync: Optional[bool] = False,
+    ) -> None:
+        if not sync and _should_sync():
             if step == self.experiment._latest_studio_step:  # noqa: SLF001
                 # We are in log_eval_end_metrics but there has been already
                 # a studio request sent with `step`.
                 # We decrease the number to bypass `live.studio._get_unsent_datapoints`
                 self.experiment._latest_studio_step -= 1  # noqa: SLF001
-            self.experiment.next_step()
+            sync = True
+        super().log_metrics(metrics, step, sync)
 
     def after_save_checkpoint(self, checkpoint_callback: ModelCheckpoint) -> None:
         if self._log_model in [True, "all"]:
@@ -123,6 +88,7 @@ class DVCLiveLogger(Logger):
         ):
             self._save_checkpoints(checkpoint_callback)
 
+    @override
     @rank_zero_only
     def finalize(self, status: str) -> None:
         # Log best model.
@@ -133,7 +99,7 @@ class DVCLiveLogger(Logger):
             self.experiment.log_artifact(
                 best_model_path, name="best", type="model", copy=True
             )
-        self.experiment.end()
+        super().finalize(status)
 
     def _scan_checkpoints(self, checkpoint_callback: ModelCheckpoint) -> None:
         # get checkpoints to be saved with associated score
@@ -146,7 +112,7 @@ class DVCLiveLogger(Logger):
 
     def _save_checkpoints(self, checkpoint_callback: ModelCheckpoint) -> None:
         # drop unused checkpoints
-        if not self._experiment._resume:  # noqa: SLF001
+        if not self.experiment._resume and checkpoint_callback.dirpath:  # noqa: SLF001
             for p in Path(checkpoint_callback.dirpath).iterdir():
                 if str(p) not in self._all_checkpoint_paths:
                     p.unlink(missing_ok=True)
