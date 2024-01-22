@@ -5,6 +5,7 @@ import pytest
 from dvc.exceptions import DvcException
 
 from dvclive import Live
+from dvclive.error import InvalidDataTypeError
 from dvclive.serialize import load_yaml
 
 dvcyaml = """
@@ -295,3 +296,11 @@ def test_log_artifact_no_repo(tmp_dir, mocker):
     logger.warning.assert_called_with(
         "A DVC repo is required to log artifacts. Skipping `log_artifact(data)`."
     )
+
+
+@pytest.mark.parametrize("invalid_path", [None, 1.0, True, [], {}], ids=type)
+def test_log_artifact_invalid_path_type(invalid_path, tmp_dir):
+    live = Live(save_dvc_exp=False)
+    expected_error_msg = f"not supported type {type(invalid_path)}"
+    with pytest.raises(InvalidDataTypeError, match=expected_error_msg):
+        live.log_artifact(path=invalid_path)

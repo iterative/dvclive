@@ -1,12 +1,30 @@
+from __future__ import annotations
 import csv
 import json
 import os
 import re
 import shutil
-import webbrowser
 from pathlib import Path, PureWindowsPath
 from platform import uname
-from typing import Union
+from typing import Union, List, Dict, TYPE_CHECKING
+import webbrowser
+
+from .error import InvalidDataTypeError
+
+if TYPE_CHECKING:
+    import numpy as np
+    import pandas as pd
+else:
+    try:
+        import pandas as pd
+    except ImportError:
+        pd = None
+
+    try:
+        import numpy as np
+    except ImportError:
+        np = None
+
 
 StrPath = Union[str, Path]
 
@@ -60,10 +78,10 @@ def standardize_metric_name(metric_name: str, framework: str) -> str:
         else:
             metric_name = f"train/{metric_name}"
 
-    elif framework == "dvclive.lightning":
+    elif framework in ["dvclive.lightning", "dvclive.fabric"]:
         parts = metric_name.split("_")
         split, freq, rest = None, None, None
-        if parts[0] in ["train", "val", "test"]:
+        if any(parts[0].endswith(split) for split in ["train", "val", "test"]):
             split = parts.pop(0)
             # Only set freq if split was also found.
             # Otherwise we end up conflicting with out internal `step` property.
@@ -198,3 +216,36 @@ def read_history(live, metric):
 def read_latest(live, metric_name):
     _, latest = parse_metrics(live)
     return latest["step"], latest[metric_name]
+
+
+def convert_datapoints_to_list_of_dicts(
+    datapoints: List[Dict] | pd.DataFrame | np.ndarray,
+) -> List[Dict]:
+    """
+    Convert the given datapoints to a list of dictionaries.
+
+    Args:
+        datapoints: The input datapoints to be converted.
+
+    Returns:
+        A list of dictionaries representing the datapoints.
+
+    Raises:
+        TypeError: `datapoints` must be pd.DataFrame, np.ndarray, or List[Dict]
+    """
+    if isinstance(datapoints, list):
+        return datapoints
+
+    if pd and isinstance(datapoints, pd.DataFrame):
+        return datapoints.to_dict(orient="records")
+
+    if np and isinstance(datapoints, np.ndarray):
+        # This is a structured array
+        if datapoints.dtype.names is not None:
+            return [dict(zip(datapoints.dtype.names, row)) for row in datapoints]
+
+        # This is a regular array
+        return [dict(enumerate(row)) for row in datapoints]
+
+    # Raise an error if the input is not a supported type
+    raise InvalidDataTypeError("datapoints", type(datapoints))

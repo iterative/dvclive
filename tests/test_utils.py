@@ -1,6 +1,9 @@
+import numpy as np
+import pandas as pd
 import pytest
 
-from dvclive.utils import standardize_metric_name
+from dvclive.utils import standardize_metric_name, convert_datapoints_to_list_of_dicts
+from dvclive.error import InvalidDataTypeError
 
 
 @pytest.mark.parametrize(
@@ -15,3 +18,30 @@ from dvclive.utils import standardize_metric_name
 )
 def test_standardize_metric_name(framework, logged, standardized):
     assert standardize_metric_name(logged, framework) == standardized
+
+
+# Tests for convert_datapoints_to_list_of_dicts()
+@pytest.mark.parametrize(
+    ("input_data", "expected_output"),
+    [
+        (
+            pd.DataFrame({"A": [1, 2], "B": [3, 4]}),
+            [{"A": 1, "B": 3}, {"A": 2, "B": 4}],
+        ),
+        (np.array([[1, 3], [2, 4]]), [{0: 1, 1: 3}, {0: 2, 1: 4}]),
+        (
+            np.array([(1, 3), (2, 4)], dtype=[("A", "i4"), ("B", "i4")]),
+            [{"A": 1, "B": 3}, {"A": 2, "B": 4}],
+        ),
+        ([{"A": 1, "B": 3}, {"A": 2, "B": 4}], [{"A": 1, "B": 3}, {"A": 2, "B": 4}]),
+    ],
+)
+def test_convert_datapoints_to_list_of_dicts(input_data, expected_output):
+    assert convert_datapoints_to_list_of_dicts(input_data) == expected_output
+
+
+def test_unsupported_format():
+    with pytest.raises(InvalidDataTypeError) as exc_info:
+        convert_datapoints_to_list_of_dicts("unsupported data format")
+
+    assert "not supported type" in str(exc_info.value)

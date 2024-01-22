@@ -61,7 +61,7 @@ with Live() as live:
         live.log_param(param, params[param])
 
     # simulate training
-    offset = random.uniform(0.0.2, 0.1)
+    offset = random.uniform(0.2, 0.1)
     for epoch in range(1, params["epochs"]):
         fuzz = random.uniform(0.01, 0.1)
         accuracy = 1 - (2 ** - epoch) - fuzz - offset
