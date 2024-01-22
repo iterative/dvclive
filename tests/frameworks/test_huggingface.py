@@ -135,12 +135,19 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker, callback):
     assert params["num_train_epochs"] == 2
 
 
-@pytest.mark.parametrize("log_model", ["all", True, None])
+@pytest.mark.parametrize("log_model", ["all", True, False])
 @pytest.mark.parametrize("best", [True, False])
 @pytest.mark.parametrize("callback", [ExternalCallback, InternalCallback])
-def test_huggingface_log_model(tmp_dir, model, data, mocker, log_model, best, callback):
-    live_callback = callback(log_model=log_model, live=Live())
-    log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
+def test_huggingface_log_model(
+    tmp_dir, mocked_dvc_repo, model, data, mocker, log_model, best, callback
+):
+    live = Live()
+    log_artifact = mocker.patch.object(live, "log_artifact")
+    if callback == ExternalCallback:
+        os.environ["HF_DVCLIVE_LOG_MODEL"] = str(log_model)
+        live_callback = callback(live=live)
+    else:
+        live_callback = callback(live=live, log_model=log_model)
 
     args = TrainingArguments(
         "foo",
@@ -162,7 +169,7 @@ def test_huggingface_log_model(tmp_dir, model, data, mocker, log_model, best, ca
     expected_call_count = {
         "all": 2,
         True: 1,
-        None: 0,
+        False: 0,
     }
     assert log_artifact.call_count == expected_call_count[log_model]
 
