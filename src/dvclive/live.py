@@ -1,3 +1,5 @@
+from __future__ import annotations
+import builtins
 import glob
 import json
 import logging
@@ -6,7 +8,11 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import numpy as np
+    import pandas as pd
 
 from dvc.exceptions import DvcException
 from funcy import set_in
@@ -35,6 +41,7 @@ from .utils import (
     StrPath,
     catch_and_warn,
     clean_and_copy_into,
+    convert_datapoints_to_list_of_dicts,
     env2bool,
     inside_notebook,
     matplotlib_installed,
@@ -115,6 +122,7 @@ class Live:
 
     def _init_resume(self):
         self._read_params()
+        self.summary = self.read_latest()
         self._step = self.read_step()
         if self._step != 0:
             logger.info(f"Resuming from step {self._step}")
@@ -327,10 +335,7 @@ class Live:
         self._step = value
         logger.debug(f"Step: {self.step}")
 
-    def next_step(self):
-        if self._step is None:
-            self._step = 0
-
+    def sync(self):
         self.make_summary()
 
         if self._dvcyaml:
@@ -340,6 +345,11 @@ class Live:
 
         self.post_to_studio("data")
 
+    def next_step(self):
+        if self._step is None:
+            self._step = 0
+
+        self.sync()
         mark_dvclive_step_completed(self.step)
         self.step += 1
 
@@ -391,7 +401,7 @@ class Live:
     def log_plot(
         self,
         name: str,
-        datapoints: List[Dict],
+        datapoints: pd.DataFrame | np.ndarray | List[Dict],
         x: str,
         y: str,
         template: Optional[str] = None,
@@ -399,6 +409,9 @@ class Live:
         x_label: Optional[str] = None,
         y_label: Optional[str] = None,
     ):
+        # Convert the given datapoints to List[Dict]
+        datapoints = convert_datapoints_to_list_of_dicts(datapoints=datapoints)
+
         if not CustomPlot.could_log(datapoints):
             raise InvalidDataTypeError(name, type(datapoints))
 
@@ -479,7 +492,7 @@ class Live:
     ):
         """Tracks a local file or directory with DVC"""
         if not isinstance(path, (str, Path)):
-            raise InvalidDataTypeError(path, type(path))
+            raise InvalidDataTypeError(path, builtins.type(path))
 
         if self._dvc_repo is not None:
             from gto.constants import assert_name_is_valid
@@ -545,8 +558,8 @@ class Live:
             self._include_untracked.append(dvc_file)
             self._include_untracked.append(str(Path(dvc_file).parent / ".gitignore"))
 
-    def make_summary(self, update_step: bool = True):
-        if self._step is not None and update_step:
+    def make_summary(self):
+        if self._step is not None:
             self.summary["step"] = self.step
         dump_json(self.summary, self.metrics_file, cls=NumpyEncoder)
 
@@ -573,9 +586,10 @@ class Live:
             images_path = Path(self.plots_dir) / Image.subfolder
             self.cache(images_path)
 
-        self.make_summary(update_step=False)
-        if self._dvcyaml:
-            self.make_dvcyaml()
+        # If next_step called before end, don't want to update step number
+        if "step" in self.summary:
+            self.step = self.summary["step"]
+        self.sync()
 
         if self._inside_dvc_exp and self._dvc_repo:
             catch_and_warn(DvcException, logger)(ensure_dir_is_tracked)(
@@ -586,26 +600,22 @@ class Live:
                     self.dvc_file
                 )
 
-        self.make_report()
-
         self.save_dvc_exp()
 
-        # Post any data that hasn't been sent
-        self.post_to_studio("data")
         # Mark experiment as done
         self.post_to_studio("done")
 
         cleanup_dvclive_step_completed()
 
     def read_step(self):
-        if Path(self.metrics_file).exists():
-            latest = self.read_latest()
-            return latest.get("step", 0)
-        return 0
+        latest = self.read_latest()
+        return latest.get("step", 0)
 
     def read_latest(self):
-        with open(self.metrics_file, encoding="utf-8") as fobj:
-            return json.load(fobj)
+        if Path(self.metrics_file).exists():
+            with open(self.metrics_file, encoding="utf-8") as fobj:
+                return json.load(fobj)
+        return {}
 
     def __enter__(self):
         self._inside_with = True
