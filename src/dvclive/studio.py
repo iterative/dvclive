@@ -34,9 +34,8 @@ def _cast_to_numbers(datapoints):
 
 
 def _adapt_path(live, name):
-    if live._dvc_repo is not None:
-        name = rel_path(name, live._dvc_repo.root_dir)
-    return name
+    dvc_root_path = live._dvc_repo.root_dir if live._dvc_repo else None
+    return rel_path(name, dvc_root_path)
 
 
 def _adapt_plot_datapoints(live, plot):
