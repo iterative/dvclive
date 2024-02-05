@@ -65,16 +65,6 @@ logger.addHandler(handler)
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
 SkleanPlotKind = [*SKLEARN_PLOTS.keys()]
-TemplatePlotKind = Literal[
-    "linear",
-    "simple",
-    "scatter",
-    "smooth",
-    "confusion",
-    "confusion_normalized",
-    "bar_horizontal",
-    "bar_horizontal_sorted",
-]
 
 
 class Live:
@@ -421,7 +411,7 @@ class Live:
         datapoints: Union[pd.DataFrame, np.ndarray, List[Dict]],
         x: str,
         y: str,
-        template: TemplatePlotKind = "linear",
+        template: Optional[str] = "linear",
         title: Optional[str] = None,
         x_label: Optional[str] = None,
         y_label: Optional[str] = None,
