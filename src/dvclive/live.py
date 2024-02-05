@@ -8,11 +8,13 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     import numpy as np
     import pandas as pd
+    import matplotlib
+    import PIL
 
 from dvc.exceptions import DvcException
 from funcy import set_in
@@ -62,6 +64,16 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
+TemplatePlotKind = Literal[
+    "linear",
+    "simple",
+    "scatter",
+    "smooth",
+    "confusion",
+    "confusion_normalized",
+    "bar_horizontal",
+    "bar_horizontal_sorted",
+]
 
 
 class Live:
@@ -71,7 +83,7 @@ class Live:
         resume: bool = False,
         report: Optional[str] = None,
         save_dvc_exp: bool = True,
-        dvcyaml: Union[str, bool] = "dvc.yaml",
+        dvcyaml: Optional[str] = "dvc.yaml",
         cache_images: bool = False,
         exp_name: Optional[str] = None,
         exp_message: Optional[str] = None,
@@ -379,7 +391,11 @@ class Live:
         self.summary = set_in(self.summary, metric.summary_keys, val)
         logger.debug(f"Logged {name}: {val}")
 
-    def log_image(self, name: str, val):
+    def log_image(
+        self,
+        name: str,
+        val: Union[np.ndarray, matplotlib.figure.Figure, PIL.Image, StrPath],
+    ):
         if not Image.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 
@@ -401,10 +417,10 @@ class Live:
     def log_plot(
         self,
         name: str,
-        datapoints: pd.DataFrame | np.ndarray | List[Dict],
+        datapoints: Union[pd.DataFrame, np.ndarray, List[Dict]],
         x: str,
         y: str,
-        template: Optional[str] = None,
+        template: TemplatePlotKind = "linear",
         title: Optional[str] = None,
         x_label: Optional[str] = None,
         y_label: Optional[str] = None,
@@ -434,7 +450,14 @@ class Live:
         plot.dump(datapoints)
         logger.debug(f"Logged {name}")
 
-    def log_sklearn_plot(self, kind, labels, predictions, name=None, **kwargs):
+    def log_sklearn_plot(
+        self,
+        kind: Literal["calibration", "confusion_matrix", "precision_recall", "roc"],
+        labels: Union[List, np.ndarray],
+        predictions: Union[List, Tuple, np.ndarray],
+        name: Optional[str] = None,
+        **kwargs,
+    ):
         val = (labels, predictions)
 
         plot_config = {
@@ -527,7 +550,7 @@ class Live:
             )
 
     @catch_and_warn(DvcException, logger)
-    def cache(self, path):
+    def cache(self, path: str):
         if self._inside_dvc_pipeline:
             existing_stage = find_overlapping_stage(self._dvc_repo, path)
 
@@ -574,7 +597,7 @@ class Live:
         make_dvcyaml(self)
 
     @catch_and_warn(DvcException, logger)
-    def post_to_studio(self, event):
+    def post_to_studio(self, event: Literal["start", "data", "done"]):
         post_to_studio(self, event)
 
     def end(self):
