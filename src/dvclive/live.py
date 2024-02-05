@@ -7,7 +7,7 @@ import math
 import os
 import shutil
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any, Dict, List, Optional, Set, Tuple, Union, TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
@@ -38,7 +38,7 @@ from .error import (
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
-from .studio import get_dvc_studio_config, post_to_studio
+from .studio import StudioEventKind, get_dvc_studio_config, post_to_studio
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -64,6 +64,7 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
+SkleanPlotKind = [*SKLEARN_PLOTS.keys()]
 TemplatePlotKind = Literal[
     "linear",
     "simple",
@@ -81,7 +82,7 @@ class Live:
         self,
         dir: str = "dvclive",  # noqa: A002
         resume: bool = False,
-        report: Optional[str] = None,
+        report: Literal["md", "notebook", "html", None] = None,
         save_dvc_exp: bool = True,
         dvcyaml: Optional[str] = "dvc.yaml",
         cache_images: bool = False,
@@ -399,7 +400,7 @@ class Live:
         if not Image.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 
-        if isinstance(val, (str, Path)):
+        if isinstance(val, (str, PurePath)):
             from PIL import Image as ImagePIL
 
             val = ImagePIL.open(val)
@@ -452,7 +453,7 @@ class Live:
 
     def log_sklearn_plot(
         self,
-        kind: Literal["calibration", "confusion_matrix", "precision_recall", "roc"],
+        kind: SkleanPlotKind,
         labels: Union[List, np.ndarray],
         predictions: Union[List, Tuple, np.ndarray],
         name: Optional[str] = None,
@@ -514,7 +515,7 @@ class Live:
         cache: bool = True,
     ):
         """Tracks a local file or directory with DVC"""
-        if not isinstance(path, (str, Path)):
+        if not isinstance(path, (str, PurePath)):
             raise InvalidDataTypeError(path, builtins.type(path))
 
         if self._dvc_repo is not None:
@@ -597,7 +598,7 @@ class Live:
         make_dvcyaml(self)
 
     @catch_and_warn(DvcException, logger)
-    def post_to_studio(self, event: Literal["start", "data", "done"]):
+    def post_to_studio(self, event: StudioEventKind):
         post_to_studio(self, event)
 
     def end(self):
