@@ -24,7 +24,7 @@ class CPUMetricsCallback:
         self.duration = duration
         self.interval = interval
         self.plot = plot
-        self._no_plot_metrics = ["system/cpu/count"]
+        self._no_plot_metrics = ["system/cpu/count", "system/cpu/ram_total_GB"]
 
     def __call__(self, live):
         self._live = live

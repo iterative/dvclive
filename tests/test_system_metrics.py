@@ -86,12 +86,12 @@ def test_cpumetricscallback_with_plot(duration, interval, plot):
     assert f"{prefix}/cpu/usage_max_percent.tsv" in history
     assert f"{prefix}/cpu/parallelism_percent.tsv" in history
     assert f"{prefix}/cpu/ram_usage_percent.tsv" in history
-    assert f"{prefix}/cpu/ram_total_GB.tsv" in history
     assert f"{prefix}/io/write_speed_MB.tsv" in history
     assert f"{prefix}/io/read_speed_MB.tsv" in history
     assert len(history[f"{prefix}/cpu/ram_usage_percent.tsv"]) == 4
 
     assert f"{prefix}/cpu/count.tsv" not in history  # no plot for count
+    assert f"{prefix}/cpu/ram_total_GB.tsv" not in history
 
 
 @pytest.mark.parametrize(
