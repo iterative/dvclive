@@ -8,7 +8,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Set, Callable, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     import numpy as np
@@ -37,6 +37,7 @@ from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEn
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, post_to_studio
+from .system_metrics import CPUMetricsCallback
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -75,6 +76,7 @@ class Live:
         cache_images: bool = False,
         exp_name: Optional[str] = None,
         exp_message: Optional[str] = None,
+        callbacks: Optional[List[Callable]] = None,
     ):
         self.summary: Dict[str, Any] = {}
 
@@ -119,6 +121,10 @@ class Live:
         self._studio_events_to_skip: Set[str] = set()
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
+
+        self._callbacks = callbacks or [CPUMetricsCallback()]
+        for callback in self._callbacks:
+            callback(self)
 
     def _init_resume(self):
         self._read_params()
@@ -589,6 +595,11 @@ class Live:
         # If next_step called before end, don't want to update step number
         if "step" in self.summary:
             self.step = self.summary["step"]
+
+        # Kill all independent threads that can be found in callbacks
+        for callback in self._callbacks:
+            callback.end()
+
         self.sync()
 
         if self._inside_dvc_exp and self._dvc_repo:
