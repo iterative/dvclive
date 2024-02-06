@@ -6,14 +6,11 @@ import os
 
 from dvc_studio_client.config import get_studio_config
 from dvc_studio_client.post_live_metrics import post_live_metrics
-from dvc_studio_client.schema import BASE_SCHEMA
 
 from dvclive.serialize import load_yaml
 from dvclive.utils import parse_metrics, rel_path
 
 logger = logging.getLogger("dvclive")
-
-StudioEventKind = [*BASE_SCHEMA.schema["type"].validators]
 
 
 def _get_unsent_datapoints(plot, latest_step):

@@ -38,7 +38,7 @@ from .error import (
 from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
-from .studio import StudioEventKind, get_dvc_studio_config, post_to_studio
+from .studio import get_dvc_studio_config, post_to_studio
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -64,7 +64,7 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
-SkleanPlotKind = [*SKLEARN_PLOTS.keys()]
+SklearnPlotKind = [*SKLEARN_PLOTS.keys()]
 
 
 class Live:
@@ -443,7 +443,7 @@ class Live:
 
     def log_sklearn_plot(
         self,
-        kind: SkleanPlotKind,
+        kind: SklearnPlotKind,
         labels: Union[List, np.ndarray],
         predictions: Union[List, Tuple, np.ndarray],
         name: Optional[str] = None,
@@ -588,7 +588,7 @@ class Live:
         make_dvcyaml(self)
 
     @catch_and_warn(DvcException, logger)
-    def post_to_studio(self, event: StudioEventKind):
+    def post_to_studio(self, event: str):
         post_to_studio(self, event)
 
     def end(self):
