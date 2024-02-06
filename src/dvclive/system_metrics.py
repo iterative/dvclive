@@ -10,6 +10,8 @@ from .utils import append_dict
 logger = logging.getLogger("dvclive")
 MEGABYTES_DIVIDER = 1024.0**2
 
+MINIMUM_CPU_USAGE_TO_BE_ACTIVE = 30
+
 
 class CPUMetricsCallback:
     def __init__(
@@ -21,6 +23,7 @@ class CPUMetricsCallback:
         self.duration = duration
         self.interval = interval
         self.plot = plot
+        self._no_plot_metrics = ["system/cpu/count"]
 
     def __call__(self, live):
         self._live = live
@@ -39,14 +42,18 @@ class CPUMetricsCallback:
                 except psutil.Error:
                     logger.exception("Failed to monitor CPU metrics:")
                 self._cpu_metrics = append_dict(self._cpu_metrics, last_cpu_metrics)
-
+                self._shutdown_event.wait(self.interval)
+                if self._shutdown_event.is_set():
+                    break
             for metric_name, metric_values in self._cpu_metrics.items():
                 self._live.log_metric(
-                    metric_name, mean(metric_values), timestamp=True, plot=self.plot
+                    metric_name,
+                    mean(metric_values),
+                    timestamp=True,
+                    plot=self.plot
+                    if metric_name not in self._no_plot_metrics
+                    else False,
                 )
-            self._shutdown_event.wait(self.interval)
-            if self._shutdown_event.is_set():
-                break
 
     def end(self):
         self._shutdown_event.set()
@@ -55,8 +62,20 @@ class CPUMetricsCallback:
 def get_cpus_metrics() -> Dict[str, Union[float, int]]:
     ram_info = psutil.virtual_memory()
     io_info = psutil.disk_io_counters()
+    nb_cpus = psutil.cpu_count()
+    cpus_percent = psutil.cpu_percent(percpu=True)
     return {
-        "system/cpu/usage_percent": psutil.cpu_percent(),
+        "system/cpu/usage_avg_percent": mean(cpus_percent),
+        "system/cpu/usage_max_percent": max(cpus_percent),
+        "system/cpu/count": nb_cpus,
+        "system/cpu/parallelism_percent": len(
+            [
+                percent
+                for percent in cpus_percent
+                if percent >= MINIMUM_CPU_USAGE_TO_BE_ACTIVE
+            ]
+        )
+        / nb_cpus,
         "system/cpu/ram_usage_percent": ram_info.percent,
         "system/io/read_speed_MB": io_info.read_bytes
         / (io_info.read_time * MEGABYTES_DIVIDER),

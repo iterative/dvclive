@@ -2,7 +2,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from dvclive.utils import standardize_metric_name, convert_datapoints_to_list_of_dicts
+from dvclive.utils import (
+    standardize_metric_name,
+    convert_datapoints_to_list_of_dicts,
+    append_dict,
+)
 from dvclive.error import InvalidDataTypeError
 
 
@@ -45,3 +49,21 @@ def test_unsupported_format():
         convert_datapoints_to_list_of_dicts("unsupported data format")
 
     assert "not supported type" in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    ("aggregate", "new_metrics", "result"),
+    [
+        ({"a": [1], "b": [0.8]}, {"a": 2, "b": 1.6}, {"a": [1, 2], "b": [0.8, 1.6]}),
+        ({"a": [1]}, {"a": 2, "b": 1.6}, {"a": [1, 2], "b": [1.6]}),
+        (
+            {"a": [1], "b": [0.8], "c": [2]},
+            {"a": 2, "b": 1.6},
+            {"a": [1, 2], "b": [0.8, 1.6], "c": [2]},
+        ),
+        ({}, {"a": 2, "b": 1.6}, {"a": [2], "b": [1.6]}),
+        ({}, {}, {}),
+    ],
+)
+def test_append_dict(aggregate, new_metrics, result):
+    assert append_dict(aggregate, new_metrics) == result
