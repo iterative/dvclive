@@ -516,8 +516,6 @@ class Live:
         included in the plots section written by `Live.make_dvcyaml()`. The plot can be
         rendered with `DVC CLI`, `VSCode Extension` or `DVC Studio`.
 
-
-
         Args:
             name (StrPath): name of the output file.
             datapoints (pd.DataFrame | np.ndarray | List[Dict]): Pandas DataFrame, Numpy
