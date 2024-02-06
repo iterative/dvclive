@@ -16,8 +16,8 @@ MINIMUM_CPU_USAGE_TO_BE_ACTIVE = 30
 class CPUMetricsCallback:
     def __init__(
         self,
-        duration: Union[int, float] = 30,
-        interval: Union[int, float] = 2.0,
+        duration: Union[int, float] = 5,
+        interval: Union[int, float] = 1.0,
         plot: bool = True,
     ):
         self.duration = duration
