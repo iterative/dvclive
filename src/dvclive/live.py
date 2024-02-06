@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     import pandas as pd
     import matplotlib
     import PIL
+    from dvc.repo import Repo
 
 from dvc.exceptions import DvcException
 from funcy import set_in
@@ -64,7 +65,6 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
-SklearnPlotKind = [*SKLEARN_PLOTS.keys()]
 
 
 class Live:
@@ -104,7 +104,7 @@ class Live:
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
         self._inside_dvc_pipeline: bool = False
-        self._dvc_repo = None
+        self._dvc_repo: Optional[Repo] = None
         self._include_untracked: List[str] = []
         if env2bool(env.DVCLIVE_TEST):
             self._init_test()
@@ -443,7 +443,7 @@ class Live:
 
     def log_sklearn_plot(
         self,
-        kind: SklearnPlotKind,
+        kind: str,
         labels: Union[List, np.ndarray],
         predictions: Union[List, Tuple, np.ndarray],
         name: Optional[str] = None,
