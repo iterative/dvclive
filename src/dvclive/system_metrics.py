@@ -9,6 +9,7 @@ from .utils import append_dict
 
 logger = logging.getLogger("dvclive")
 MEGABYTES_DIVIDER = 1024.0**2
+GIGABYTES_DIVIDER = 1024.0**3
 
 MINIMUM_CPU_USAGE_TO_BE_ACTIVE = 30
 
@@ -78,6 +79,7 @@ def get_cpus_metrics() -> Dict[str, Union[float, int]]:
         * 100
         / nb_cpus,
         "system/cpu/ram_usage_percent": ram_info.percent,
+        "system/cpu/ram_total_GB": ram_info.total / GIGABYTES_DIVIDER,
         "system/io/read_speed_MB": io_info.read_bytes
         / (io_info.read_time * MEGABYTES_DIVIDER),
         "system/io/write_speed_MB": io_info.write_bytes

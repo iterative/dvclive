@@ -16,6 +16,7 @@ def mock_psutil(mocker):
 
     mocked_virtual_memory = mocker.MagicMock()
     mocked_virtual_memory.percent = 20
+    mocked_virtual_memory.total = 4 * 1024**3
 
     mocked_disk_io_counters = mocker.MagicMock()
     mocked_disk_io_counters.read_bytes = 2 * 1024**2
@@ -42,6 +43,7 @@ def mock_psutil(mocker):
         "system/cpu/count",
         "system/cpu/parallelism_percent",
         "system/cpu/ram_usage_percent",
+        "system/cpu/ram_total_GB",
         "system/io/read_speed_MB",
         "system/io/write_speed_MB",
     ],
@@ -74,15 +76,17 @@ def test_cpumetricscallback_with_plot(duration, interval, plot):
     assert "count" in latest["system"]["cpu"]
     assert "parallelism_percent" in latest["system"]["cpu"]
     assert "ram_usage_percent" in latest["system"]["cpu"]
+    assert "ram_total_GB" in latest["system"]["cpu"]
     assert "io" in latest["system"]
     assert "read_speed_MB" in latest["system"]["io"]
     assert "write_speed_MB" in latest["system"]["io"]
 
     prefix = f"{dir_path}/plots/metrics/system"
-    assert f"{prefix}/cpu/ram_usage_percent.tsv" in history
     assert f"{prefix}/cpu/usage_avg_percent.tsv" in history
     assert f"{prefix}/cpu/usage_max_percent.tsv" in history
     assert f"{prefix}/cpu/parallelism_percent.tsv" in history
+    assert f"{prefix}/cpu/ram_usage_percent.tsv" in history
+    assert f"{prefix}/cpu/ram_total_GB.tsv" in history
     assert f"{prefix}/io/write_speed_MB.tsv" in history
     assert f"{prefix}/io/read_speed_MB.tsv" in history
     assert len(history[f"{prefix}/cpu/ram_usage_percent.tsv"]) == 4
@@ -112,6 +116,7 @@ def test_cpumetricscallback_without_plot(duration, interval, plot):
     assert "count" in latest["system"]["cpu"]
     assert "parallelism_percent" in latest["system"]["cpu"]
     assert "ram_usage_percent" in latest["system"]["cpu"]
+    assert "ram_total_GB" in latest["system"]["cpu"]
     assert "io" in latest["system"]
     assert "read_speed_MB" in latest["system"]["io"]
     assert "write_speed_MB" in latest["system"]["io"]
@@ -122,5 +127,6 @@ def test_cpumetricscallback_without_plot(duration, interval, plot):
     assert f"{prefix}/cpu/count.tsv" not in history
     assert f"{prefix}/cpu/parallelism_percent.tsv" not in history
     assert f"{prefix}/cpu/ram_usage_percent.tsv" not in history
+    assert f"{prefix}/cpu/ram_total_GB.tsv" not in history
     assert f"{prefix}/cpu/write_speed_MB.tsv" not in history
     assert f"{prefix}/cpu/read_speed_MB.tsv" not in history
