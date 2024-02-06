@@ -75,6 +75,7 @@ def get_cpus_metrics() -> Dict[str, Union[float, int]]:
                 if percent >= MINIMUM_CPU_USAGE_TO_BE_ACTIVE
             ]
         )
+        * 100
         / nb_cpus,
         "system/cpu/ram_usage_percent": ram_info.percent,
         "system/io/read_speed_MB": io_info.read_bytes
