@@ -8,7 +8,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union, TYPE_CHECKING
+from typing import Any, Dict, List, Literal, Optional, Set, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     import numpy as np
@@ -33,7 +33,15 @@ from .error import (
     InvalidPlotTypeError,
     InvalidReportModeError,
 )
-from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEncoder
+from .plots import (
+    PLOT_TYPES,
+    SKLEARN_PLOTS,
+    BoundingBoxes,
+    CustomPlot,
+    Image,
+    Metric,
+    NumpyEncoder,
+)
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, post_to_studio
@@ -84,6 +92,7 @@ class Live:
         self._step: Optional[int] = None
         self._metrics: Dict[str, Any] = {}
         self._images: Dict[str, Any] = {}
+        self._bounding_boxes: Dict[str, Any] = {}
         self._params: Dict[str, Any] = {}
         self._plots: Dict[str, Any] = {}
         self._artifacts: Dict[str, Dict] = {}
@@ -398,6 +407,26 @@ class Live:
         image.dump(val)
         logger.debug(f"Logged {name}: {val}")
 
+    def log_bounding_boxes(
+        self,
+        name: str,
+        bboxes: Union[List[List[int]], np.ndarray],
+        labels: Union[List[str], np.ndarray],
+        scores: Union[List[float], np.ndarray],
+        format: Literal["tlbr", "tlhw", "xywh"],  # noqa: A002
+    ):
+        BoundingBoxes.could_log(name, bboxes, labels, scores, format)
+
+        if name in self._bounding_boxes:
+            bounding_boxes = self._bounding_boxes[name]
+        else:
+            bounding_boxes = BoundingBoxes(name, self.plots_dir)
+            self._bounding_boxes[name] = bounding_boxes
+
+        bounding_boxes.step = self.step
+        bounding_boxes.dump(bboxes, labels, scores, format)
+        logger.debug(f"Logged {name}: {len(bboxes)} bounding boxes in {format} format")
+
     def log_plot(
         self,
         name: str,
@@ -585,6 +614,10 @@ class Live:
         if self._images and self._cache_images:
             images_path = Path(self.plots_dir) / Image.subfolder
             self.cache(images_path)
+
+        if self._bounding_boxes and self._cache_images:
+            bounding_boxes_path = Path(self.plots_dir) / BoundingBoxes.subfolder
+            self.cache(bounding_boxes_path)
 
         # If next_step called before end, don't want to update step number
         if "step" in self.summary:

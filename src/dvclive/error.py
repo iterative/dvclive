@@ -39,3 +39,11 @@ class InvalidReportModeError(DvcLiveError):
             f"`report` can only be `None`, `auto`, `html`, `notebook` or `md`. "
             f"Got {val} instead."
         )
+
+
+class InvalidSameSizeError(DvcLiveError):
+    def __init__(self, name, x, y):
+        self.name = name
+        self.x = x
+        self.y = y
+        super().__init__(f"Data '{name}': '{x}' and '{y}' must have the same length")
