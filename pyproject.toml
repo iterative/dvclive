@@ -54,7 +54,11 @@ tests = [
     "dvclive[image,plots,markdown]",
     "ipython",
 ]
-dev = ["dvclive[all,tests]", "mypy>=1.1.1", "types-PyYAML"]
+dev = [
+    "dvclive[all,tests]",
+    "mypy>=1.1.1",
+    "types-PyYAML",
+]
 mmcv = ["mmcv"]
 tf = ["tensorflow"]
 xgb = ["xgboost"]
@@ -65,7 +69,7 @@ fastai = ["fastai"]
 lightning = ["lightning>=2.0", "torch", "jsonargparse[signatures]>=4.26.1"]
 optuna = ["optuna"]
 all = [
-    "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,lightning,optuna,plots,markdown]",
+   "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,lightning,optuna,plots,markdown]"
 ]
 
 [project.urls]
@@ -133,54 +137,12 @@ ignore-words-list = "fpr"
 
 [tool.ruff]
 ignore = ["N818", "UP006", "UP007", "UP035", "UP038", "B905", "PGH003"]
-select = [
-    "F",
-    "E",
-    "W",
-    "C90",
-    "N",
-    "UP",
-    "YTT",
-    "S",
-    "BLE",
-    "B",
-    "A",
-    "C4",
-    "T10",
-    "EXE",
-    "ISC",
-    "INP",
-    "PIE",
-    "T20",
-    "PT",
-    "Q",
-    "RSE",
-    "RET",
-    "SLF",
-    "SIM",
-    "TID",
-    "TCH",
-    "INT",
-    "ARG",
-    "PGH",
-    "PL",
-    "TRY",
-    "NPY",
-    "RUF",
-]
+select = ["F", "E", "W", "C90", "N", "UP", "YTT", "S", "BLE", "B", "A", "C4", "T10", "EXE", "ISC", "INP", "PIE", "T20", "PT", "Q", "RSE", "RET", "SLF", "SIM", "TID", "TCH", "INT", "ARG", "PGH", "PL", "TRY", "NPY", "RUF"]
 
 [tool.ruff.per-file-ignores]
 "noxfile.py" = ["D", "PTH"]
-"tests/*" = [
-    "S101",
-    "INP001",
-    "SLF001",
-    "ARG001",
-    "ARG002",
-    "ARG005",
-    "PLR2004",
-    "NPY002",
-]
+"tests/*" = ["S101", "INP001", "SLF001", "ARG001", "ARG002", "ARG005", "PLR2004", "NPY002"]
 
 [tool.ruff.pylint]
 max-args = 10
+
