@@ -63,6 +63,8 @@ logger.addHandler(handler)
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
 
+NULL_SHA: str = "0" * 40
+
 
 class Live:
     def __init__(
@@ -95,10 +97,7 @@ class Live:
         self._report_notebook = None
         self._init_report()
 
-        self._baseline_rev: str = os.getenv(
-            env.DVC_EXP_BASELINE_REV,
-            "0" * 40,  # noqa: PLW1508
-        )
+        self._baseline_rev: str = os.getenv(env.DVC_EXP_BASELINE_REV, NULL_SHA)
         self._exp_name: Optional[str] = exp_name or os.getenv(env.DVC_EXP_NAME)
         self._exp_message: Optional[str] = exp_message
         self._experiment_rev: Optional[str] = None
