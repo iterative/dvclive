@@ -1,94 +1,119 @@
 [build-system]
-requires = ["setuptools>=61", "setuptools_scm[toml]>=7"]
 build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61", "setuptools_scm[toml]>=7"]
 
 [project]
+authors = [{name = "Iterative", email = "support@dvc.org"}]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11"
+]
+dependencies = [
+  "dvc>=3.33.3",
+  "dvc-render>=1.0.0,<2",
+  "dvc-studio-client>=0.17.1,<1",
+  "funcy",
+  "gto",
+  "ruamel.yaml",
+  "scmrepo"
+]
 description = "Experiments logger for ML projects."
+dynamic = ["version"]
+keywords = [
+  "ai",
+  "metrics",
+  "collaboration",
+  "data-science",
+  "data-version-control",
+  "developer-tools",
+  "git",
+  "machine-learning",
+  "reproducibility"
+]
+license = {text = "Apache License 2.0"}
+maintainers = [{name = "Iterative", email = "support@dvc.org"}]
 name = "dvclive"
 readme = "README.md"
-keywords = [
-    "ai",
-    "metrics",
-    "collaboration",
-    "data-science",
-    "data-version-control",
-    "developer-tools",
-    "git",
-    "machine-learning",
-    "reproducibility",
-]
-license = { text = "Apache License 2.0" }
-maintainers = [{ name = "Iterative", email = "support@dvc.org" }]
-authors = [{ name = "Iterative", email = "support@dvc.org" }]
 requires-python = ">=3.8"
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-]
-dynamic = ["version"]
-dependencies = [
-    "dvc>=3.33.3",
-    "dvc-render>=1.0.0,<2",
-    "dvc-studio-client>=0.17.1,<1",
-    "funcy",
-    "gto",
-    "ruamel.yaml",
-    "scmrepo",
-]
 
 [project.optional-dependencies]
-image = ["numpy", "pillow"]
-sklearn = ["scikit-learn"]
-plots = ["scikit-learn", "pandas", "numpy"]
-markdown = ["matplotlib"]
-tests = [
-    "pytest>=7.2.0,<8.0",
-    "pytest-sugar>=0.9.6,<1.0",
-    "pytest-cov>=3.0.0,<4.0",
-    "pytest-mock>=3.8.2,<4.0",
-    "dvclive[image,plots,markdown]",
-    "ipython",
+all = [
+  "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,lightning,optuna,plots,markdown]"
 ]
+catalyst = ["catalyst>22"]
 dev = [
-    "dvclive[all,tests]",
-    "mypy>=1.1.1",
-    "types-PyYAML",
+  "dvclive[all,tests]",
+  "mypy>=1.1.1",
+  "types-PyYAML"
 ]
+fastai = ["fastai"]
+huggingface = ["transformers", "datasets"]
+image = ["numpy", "pillow"]
+lgbm = ["lightgbm"]
+lightning = ["lightning>=2.0", "torch", "jsonargparse[signatures]>=4.26.1"]
+markdown = ["matplotlib"]
 mmcv = ["mmcv"]
+optuna = ["optuna"]
+plots = ["scikit-learn", "pandas", "numpy"]
+sklearn = ["scikit-learn"]
+tests = [
+  "pytest>=7.2.0,<8.0",
+  "pytest-sugar>=0.9.6,<1.0",
+  "pytest-cov>=3.0.0,<4.0",
+  "pytest-mock>=3.8.2,<4.0",
+  "dvclive[image,plots,markdown]",
+  "ipython"
+]
 tf = ["tensorflow"]
 xgb = ["xgboost"]
-lgbm = ["lightgbm"]
-huggingface = ["transformers", "datasets"]
-catalyst = ["catalyst>22"]
-fastai = ["fastai"]
-lightning = ["lightning>=2.0", "torch", "jsonargparse[signatures]>=4.26.1"]
-optuna = ["optuna"]
-all = [
-   "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,lightning,optuna,plots,markdown]"
-]
 
 [project.urls]
-Homepage = "https://github.com/iterative/dvclive"
-Documentation = "https://dvc.org/doc/dvclive"
-Repository = "https://github.com/iterative/dvclive"
 Changelog = "https://github.com/iterative/dvclive/releases"
+Documentation = "https://dvc.org/doc/dvclive"
+Homepage = "https://github.com/iterative/dvclive"
 Issues = "https://github.com/iterative/dvclive/issues"
+Repository = "https://github.com/iterative/dvclive"
 
-[tool.setuptools.packages.find]
-exclude = ["tests", "tests.*"]
-where = ["src"]
-namespaces = false
+[tool.codespell]
+ignore-words-list = "fpr"
 
-[tool.setuptools]
-license-files = ["LICENSE"]
-platforms = ["any"]
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
 
-[tool.setuptools_scm]
-write_to = "src/dvclive/_dvclive_version.py"
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "if __name__ == .__main__.:",
+  "if typing.TYPE_CHECKING:",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "raise AssertionError",
+  "@overload"
+]
+show_missing = true
+
+[tool.coverage.run]
+branch = true
+source = ["dvclive", "tests"]
+
+[tool.mypy]
+check_untyped_defs = false
+files = ["src", "tests"]
+ignore_missing_imports = true
+pretty = true
+# Error output
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+show_traceback = true
+# Warnings
+warn_no_return = true
+warn_redundant_casts = true
+warn_unreachable = true
 
 [tool.pytest.ini_options]
 addopts = "-ra"
@@ -96,43 +121,6 @@ markers = """
     vscode: mark a test that verifies behavior that VS Code relies on
     studio: mark a test that verifies behavior that Studio relies on
 """
-
-[tool.coverage.run]
-branch = true
-source = ["dvclive", "tests"]
-
-[tool.coverage.paths]
-source = ["src", "*/site-packages"]
-
-[tool.coverage.report]
-show_missing = true
-exclude_lines = [
-    "pragma: no cover",
-    "if __name__ == .__main__.:",
-    "if typing.TYPE_CHECKING:",
-    "if TYPE_CHECKING:",
-    "raise NotImplementedError",
-    "raise AssertionError",
-    "@overload",
-]
-
-[tool.mypy]
-# Error output
-show_column_numbers = true
-show_error_codes = true
-show_error_context = true
-show_traceback = true
-pretty = true
-check_untyped_defs = false
-# Warnings
-warn_no_return = true
-warn_redundant_casts = true
-warn_unreachable = true
-ignore_missing_imports = true
-files = ["src", "tests"]
-
-[tool.codespell]
-ignore-words-list = "fpr"
 
 [tool.ruff]
 ignore = ["N818", "UP006", "UP007", "UP035", "UP038", "B905", "PGH003"]
@@ -144,3 +132,15 @@ select = ["F", "E", "W", "C90", "N", "UP", "YTT", "S", "BLE", "B", "A", "C4", "T
 
 [tool.ruff.pylint]
 max-args = 10
+
+[tool.setuptools]
+license-files = ["LICENSE"]
+platforms = ["any"]
+
+[tool.setuptools.packages.find]
+exclude = ["tests", "tests.*"]
+namespaces = false
+where = ["src"]
+
+[tool.setuptools_scm]
+write_to = "src/dvclive/_dvclive_version.py"
