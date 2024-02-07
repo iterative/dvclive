@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     import pandas as pd
     import matplotlib
     import PIL
-    from dvc.repo import Repo
 
 from dvc.exceptions import DvcException
 from funcy import set_in
@@ -104,7 +103,7 @@ class Live:
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
         self._inside_dvc_pipeline: bool = False
-        self._dvc_repo: Optional[Repo] = None
+        self._dvc_repo = None
         self._include_untracked: List[str] = []
         if env2bool(env.DVCLIVE_TEST):
             self._init_test()
@@ -541,7 +540,7 @@ class Live:
             )
 
     @catch_and_warn(DvcException, logger)
-    def cache(self, path: str):
+    def cache(self, path):
         if self._inside_dvc_pipeline:
             existing_stage = find_overlapping_stage(self._dvc_repo, path)
 
