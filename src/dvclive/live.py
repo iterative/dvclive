@@ -51,7 +51,6 @@ from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEn
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, post_to_studio
-from .system_metrics import CPUMetricsCallback
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -136,7 +135,7 @@ class Live:
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
 
-        self._callbacks = callbacks or [CPUMetricsCallback()]
+        self._callbacks = callbacks or []
         for callback in self._callbacks:
             callback(self)
 
