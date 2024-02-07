@@ -96,6 +96,8 @@ class Live:
         self._init_report()
 
         self._baseline_rev: Optional[str] = None
+        self._subdir: Optional[str] = None
+        self._exp_parent_data: Optional[Dict[str, Any]] = None
         self._exp_name: Optional[str] = exp_name
         self._exp_message: Optional[str] = exp_message
         self._experiment_rev: Optional[str] = None
@@ -190,6 +192,10 @@ class Live:
             return
 
         self._baseline_rev = self._dvc_repo.scm.get_rev()
+
+        self._subdir = self._dvc_repo.subrepo_relpath
+        self._exp_parent_data = self._dvc_repo.head_commit_info
+
         if self._save_dvc_exp:
             self._exp_name = get_exp_name(
                 self._exp_name, self._dvc_repo.scm, self._baseline_rev

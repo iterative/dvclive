@@ -19,10 +19,18 @@ def mocked_dvc_repo(tmp_dir, mocker):
     _dvc_repo.scm.get_ref.return_value = None
     _dvc_repo.scm.no_commits = False
     _dvc_repo.experiments.save.return_value = "e" * 40
-    _dvc_repo.root_dir = tmp_dir
+    _dvc_repo.root_dir = _dvc_repo.scm.root_dir = tmp_dir
     _dvc_repo.config = {}
+    _dvc_repo.subrepo_relpath = ""
+    _dvc_repo.head_commit_info = None
     mocker.patch("dvclive.live.get_dvc_repo", return_value=_dvc_repo)
     return _dvc_repo
+
+
+@pytest.fixture()
+def mocked_dvc_subrepo(tmp_dir, mocker, mocked_dvc_repo):
+    mocked_dvc_repo.subrepo_relpath = "subdir"
+    return mocked_dvc_repo
 
 
 @pytest.fixture()

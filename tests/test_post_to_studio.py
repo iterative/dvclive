@@ -32,7 +32,7 @@ def get_studio_call(event_type, exp_name, **kwargs):
     }
 
 
-def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
+def test_post_to_studio(monkeypatch, tmp_dir, mocked_dvc_repo, mocked_studio_post):
     live = Live()
     live.log_param("fooparam", 1)
 
@@ -41,7 +41,8 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     mocked_post, _ = mocked_studio_post
 
     mocked_post.assert_called_with(
-        "https://0.0.0.0/api/live", **get_studio_call("start", exp_name=live._exp_name)
+        "https://0.0.0.0/api/live",
+        **get_studio_call("start", exp_name=live._exp_name),
     )
 
     live.log_metric("foo", 1)
@@ -78,6 +79,18 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
         **get_studio_call(
             "done", exp_name=live._exp_name, experiment_rev=live._experiment_rev
         ),
+    )
+
+
+def test_post_to_studio_subrepo(tmp_dir, mocked_dvc_subrepo, mocked_studio_post):
+    live = Live()
+    live.log_param("fooparam", 1)
+
+    mocked_post, _ = mocked_studio_post
+
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        **get_studio_call("start", exp_name=live._exp_name, subdir="subdir"),
     )
 
 
