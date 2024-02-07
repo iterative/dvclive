@@ -17,6 +17,12 @@ class InvalidDvcyamlError(DvcLiveError):
         super().__init__("`dvcyaml` path must have filename 'dvc.yaml'")
 
 
+class InvalidImageNameError(DvcLiveError):
+    def __init__(self, name):
+        self.name = name
+        super().__init__(f"Cannot log image with name '{name}'")
+
+
 class InvalidPlotTypeError(DvcLiveError):
     def __init__(self, name):
         from .plots import SKLEARN_PLOTS

@@ -31,6 +31,7 @@ from .dvc import (
 from .error import (
     InvalidDataTypeError,
     InvalidDvcyamlError,
+    InvalidImageNameError,
     InvalidParameterTypeError,
     InvalidPlotTypeError,
     InvalidReportModeError,
@@ -389,10 +390,19 @@ class Live:
         if not Image.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 
+        # If we're given a path, try loading the image first. This might error out.
         if isinstance(val, (str, PurePath)):
             from PIL import Image as ImagePIL
 
+            suffix = Path(val).suffix
+            if not Path(name).suffix and suffix in Image.suffixes:
+                name = f"{name}{suffix}"
+
             val = ImagePIL.open(val)
+
+        # See if the image name is valid
+        if Path(name).suffix not in Image.suffixes:
+            raise InvalidImageNameError(name)
 
         if name in self._images:
             image = self._images[name]
