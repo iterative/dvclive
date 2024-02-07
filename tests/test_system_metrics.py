@@ -61,13 +61,16 @@ def test_get_cpus_metrics(mocker, metric_name):
         (2.0, 1, True),
     ],
 )
-def test_cpumetricscallback_with_plot(duration, interval, plot):
-    with Live(callbacks=[CPUMetricsCallback(duration, interval, plot)]) as live:
+def test_cpumetricscallback_with_plot(duration, interval, plot, tmpdir):
+    with Live(
+        tmpdir,
+        save_dvc_exp=False,
+        callbacks=[CPUMetricsCallback(duration, interval, plot)],
+    ) as live:
         time.sleep(duration * 2)
         live.next_step()
         time.sleep(duration * 2 + 0.1)  # allow the thread to finish
         history, latest = parse_metrics(live)
-        dir_path = live.dir
 
     assert "system" in latest
     assert "cpu" in latest["system"]
@@ -81,7 +84,7 @@ def test_cpumetricscallback_with_plot(duration, interval, plot):
     assert "read_speed_MB" in latest["system"]["io"]
     assert "write_speed_MB" in latest["system"]["io"]
 
-    prefix = f"{dir_path}/plots/metrics/system"
+    prefix = f"{tmpdir}/plots/metrics/system"
     assert f"{prefix}/cpu/usage_avg_percent.tsv" in history
     assert f"{prefix}/cpu/usage_max_percent.tsv" in history
     assert f"{prefix}/cpu/parallelism_percent.tsv" in history
@@ -101,13 +104,16 @@ def test_cpumetricscallback_with_plot(duration, interval, plot):
         (2.0, 1, False),
     ],
 )
-def test_cpumetricscallback_without_plot(duration, interval, plot):
-    with Live(callbacks=[CPUMetricsCallback(duration, interval, plot)]) as live:
+def test_cpumetricscallback_without_plot(duration, interval, plot, tmpdir):
+    with Live(
+        tmpdir,
+        save_dvc_exp=False,
+        callbacks=[CPUMetricsCallback(duration, interval, plot)],
+    ) as live:
         time.sleep(duration * 2)
         live.next_step()
         time.sleep(duration * 2 + 0.1)  # allow the thread to finish
         history, latest = parse_metrics(live)
-        dir_path = live.dir
 
     assert "system" in latest
     assert "cpu" in latest["system"]
@@ -121,7 +127,7 @@ def test_cpumetricscallback_without_plot(duration, interval, plot):
     assert "read_speed_MB" in latest["system"]["io"]
     assert "write_speed_MB" in latest["system"]["io"]
 
-    prefix = f"{dir_path}/plots/metrics/system"
+    prefix = f"{tmpdir}/plots/metrics/system"
     assert f"{prefix}/cpu/usage_avg_percent.tsv" not in history
     assert f"{prefix}/cpu/usage_max_percent.tsv" not in history
     assert f"{prefix}/cpu/count.tsv" not in history
