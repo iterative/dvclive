@@ -29,9 +29,9 @@ def test_get_dvc_repo_subdir(tmp_dir):
 def test_exp_save_on_end(tmp_dir, save, mocked_dvc_repo):
     live = Live(save_dvc_exp=save)
     live.end()
+    assert live._baseline_rev is not None
+    assert live._exp_name is not None
     if save:
-        assert live._baseline_rev is not None
-        assert live._exp_name is not None
         mocked_dvc_repo.experiments.save.assert_called_with(
             name=live._exp_name,
             include_untracked=[live.dir, "dvc.yaml"],
@@ -39,8 +39,6 @@ def test_exp_save_on_end(tmp_dir, save, mocked_dvc_repo):
             message=None,
         )
     else:
-        assert live._baseline_rev is not None
-        assert live._exp_name is not None
         mocked_dvc_repo.experiments.save.assert_not_called()
 
 
@@ -57,31 +55,6 @@ def test_exp_save_skip_on_env_vars(tmp_dir, monkeypatch):
     assert live._exp_name == "bar"
     assert live._inside_dvc_exp
     assert live._inside_dvc_pipeline
-
-
-def test_exp_save_run_on_dvc_repro(tmp_dir, mocker):
-    dvc_repo = mocker.MagicMock()
-    dvc_stage = mocker.MagicMock()
-    dvc_file = mocker.MagicMock()
-    dvc_repo.index.stages = [dvc_stage, dvc_file]
-    dvc_repo.scm.get_rev.return_value = "current_rev"
-    dvc_repo.scm.get_ref.return_value = None
-    dvc_repo.scm.no_commits = False
-    dvc_repo.config = {}
-    dvc_repo.root_dir = tmp_dir
-    mocker.patch("dvclive.live.get_dvc_repo", return_value=dvc_repo)
-    live = Live()
-    assert live._save_dvc_exp
-    assert live._baseline_rev is not None
-    assert live._exp_name is not None
-    live.end()
-
-    dvc_repo.experiments.save.assert_called_with(
-        name=live._exp_name,
-        include_untracked=[live.dir, "dvc.yaml"],
-        force=True,
-        message=None,
-    )
 
 
 def test_exp_save_with_dvc_files(tmp_dir, mocker):
@@ -203,10 +176,12 @@ def test_no_scm_repo(tmp_dir, mocker):
     assert live._save_dvc_exp is False
 
 
-def test_dvc_repro(tmp_dir, monkeypatch, mocker):
+def test_dvc_repro(tmp_dir, monkeypatch, mocked_dvc_repo, mocked_studio_post):
     monkeypatch.setenv(DVC_ROOT, "root")
-    mocker.patch("dvclive.live.get_dvc_repo", return_value=None)
     live = Live(save_dvc_exp=True)
+    assert live._baseline_rev is not None
+    assert live._exp_name is not None
+    assert not live._studio_events_to_skip
     assert not live._save_dvc_exp
 
 
