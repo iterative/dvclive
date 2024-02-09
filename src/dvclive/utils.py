@@ -111,7 +111,7 @@ def parse_metrics(live):
     metrics_path = Path(live.plots_dir) / Metric.subfolder
     history = {}
     for suffix in Metric.suffixes:
-        for scalar_file in metrics_path.rglob(f"**/*{suffix}"):
+        for scalar_file in metrics_path.rglob(f"*{suffix}"):
             history[str(scalar_file)] = parse_tsv(scalar_file)
     latest = parse_json(live.metrics_file)
     return history, latest

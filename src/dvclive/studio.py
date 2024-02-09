@@ -14,7 +14,7 @@ logger = logging.getLogger("dvclive")
 
 
 def _get_unsent_datapoints(plot, latest_step):
-    return [x for x in plot if int(x["step"]) > latest_step]
+    return [x for x in plot if int(x["step"]) >= latest_step]
 
 
 def _cast_to_numbers(datapoints):
@@ -53,7 +53,7 @@ def _adapt_images(live):
     return {
         _adapt_path(live, image.output_path): {"image": _adapt_image(image.output_path)}
         for image in live._images.values()
-        if image.step > live._latest_studio_step
+        if image.step >= live._latest_studio_step
     }
 
 
@@ -76,7 +76,6 @@ def get_studio_updates(live):
         for name, plot in plots.items()
     }
     plots = {k: {"data": v} for k, v in plots.items()}
-
     plots.update(_adapt_images(live))
 
     return metrics, params, plots
