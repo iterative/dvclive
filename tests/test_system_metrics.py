@@ -61,16 +61,16 @@ def test_get_cpus_metrics(mocker, metric_name):
         (2.0, 1, True),
     ],
 )
-def test_cpumetricscallback_with_plot(duration, interval, plot, tmpdir):
+def test_cpumetricscallback_with_plot(tmp_dir, duration, interval, plot):
     with Live(
-        tmpdir,
+        tmp_dir,
         save_dvc_exp=False,
         callbacks=[CPUMetricsCallback(duration, interval, plot)],
     ) as live:
         time.sleep(duration * 2)
         live.next_step()
         time.sleep(duration * 2 + 0.1)  # allow the thread to finish
-        history, latest = parse_metrics(live)
+        timeseries, latest = parse_metrics(live)
 
     assert "system" in latest
     assert "cpu" in latest["system"]
@@ -84,17 +84,17 @@ def test_cpumetricscallback_with_plot(duration, interval, plot, tmpdir):
     assert "read_speed_MB" in latest["system"]["io"]
     assert "write_speed_MB" in latest["system"]["io"]
 
-    prefix = f"{tmpdir}/plots/metrics/system"
-    assert f"{prefix}/cpu/usage_avg_percent.tsv" in history
-    assert f"{prefix}/cpu/usage_max_percent.tsv" in history
-    assert f"{prefix}/cpu/parallelism_percent.tsv" in history
-    assert f"{prefix}/cpu/ram_usage_percent.tsv" in history
-    assert f"{prefix}/io/write_speed_MB.tsv" in history
-    assert f"{prefix}/io/read_speed_MB.tsv" in history
-    assert len(history[f"{prefix}/cpu/ram_usage_percent.tsv"]) == 4
+    assert any("system/cpu/usage_avg_percent.tsv" in key for key in timeseries)
+    assert any("system/cpu/usage_max_percent.tsv" in key for key in timeseries)
+    assert any("system/cpu/parallelism_percent.tsv" in key for key in timeseries)
+    assert any("system/cpu/ram_usage_percent.tsv" in key for key in timeseries)
+    assert any("system/io/write_speed_MB.tsv" in key for key in timeseries)
+    assert any("system/io/read_speed_MB.tsv" in key for key in timeseries)
+    assert all(len(timeseries[key]) == 4 for key in timeseries if "system" in key)
 
-    assert f"{prefix}/cpu/count.tsv" not in history  # no plot for count
-    assert f"{prefix}/cpu/ram_total_GB.tsv" not in history
+    # not plot for fix values
+    assert all("system/cpu/count.tsv" not in key for key in timeseries)
+    assert all("system/cpu/ram_total_GB.tsv" not in key for key in timeseries)
 
 
 @pytest.mark.parametrize(
@@ -104,16 +104,16 @@ def test_cpumetricscallback_with_plot(duration, interval, plot, tmpdir):
         (2.0, 1, False),
     ],
 )
-def test_cpumetricscallback_without_plot(duration, interval, plot, tmpdir):
+def test_cpumetricscallback_without_plot(tmp_dir, duration, interval, plot):
     with Live(
-        tmpdir,
+        tmp_dir,
         save_dvc_exp=False,
         callbacks=[CPUMetricsCallback(duration, interval, plot)],
     ) as live:
         time.sleep(duration * 2)
         live.next_step()
         time.sleep(duration * 2 + 0.1)  # allow the thread to finish
-        history, latest = parse_metrics(live)
+        timeseries, latest = parse_metrics(live)
 
     assert "system" in latest
     assert "cpu" in latest["system"]
@@ -127,12 +127,11 @@ def test_cpumetricscallback_without_plot(duration, interval, plot, tmpdir):
     assert "read_speed_MB" in latest["system"]["io"]
     assert "write_speed_MB" in latest["system"]["io"]
 
-    prefix = f"{tmpdir}/plots/metrics/system"
-    assert f"{prefix}/cpu/usage_avg_percent.tsv" not in history
-    assert f"{prefix}/cpu/usage_max_percent.tsv" not in history
-    assert f"{prefix}/cpu/count.tsv" not in history
-    assert f"{prefix}/cpu/parallelism_percent.tsv" not in history
-    assert f"{prefix}/cpu/ram_usage_percent.tsv" not in history
-    assert f"{prefix}/cpu/ram_total_GB.tsv" not in history
-    assert f"{prefix}/cpu/write_speed_MB.tsv" not in history
-    assert f"{prefix}/cpu/read_speed_MB.tsv" not in history
+    assert all("system/cpu/usage_avg_percent.tsv" not in key for key in timeseries)
+    assert all("system/cpu/usage_max_percent.tsv" not in key for key in timeseries)
+    assert all("system/cpu/count.tsv" not in key for key in timeseries)
+    assert all("system/cpu/parallelism_percent.tsv" not in key for key in timeseries)
+    assert all("system/cpu/ram_usage_percent.tsv" not in key for key in timeseries)
+    assert all("system/cpu/ram_total_GB.tsv" not in key for key in timeseries)
+    assert all("system/cpu/write_speed_MB.tsv" not in key for key in timeseries)
+    assert all("system/cpu/read_speed_MB.tsv" not in key for key in timeseries)
