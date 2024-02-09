@@ -362,6 +362,7 @@ class Live:
 
         self.make_report()
 
+        logger.warning(f"post_to_studio step{self.step}")
         self.post_to_studio("data")
 
     def next_step(self):
@@ -392,6 +393,10 @@ class Live:
             self._metrics[name] = metric
 
         metric.step = self.step
+
+        logger.warning(
+            f"Logging {name} with value {val} and step{self.step} timestamp {timestamp}"
+        )
         if plot:
             metric.dump(val, timestamp=timestamp)
 
