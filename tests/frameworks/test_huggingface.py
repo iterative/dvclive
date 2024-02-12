@@ -100,33 +100,35 @@ def args():
         "foo",
         evaluation_strategy="epoch",
         num_train_epochs=2,
-        save_strategy="epoch",
+        save_strategy="no",
+        logging_strategy="no",
     )
 
 
 def test_huggingface_integration(tmp_dir, model, args, data, mocker):
+    callback = DVCLiveCallback()
     trainer = Trainer(
         model,
         args,
         train_dataset=data[0],
         eval_dataset=data[1],
         compute_metrics=compute_metrics,
+        callbacks=[callback],
     )
-    callback = DVCLiveCallback()
+
     live = callback.live
     spy = mocker.spy(live, "end")
-    trainer.add_callback(callback)
     trainer.train()
     spy.assert_called_once()
 
-    live = callback.live
-    assert os.path.exists(live.dir)
+    assert os.path.exists(callback.live.dir)
 
     logs, _ = parse_metrics(live)
 
-    assert len(logs) == 10
+    assert len(logs) == 11
 
     scalars = os.path.join(live.plots_dir, Metric.subfolder)
+
     assert os.path.join(scalars, "eval", "foo.tsv") in logs
     assert os.path.join(scalars, "eval", "loss.tsv") in logs
     assert os.path.join(scalars, "train", "loss.tsv") in logs
