@@ -68,6 +68,7 @@ class RegressionModelConfig(PretrainedConfig):
 class RegressionPreTrainedModel(PreTrainedModel):
     config_class = RegressionModelConfig
     base_model_prefix = "regression"
+    is_parallelizable = False
 
     def __init__(self, config):
         super().__init__(config)
