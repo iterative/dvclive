@@ -11,7 +11,6 @@ import tempfile
 from pathlib import Path, PurePath
 from typing import (
     Any,
-    Callable,
     Dict,
     List,
     Optional,
@@ -51,6 +50,7 @@ from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEn
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, post_to_studio
+from .system_metrics import CPUMetrics
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -89,7 +89,7 @@ class Live:
         cache_images: bool = False,
         exp_name: Optional[str] = None,
         exp_message: Optional[str] = None,
-        callbacks: Optional[List[Callable]] = None,
+        monitor_system: bool = False,
     ):
         self.summary: Dict[str, Any] = {}
 
@@ -135,8 +135,8 @@ class Live:
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
 
-        self._callbacks = callbacks or []
-        for callback in self._callbacks:
+        self._system_monitoring_callbacks = [CPUMetrics()] if monitor_system else []
+        for callback in self._system_monitoring_callbacks:
             callback(self)
 
     def _init_resume(self):
@@ -362,7 +362,6 @@ class Live:
 
         self.make_report()
 
-        logger.warning(f"post_to_studio step{self.step}")
         self.post_to_studio("data")
 
     def next_step(self):
@@ -394,9 +393,6 @@ class Live:
 
         metric.step = self.step
 
-        logger.warning(
-            f"Logging {name} with value {val} and step{self.step} timestamp {timestamp}"
-        )
         if plot:
             metric.dump(val, timestamp=timestamp)
 
@@ -626,7 +622,7 @@ class Live:
             self.step = self.summary["step"]
 
         # Kill all independent threads that can be found in callbacks
-        for callback in self._callbacks:
+        for callback in self._system_monitoring_callbacks:
             callback.end()
 
         self.sync()

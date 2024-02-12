@@ -71,8 +71,6 @@ def get_studio_updates(live):
     metrics_file = _adapt_path(live, metrics_file)
     metrics = {metrics_file: {"data": metrics}}
 
-    logger.warning(f"steeep: {live._latest_studio_step}")
-    logger.warning(plots)
     plots = {
         _adapt_path(live, name): _adapt_plot_datapoints(live, plot)
         for name, plot in plots.items()

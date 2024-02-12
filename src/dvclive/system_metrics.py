@@ -4,8 +4,7 @@ from typing import Dict, Union
 import psutil
 from statistics import mean
 from threading import Event, Thread
-
-from .utils import append_dict
+from funcy import merge_with
 
 logger = logging.getLogger("dvclive")
 MEGABYTES_DIVIDER = 1024.0**2
@@ -14,44 +13,48 @@ GIGABYTES_DIVIDER = 1024.0**3
 MINIMUM_CPU_USAGE_TO_BE_ACTIVE = 30
 
 
-class CPUMetricsCallback:
+class CPUMetrics:
     def __init__(
         self,
-        duration: Union[int, float] = 5,
-        interval: Union[int, float] = 1.0,
+        interval: float = 0.5,
+        nb_samples: int = 10,
         plot: bool = True,
     ):
-        self.duration = duration
-        self.interval = interval
-        self.plot = plot
+        self._interval = interval  # seconds
+        self._nb_samples = nb_samples
+        self._plot = plot
         self._no_plot_metrics = ["system/cpu/count", "system/cpu/ram_total_GB"]
+        self._warn_user = True
 
     def __call__(self, live):
         self._live = live
         self._shutdown_event = Event()
         Thread(
-            target=self.monitoring_loop,
+            target=self._monitoring_loop,
         ).start()
 
-    def monitoring_loop(self):
+    def _monitoring_loop(self):
         while not self._shutdown_event.is_set():
             self._cpu_metrics = {}
-            for _ in range(int(self.duration // self.interval)):
+            for _ in range(self._nb_samples):
                 last_cpu_metrics = {}
                 try:
-                    last_cpu_metrics = get_cpus_metrics()
+                    last_cpu_metrics = _get_cpus_metrics()
                 except psutil.Error:
-                    logger.exception("Failed to monitor CPU metrics:")
-                self._cpu_metrics = append_dict(self._cpu_metrics, last_cpu_metrics)
-                self._shutdown_event.wait(self.interval)
+                    if self._warn_user:
+                        logger.exception("Failed to monitor CPU metrics")
+                        self._warn_user = False
+
+                self._cpu_metrics = merge_with(sum, self._cpu_metrics, last_cpu_metrics)
+                self._shutdown_event.wait(self._interval)
                 if self._shutdown_event.is_set():
                     break
             for metric_name, metric_values in self._cpu_metrics.items():
                 self._live.log_metric(
                     metric_name,
-                    mean(metric_values),
+                    metric_values / self._nb_samples,
                     timestamp=True,
-                    plot=self.plot
+                    plot=self._plot
                     if metric_name not in self._no_plot_metrics
                     else False,
                 )
@@ -60,7 +63,7 @@ class CPUMetricsCallback:
         self._shutdown_event.set()
 
 
-def get_cpus_metrics() -> Dict[str, Union[float, int]]:
+def _get_cpus_metrics() -> Dict[str, Union[float, int]]:
     ram_info = psutil.virtual_memory()
     io_info = psutil.disk_io_counters()
     nb_cpus = psutil.cpu_count()

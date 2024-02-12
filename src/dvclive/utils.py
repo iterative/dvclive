@@ -6,7 +6,7 @@ import re
 import shutil
 from pathlib import Path, PurePath
 from platform import uname
-from typing import Any, Union, List, Dict, TYPE_CHECKING
+from typing import Union, List, Dict, TYPE_CHECKING
 import webbrowser
 
 from .error import InvalidDataTypeError
@@ -245,13 +245,3 @@ def convert_datapoints_to_list_of_dicts(
 
     # Raise an error if the input is not a supported type
     raise InvalidDataTypeError("datapoints", type(datapoints))
-
-
-def append_dict(previous_values: Dict[str, List[Any]], new_value: Dict[str, Any]):
-    return {
-        **previous_values,
-        **{
-            metric_name: [*previous_values.get(metric_name, []), value]
-            for metric_name, value in new_value.items()
-        },
-    }

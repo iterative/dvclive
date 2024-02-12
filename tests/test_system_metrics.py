@@ -3,7 +3,7 @@ import time
 import pytest
 
 from dvclive import Live
-from dvclive.system_metrics import CPUMetricsCallback, get_cpus_metrics
+from dvclive.system_metrics import _get_cpus_metrics
 from dvclive.utils import parse_metrics
 
 
@@ -50,26 +50,19 @@ def mock_psutil(mocker):
 )
 def test_get_cpus_metrics(mocker, metric_name):
     mock_psutil(mocker)
-    metrics = get_cpus_metrics()
+    metrics = _get_cpus_metrics()
     assert metric_name in metrics
 
 
-@pytest.mark.parametrize(
-    ("duration", "interval", "plot"),
-    [
-        (1, 0.5, True),
-        (2.0, 1, True),
-    ],
-)
-def test_cpumetricscallback_with_plot(tmp_dir, duration, interval, plot):
+def test_monitor_system(tmp_dir):
     with Live(
         tmp_dir,
         save_dvc_exp=False,
-        callbacks=[CPUMetricsCallback(duration, interval, plot)],
+        monitor_system=True,
     ) as live:
-        time.sleep(duration * 2)
+        time.sleep(5 + 1)  # allow the thread to finish
         live.next_step()
-        time.sleep(duration * 2 + 0.1)  # allow the thread to finish
+        time.sleep(5 + 1)  # allow the thread to finish
         timeseries, latest = parse_metrics(live)
 
     assert "system" in latest
@@ -90,48 +83,8 @@ def test_cpumetricscallback_with_plot(tmp_dir, duration, interval, plot):
     assert any("ram_usage_percent.tsv" in key for key in timeseries)
     assert any("write_speed_MB.tsv" in key for key in timeseries)
     assert any("read_speed_MB.tsv" in key for key in timeseries)
-    # assert all(len(timeseries[key]) == 4 for key in timeseries if "system" in key)
+    assert all(len(timeseries[key]) == 2 for key in timeseries if "system" in key)
 
     # not plot for constant values
     assert all("count.tsv" not in key for key in timeseries)
     assert all("ram_total_GB.tsv" not in key for key in timeseries)
-
-
-@pytest.mark.parametrize(
-    ("duration", "interval", "plot"),
-    [
-        (1, 0.5, False),
-        (2.0, 1, False),
-    ],
-)
-def test_cpumetricscallback_without_plot(tmp_dir, duration, interval, plot):
-    with Live(
-        tmp_dir,
-        save_dvc_exp=False,
-        callbacks=[CPUMetricsCallback(duration, interval, plot)],
-    ) as live:
-        time.sleep(duration * 2)
-        live.next_step()
-        time.sleep(duration * 2 + 0.1)  # allow the thread to finish
-        timeseries, latest = parse_metrics(live)
-
-    assert "system" in latest
-    assert "cpu" in latest["system"]
-    assert "usage_avg_percent" in latest["system"]["cpu"]
-    assert "usage_max_percent" in latest["system"]["cpu"]
-    assert "count" in latest["system"]["cpu"]
-    assert "parallelism_percent" in latest["system"]["cpu"]
-    assert "ram_usage_percent" in latest["system"]["cpu"]
-    assert "ram_total_GB" in latest["system"]["cpu"]
-    assert "io" in latest["system"]
-    assert "read_speed_MB" in latest["system"]["io"]
-    assert "write_speed_MB" in latest["system"]["io"]
-
-    assert all("usage_avg_percent.tsv" not in key for key in timeseries)
-    assert all("usage_max_percent.tsv" not in key for key in timeseries)
-    assert all("count.tsv" not in key for key in timeseries)
-    assert all("parallelism_percent.tsv" not in key for key in timeseries)
-    assert all("ram_usage_percent.tsv" not in key for key in timeseries)
-    assert all("ram_total_GB.tsv" not in key for key in timeseries)
-    assert all("write_speed_MB.tsv" not in key for key in timeseries)
-    assert all("read_speed_MB.tsv" not in key for key in timeseries)
