@@ -31,13 +31,13 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "dvc>=3.33.3",
+    "dvc@git+https://github.com/iterative/dvc.git@refs/pull/10291/head",
     "dvc-render>=1.0.0,<2",
-    "dvc-studio-client>=0.17.1,<1",
+    "dvc-studio-client@git+https://github.com/iterative/dvc-studio-client.git@refs/pull/144/head",
     "funcy",
     "gto",
     "ruamel.yaml",
-    "scmrepo",
+    "scmrepo>=3,<4",
 ]
 
 [project.optional-dependencies]

@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     import PIL
 
 from dvc.exceptions import DvcException
+from dvc.utils.studio import get_dvc_experiment_parent_data, get_subrepo_relpath
 from funcy import set_in
 from ruamel.yaml.representer import RepresenterError
 
@@ -137,6 +138,8 @@ class Live:
         self._init_report()
 
         self._baseline_rev: Optional[str] = None
+        self._subdir: Optional[str] = None
+        self._exp_parent_data: Optional[Dict[str, Any]] = None
         self._exp_name: Optional[str] = exp_name
         self._exp_message: Optional[str] = exp_message
         self._experiment_rev: Optional[str] = None
@@ -231,6 +234,12 @@ class Live:
             return
 
         self._baseline_rev = self._dvc_repo.scm.get_rev()
+
+        self._subdir = get_subrepo_relpath(self._dvc_repo)
+        self._exp_parent_data = get_dvc_experiment_parent_data(
+            self._dvc_repo, self._baseline_rev
+        )
+
         if self._save_dvc_exp:
             self._exp_name = get_exp_name(
                 self._exp_name, self._dvc_repo.scm, self._baseline_rev

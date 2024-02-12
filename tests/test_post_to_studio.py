@@ -81,6 +81,18 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     )
 
 
+def test_post_to_studio_subrepo(tmp_dir, mocked_dvc_subrepo, mocked_studio_post):
+    live = Live()
+    live.log_param("fooparam", 1)
+
+    mocked_post, _ = mocked_studio_post
+
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        **get_studio_call("start", exp_name=live._exp_name, subdir="subdir"),
+    )
+
+
 def test_post_to_studio_failed_data_request(
     tmp_dir, mocker, mocked_dvc_repo, mocked_studio_post
 ):

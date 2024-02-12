@@ -4,6 +4,8 @@ import sys
 import pytest
 from dvc_studio_client.env import DVC_STUDIO_TOKEN, DVC_STUDIO_URL, STUDIO_REPO_URL
 
+from dvclive.utils import rel_path
+
 
 @pytest.fixture()
 def tmp_dir(tmp_path, monkeypatch):
@@ -19,10 +21,18 @@ def mocked_dvc_repo(tmp_dir, mocker):
     _dvc_repo.scm.get_ref.return_value = None
     _dvc_repo.scm.no_commits = False
     _dvc_repo.experiments.save.return_value = "e" * 40
-    _dvc_repo.root_dir = tmp_dir
+    _dvc_repo.root_dir = _dvc_repo.scm.root_dir = tmp_dir
+    _dvc_repo.fs.relpath = rel_path
+    _dvc_repo.scm.resolve_commit.return_value = None
     _dvc_repo.config = {}
     mocker.patch("dvclive.live.get_dvc_repo", return_value=_dvc_repo)
     return _dvc_repo
+
+
+@pytest.fixture()
+def mocked_dvc_subrepo(tmp_dir, mocker, mocked_dvc_repo):
+    mocked_dvc_repo.root_dir = tmp_dir / "subdir"
+    return mocked_dvc_repo
 
 
 @pytest.fixture()

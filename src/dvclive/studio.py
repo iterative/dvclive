@@ -89,13 +89,18 @@ def get_dvc_studio_config(live):
     return get_studio_config(dvc_studio_config=config)
 
 
-def post_to_studio(live, event):
+def post_to_studio(live, event):  # noqa: C901
     if event in live._studio_events_to_skip:
         return
 
     kwargs = {}
-    if event == "start" and live._exp_message:
-        kwargs["message"] = live._exp_message
+    if event == "start":
+        if message := live._exp_message:
+            kwargs["message"] = message
+        if subdir := live._subdir:
+            kwargs["subdir"] = subdir
+        if dvc_experiment_parent_data := live._exp_parent_data:
+            kwargs["dvc_experiment_parent_data"] = dvc_experiment_parent_data
     elif event == "data":
         metrics, params, plots = get_studio_updates(live)
         kwargs["step"] = live.step
