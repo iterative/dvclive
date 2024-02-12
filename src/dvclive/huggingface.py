@@ -45,7 +45,6 @@ class DVCLiveCallback(TrainerCallback):
         **kwargs,
     ):
         logs = kwargs["logs"]
-        logger.error(logs)
         for key, value in logs.items():
             self.live.log_metric(standardize_metric_name(key, __name__), value)
         self.live.next_step()

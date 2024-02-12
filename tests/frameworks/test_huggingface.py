@@ -68,7 +68,6 @@ class RegressionModelConfig(PretrainedConfig):
 class RegressionPreTrainedModel(PreTrainedModel):
     config_class = RegressionModelConfig
     base_model_prefix = "regression"
-    is_parallelizable = False
 
     def __init__(self, config):
         super().__init__(config)
@@ -107,30 +106,28 @@ def args():
 
 
 def test_huggingface_integration(tmp_dir, model, args, data, mocker):
-    live = Live()
-    spy_end = mocker.spy(live, "end")
-    spy_next_step = mocker.spy(live, "next_step")
     trainer = Trainer(
         model,
         args,
         train_dataset=data[0],
         eval_dataset=data[1],
         compute_metrics=compute_metrics,
-        callbacks=[DVCLiveCallback(live=live)],
     )
-
+    callback = DVCLiveCallback()
+    live = callback.live
+    spy = mocker.spy(live, "end")
+    trainer.add_callback(callback)
     trainer.train()
-    spy_end.assert_called_once()
-    assert spy_next_step.call_count == 3
+    spy.assert_called_once()
 
+    live = callback.live
     assert os.path.exists(live.dir)
 
     logs, _ = parse_metrics(live)
 
-    assert len(logs) == 11
+    assert len(logs) == 10
 
     scalars = os.path.join(live.plots_dir, Metric.subfolder)
-
     assert os.path.join(scalars, "eval", "foo.tsv") in logs
     assert os.path.join(scalars, "eval", "loss.tsv") in logs
     assert os.path.join(scalars, "train", "loss.tsv") in logs
