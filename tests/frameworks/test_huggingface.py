@@ -106,22 +106,23 @@ def args():
 
 
 def test_huggingface_integration(tmp_dir, model, args, data, mocker):
-    callback = DVCLiveCallback()
+    live = Live()
+    spy_end = mocker.spy(live, "end")
+    spy_next_step = mocker.spy(live, "next_step")
     trainer = Trainer(
         model,
         args,
         train_dataset=data[0],
         eval_dataset=data[1],
         compute_metrics=compute_metrics,
-        callbacks=[callback],
+        callbacks=[DVCLiveCallback(live=live)],
     )
 
-    live = callback.live
-    spy = mocker.spy(live, "end")
     trainer.train()
-    spy.assert_called_once()
+    spy_end.assert_called_once()
+    assert spy_next_step.call_count == 3
 
-    assert os.path.exists(callback.live.dir)
+    assert os.path.exists(live.dir)
 
     logs, _ = parse_metrics(live)
 
