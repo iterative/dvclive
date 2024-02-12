@@ -13,17 +13,11 @@ from dvclive.utils import parse_metrics, rel_path
 logger = logging.getLogger("dvclive")
 
 
-def _get_unsent_datapoints(plot, latest_step):
-    return [x for x in plot if int(x["step"]) > latest_step]
-
-
 def _cast_to_numbers(datapoints):
     for datapoint in datapoints:
         for k, v in datapoint.items():
-            if k == "step":
+            if k in ["step", "timestamp"]:
                 datapoint[k] = int(v)
-            elif k == "timestamp":
-                continue
             else:
                 float_v = float(v)
                 if math.isnan(float_v) or math.isinf(float_v):
@@ -37,11 +31,6 @@ def _adapt_path(live, name):
     if live._dvc_repo is not None:
         name = rel_path(name, live._dvc_repo.root_dir)
     return name
-
-
-def _adapt_plot_datapoints(live, plot):
-    datapoints = _get_unsent_datapoints(plot, live._latest_studio_step)
-    return _cast_to_numbers(datapoints)
 
 
 def _adapt_image(image_path):
@@ -71,14 +60,18 @@ def get_studio_updates(live):
     metrics_file = _adapt_path(live, metrics_file)
     metrics = {metrics_file: {"data": metrics}}
 
-    plots = {
-        _adapt_path(live, name): _adapt_plot_datapoints(live, plot)
-        for name, plot in plots.items()
-    }
-    plots = {k: {"data": v} for k, v in plots.items()}
-    plots.update(_adapt_images(live))
+    plots_to_send = {}
+    for name, plot in plots.items():
+        path = _adapt_path(live, name)
+        nb_points_already_sent = live._nb_points_sent_to_studio.get(path, 0)
+        live._nb_points_sent_to_studio[path] = len(plot)
 
-    return metrics, params, plots
+        plots_to_send[path] = _cast_to_numbers(plot[nb_points_already_sent:])
+
+    plots_to_send = {k: {"data": v} for k, v in plots_to_send.items()}
+    plots_to_send.update(_adapt_images(live))
+
+    return metrics, params, plots_to_send
 
 
 def get_dvc_studio_config(live):
