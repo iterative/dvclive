@@ -102,7 +102,7 @@ def args():
         evaluation_strategy="epoch",
         num_train_epochs=2,
         save_strategy="epoch",
-        report_to="none",
+        report_to="none",  # Disable auto-reporting to avoid duplication
     )
 
 
@@ -120,7 +120,7 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker, callback):
     trainer.add_callback(callback)
     spy = mocker.spy(Live, "end")
     trainer.train()
-    spy.assert_called()
+    spy.assert_called_once()
 
     live = callback.live
     assert os.path.exists(live.dir)
@@ -131,6 +131,8 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker, callback):
     assert os.path.join(scalars, "eval", "foo.tsv") in logs
     assert os.path.join(scalars, "eval", "loss.tsv") in logs
     assert os.path.join(scalars, "train", "loss.tsv") in logs
+    assert len(logs[os.path.join(scalars, "epoch.tsv")]) == 3
+    assert len(logs[os.path.join(scalars, "eval", "loss.tsv")]) == 2
 
     params = load_yaml(live.params_file)
     assert params["num_train_epochs"] == 2
@@ -140,23 +142,27 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker, callback):
 @pytest.mark.parametrize("best", [True, False])
 @pytest.mark.parametrize("callback", [ExternalCallback, InternalCallback])
 def test_huggingface_log_model(
-    tmp_dir, mocked_dvc_repo, model, data, mocker, log_model, best, callback
+    tmp_dir,
+    mocked_dvc_repo,
+    model,
+    data,
+    args,
+    monkeypatch,
+    mocker,
+    log_model,
+    best,
+    callback,
 ):
     live = Live()
     log_artifact = mocker.patch.object(live, "log_artifact")
     if callback == ExternalCallback:
-        os.environ["HF_DVCLIVE_LOG_MODEL"] = str(log_model)
+        monkeypatch.setenv("HF_DVCLIVE_LOG_MODEL", str(log_model))
         live_callback = callback(live=live)
     else:
         live_callback = callback(live=live, log_model=log_model)
 
-    args = TrainingArguments(
-        "foo",
-        evaluation_strategy="epoch",
-        num_train_epochs=2,
-        save_strategy="epoch",
-        load_best_model_at_end=best,
-    )
+    args.load_best_model_at_end = best
+
     trainer = Trainer(
         model,
         args,
@@ -174,7 +180,7 @@ def test_huggingface_log_model(
     }
     assert log_artifact.call_count == expected_call_count[log_model]
 
-    if log_model == "last":
+    if log_model is True:
         name = "best" if best else "last"
         log_artifact.assert_called_with(
             os.path.join(args.output_dir, name),
@@ -190,3 +196,21 @@ def test_huggingface_pass_logger(callback):
 
     assert callback().live is not logger
     assert callback(live=logger).live is logger
+
+
+@pytest.mark.parametrize("report_to", ["all", "dvclive", "none"])
+def test_huggingface_report_to(model, report_to):
+    args = TrainingArguments("foo", report_to=report_to)
+    trainer = Trainer(
+        model,
+        args,
+    )
+    live_cbs = [
+        cb
+        for cb in trainer.callback_handler.callbacks
+        if isinstance(cb, ExternalCallback)
+    ]
+    if report_to == "none":
+        assert not any(live_cbs)
+    else:
+        assert any(live_cbs)

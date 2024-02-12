@@ -27,6 +27,7 @@ class DVCLiveCallback(TrainerCallback):
         logger.warning(
             "This callback will be deprecated in DVCLive 4.0 in favor of"
             " `transformers.integrations.DVCLiveCallback`"
+            " https://dvc.org/doc/dvclive/ml-frameworks/huggingface."
         )
         super().__init__()
         self._log_model = log_model
