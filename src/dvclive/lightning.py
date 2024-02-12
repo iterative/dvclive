@@ -71,11 +71,6 @@ class DVCLiveLogger(Logger, FabricDVCLiveLogger):
         sync: Optional[bool] = False,
     ) -> None:
         if not sync and _should_sync():
-            if step == self.experiment._latest_studio_step:  # noqa: SLF001
-                # We are in log_eval_end_metrics but there has been already
-                # a studio request sent with `step`.
-                # We decrease the number to bypass `live.studio._get_unsent_datapoints`
-                self.experiment._latest_studio_step -= 1  # noqa: SLF001
             sync = True
         super().log_metrics(metrics, step, sync)
 
