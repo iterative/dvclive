@@ -116,9 +116,8 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker, callback):
         compute_metrics=compute_metrics,
     )
     callback = callback()
-    live = callback.live
-    trainer.add_callback(callback)
     spy = mocker.spy(Live, "end")
+    trainer.add_callback(callback)
     trainer.train()
     spy.assert_called_once()
 
