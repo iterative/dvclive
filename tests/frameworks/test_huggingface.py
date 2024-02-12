@@ -137,7 +137,7 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker, callback):
     assert params["num_train_epochs"] == 2
 
 
-@pytest.mark.parametrize("log_model", ["all", True, False])
+@pytest.mark.parametrize("log_model", ["all", True, False, None])
 @pytest.mark.parametrize("best", [True, False])
 @pytest.mark.parametrize("callback", [ExternalCallback, InternalCallback])
 def test_huggingface_log_model(
@@ -176,6 +176,7 @@ def test_huggingface_log_model(
         "all": 2,
         True: 1,
         False: 0,
+        None: 0,
     }
     assert log_artifact.call_count == expected_call_count[log_model]
 
