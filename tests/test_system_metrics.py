@@ -38,14 +38,14 @@ def mock_psutil(mocker):
 @pytest.mark.parametrize(
     ("metric_name"),
     [
-        "system/cpu/usage_avg_percent",
-        "system/cpu/usage_max_percent",
+        "system/cpu/usage (%)",
         "system/cpu/count",
-        "system/cpu/parallelism_percent",
-        "system/cpu/ram_usage_percent",
-        "system/cpu/ram_total_GB",
-        "system/io/read_speed_MB",
-        "system/io/write_speed_MB",
+        "system/cpu/parallelization (%)",
+        "system/ram/usage (%)",
+        "system/ram/usage (GB)",
+        "system/ram/total (GB)",
+        "system/io/read speed (MB)",
+        "system/io/write speed (MB)",
     ],
 )
 def test_get_cpus_metrics(mocker, metric_name):
@@ -67,24 +67,24 @@ def test_monitor_system(tmp_dir):
 
     assert "system" in latest
     assert "cpu" in latest["system"]
-    assert "usage_avg_percent" in latest["system"]["cpu"]
-    assert "usage_max_percent" in latest["system"]["cpu"]
+    assert "usage (%)" in latest["system"]["cpu"]
     assert "count" in latest["system"]["cpu"]
-    assert "parallelism_percent" in latest["system"]["cpu"]
-    assert "ram_usage_percent" in latest["system"]["cpu"]
-    assert "ram_total_GB" in latest["system"]["cpu"]
+    assert "parallelization (%)" in latest["system"]["cpu"]
+    assert "ram" in latest["system"]
+    assert "usage (%)" in latest["system"]["ram"]
+    assert "usage (GB)" in latest["system"]["ram"]
+    assert "total (GB)" in latest["system"]["ram"]
     assert "io" in latest["system"]
-    assert "read_speed_MB" in latest["system"]["io"]
-    assert "write_speed_MB" in latest["system"]["io"]
+    assert "read speed (MB)" in latest["system"]["io"]
+    assert "write speed (MB)" in latest["system"]["io"]
 
-    assert any("usage_avg_percent" in key for key in timeseries)
-    assert any("usage_max_percent.tsv" in key for key in timeseries)
-    assert any("parallelism_percent.tsv" in key for key in timeseries)
-    assert any("ram_usage_percent.tsv" in key for key in timeseries)
-    assert any("write_speed_MB.tsv" in key for key in timeseries)
-    assert any("read_speed_MB.tsv" in key for key in timeseries)
+    assert any("usage (%).tsv" in key for key in timeseries)
+    assert any("parallelization (%).tsv" in key for key in timeseries)
+    assert any("usage (GB).tsv" in key for key in timeseries)
+    assert any("read speed (MB).tsv" in key for key in timeseries)
+    assert any("write speed (MB).tsv" in key for key in timeseries)
     assert all(len(timeseries[key]) == 2 for key in timeseries if "system" in key)
 
     # not plot for constant values
     assert all("count.tsv" not in key for key in timeseries)
-    assert all("ram_total_GB.tsv" not in key for key in timeseries)
+    assert all("total (GB).tsv" not in key for key in timeseries)

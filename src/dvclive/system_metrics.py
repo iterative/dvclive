@@ -10,7 +10,7 @@ logger = logging.getLogger("dvclive")
 MEGABYTES_DIVIDER = 1024.0**2
 GIGABYTES_DIVIDER = 1024.0**3
 
-MINIMUM_CPU_USAGE_TO_BE_ACTIVE = 30
+MINIMUM_CPU_USAGE_TO_BE_ACTIVE = 20
 
 
 class CPUMetrics:
@@ -23,7 +23,7 @@ class CPUMetrics:
         self._interval = interval  # seconds
         self._nb_samples = nb_samples
         self._plot = plot
-        self._no_plot_metrics = ["system/cpu/count", "system/cpu/ram_total_GB"]
+        self._no_plot_metrics = ["system/cpu/count", "system/ram/total (GB)"]
         self._warn_user = True
 
     def __call__(self, live):
@@ -69,10 +69,9 @@ def _get_cpus_metrics() -> Dict[str, Union[float, int]]:
     nb_cpus = psutil.cpu_count()
     cpus_percent = psutil.cpu_percent(percpu=True)
     return {
-        "system/cpu/usage_avg_percent": mean(cpus_percent),
-        "system/cpu/usage_max_percent": max(cpus_percent),
+        "system/cpu/usage (%)": mean(cpus_percent),
         "system/cpu/count": nb_cpus,
-        "system/cpu/parallelism_percent": len(
+        "system/cpu/parallelization (%)": len(
             [
                 percent
                 for percent in cpus_percent
@@ -81,10 +80,12 @@ def _get_cpus_metrics() -> Dict[str, Union[float, int]]:
         )
         * 100
         / nb_cpus,
-        "system/cpu/ram_usage_percent": ram_info.percent,
-        "system/cpu/ram_total_GB": ram_info.total / GIGABYTES_DIVIDER,
-        "system/io/read_speed_MB": io_info.read_bytes
+        "system/ram/usage (%)": ram_info.percent,
+        "system/ram/usage (GB)": (ram_info.percent / 100)
+        * (ram_info.total / GIGABYTES_DIVIDER),
+        "system/ram/total (GB)": ram_info.total / GIGABYTES_DIVIDER,
+        "system/io/read speed (MB)": io_info.read_bytes
         / (io_info.read_time * MEGABYTES_DIVIDER),
-        "system/io/write_speed_MB": io_info.write_bytes
+        "system/io/write speed (MB)": io_info.write_bytes
         / (io_info.write_time * MEGABYTES_DIVIDER),
     }
