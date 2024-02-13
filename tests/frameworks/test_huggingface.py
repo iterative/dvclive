@@ -101,6 +101,7 @@ def args():
         evaluation_strategy="epoch",
         num_train_epochs=2,
         save_strategy="epoch",
+        report_to="none",
     )
 
 

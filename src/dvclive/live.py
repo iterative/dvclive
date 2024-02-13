@@ -7,12 +7,14 @@ import math
 import os
 import shutil
 import tempfile
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union, TYPE_CHECKING
+from pathlib import Path, PurePath
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     import numpy as np
     import pandas as pd
+    import matplotlib
+    import PIL
 
 from dvc.exceptions import DvcException
 from funcy import set_in
@@ -29,6 +31,7 @@ from .dvc import (
 from .error import (
     InvalidDataTypeError,
     InvalidDvcyamlError,
+    InvalidImageNameError,
     InvalidParameterTypeError,
     InvalidPlotTypeError,
     InvalidReportModeError,
@@ -71,13 +74,51 @@ class Live:
         self,
         dir: str = "dvclive",  # noqa: A002
         resume: bool = False,
-        report: Optional[str] = None,
+        report: Literal["md", "notebook", "html", None] = None,
         save_dvc_exp: bool = True,
-        dvcyaml: Union[str, bool] = "dvc.yaml",
+        dvcyaml: Optional[str] = "dvc.yaml",
         cache_images: bool = False,
         exp_name: Optional[str] = None,
         exp_message: Optional[str] = None,
     ):
+        """
+        Initializes a DVCLive logger. A `Live()` instance is required in order to log
+        machine learning parameters, metrics and other metadata.
+        Warning: `Live()` will remove all existing DVCLive related files under dir
+        unless `resume=True`.
+
+        Args:
+            dir (str | Path): where to save DVCLive's outputs. Defaults to `"dvclive"`.
+            resume (bool): if `True`, DVCLive will try to read the previous step from
+                the metrics_file and start from that point. Defaults to `False`.
+            report ("html", "md", "notebook", None): any of `"html"`, `"notebook"`,
+                `"md"` or `None`. See `Live.make_report()`. Defaults to None.
+            save_dvc_exp (bool): if `True`, DVCLive will create a new DVC experiment as
+                part of `Live.end()`. Defaults to `True`. If you are using DVCLive
+                inside a DVC Pipeline and running with `dvc exp run`, the option will be
+                ignored.
+            dvcyaml (str | None): where to write dvc.yaml file, which adds DVC
+                configuration for metrics, plots, and parameters as part of
+                `Live.next_step()` and `Live.end()`. If `None`, no dvc.yaml file is
+                written. Defaults to `"dvc.yaml"`. See `Live.make_dvcyaml()`.
+                If a string like `"subdir/dvc.yaml"`, DVCLive will write the
+                configuration to that path (file must be named "dvc.yaml").
+                If `False`, DVCLive will not write to "dvc.yaml" (useful if you are
+                tracking DVCLive metrics, plots, and parameters independently and
+                want to avoid duplication).
+            cache_images (bool): if `True`, DVCLive will cache any images logged with
+                `Live.log_image()` as part of `Live.end()`. Defaults to `False`.
+                If running a DVC pipeline, `cache_images` will be ignored, and you
+                should instead cache images as pipeline outputs.
+            exp_name (str | None): if not `None`, and `save_dvc_exp` is `True`, the
+                provided string will be passed to `dvc exp save --name`.
+                If DVCLive is used inside `dvc exp run`, the option will be ignored, use
+                `dvc exp run --name` instead.
+            exp_message (str | None): if not `None`, and `save_dvc_exp` is `True`, the
+                provided string will be passed to `dvc exp save --message`.
+                If DVCLive is used inside `dvc exp run`, the option will be ignored, use
+                `dvc exp run --message` instead.
+        """
         self.summary: Dict[str, Any] = {}
 
         self._dir: str = dir
@@ -267,10 +308,11 @@ class Live:
 
     def _init_test(self):
         """
-        Enables test mode that writes to temp paths and doesn't depend on repo.
+        Enables a test mode that writes to temporary paths and doesn't depend on the
+        repository.
 
-        Needed to run integration tests in external libraries like huggingface
-        accelerate.
+        This is needed to run integration tests in external libraries, such as
+        HuggingFace Accelerate.
         """
         with tempfile.TemporaryDirectory() as dirpath:
             self._dir = os.path.join(dirpath, self._dir)
@@ -284,6 +326,7 @@ class Live:
 
     @property
     def dir(self) -> str:  # noqa: A003
+        """Location of the directory to store outputs."""
         return self._dir
 
     @property
@@ -296,6 +339,7 @@ class Live:
 
     @property
     def dvc_file(self) -> str:
+        """Path for dvc.yaml file."""
         return self._dvc_file
 
     @property
@@ -333,6 +377,14 @@ class Live:
         self.post_to_studio("data")
 
     def next_step(self):
+        """
+        Signals that the current iteration has ended and increases step value by one.
+        DVCLive uses `step` to track the history of the metrics logged with
+        `Live.log_metric()`.
+        You can use `Live.next_step()` to increase the step by one. In addition to
+        increasing the `step` number, it will call `Live.make_report()`,
+        `Live.make_dvcyaml()`, and `Live.make_summary()` by default.
+        """
         if self._step is None:
             self._step = 0
 
@@ -347,6 +399,28 @@ class Live:
         timestamp: bool = False,
         plot: bool = True,
     ):
+        """
+        On each `Live.log_metric(name, val)` call `DVCLive` will create a metrics
+        history file in `{Live.plots_dir}/metrics/{name}.tsv`. Each subsequent call to
+        `Live.log_metric(name, val)` will add a new row to
+        `{Live.plots_dir}/metrics/{name}.tsv`. In addition, `DVCLive` will store the
+        latest value logged in `Live.summary`, so it can be serialized with calls to
+        `live.make_summary()`, `live.next_step()` or when exiting the `Live` context
+        block.
+
+        Args:
+            name (str): name of the metric being logged.
+            val (int | float | str): the value to be logged.
+            timestamp (bool): whether to automatically log timestamp in the metrics
+                history file.
+            plot (bool): whether to add the metric value to the metrics history file for
+                plotting. If `False`, the metric will only be saved to the metrics
+                summary.
+
+        Raises:
+            `InvalidDataTypeError`: thrown if the provided `val` does not have a
+                supported type.
+        """
         if not Metric.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 
@@ -366,14 +440,57 @@ class Live:
         self.summary = set_in(self.summary, metric.summary_keys, val)
         logger.debug(f"Logged {name}: {val}")
 
-    def log_image(self, name: str, val):
+    def log_image(
+        self,
+        name: str,
+        val: Union[np.ndarray, matplotlib.figure.Figure, PIL.Image, StrPath],
+    ):
+        """
+        Saves the given image `val` to the output file `name`.
+
+        Supported values for val are:
+        - A valid NumPy array (convertible to an image via `PIL.Image.fromarray`)
+        - A `matplotlib.figure.Figure` instance
+        - A `PIL.Image` instance
+        - A path to an image file (`str` or `Path`). It should be in a format that is
+        readable by `PIL.Image.open()`
+
+        The images will be saved in `{Live.plots_dir}/images/{name}`. When using
+        `Live(cache_images=True)`, the images directory will also be cached as part of
+        `Live.end()`. In that case, a `.dvc` file will be saved to track it, and the
+        directory will be added to a `.gitignore` file to prevent Git tracking.
+
+        By default the images will be overwritten on each step. However, you can log
+        images using the following pattern
+        `live.log_image(f"folder/{live.step}.png", img)`.
+        In `DVC Studio` and the `DVC Extension for VSCode`, folders following this
+        pattern will be rendered using an image slider.
+
+        Args:
+            name (str): name of the image file that this command will output
+            val (np.ndarray | matplotlib.figure.Figure | PIL.Image | StrPath):
+                image to be saved. See the list of supported values in the description.
+
+        Raises:
+            `InvalidDataTypeError`: thrown if the provided `val` does not have a
+                supported type.
+        """
         if not Image.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 
-        if isinstance(val, (str, Path)):
+        # If we're given a path, try loading the image first. This might error out.
+        if isinstance(val, (str, PurePath)):
             from PIL import Image as ImagePIL
 
+            suffix = Path(val).suffix
+            if not Path(name).suffix and suffix in Image.suffixes:
+                name = f"{name}{suffix}"
+
             val = ImagePIL.open(val)
+
+        # See if the image name is valid
+        if Path(name).suffix not in Image.suffixes:
+            raise InvalidImageNameError(name)
 
         if name in self._images:
             image = self._images[name]
@@ -388,14 +505,37 @@ class Live:
     def log_plot(
         self,
         name: str,
-        datapoints: pd.DataFrame | np.ndarray | List[Dict],
+        datapoints: Union[pd.DataFrame, np.ndarray, List[Dict]],
         x: str,
         y: str,
-        template: Optional[str] = None,
+        template: Optional[str] = "linear",
         title: Optional[str] = None,
         x_label: Optional[str] = None,
         y_label: Optional[str] = None,
     ):
+        """
+        The method will dump the provided datapoints to
+        `{Live.dir}/plots/custom/{name}.json`and store the provided properties to be
+        included in the plots section written by `Live.make_dvcyaml()`. The plot can be
+        rendered with `DVC CLI`, `VSCode Extension` or `DVC Studio`.
+
+        Args:
+            name (StrPath): name of the output file.
+            datapoints (pd.DataFrame | np.ndarray | List[Dict]): Pandas DataFrame, Numpy
+                Array or List of dictionaries containing the data for the plot.
+            x (str): name of the key (present in the dictionaries) to use as the x axis.
+            y (str): name of the key (present in the dictionaries) to use the y axis.
+            template (str): name of the `DVC plots template` to use. Defaults to
+                `"linear"`.
+            title (str): title to be displayed. Defaults to
+                `"{Live.dir}/plots/custom/{name}.json"`.
+            x_label (str): label for the x axis. Defaults to the name passed as `x`.
+            y_label (str): label for the y axis. Defaults to the name passed as `y`.
+
+        Raises:
+            `InvalidDataTypeError`: thrown if the provided `datapoints` does not have a
+                supported type.
+        """
         # Convert the given datapoints to List[Dict]
         datapoints = convert_datapoints_to_list_of_dicts(datapoints=datapoints)
 
@@ -421,7 +561,38 @@ class Live:
         plot.dump(datapoints)
         logger.debug(f"Logged {name}")
 
-    def log_sklearn_plot(self, kind, labels, predictions, name=None, **kwargs):
+    def log_sklearn_plot(
+        self,
+        kind: str,
+        labels: Union[List, np.ndarray],
+        predictions: Union[List, Tuple, np.ndarray],
+        name: Optional[str] = None,
+        **kwargs,
+    ):
+        """
+        Generates a scikit learn plot and saves the data in
+        `{Live.dir}/plots/sklearn/{name}.json`. The method will compute and dump the
+        `kind` plot to `{Live.dir}/plots/sklearn/{name}` in a format compatible with
+        dvc plots. It will also store the provided properties to be included in the
+        plots section written by `Live.make_dvcyaml()`.
+
+        Args:
+            kind ("calibration" | "confusion_matrix" | "det" | "precision_recall" |
+                "roc"): a supported plot type.
+            labels (List | np.ndarray): array of ground truth labels.
+            predictions (List | np.ndarray): array of predicted labels (for
+            `"confusion_matrix"`) or predicted probabilities (for other plots).
+            name (str): optional name of the output file. If not provided, `kind` will
+            be used as name.
+            kwargs: additional arguments to tune the result. Arguments are passed to the
+                scikit-learn function (e.g. `drop_intermediate=True` for the `"roc"`
+                type). Plus extra arguments supported by the type of a plot are:
+                 - `normalized`: default to `False`. `confusion_matrix` with values
+                    normalized to `<0, 1>` range.
+        Raises:
+            InvalidPlotTypeError: thrown if the provided `kind` does not correspond to
+                any of the supported plots.
+        """
         val = (labels, predictions)
 
         plot_config = {
@@ -457,13 +628,39 @@ class Live:
             raise InvalidParameterTypeError(exc.args[0]) from exc
 
     def log_params(self, params: Dict[str, ParamLike]):
-        """Saves the given set of parameters (dict) to yaml"""
+        """
+        On each `Live.log_params(params)` call, DVCLive will write keys/values pairs in
+        the params dict to `{Live.dir}/params.yaml`:
+
+        Also see `Live.log_param()`.
+
+        Args:
+            params (Dict[str, ParamLike]): dictionary with name/value pairs of
+                parameters to be logged.
+
+        Raises:
+            `InvalidParameterTypeError`: thrown if the parameter value is not among
+                supported types.
+        """
         self._params.update(params)
         self._dump_params()
         logger.debug(f"Logged {params} parameters to {self.params_file}")
 
     def log_param(self, name: str, val: ParamLike):
-        """Saves the given parameter value to yaml"""
+        """
+        On each `Live.log_param(name, val)` call, DVCLive will write the name parameter
+        to `{Live.dir}/params.yaml` with the corresponding `val`.
+
+        Also see `Live.log_params()`.
+
+        Args:
+            name (str): name of the parameter being logged.
+            val (ParamLike): the value to be logged.
+
+        Raises:
+            `InvalidParameterTypeError`: thrown if the parameter value is not among
+                supported types.
+        """
         self.log_params({name: val})
 
     def log_artifact(
@@ -477,8 +674,47 @@ class Live:
         copy: bool = False,
         cache: bool = True,
     ):
-        """Tracks a local file or directory with DVC"""
-        if not isinstance(path, (str, Path)):
+        """
+        Tracks an existing directory or file with DVC.
+
+        Log path, saving its contents to DVC storage. Also annotate with any included
+        metadata fields (for example, to be consumed in the model registry or automation
+        scenarios).
+        If `cache=True` (which is the default), uses `dvc add` to track path with DVC,
+        saving it to the DVC cache and generating a `{path}.dvc` file that acts as a
+        pointer to the cached data.
+        If you include any of the optional metadata fields (type, name, desc, labels,
+        meta), it will add an artifact and all the metadata passed as arguments to the
+        corresponding `dvc.yaml` (unless `dvcyaml=None`). Passing `type="model"` will
+        include it in the model registry.
+
+        Args:
+            path (StrPath): an existing directory or file.
+            type (Optional[str]): an optional type of the artifact. Common types are
+                `"model"` or `"dataset"`.
+            name (Optional[str]): an optional custom name of an artifact.
+                If not provided the `path` stem (last part of the path without the
+                file extension) will be used as the artifact name.
+            desc (Optional[str]): an optional description of an artifact.
+            labels (Optional[List[str]]): optional labels describing the artifact.
+            meta (Optional[Dict[str, Any]]): optional metainformation in `key: value`
+                format.
+            copy (bool): copy a directory or file at path into the `dvclive/artifacts`
+                location (default) before tracking it. The new path is used instead of
+                the original one to track the artifact. Useful if you don't want to
+                track the original path in your repo (for example, it is outside the
+                repo or in a Git-ignored directory).
+            cache (bool): cache the files with DVC to track them outside of Git.
+                Defaults to `True`, but set to `False` if you want to annotate metadata
+                about the artifact without storing a copy in the DVC cache.
+                If running a DVC pipeline, `cache` will be ignored, and you should
+                instead cache artifacts as pipeline outputs.
+
+        Raises:
+            `InvalidDataTypeError`: thrown if the provided `path` does not have a
+                supported type.
+        """
+        if not isinstance(path, (str, PurePath)):
             raise InvalidDataTypeError(path, builtins.type(path))
 
         if self._dvc_repo is not None:
@@ -546,11 +782,33 @@ class Live:
             self._include_untracked.append(str(Path(dvc_file).parent / ".gitignore"))
 
     def make_summary(self):
+        """
+        Serializes a summary of the logged metrics (`Live.summary`) to
+        `Live.metrics_file`.
+
+        The `Live.summary` object will contain the latest value of each metric logged
+        with `Live.log_metric()`. It can be also modified manually.
+
+        `Live.next_step()` and `Live.end()` will call `Live.make_summary()` internally,
+        so you don't need to call both.
+
+        The summary is usable by `dvc metrics`.
+        """
         if self._step is not None:
             self.summary["step"] = self.step
         dump_json(self.summary, self.metrics_file, cls=NumpyEncoder)
 
     def make_report(self):
+        """
+        Generates a report from the logged data.
+
+        `Live.next_step()` and `Live.end()` will call `Live.make_report()` internally,
+        so you don't need to call both.
+
+        On each call, DVCLive will collect all the data logged in `{Live.dir}`, generate
+        a report and save it in `{Live.dir}/report.{format}`. The format can be HTML
+        or Markdown depending on the value of the `report` argument passed to `Live()`.
+        """
         if self._report_mode is not None:
             make_report(self)
             if self._report_mode == "html" and env2bool(env.DVCLIVE_OPEN):
@@ -558,14 +816,33 @@ class Live:
 
     @catch_and_warn(DvcException, logger)
     def make_dvcyaml(self):
+        """
+        Writes DVC configuration for metrics, plots, and parameters to `Live.dvc_file`.
+
+        Creates `dvc.yaml`, which describes and configures metrics, plots, and
+        parameters. DVC tools use this file to show reports and experiments tables.
+        `Live.next_step()` and `Live.end()` will call `Live.make_dvcyaml()` internally,
+        so you don't need to call both (unless `dvcyaml=None`).
+        """
         if self.dvc_file:
             make_dvcyaml(self)
 
     @catch_and_warn(DvcException, logger)
-    def post_to_studio(self, event):
+    def post_to_studio(self, event: str):
         post_to_studio(self, event)
 
     def end(self):
+        """
+        Signals that the current experiment has ended.
+        `Live.end()` gets automatically called when exiting the context manager. It is
+        also called when the training ends for each of the supported ML Frameworks
+
+        By default, `Live.end()` will call `Live.make_summary()`, `Live.make_dvcyaml()`,
+        and `Live.make_report()`.
+
+        If `save_dvc_exp=True`, it will save a new DVC experiment and write a `dvc.yaml`
+        file configuring what DVC will show for logged plots, metrics, and parameters.
+        """
         if self._inside_with:
             # Prevent `live.end` calls inside context manager
             return
