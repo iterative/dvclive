@@ -5,7 +5,7 @@ import logging
 import math
 import os
 from pathlib import PureWindowsPath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, Mapping
 
 from dvc_studio_client.config import get_studio_config
 from dvc_studio_client.post_live_metrics import post_live_metrics
@@ -18,11 +18,11 @@ from dvclive.utils import parse_metrics, rel_path, StrPath
 logger = logging.getLogger("dvclive")
 
 
-def _get_unsent_datapoints(plot: dict, latest_step: int):
+def _get_unsent_datapoints(plot: Mapping, latest_step: int):
     return [x for x in plot if int(x["step"]) > latest_step]
 
 
-def _cast_to_numbers(datapoints: dict):
+def _cast_to_numbers(datapoints: Mapping):
     for datapoint in datapoints:
         for k, v in datapoint.items():
             if k == "step":
@@ -46,7 +46,7 @@ def _adapt_path(live: Live, name: StrPath):
     return name
 
 
-def _adapt_plot_datapoints(live: Live, plot: dict):
+def _adapt_plot_datapoints(live: Live, plot: Mapping):
     datapoints = _get_unsent_datapoints(plot, live._latest_studio_step)
     return _cast_to_numbers(datapoints)
 
@@ -96,7 +96,7 @@ def get_dvc_studio_config(live: Live):
     return get_studio_config(dvc_studio_config=config)
 
 
-def post_to_studio(live: Live, event: str):
+def post_to_studio(live: Live, event: Literal["start", "data", "done"]):
     if event in live._studio_events_to_skip:
         return
 
@@ -105,7 +105,7 @@ def post_to_studio(live: Live, event: str):
         kwargs["message"] = live._exp_message
     elif event == "data":
         metrics, params, plots = get_studio_updates(live)
-        kwargs["step"] = live.step
+        kwargs["step"] = live.step  # type: ignore
         kwargs["metrics"] = metrics
         kwargs["params"] = params
         kwargs["plots"] = plots
@@ -115,10 +115,10 @@ def post_to_studio(live: Live, event: str):
     response = post_live_metrics(
         event,
         live._baseline_rev,
-        live._exp_name,
+        live._exp_name,  # type: ignore
         "dvclive",
         dvc_studio_config=live._dvc_studio_config,
-        **kwargs,
+        **kwargs,  # type: ignore
     )
     if not response:
         logger.warning(f"`post_to_studio` `{event}` failed.")

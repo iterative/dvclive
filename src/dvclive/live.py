@@ -158,7 +158,7 @@ class Live:
         else:
             self._init_cleanup()
 
-        self._latest_studio_step = self.step if resume else -1
+        self._latest_studio_step: int = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
