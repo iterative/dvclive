@@ -824,8 +824,7 @@ class Live:
         `Live.next_step()` and `Live.end()` will call `Live.make_dvcyaml()` internally,
         so you don't need to call both (unless `dvcyaml=None`).
         """
-        if self.dvc_file:
-            make_dvcyaml(self)
+        make_dvcyaml(self)
 
     @catch_and_warn(DvcException, logger)
     def post_to_studio(self, event: Literal["start", "data", "done"]):
