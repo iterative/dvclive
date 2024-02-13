@@ -4,7 +4,7 @@ import json
 import os
 import re
 import shutil
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
 from platform import uname
 from typing import Union, List, Dict, TYPE_CHECKING
 import webbrowser
@@ -192,12 +192,8 @@ def catch_and_warn(exception, logger, on_finally=None):
 
 
 def rel_path(path, dvc_root_path):
-    if dvc_root_path:
-        absolute_path = Path(path).absolute()
-        path = os.path.relpath(absolute_path, dvc_root_path)
-    if os.name == "nt":
-        return str(PureWindowsPath(path).as_posix())
-    return str(Path(path).as_posix())
+    absolute_path = Path(path).absolute()
+    return str(Path(os.path.relpath(absolute_path, dvc_root_path)).as_posix())
 
 
 def read_history(live, metric):

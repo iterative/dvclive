@@ -4,6 +4,7 @@ import base64
 import logging
 import math
 import os
+from pathlib import PureWindowsPath
 from typing import TYPE_CHECKING
 
 from dvc_studio_client.config import get_studio_config
@@ -38,8 +39,11 @@ def _cast_to_numbers(datapoints: dict):
 
 
 def _adapt_path(live: Live, name: StrPath):
-    dvc_root_path = live._dvc_repo.root_dir if live._dvc_repo else None
-    return rel_path(name, dvc_root_path)
+    if live._dvc_repo is not None:
+        name = rel_path(name, live._dvc_repo.root_dir)
+    if os.name == "nt":
+        name = str(PureWindowsPath(name).as_posix())
+    return name
 
 
 def _adapt_plot_datapoints(live: Live, plot: dict):

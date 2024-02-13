@@ -1,8 +1,0 @@
-metrics:
-- ../../../../private/var/folders/24/99_tf1xj3vx8k1k_jkdmnhq00000gn/T/pytest-of-dave/pytest-255/test_dvclive_log_metrics_10_0/metrics.json
-- ../../../../private/var/folders/24/99_tf1xj3vx8k1k_jkdmnhq00000gn/T/pytest-of-dave/pytest-255/test_dvclive_log_metrics_None_0/metrics.json
-plots:
-- ? ../../../../private/var/folders/24/99_tf1xj3vx8k1k_jkdmnhq00000gn/T/pytest-of-dave/pytest-255/test_dvclive_log_metrics_10_0/plots/metrics
-  : x: step
-- ? ../../../../private/var/folders/24/99_tf1xj3vx8k1k_jkdmnhq00000gn/T/pytest-of-dave/pytest-255/test_dvclive_log_metrics_None_0/plots/metrics
-  : x: step
