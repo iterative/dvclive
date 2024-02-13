@@ -828,7 +828,7 @@ class Live:
             make_dvcyaml(self)
 
     @catch_and_warn(DvcException, logger)
-    def post_to_studio(self, event: str):
+    def post_to_studio(self, event: Literal["start", "data", "done"]):
         post_to_studio(self, event)
 
     def end(self):
