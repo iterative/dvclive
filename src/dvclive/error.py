@@ -6,10 +6,16 @@ class DvcLiveError(Exception):
 
 
 class InvalidDataTypeError(DvcLiveError):
-    def __init__(self, name, val):
+    def __init__(self, name, val, subfield=None):
         self.name = name
         self.val = val
-        super().__init__(f"Data '{name}' has not supported type {val}")
+        self.subfield = subfield
+        if subfield:
+            super().__init__(
+                f"Data '{name}' has not supported type {val} for subfield {subfield}"
+            )
+        else:
+            super().__init__(f"Data '{name}' has not supported type {val}")
 
 
 class InvalidDvcyamlError(DvcLiveError):
@@ -47,3 +53,13 @@ class InvalidSameSizeError(DvcLiveError):
         self.x = x
         self.y = y
         super().__init__(f"Data '{name}': '{x}' and '{y}' must have the same length")
+
+
+class MissingFieldError(DvcLiveError):
+    def __init__(self, name, dictionary, field):
+        self.name = name
+        self.dictionary = dictionary
+        self.field = field
+        super().__init__(
+            f"Data '{name}': {dictionary} does not contain the '{field}' field"
+        )

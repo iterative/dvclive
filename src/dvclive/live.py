@@ -8,7 +8,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Set, Union, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Set, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     import numpy as np
@@ -36,7 +36,7 @@ from .error import (
 from .plots import (
     PLOT_TYPES,
     SKLEARN_PLOTS,
-    BoundingBoxes,
+    Annotations,
     CustomPlot,
     Image,
     Metric,
@@ -92,7 +92,6 @@ class Live:
         self._step: Optional[int] = None
         self._metrics: Dict[str, Any] = {}
         self._images: Dict[str, Any] = {}
-        self._bounding_boxes: Dict[str, Any] = {}
         self._params: Dict[str, Any] = {}
         self._plots: Dict[str, Any] = {}
         self._artifacts: Dict[str, Dict] = {}
@@ -388,7 +387,7 @@ class Live:
         self.summary = set_in(self.summary, metric.summary_keys, val)
         logger.debug(f"Logged {name}: {val}")
 
-    def log_image(self, name: str, val):
+    def log_image(self, name: str, val, annotations: Optional[Dict] = None):
         if not Image.could_log(val):
             raise InvalidDataTypeError(name, type(val))
 
@@ -398,34 +397,22 @@ class Live:
             val = ImagePIL.open(val)
 
         if name in self._images:
-            image = self._images[name]
+            image = self._images[name]["image"]
         else:
             image = Image(name, self.plots_dir)
-            self._images[name] = image
+            self._images[name] = {"image": image}
 
         image.step = self.step
         image.dump(val)
+
+        if annotations:
+            Annotations.could_log(name, annotations)
+            annotation_object = Annotations(name, self.plots_dir)
+            self._images[name]["annotations"] = annotation_object
+            annotation_object.step = self.step
+            annotation_object.dump(annotations)
+
         logger.debug(f"Logged {name}: {val}")
-
-    def log_bounding_boxes(
-        self,
-        name: str,
-        bboxes: Union[List[List[int]], np.ndarray],
-        labels: Union[List[str], np.ndarray],
-        scores: Union[List[float], np.ndarray],
-        format: Literal["tlbr", "tlhw", "xywh"],  # noqa: A002
-    ):
-        BoundingBoxes.could_log(name, bboxes, labels, scores, format)
-
-        if name in self._bounding_boxes:
-            bounding_boxes = self._bounding_boxes[name]
-        else:
-            bounding_boxes = BoundingBoxes(name, self.plots_dir)
-            self._bounding_boxes[name] = bounding_boxes
-
-        bounding_boxes.step = self.step
-        bounding_boxes.dump(bboxes, labels, scores, format)
-        logger.debug(f"Logged {name}: {len(bboxes)} bounding boxes in {format} format")
 
     def log_plot(
         self,
@@ -614,10 +601,6 @@ class Live:
         if self._images and self._cache_images:
             images_path = Path(self.plots_dir) / Image.subfolder
             self.cache(images_path)
-
-        if self._bounding_boxes and self._cache_images:
-            bounding_boxes_path = Path(self.plots_dir) / BoundingBoxes.subfolder
-            self.cache(bounding_boxes_path)
 
         # If next_step called before end, don't want to update step number
         if "step" in self.summary:

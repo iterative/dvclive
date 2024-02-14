@@ -51,9 +51,11 @@ def _adapt_image(image_path):
 
 def _adapt_images(live):
     return {
-        _adapt_path(live, image.output_path): {"image": _adapt_image(image.output_path)}
+        _adapt_path(live, image["image"].output_path): {
+            "image": _adapt_image(image["image"].output_path)
+        }
         for image in live._images.values()
-        if image.step > live._latest_studio_step
+        if image["image"].step > live._latest_studio_step
     }
 
 
