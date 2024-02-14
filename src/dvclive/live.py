@@ -338,7 +338,7 @@ class Live:
             )
 
     @property
-    def dir(self) -> str:
+    def dir(self) -> str:  # noqa: A003
         """Location of the directory to store outputs."""
         return self._dir
 
