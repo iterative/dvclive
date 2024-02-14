@@ -22,7 +22,7 @@ class BoringModel(torch.nn.Module):
 
 
 @pytest.mark.parametrize("step_idx", [10, None])
-def test_dvclive_log_metrics(tmp_path, step_idx):
+def test_dvclive_log_metrics(tmp_path, mocked_dvc_repo, step_idx):
     logger = DVCLiveLogger(dir=tmp_path)
     metrics = {
         "float": 0.3,
@@ -33,7 +33,7 @@ def test_dvclive_log_metrics(tmp_path, step_idx):
     logger.log_metrics(metrics, step_idx)
 
 
-def test_dvclive_log_hyperparams(tmp_path):
+def test_dvclive_log_hyperparams(tmp_path, mocked_dvc_repo):
     logger = DVCLiveLogger(dir=tmp_path)
     hparams = {
         "float": 0.3,
@@ -50,7 +50,7 @@ def test_dvclive_log_hyperparams(tmp_path):
     logger.log_hyperparams(hparams)
 
 
-def test_dvclive_finalize(monkeypatch, tmp_path):
+def test_dvclive_finalize(monkeypatch, tmp_path, mocked_dvc_repo):
     """Test that the SummaryWriter closes in finalize."""
     import dvclive
 

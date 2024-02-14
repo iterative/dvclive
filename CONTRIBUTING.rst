@@ -41,7 +41,7 @@ Request features on the `Issue Tracker`_.
 How to set up your development environment
 ------------------------------------------
 
-You need Python 3.8+.
+You need Python 3.9+.
 
 - Clone the repository:
 
