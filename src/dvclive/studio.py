@@ -61,12 +61,12 @@ def get_studio_updates(live):
     metrics = {metrics_file: {"data": metrics}}
 
     plots_to_send = {}
+    live._num_points_read_from_file = {}
     for name, plot in plots.items():
         path = _adapt_path(live, name)
-        nb_points_already_sent = live._nb_points_sent_to_studio.get(path, 0)
-        live._nb_points_sent_to_studio[path] = len(plot)
-
+        nb_points_already_sent = live._num_points_sent_to_studio.get(path, 0)
         plots_to_send[path] = _cast_to_numbers(plot[nb_points_already_sent:])
+        live._num_points_read_from_file.update({path: len(plot)})
 
     plots_to_send = {k: {"data": v} for k, v in plots_to_send.items()}
     plots_to_send.update(_adapt_images(live))
@@ -112,6 +112,8 @@ def post_to_studio(live, event):
             live._studio_events_to_skip.add("data")
             live._studio_events_to_skip.add("done")
     elif event == "data":
+        for path, num_points in live._num_points_read_from_file.items():
+            live._num_points_sent_to_studio[path] = num_points
         live._latest_studio_step = live.step
 
     if event == "done":

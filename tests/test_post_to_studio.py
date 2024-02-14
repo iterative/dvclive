@@ -105,7 +105,11 @@ def test_post_to_studio_failed_data_request(
             "data",
             exp_name=live._exp_name,
             step=1,
-            plots={f"{foo_path}": {"data": [{"step": 1, "foo": 2.0}]}},
+            plots={
+                f"{foo_path}": {
+                    "data": [{"step": 0, "foo": 1.0}, {"step": 1, "foo": 2.0}]
+                }
+            },
         ),
     )
 

@@ -172,7 +172,8 @@ class Live:
         self._latest_studio_step = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
         self._dvc_studio_config: Dict[str, Any] = {}
-        self._nb_points_sent_to_studio = {}
+        self._num_points_sent_to_studio: Dict[str, int] = {}
+        self._num_points_read_from_file: Dict[str, int] = {}
         self._init_studio()
 
         self._system_monitoring_callbacks = [CPUMetrics()] if monitor_system else []
