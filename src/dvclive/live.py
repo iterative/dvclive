@@ -9,6 +9,7 @@ import shutil
 import tempfile
 
 from pathlib import Path, PurePath
+from py3nvml import get_num_procs
 from typing import (
     Any,
     Dict,
@@ -51,7 +52,7 @@ from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEn
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, post_to_studio
-from .monitor_system import MonitorCPU
+from .monitor_system import MonitorCPU, MonitorGPU
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -175,9 +176,14 @@ class Live:
         self._init_studio()
 
         self._monitor_cpu = None
+        self._monitor_gpu = None
         if monitor_system:
             self._monitor_cpu = MonitorCPU()
             self._monitor_cpu(self)
+
+            if len(get_num_procs()):
+                self._monitor_gpu = MonitorGPU()
+                self._monitor_gpu(self)
 
     def _init_resume(self):
         self._read_params()
@@ -899,6 +905,8 @@ class Live:
         # Kill threads that monitor the system metrics
         if self._monitor_cpu is not None:
             self._monitor_cpu.end()
+        if self._monitor_gpu is not None:
+            self._monitor_gpu.end()
 
         self.sync()
 

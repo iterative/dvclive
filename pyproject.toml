@@ -38,7 +38,8 @@ dependencies = [
   "gto",
   "ruamel.yaml",
   "scmrepo",
-  "psutil"
+  "psutil",
+  "py3nvml"
 ]
 
 [project.optional-dependencies]

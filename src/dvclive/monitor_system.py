@@ -6,6 +6,14 @@ import psutil
 from statistics import mean
 from threading import Event, Thread
 from funcy import merge_with
+from py3nvml.py3nvml import (
+    nvmlInit,
+    nvmlDeviceGetCount,
+    nvmlDeviceGetHandleByIndex,
+    nvmlDeviceGetMemoryInfo,
+    nvmlDeviceGetUtilizationRates,
+    nvmlShutdown,
+)
 
 from .error import InvalidDataTypeError
 
@@ -156,3 +164,54 @@ class MonitorCPU(_MonitorSystem):
                 disk_info.total / GIGABYTES_DIVIDER
             )
         return result
+
+
+class MonitorGPU(_MonitorSystem):
+    _plot_blacklist_prefix = ("system/gpu/count", "system/vram/total (GB)")
+
+    def __init__(
+        self,
+        interval: float = 0.5,
+        num_samples: int = 10,
+        plot: bool = True,
+    ):
+        """Monitor GPU resources and log them to DVC Live.
+
+        Args:
+            interval (float): interval in seconds between two measurements.
+                Defaults to 0.5.
+            num_samples (int): number of samples to average. Defaults to 10.
+            plot (bool): should the system metrics be saved as plots. Defaults to True.
+
+        Raises:
+            InvalidDataTypeError: if the arguments passed to the function don't have a
+                supported type.
+        """
+        super().__init__(interval=interval, num_samples=num_samples, plot=plot)
+
+    def _get_metrics(self) -> Dict[str, Union[float, int]]:
+        nvmlInit()
+        num_gpus = nvmlDeviceGetCount()
+        gpu_metrics = {
+            "system/gpu/count": num_gpus,
+        }
+
+        for gpu_idx in range(num_gpus):
+            gpu_handle = nvmlDeviceGetHandleByIndex(gpu_idx)
+            memory_info = nvmlDeviceGetMemoryInfo(gpu_handle)
+            usage_info = nvmlDeviceGetUtilizationRates(gpu_handle)
+
+            gpu_metrics[f"system/gpu/usage (%)/{gpu_idx}"] = (
+                100 * usage_info.memory / usage_info.gpu if usage_info.gpu else 0
+            )
+            gpu_metrics[f"system/vram/usage (%)/{gpu_idx}"] = (
+                100 * memory_info.used / memory_info.total
+            )
+            gpu_metrics[f"system/vram/usage (GB)/{gpu_idx}"] = (
+                memory_info.used / GIGABYTES_DIVIDER
+            )
+            gpu_metrics[f"system/vram/total (GB)/{gpu_idx}"] = (
+                memory_info.total / GIGABYTES_DIVIDER
+            )
+        nvmlShutdown()
+        return gpu_metrics

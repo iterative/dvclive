@@ -2,7 +2,7 @@ import time
 from pathlib import Path
 
 from dvclive import Live
-from dvclive.monitor_system import MonitorCPU
+from dvclive.monitor_system import MonitorCPU, MonitorGPU
 from dvclive.utils import parse_metrics
 
 
@@ -124,3 +124,92 @@ def test_monitor_system(tmp_dir, mocker):
     assert all(
         str(Path("system/disk/total (GB)/0.tsv")) not in key for key in timeseries
     )
+
+
+def mock_py3nvml(mocker, nb_gpus=2, crash_index=None):
+    mocker.patch("dvclive.live.get_num_procs", return_value=[1 for _ in range(nb_gpus)])
+    mocker.patch("dvclive.monitor_system.nvmlDeviceGetCount", return_value=nb_gpus)
+
+    mocked_memory_info = mocker.MagicMock()
+    mocked_memory_info.used = 3 * 1024**3
+    mocked_memory_info.total = 5 * 1024**3
+
+    mocked_utilization_rate = mocker.MagicMock()
+    mocked_utilization_rate.memory = 5
+    mocked_utilization_rate.gpu = 10
+
+    mocking_dict = {
+        "nvmlDeviceGetHandleByIndex": None,
+        "nvmlDeviceGetMemoryInfo": mocked_memory_info,
+        "nvmlDeviceGetUtilizationRates": mocked_utilization_rate,
+    }
+
+    for function_name, return_value in mocking_dict.items():
+        mocker.patch(
+            f"dvclive.monitor_system.{function_name}",
+            return_value=return_value,
+        )
+
+
+def test_get_gpus_metrics_mocker(mocker, tmp_dir):
+    mock_py3nvml(mocker, nb_gpus=2)
+    with Live(
+        tmp_dir,
+        save_dvc_exp=False,
+        monitor_system=False,
+    ) as live:
+        monitor = MonitorGPU()
+        monitor(live)
+        metrics = monitor._get_metrics()
+        monitor.end()
+    assert "system/gpu/usage (%)/0" in metrics
+    assert "system/gpu/usage (%)/1" in metrics
+    assert "system/vram/usage (%)/0" in metrics
+    assert "system/vram/usage (%)/1" in metrics
+    assert "system/vram/usage (GB)/0" in metrics
+    assert "system/vram/usage (GB)/1" in metrics
+    assert "system/vram/total (GB)/0" in metrics
+    assert "system/vram/total (GB)/1" in metrics
+
+
+def test_monitor_gpu_system(tmp_dir, mocker):
+    mock_psutil(mocker)
+    mock_py3nvml(mocker, nb_gpus=1)
+    with Live(
+        tmp_dir,
+        save_dvc_exp=False,
+        monitor_system=True,
+    ) as live:
+        time.sleep(5 + 1)  # allow the thread to finish
+        live.next_step()
+        time.sleep(5 + 1)  # allow the thread to finish
+        timeseries, latest = parse_metrics(live)
+
+    # metrics.json records CPU and RAM metrics if GPU detected
+    assert "system" in latest
+    assert "cpu" in latest["system"]
+    assert "ram" in latest["system"]
+    assert "disk" in latest["system"]
+
+    # metrics.json file contains all the system metrics
+    assert "gpu" in latest["system"]
+    assert "count" in latest["system"]["gpu"]
+    assert "usage (%)" in latest["system"]["gpu"]
+    assert "0" in latest["system"]["gpu"]["usage (%)"]
+    assert "vram" in latest["system"]
+    assert "usage (%)" in latest["system"]["vram"]
+    assert "0" in latest["system"]["vram"]["usage (%)"]
+    assert "usage (GB)" in latest["system"]["vram"]
+    assert "0" in latest["system"]["vram"]["usage (GB)"]
+    assert "total (GB)" in latest["system"]["vram"]
+    assert "0" in latest["system"]["vram"]["total (GB)"]
+
+    # timeseries contains all the system metrics
+    assert any(str(Path("system/gpu/usage (%)/0.tsv")) in key for key in timeseries)
+    assert any(str(Path("system/vram/usage (%)/0.tsv")) in key for key in timeseries)
+    assert any(str(Path("system/vram/usage (GB)/0.tsv")) in key for key in timeseries)
+    assert all(len(timeseries[key]) == 2 for key in timeseries if "system" in key)
+
+    # blacklisted timeseries
+    assert all(str(Path("system/gpu/count.tsv")) not in key for key in timeseries)
+    assert all(str(Path("system/vram/total (GB).tsv")) not in key for key in timeseries)
