@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Optional
 
+from dvclive import env
 from dvclive.plots import Image, Metric
 from dvclive.serialize import dump_yaml
 from dvclive.utils import StrPath, rel_path
@@ -131,9 +132,14 @@ def update_dvcyaml(live, updates):  # noqa: C901
 def get_exp_name(name, scm, baseline_rev) -> str:
     from dvc.exceptions import InvalidArgumentError
     from dvc.repo.experiments.refs import ExpRefInfo
-    from dvc.repo.experiments.utils import check_ref_format, get_random_exp_name
+    from dvc.repo.experiments.utils import (
+        check_ref_format,
+        gen_random_name,
+        get_random_exp_name,
+    )
 
-    if name:
+    name = name or os.getenv(env.DVC_EXP_NAME)
+    if name and scm and baseline_rev:
         ref = ExpRefInfo(baseline_sha=baseline_rev, name=name)
         if scm.get_ref(str(ref)):
             logger.warning(f"Experiment conflicts with existing experiment '{name}'.")
@@ -144,7 +150,11 @@ def get_exp_name(name, scm, baseline_rev) -> str:
                 logger.warning(e)
             else:
                 return name
-    return get_random_exp_name(scm, baseline_rev)
+    if scm and baseline_rev:
+        return get_random_exp_name(scm, baseline_rev)
+    if name:
+        return name
+    return gen_random_name()
 
 
 def find_overlapping_stage(dvc_repo: "Repo", path: StrPath) -> Optional["Stage"]:
