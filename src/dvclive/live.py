@@ -398,7 +398,7 @@ class Live:
         logger.debug(f"Step: {self.step}")
 
     @property
-    def monitor_cpu(self) -> int:
+    def monitor_cpu(self) -> Optional[MonitorCPU]:
         return self._monitor_cpu or None
 
     @monitor_cpu.setter

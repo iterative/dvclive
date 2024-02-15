@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Union, Optional, List
+from typing import Dict, Union, Optional, List, Tuple
 from pathlib import Path
 
 import psutil
@@ -24,7 +24,7 @@ class _MonitorSystem:
     aggregate the results of this sampling using the average.
     """
 
-    _plot_blacklist_prefix = ()
+    _plot_blacklist_prefix: Tuple = ()
 
     def __init__(
         self,
@@ -78,7 +78,7 @@ class _MonitorSystem:
                     plot=None if blacklisted else self._plot,
                 )
 
-    def _get_metrics() -> Dict[str, Union[float, int]]:
+    def _get_metrics(self):
         pass
 
     def end(self):
@@ -86,7 +86,7 @@ class _MonitorSystem:
 
 
 class MonitorCPU(_MonitorSystem):
-    _plot_blacklist_prefix = (
+    _plot_blacklist_prefix: Tuple = (
         "system/cpu/count",
         "system/ram/total (GB)",
         "system/disk/total (GB)",
