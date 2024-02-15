@@ -6,17 +6,23 @@ import psutil
 from statistics import mean
 from threading import Event, Thread
 from funcy import merge_with
-from py3nvml.py3nvml import (
-    nvmlInit,
-    nvmlDeviceGetCount,
-    nvmlDeviceGetHandleByIndex,
-    nvmlDeviceGetMemoryInfo,
-    nvmlDeviceGetUtilizationRates,
-    nvmlShutdown,
-)
 
 from .error import InvalidDataTypeError
 
+
+try:
+    from py3nvml.py3nvml import (
+        nvmlInit,
+        nvmlDeviceGetCount,
+        nvmlDeviceGetHandleByIndex,
+        nvmlDeviceGetMemoryInfo,
+        nvmlDeviceGetUtilizationRates,
+        nvmlShutdown,
+    )
+
+    GPU_AVAILABLE = True
+except ImportError:
+    GPU_AVAILABLE = False
 
 logger = logging.getLogger("dvclive")
 MEGABYTES_DIVIDER = 1024.0**2

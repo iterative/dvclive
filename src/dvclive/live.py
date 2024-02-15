@@ -9,7 +9,6 @@ import shutil
 import tempfile
 
 from pathlib import Path, PurePath
-from py3nvml import get_num_procs
 from typing import (
     Any,
     Dict,
@@ -21,6 +20,7 @@ from typing import (
     TYPE_CHECKING,
     Literal,
 )
+
 
 if TYPE_CHECKING:
     import numpy as np
@@ -52,7 +52,7 @@ from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEn
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, post_to_studio
-from .monitor_system import MonitorCPU, MonitorGPU
+from .monitor_system import GPU_AVAILABLE, MonitorCPU, MonitorGPU
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -180,8 +180,7 @@ class Live:
         if monitor_system:
             self._monitor_cpu = MonitorCPU()
             self._monitor_cpu(self)
-
-            if len(get_num_procs()):
+            if GPU_AVAILABLE:
                 self._monitor_gpu = MonitorGPU()
                 self._monitor_gpu(self)
 
