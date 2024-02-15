@@ -51,7 +51,7 @@ from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEn
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, post_to_studio
-from .system_metrics import CPUMetrics
+from .monitor_system import MonitorCPU
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -174,10 +174,10 @@ class Live:
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
 
-        self._cpu_metrics = None
+        self._monitor_cpu = None
         if monitor_system:
-            self._cpu_metrics = CPUMetrics()
-            self._cpu_metrics(self)
+            self._monitor_cpu = MonitorCPU()
+            self._monitor_cpu(self)
 
     def _init_resume(self):
         self._read_params()
@@ -398,15 +398,15 @@ class Live:
         logger.debug(f"Step: {self.step}")
 
     @property
-    def cpu_metrics(self) -> int:
-        return self._cpu_metrics or None
+    def monitor_cpu(self) -> int:
+        return self._monitor_cpu or None
 
-    @cpu_metrics.setter
-    def cpu_metrics(self, cpu_metrics: CPUMetrics) -> None:
-        if self._cpu_metrics is not None:
-            self._cpu_metrics.end()
-        self._cpu_metrics = cpu_metrics
-        self._cpu_metrics(self)
+    @monitor_cpu.setter
+    def monitor_cpu(self, monitor_cpu: MonitorCPU) -> None:
+        if self._monitor_cpu is not None:
+            self._monitor_cpu.end()
+        self._monitor_cpu = monitor_cpu
+        self._monitor_cpu(self)
 
     def sync(self):
         self.make_summary()
@@ -897,8 +897,8 @@ class Live:
             self.step = self.summary["step"]
 
         # Kill threads that monitor the system metrics
-        if self._cpu_metrics is not None:
-            self._cpu_metrics.end()
+        if self._monitor_cpu is not None:
+            self._monitor_cpu.end()
 
         self.sync()
 

@@ -14,7 +14,7 @@ GIGABYTES_DIVIDER = 1024.0**3
 MINIMUM_CPU_USAGE_TO_BE_ACTIVE = 20
 
 
-class _SystemMetrics:
+class _MonitorSystem:
     _plot_blacklist_prefix = ()
 
     def __init__(
@@ -69,7 +69,7 @@ class _SystemMetrics:
         self._shutdown_event.set()
 
 
-class CPUMetrics(_SystemMetrics):
+class MonitorCPU(_MonitorSystem):
     _plot_blacklist_prefix = (
         "system/cpu/count",
         "system/ram/total (GB)",

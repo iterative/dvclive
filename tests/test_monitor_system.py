@@ -2,16 +2,16 @@ import time
 from pathlib import Path
 
 from dvclive import Live
-from dvclive.system_metrics import CPUMetrics
+from dvclive.monitor_system import MonitorCPU
 from dvclive.utils import parse_metrics
 
 
 def mock_psutil(mocker):
     mocker.patch(
-        "dvclive.system_metrics.psutil.cpu_percent",
+        "dvclive.monitor_system.psutil.cpu_percent",
         return_value=[10, 20, 30, 40, 50, 60],
     )
-    mocker.patch("dvclive.system_metrics.psutil.cpu_count", return_value=6)
+    mocker.patch("dvclive.monitor_system.psutil.cpu_count", return_value=6)
 
     mocked_virtual_memory = mocker.MagicMock()
     mocked_virtual_memory.percent = 20
@@ -28,7 +28,7 @@ def mock_psutil(mocker):
     }
     for function_name, return_value in mocking_dict.items():
         mocker.patch(
-            f"dvclive.system_metrics.psutil.{function_name}",
+            f"dvclive.monitor_system.psutil.{function_name}",
             return_value=return_value,
         )
 
@@ -40,7 +40,7 @@ def test_get_cpus_metrics_mocker(tmp_dir, mocker):
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        monitor = CPUMetrics(directories_to_monitor=["/", "/"])
+        monitor = MonitorCPU(directories_to_monitor=["/", "/"])
         monitor(live)
         metrics = monitor._get_metrics()
         monitor.end()
@@ -67,7 +67,7 @@ def test_ignore_missing_directories(tmp_dir, mocker):
         monitor_system=False,
     ) as live:
         missing_directories = "______"
-        monitor = CPUMetrics(directories_to_monitor=["/", missing_directories])
+        monitor = MonitorCPU(directories_to_monitor=["/", missing_directories])
         monitor(live)
         metrics = monitor._get_metrics()
         monitor.end()
