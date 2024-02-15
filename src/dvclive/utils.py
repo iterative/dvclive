@@ -4,7 +4,7 @@ import json
 import os
 import re
 import shutil
-from pathlib import Path
+from pathlib import Path, PurePath
 from platform import uname
 from typing import Union, List, Dict, TYPE_CHECKING
 import webbrowser
@@ -26,7 +26,7 @@ else:
         np = None
 
 
-StrPath = Union[str, Path]
+StrPath = Union[str, PurePath]
 
 
 def run_once(f):
