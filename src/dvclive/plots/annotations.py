@@ -25,58 +25,57 @@ class Annotations(Data):
 
     @staticmethod
     def could_log(  # noqa: C901
-        name: str,
         annotations: Dict[str, List],
     ) -> bool:
         # no missing fields
         for field in ["boxes", "labels", "scores", "format"]:
             if field not in annotations:
-                raise MissingFieldError(name, annotations, field)
+                raise MissingFieldError(annotations, field)
 
         # `boxes`, `labels`, and `scores` fields should have the same size
         if len(annotations["boxes"]) != len(annotations["labels"]):
-            raise InvalidSameSizeError(name, "boxes", "labels")
+            raise InvalidSameSizeError("boxes", "labels")
 
         if len(annotations["boxes"]) != len(annotations["scores"]):
-            raise InvalidSameSizeError(name, "boxes", "scores")
+            raise InvalidSameSizeError("boxes", "scores")
 
         # `format` should be one of the supported formats
         if annotations["format"] not in ["tlbr", "tlhw", "xywh", "ltrb"]:
-            raise InvalidDataTypeError(name, type(format))
+            raise InvalidDataTypeError("format", type(format))
 
         # `scores` should be a List[float]
         for idx, score in enumerate(annotations["scores"]):
             if not isinstance(score, (float, np.floating)):
                 raise InvalidDataTypeError(
-                    name, type(score), f"annotations['scores'][{idx}]"
+                    "scores", type(score), f"annotations['scores'][{idx}]"
                 )
 
         # `boxes` should be a List[List[int, 4]]
         for idx, boxes in enumerate(annotations["boxes"]):
             if not all(isinstance(x, (int, np.int_)) for x in boxes):
                 raise InvalidDataTypeError(
-                    name, type(boxes), f"annotations['boxes'][{idx}]"
+                    "boxes", type(boxes), f"annotations['boxes'][{idx}]"
                 )
             if len(boxes) != 4:  # noqa: PLR2004
                 raise InvalidDataTypeError(
-                    name, len(boxes), f"annotations['boxes'][{idx}]"
+                    "boxes", len(boxes), f"annotations['boxes'][{idx}]"
                 )
 
         # `labels` should be a List[str]
         for idx, label in enumerate(annotations["labels"]):
             if not isinstance(label, str):
                 raise InvalidDataTypeError(
-                    name, type(label), f"annotations['labels'][{idx}]"
+                    "labels", type(label), f"annotations['labels'][{idx}]"
                 )
-        return
+        return True
 
     def dump(
         self,
-        annotations: Dict[str, List],
-    ) -> None:
-        boxes = self.convert_to_tlbr(annotations["boxes"], annotations["format"])
-        labels = annotations["labels"]
-        scores = annotations["scores"]
+        val,
+    ):
+        boxes = self.convert_to_tlbr(val["boxes"], val["format"])
+        labels = val["labels"]
+        scores = val["scores"]
         boxes_info = [
             {
                 "label": label,
@@ -108,7 +107,7 @@ class Annotations(Data):
     def convert_to_tlbr(
         bboxes: Union[List[List[int]], "np.ndarray"],
         format: BboxFormatKind,  # noqa: A002
-    ) -> List[List[int]]:
+    ) -> Union[List[List[int]], "np.ndarray"]:
         """
         Converts bounding boxes from different formats to the top, left, bottom, right
         format.

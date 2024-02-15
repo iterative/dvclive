@@ -54,18 +54,14 @@ class InvalidReportModeError(DvcLiveError):
 
 
 class InvalidSameSizeError(DvcLiveError):
-    def __init__(self, name, x, y):
-        self.name = name
+    def __init__(self, x, y):
         self.x = x
         self.y = y
-        super().__init__(f"Data '{name}': '{x}' and '{y}' must have the same length")
+        super().__init__(f"'{x}' and '{y}' must have the same length")
 
 
 class MissingFieldError(DvcLiveError):
-    def __init__(self, name, dictionary, field):
-        self.name = name
+    def __init__(self, dictionary, field):
         self.dictionary = dictionary
         self.field = field
-        super().__init__(
-            f"Data '{name}': {dictionary} does not contain the '{field}' field"
-        )
+        super().__init__(f"{dictionary} does not contain the '{field}' field")

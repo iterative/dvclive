@@ -524,7 +524,7 @@ class Live:
         image.dump(val)
 
         if annotations:
-            Annotations.could_log(name, annotations)
+            Annotations.could_log(annotations)
             annotation_object = Annotations(name, self.plots_dir)
             self._images[name]["annotations"] = annotation_object
             annotation_object.step = self.step
