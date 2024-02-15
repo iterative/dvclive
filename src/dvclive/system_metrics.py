@@ -1,5 +1,6 @@
 import logging
-from typing import Dict, Union
+from typing import Dict, Union, Optional, List
+from pathlib import Path
 
 import psutil
 from statistics import mean
@@ -13,7 +14,9 @@ GIGABYTES_DIVIDER = 1024.0**3
 MINIMUM_CPU_USAGE_TO_BE_ACTIVE = 20
 
 
-class CPUMetrics:
+class _SystemMetrics:
+    _plot_blacklist_prefix = ()
+
     def __init__(
         self,
         interval: float = 0.5,
@@ -23,7 +26,6 @@ class CPUMetrics:
         self._interval = interval  # seconds
         self._nb_samples = nb_samples
         self._plot = plot
-        self._no_plot_metrics = ["system/cpu/count", "system/ram/total (GB)"]
         self._warn_user = True
 
     def __call__(self, live):
@@ -35,57 +37,85 @@ class CPUMetrics:
 
     def _monitoring_loop(self):
         while not self._shutdown_event.is_set():
-            self._cpu_metrics = {}
+            self._metrics = {}
             for _ in range(self._nb_samples):
-                last_cpu_metrics = {}
+                last_metrics = {}
                 try:
-                    last_cpu_metrics = _get_cpus_metrics()
+                    last_metrics = self._get_metrics()
                 except psutil.Error:
                     if self._warn_user:
                         logger.exception("Failed to monitor CPU metrics")
                         self._warn_user = False
 
-                self._cpu_metrics = merge_with(sum, self._cpu_metrics, last_cpu_metrics)
+                self._metrics = merge_with(sum, self._metrics, last_metrics)
                 self._shutdown_event.wait(self._interval)
                 if self._shutdown_event.is_set():
                     break
-            for metric_name, metric_values in self._cpu_metrics.items():
-                self._live.log_metric(
-                    metric_name,
-                    metric_values / self._nb_samples,
-                    timestamp=True,
-                    plot=self._plot
-                    if metric_name not in self._no_plot_metrics
-                    else False,
+            for name, values in self._metrics.items():
+                blacklisted = any(
+                    name.startswith(prefix) for prefix in self._plot_blacklist_prefix
                 )
+                self._live.log_metric(
+                    name,
+                    values / self._nb_samples,
+                    timestamp=True,
+                    plot=None if blacklisted else self._plot,
+                )
+
+    def _get_metrics() -> Dict[str, Union[float, int]]:
+        pass
 
     def end(self):
         self._shutdown_event.set()
 
 
-def _get_cpus_metrics() -> Dict[str, Union[float, int]]:
-    ram_info = psutil.virtual_memory()
-    io_info = psutil.disk_io_counters()
-    nb_cpus = psutil.cpu_count()
-    cpus_percent = psutil.cpu_percent(percpu=True)
-    return {
-        "system/cpu/usage (%)": mean(cpus_percent),
-        "system/cpu/count": nb_cpus,
-        "system/cpu/parallelization (%)": len(
-            [
-                percent
-                for percent in cpus_percent
-                if percent >= MINIMUM_CPU_USAGE_TO_BE_ACTIVE
-            ]
+class CPUMetrics(_SystemMetrics):
+    _plot_blacklist_prefix = (
+        "system/cpu/count",
+        "system/ram/total (GB)",
+        "system/disk/total (GB)",
+    )
+
+    def __init__(
+        self,
+        interval: float = 0.5,
+        nb_samples: int = 10,
+        directories_to_monitor: Optional[List[str]] = None,
+        plot: bool = True,
+    ):
+        super().__init__(interval=interval, nb_samples=nb_samples, plot=plot)
+        self._directories_to_monitor = (
+            ["."] if directories_to_monitor is None else directories_to_monitor
         )
-        * 100
-        / nb_cpus,
-        "system/ram/usage (%)": ram_info.percent,
-        "system/ram/usage (GB)": (ram_info.percent / 100)
-        * (ram_info.total / GIGABYTES_DIVIDER),
-        "system/ram/total (GB)": ram_info.total / GIGABYTES_DIVIDER,
-        "system/io/read speed (MB)": io_info.read_bytes
-        / (io_info.read_time * MEGABYTES_DIVIDER),
-        "system/io/write speed (MB)": io_info.write_bytes
-        / (io_info.write_time * MEGABYTES_DIVIDER),
-    }
+
+    def _get_metrics(self) -> Dict[str, Union[float, int]]:
+        ram_info = psutil.virtual_memory()
+        nb_cpus = psutil.cpu_count()
+        cpus_percent = psutil.cpu_percent(percpu=True)
+        result = {
+            "system/cpu/usage (%)": mean(cpus_percent),
+            "system/cpu/count": nb_cpus,
+            "system/cpu/parallelization (%)": len(
+                [
+                    percent
+                    for percent in cpus_percent
+                    if percent >= MINIMUM_CPU_USAGE_TO_BE_ACTIVE
+                ]
+            )
+            * 100
+            / nb_cpus,
+            "system/ram/usage (%)": ram_info.percent,
+            "system/ram/usage (GB)": (ram_info.percent / 100)
+            * (ram_info.total / GIGABYTES_DIVIDER),
+            "system/ram/total (GB)": ram_info.total / GIGABYTES_DIVIDER,
+        }
+        for idx, directory in enumerate(self._directories_to_monitor):
+            if not Path(directory).exists():
+                continue
+            disk_info = psutil.disk_usage(directory)
+            result[f"system/disk/usage (%)/{idx}"] = disk_info.percent
+            result[f"system/disk/usage (GB)/{idx}"] = disk_info.used / GIGABYTES_DIVIDER
+            result[f"system/disk/total (GB)/{idx}"] = (
+                disk_info.total / GIGABYTES_DIVIDER
+            )
+        return result

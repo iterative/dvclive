@@ -176,9 +176,10 @@ class Live:
         self._num_points_read_from_file: Dict[str, int] = {}
         self._init_studio()
 
-        self._system_monitoring_callbacks = [CPUMetrics()] if monitor_system else []
-        for callback in self._system_monitoring_callbacks:
-            callback(self)
+        self._cpu_metrics = None
+        if monitor_system:
+            self._cpu_metrics = CPUMetrics()
+            self._cpu_metrics(self)
 
     def _init_resume(self):
         self._read_params()
@@ -397,6 +398,13 @@ class Live:
     def step(self, value: int) -> None:
         self._step = value
         logger.debug(f"Step: {self.step}")
+
+    @step.setter
+    def cpu_metrics(self, cpu_metrics: CPUMetrics) -> None:
+        if self._cpu_metrics is not None:
+            self._cpu_metrics.end()
+        self._cpu_metrics = cpu_metrics
+        self._cpu_metrics(self)
 
     def sync(self):
         self.make_summary()
@@ -887,9 +895,9 @@ class Live:
         if "step" in self.summary:
             self.step = self.summary["step"]
 
-        # Kill all independent threads that can be found in callbacks
-        for callback in self._system_monitoring_callbacks:
-            callback.end()
+        # Kill threads that monitor the system metrics
+        if self._cpu_metrics is not None:
+            self._cpu_metrics.end()
 
         self.sync()
 
