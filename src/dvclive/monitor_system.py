@@ -7,6 +7,9 @@ from statistics import mean
 from threading import Event, Thread
 from funcy import merge_with
 
+from .error import InvalidDataTypeError
+
+
 logger = logging.getLogger("dvclive")
 MEGABYTES_DIVIDER = 1024.0**2
 GIGABYTES_DIVIDER = 1024.0**3
@@ -15,16 +18,29 @@ MINIMUM_CPU_USAGE_TO_BE_ACTIVE = 20
 
 
 class _MonitorSystem:
+    """
+    Monitor system resources and log them to DVC Live.
+    Use a separate thread to call a `_get_metrics` function at  fix interval and
+    aggregate the results of this sampling using the average.
+    """
+
     _plot_blacklist_prefix = ()
 
     def __init__(
         self,
         interval: float = 0.5,
-        nb_samples: int = 10,
+        num_samples: int = 10,
         plot: bool = True,
     ):
+        if not isinstance(interval, (int, float)):
+            raise InvalidDataTypeError("MonitorSystem.interval", type(interval))
+        if not isinstance(num_samples, int):
+            raise InvalidDataTypeError("MonitorSystem.sample", type(num_samples))
+        if not isinstance(plot, bool):
+            raise InvalidDataTypeError("MonitorSystem.plot", type(plot))
+
         self._interval = interval  # seconds
-        self._nb_samples = nb_samples
+        self._nb_samples = num_samples
         self._plot = plot
         self._warn_user = True
 
@@ -79,14 +95,35 @@ class MonitorCPU(_MonitorSystem):
     def __init__(
         self,
         interval: float = 0.5,
-        nb_samples: int = 10,
+        num_samples: int = 10,
         directories_to_monitor: Optional[List[str]] = None,
         plot: bool = True,
     ):
-        super().__init__(interval=interval, nb_samples=nb_samples, plot=plot)
-        self._directories_to_monitor = (
+        """Monitor CPU resources and log them to DVC Live.
+
+        Args:
+            interval (float): interval in seconds between two measurements.
+                Defaults to 0.5.
+            num_samples (int): number of samples to average. Defaults to 10.
+            directories_to_monitor (Optional[List[str]]): paths of the directories that
+            needs to be monitor for disk storage metrics. Defaults to the current
+            directory.
+            plot (bool): should the system metrics be saved as plots. Defaults to True.
+
+        Raises:
+            InvalidDataTypeError: if the arguments passed to the function don't have a
+                supported type.
+        """
+        super().__init__(interval=interval, num_samples=num_samples, plot=plot)
+        directories_to_monitor = (
             ["."] if directories_to_monitor is None else directories_to_monitor
         )
+        for idx, path in enumerate(directories_to_monitor):
+            if not isinstance(path, str):
+                raise InvalidDataTypeError(
+                    f"MonitorCPU.directories_to_monitor[{idx}]", type(path)
+                )
+        self._directories_to_monitor = directories_to_monitor
 
     def _get_metrics(self) -> Dict[str, Union[float, int]]:
         ram_info = psutil.virtual_memory()
