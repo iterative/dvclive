@@ -10,7 +10,7 @@ from dvclive.error import InvalidSameSizeError, InvalidDataTypeError, MissingFie
 
 from .base import Data
 
-BboxFormatKind = Literal["tlbr", "tlhw", "xywh"]
+BboxFormatKind = Literal["tlbr", "tlhw", "xywh", "ltrb"]
 
 
 class Annotations(Data):
@@ -41,7 +41,7 @@ class Annotations(Data):
             raise InvalidSameSizeError(name, "boxes", "scores")
 
         # `format` should be one of the supported formats
-        if annotations["format"] not in ["tlbr", "tlhw", "xywh"]:
+        if annotations["format"] not in ["tlbr", "tlhw", "xywh", "ltrb"]:
             raise InvalidDataTypeError(name, type(format))
 
         # `scores` should be a List[float]
@@ -117,6 +117,9 @@ class Annotations(Data):
             return [
                 [box[0], box[1], box[0] + box[2], box[1] + box[3]] for box in bboxes
             ]
+
+        if format == "ltrb":
+            return [[box[1], box[0], box[3], box[2]] for box in bboxes]
 
         if format == "xywh":
             return [
