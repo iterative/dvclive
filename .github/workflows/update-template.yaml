@@ -9,8 +9,8 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-    - name: Check out the repository
-      uses: actions/checkout@v4
+      - name: Check out the repository
+        uses: actions/checkout@v4
 
-    - name: Update template
-      uses: iterative/py-template@main
+      - name: Update template
+        uses: iterative/py-template@main

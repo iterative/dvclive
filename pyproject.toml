@@ -7,37 +7,37 @@ description = "Experiments logger for ML projects."
 name = "dvclive"
 readme = "README.md"
 keywords = [
-    "ai",
-    "metrics",
-    "collaboration",
-    "data-science",
-    "data-version-control",
-    "developer-tools",
-    "git",
-    "machine-learning",
-    "reproducibility",
+  "ai",
+  "metrics",
+  "collaboration",
+  "data-science",
+  "data-version-control",
+  "developer-tools",
+  "git",
+  "machine-learning",
+  "reproducibility"
 ]
-license = { text = "Apache License 2.0" }
-maintainers = [{ name = "Iterative", email = "support@dvc.org" }]
-authors = [{ name = "Iterative", email = "support@dvc.org" }]
+license = {text = "Apache License 2.0"}
+maintainers = [{name = "Iterative", email = "support@dvc.org"}]
+authors = [{name = "Iterative", email = "support@dvc.org"}]
 requires-python = ">=3.9"
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12"
 ]
 dynamic = ["version"]
 dependencies = [
-    "dvc>=3.33.3",
-    "dvc-render>=1.0.0,<2",
-    "dvc-studio-client>=0.17.1,<1",
-    "funcy",
-    "gto",
-    "ruamel.yaml",
-    "scmrepo",
+  "dvc>=3.33.3",
+  "dvc-render>=1.0.0,<2",
+  "dvc-studio-client>=0.17.1,<1",
+  "funcy",
+  "gto",
+  "ruamel.yaml",
+  "scmrepo"
 ]
 
 [project.optional-dependencies]
@@ -46,17 +46,17 @@ sklearn = ["scikit-learn"]
 plots = ["scikit-learn", "pandas", "numpy"]
 markdown = ["matplotlib"]
 tests = [
-    "pytest>=7.2.0,<8.0",
-    "pytest-sugar>=0.9.6,<1.0",
-    "pytest-cov>=3.0.0,<4.0",
-    "pytest-mock>=3.8.2,<4.0",
-    "dvclive[image,plots,markdown]",
-    "ipython",
+  "pytest>=7.2.0,<8.0",
+  "pytest-sugar>=0.9.6,<1.0",
+  "pytest-cov>=3.0.0,<4.0",
+  "pytest-mock>=3.8.2,<4.0",
+  "dvclive[image,plots,markdown]",
+  "ipython"
 ]
 dev = [
-    "dvclive[all,tests]",
-    "mypy>=1.1.1",
-    "types-PyYAML",
+  "dvclive[all,tests]",
+  "mypy>=1.1.1",
+  "types-PyYAML"
 ]
 mmcv = ["mmcv"]
 tf = ["tensorflow"]
@@ -68,7 +68,7 @@ fastai = ["fastai"]
 lightning = ["lightning>=2.0", "torch", "jsonargparse[signatures]>=4.26.1"]
 optuna = ["optuna"]
 all = [
-   "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,lightning,optuna,plots,markdown]"
+  "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,lightning,optuna,plots,markdown]"
 ]
 
 [project.urls]
@@ -78,14 +78,14 @@ Repository = "https://github.com/iterative/dvclive"
 Changelog = "https://github.com/iterative/dvclive/releases"
 Issues = "https://github.com/iterative/dvclive/issues"
 
+[tool.setuptools]
+license-files = ["LICENSE"]
+platforms = ["any"]
+
 [tool.setuptools.packages.find]
 exclude = ["tests", "tests.*"]
 where = ["src"]
 namespaces = false
-
-[tool.setuptools]
-license-files = ["LICENSE"]
-platforms = ["any"]
 
 [tool.setuptools_scm]
 write_to = "src/dvclive/_dvclive_version.py"
@@ -107,13 +107,13 @@ source = ["src", "*/site-packages"]
 [tool.coverage.report]
 show_missing = true
 exclude_lines = [
-    "pragma: no cover",
-    "if __name__ == .__main__.:",
-    "if typing.TYPE_CHECKING:",
-    "if TYPE_CHECKING:",
-    "raise NotImplementedError",
-    "raise AssertionError",
-    "@overload",
+  "pragma: no cover",
+  "if __name__ == .__main__.:",
+  "if typing.TYPE_CHECKING:",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "raise AssertionError",
+  "@overload"
 ]
 
 [tool.mypy]

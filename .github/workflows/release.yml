@@ -16,27 +16,27 @@ jobs:
       id-token: write
     runs-on: ubuntu-latest
     steps:
-    - name: Check out the repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-    - name: Upgrade pip
-      run: |
-        pip install --upgrade pip
-        pip --version
+      - name: Upgrade pip
+        run: |
+          pip install --upgrade pip
+          pip --version
 
-    - name: Install
-      run: python -m pip install build setuptools
+      - name: Install
+        run: python -m pip install build setuptools
 
-    - name: Build package
-      run: python -m build
+      - name: Build package
+        run: python -m build
 
-    - name: Upload package
-      if: github.event_name == 'release'
-      uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Upload package
+        if: github.event_name == 'release'
+        uses: pypa/gh-action-pypi-publish@release/v1
