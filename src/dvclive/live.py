@@ -172,8 +172,6 @@ class Live:
         self._latest_studio_step = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
         self._dvc_studio_config: Dict[str, Any] = {}
-        self._num_points_sent_to_studio: Dict[str, int] = {}
-        self._num_points_read_from_file: Dict[str, int] = {}
         self._init_studio()
 
         self._cpu_metrics = None
@@ -399,7 +397,11 @@ class Live:
         self._step = value
         logger.debug(f"Step: {self.step}")
 
-    @step.setter
+    @property
+    def cpu_metrics(self) -> int:
+        return self._cpu_metrics or None
+
+    @cpu_metrics.setter
     def cpu_metrics(self, cpu_metrics: CPUMetrics) -> None:
         if self._cpu_metrics is not None:
             self._cpu_metrics.end()
@@ -474,7 +476,6 @@ class Live:
             self._metrics[name] = metric
 
         metric.step = self.step
-
         if plot:
             metric.dump(val, timestamp=timestamp)
 

@@ -2,10 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from dvclive.utils import (
-    standardize_metric_name,
-    convert_datapoints_to_list_of_dicts,
-)
+from dvclive.utils import standardize_metric_name, convert_datapoints_to_list_of_dicts
 from dvclive.error import InvalidDataTypeError
 
 
