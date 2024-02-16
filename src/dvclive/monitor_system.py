@@ -1,6 +1,7 @@
 import abc
 import logging
-from typing import Dict, Union, Optional, List, Tuple
+import os
+from typing import Dict, Union, Optional, Tuple
 from pathlib import Path
 
 import psutil
@@ -34,16 +35,16 @@ class _SystemMonitor(abc.ABC):
         if not isinstance(interval, (int, float)):
             raise TypeError(  # noqa: TRY003
                 "System monitoring `interval` should be an `int` or a `float`, but got "
-                f"{type(interval)}"
+                f"'{type(interval)}'"
             )
         if not isinstance(num_samples, int):
             raise TypeError(  # noqa: TRY003
                 "System monitoring `num_samples` should be an `int`, but got "
-                f"{type(num_samples)}"
+                f"'{type(num_samples)}'"
             )
         if not isinstance(plot, bool):
             raise TypeError(  # noqa: TRY003
-                f"System monitoring `plot` should be a `bool`, but got {type(plot)}"
+                f"System monitoring `plot` should be a `bool`, but got '{type(plot)}'"
             )
 
         self._interval = interval  # seconds
@@ -104,7 +105,7 @@ class CPUMonitor(_SystemMonitor):
         self,
         interval: float = 0.5,
         num_samples: int = 10,
-        disks_to_monitor: Optional[List[str]] = None,
+        disks_to_monitor: Optional[Dict[str, str]] = None,
         plot: bool = True,
     ):
         """Monitor CPU resources and log them to DVC Live.
@@ -113,8 +114,10 @@ class CPUMonitor(_SystemMonitor):
             interval (float): interval in seconds between two measurements.
                 Defaults to 0.5.
             num_samples (int): number of samples to average. Defaults to 10.
-            disks_to_monitor (Optional[List[str]]): paths to the disks or partitions to
-                monitor disk usage statistics. Defaults to "/".
+            disks_to_monitor (Optional[Dict[str, str]]): paths to the disks or
+                partitions to monitor disk usage statistics. The key is the name that
+                will be displayed in the metric name. The value is the path to the disk
+                or partition. Defaults to {"main": "/"}.
             plot (bool): should the system metrics be saved as plots. Defaults to True.
 
         Raises:
@@ -122,12 +125,24 @@ class CPUMonitor(_SystemMonitor):
                 supported type.
         """
         super().__init__(interval=interval, num_samples=num_samples, plot=plot)
-        disks_to_monitor = ["/"] if disks_to_monitor is None else disks_to_monitor
-        for idx, path in enumerate(disks_to_monitor):
-            if not isinstance(path, str):
+        disks_to_monitor = (
+            {"main": "/"} if disks_to_monitor is None else disks_to_monitor
+        )
+        for disk_name, disk_path in disks_to_monitor.items():
+            if not isinstance(disk_name, str):
                 raise TypeError(  # noqa: TRY003
-                    "CPU monitoring `partitions_to_monitor` should be a `List[str]`, "
-                    f"but got {type(path)} at position {idx}"
+                    "Keys for `partitions_to_monitor` should be a `str`"
+                    f", but got '{type(disk_name)}'"
+                )
+            if not isinstance(disk_path, str):
+                raise TypeError(  # noqa: TRY003
+                    "Value for `partitions_to_monitor` should be a `str`"
+                    f", but got '{type(disk_path)}'"
+                )
+            if disk_name != os.path.normpath(disk_name):
+                raise ValueError(  # noqa: TRY003
+                    "Keys for `partitions_to_monitor` should be a valid name"
+                    f", but got '{disk_name}'"
                 )
         self._disks_to_monitor = disks_to_monitor
 
@@ -152,16 +167,15 @@ class CPUMonitor(_SystemMonitor):
             * (ram_info.total / GIGABYTES_DIVIDER),
             "system/ram/total (GB)": ram_info.total / GIGABYTES_DIVIDER,
         }
-        for disk_name in self._disks_to_monitor:
-            if not Path(disk_name).exists():
+        for disk_name, disk_path in self._disks_to_monitor.items():
+            if not Path(disk_path).exists():
                 continue
-            disk_info = psutil.disk_usage(disk_name)
-            disk_path = Path(disk_name).as_posix().lstrip("/")
+            disk_info = psutil.disk_usage(disk_path)
             disk_metrics = {
-                f"system/disk/usage (%)/{disk_path}": disk_info.percent,
-                f"system/disk/usage (GB)/{disk_path}": disk_info.used
+                f"system/disk/usage (%)/{disk_name}": disk_info.percent,
+                f"system/disk/usage (GB)/{disk_name}": disk_info.used
                 / GIGABYTES_DIVIDER,
-                f"system/disk/total (GB)/{disk_path}": disk_info.total
+                f"system/disk/total (GB)/{disk_name}": disk_info.total
                 / GIGABYTES_DIVIDER,
             }
             disk_metrics = {k.rstrip("/"): v for k, v in disk_metrics.items()}

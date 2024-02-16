@@ -52,12 +52,14 @@ tests = [
   "pytest-cov>=3.0.0,<4.0",
   "pytest-mock>=3.8.2,<4.0",
   "dvclive[image,plots,markdown]",
-  "ipython"
+  "ipython",
+  "pytest_voluptuous"
 ]
 dev = [
   "dvclive[all,tests]",
   "mypy>=1.1.1",
-  "types-PyYAML"
+  "types-PyYAML",
+  "voluptuous"
 ]
 mmcv = ["mmcv"]
 tf = ["tensorflow"]
