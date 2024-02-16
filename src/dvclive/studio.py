@@ -1,19 +1,24 @@
 # ruff: noqa: SLF001
+from __future__ import annotations
 import base64
 import logging
 import math
 import os
+from pathlib import PureWindowsPath
+from typing import TYPE_CHECKING, Literal, Mapping
 
 from dvc_studio_client.config import get_studio_config
 from dvc_studio_client.post_live_metrics import post_live_metrics
 
+if TYPE_CHECKING:
+    from dvclive.live import Live
 from dvclive.serialize import load_yaml
-from dvclive.utils import parse_metrics, rel_path
+from dvclive.utils import parse_metrics, rel_path, StrPath
 
 logger = logging.getLogger("dvclive")
 
 
-def _cast_to_numbers(datapoints):
+def _cast_to_numbers(datapoints: Mapping):
     for datapoint in datapoints:
         for k, v in datapoint.items():
             if k == "step":
@@ -29,18 +34,20 @@ def _cast_to_numbers(datapoints):
     return datapoints
 
 
-def _adapt_path(live, name):
+def _adapt_path(live: Live, name: StrPath):
     if live._dvc_repo is not None:
         name = rel_path(name, live._dvc_repo.root_dir)
+    if os.name == "nt":
+        name = str(PureWindowsPath(name).as_posix())
     return name
 
 
-def _adapt_image(image_path):
+def _adapt_image(image_path: StrPath):
     with open(image_path, "rb") as fobj:
         return base64.b64encode(fobj.read()).decode("utf-8")
 
 
-def _adapt_images(live):
+def _adapt_images(live: Live):
     return {
         _adapt_path(live, image.output_path): {"image": _adapt_image(image.output_path)}
         for image in live._images.values()
@@ -48,7 +55,7 @@ def _adapt_images(live):
     }
 
 
-def get_studio_updates(live):
+def get_studio_updates(live: Live):
     if os.path.isfile(live.params_file):
         params_file = live.params_file
         params_file = _adapt_path(live, params_file)
@@ -74,7 +81,7 @@ def get_studio_updates(live):
     return metrics, params, plots_to_send
 
 
-def get_dvc_studio_config(live):
+def get_dvc_studio_config(live: Live):
     config = {}
     if live._dvc_repo:
         config = live._dvc_repo.config.get("studio")
@@ -89,7 +96,7 @@ def increment_num_points_sent_to_studio(live, plots):
     return live
 
 
-def post_to_studio(live, event):
+def post_to_studio(live: Live, event: Literal["start", "data", "done"]):
     if event in live._studio_events_to_skip:
         return
 
@@ -98,7 +105,7 @@ def post_to_studio(live, event):
         kwargs["message"] = live._exp_message
     elif event == "data":
         metrics, params, plots = get_studio_updates(live)
-        kwargs["step"] = live.step
+        kwargs["step"] = live.step  # type: ignore
         kwargs["metrics"] = metrics
         kwargs["params"] = params
         kwargs["plots"] = plots
@@ -108,10 +115,10 @@ def post_to_studio(live, event):
     response = post_live_metrics(
         event,
         live._baseline_rev,
-        live._exp_name,
+        live._exp_name,  # type: ignore
         "dvclive",
         dvc_studio_config=live._dvc_studio_config,
-        **kwargs,
+        **kwargs,  # type: ignore
     )
     if not response:
         logger.warning(f"`post_to_studio` `{event}` failed.")
