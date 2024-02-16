@@ -39,7 +39,7 @@ dependencies = [
   "ruamel.yaml",
   "scmrepo",
   "psutil",
-  "py3nvml"
+  "pynvml"
 ]
 
 [project.optional-dependencies]

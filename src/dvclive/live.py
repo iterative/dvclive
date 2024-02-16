@@ -413,6 +413,17 @@ class Live:
         self._monitor_cpu = monitor_cpu
         self._monitor_cpu(self)
 
+    @property
+    def monitor_gpu(self) -> Optional[MonitorGPU]:
+        return self._monitor_gpu or None
+
+    @monitor_gpu.setter
+    def monitor_gpu(self, monitor_gpu: MonitorGPU) -> None:
+        if self._monitor_gpu is not None:
+            self._monitor_gpu.end()
+        self._monitor_gpu = monitor_gpu
+        self._monitor_gpu(self)
+
     def sync(self):
         self.make_summary()
 

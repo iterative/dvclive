@@ -11,7 +11,7 @@ from .error import InvalidDataTypeError
 
 
 try:
-    from py3nvml.py3nvml import (
+    from pynvml import (
         nvmlInit,
         nvmlDeviceGetCount,
         nvmlDeviceGetHandleByIndex,

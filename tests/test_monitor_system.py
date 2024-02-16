@@ -126,9 +126,11 @@ def test_monitor_system(tmp_dir, mocker):
     )
 
 
-def mock_py3nvml(mocker, num_gpus=2, crash_index=None):
+def mock_pynvml(mocker, num_gpus=2, crash_index=None):
     mocker.patch("dvclive.monitor_system.GPU_AVAILABLE", return_value=num_gpus)
     mocker.patch("dvclive.monitor_system.nvmlDeviceGetCount", return_value=num_gpus)
+    mocker.patch("dvclive.monitor_system.nvmlInit", return_value=None)
+    mocker.patch("dvclive.monitor_system.nvmlShutdown", return_value=None)
 
     mocked_memory_info = mocker.MagicMock()
     mocked_memory_info.used = 3 * 1024**3
@@ -152,7 +154,7 @@ def mock_py3nvml(mocker, num_gpus=2, crash_index=None):
 
 
 def test_get_gpus_metrics_mocker(mocker, tmp_dir):
-    mock_py3nvml(mocker, num_gpus=2)
+    mock_pynvml(mocker, num_gpus=2)
     with Live(
         tmp_dir,
         save_dvc_exp=False,
@@ -174,7 +176,7 @@ def test_get_gpus_metrics_mocker(mocker, tmp_dir):
 
 def test_monitor_gpu_system(tmp_dir, mocker):
     mock_psutil(mocker)
-    mock_py3nvml(mocker, num_gpus=1)
+    mock_pynvml(mocker, num_gpus=1)
     with Live(
         tmp_dir,
         save_dvc_exp=False,
