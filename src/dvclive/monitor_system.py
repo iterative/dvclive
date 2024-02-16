@@ -1,3 +1,4 @@
+import abc
 import logging
 from typing import Dict, Union, Optional, List, Tuple
 from pathlib import Path
@@ -7,8 +8,6 @@ from statistics import mean
 from threading import Event, Thread
 from funcy import merge_with
 
-from .error import InvalidDataTypeError
-
 
 logger = logging.getLogger("dvclive")
 MEGABYTES_DIVIDER = 1024.0**2
@@ -17,10 +16,10 @@ GIGABYTES_DIVIDER = 1024.0**3
 MINIMUM_CPU_USAGE_TO_BE_ACTIVE = 20
 
 
-class _MonitorSystem:
+class _SystemMonitor(abc.ABC):
     """
     Monitor system resources and log them to DVC Live.
-    Use a separate thread to call a `_get_metrics` function at  fix interval and
+    Use a separate thread to call a `_get_metrics` function at fix interval and
     aggregate the results of this sampling using the average.
     """
 
@@ -33,11 +32,19 @@ class _MonitorSystem:
         plot: bool = True,
     ):
         if not isinstance(interval, (int, float)):
-            raise InvalidDataTypeError("MonitorSystem.interval", type(interval))
+            raise TypeError(  # noqa: TRY003
+                "System monitoring `interval` should be an `int` or a `float`, but got "
+                f"{type(interval)}"
+            )
         if not isinstance(num_samples, int):
-            raise InvalidDataTypeError("MonitorSystem.sample", type(num_samples))
+            raise TypeError(  # noqa: TRY003
+                "System monitoring `num_samples` should be an `int`, but got "
+                f"{type(num_samples)}"
+            )
         if not isinstance(plot, bool):
-            raise InvalidDataTypeError("MonitorSystem.plot", type(plot))
+            raise TypeError(  # noqa: TRY003
+                f"System monitoring `plot` should be a `bool`, but got {type(plot)}"
+            )
 
         self._interval = interval  # seconds
         self._nb_samples = num_samples
@@ -78,14 +85,15 @@ class _MonitorSystem:
                     plot=None if blacklisted else self._plot,
                 )
 
-    def _get_metrics(self):
+    @abc.abstractmethod
+    def _get_metrics(self) -> Dict[str, Union[float, int]]:
         pass
 
     def end(self):
         self._shutdown_event.set()
 
 
-class MonitorCPU(_MonitorSystem):
+class CPUMonitor(_SystemMonitor):
     _plot_blacklist_prefix: Tuple = (
         "system/cpu/count",
         "system/ram/total (GB)",
@@ -96,7 +104,7 @@ class MonitorCPU(_MonitorSystem):
         self,
         interval: float = 0.5,
         num_samples: int = 10,
-        directories_to_monitor: Optional[List[str]] = None,
+        disks_to_monitor: Optional[List[str]] = None,
         plot: bool = True,
     ):
         """Monitor CPU resources and log them to DVC Live.
@@ -105,25 +113,23 @@ class MonitorCPU(_MonitorSystem):
             interval (float): interval in seconds between two measurements.
                 Defaults to 0.5.
             num_samples (int): number of samples to average. Defaults to 10.
-            directories_to_monitor (Optional[List[str]]): paths of the directories that
-            needs to be monitor for disk storage metrics. Defaults to the current
-            directory.
+            disks_to_monitor (Optional[List[str]]): paths to the disks or partitions to
+                monitor disk usage statistics. Defaults to "/".
             plot (bool): should the system metrics be saved as plots. Defaults to True.
 
         Raises:
-            InvalidDataTypeError: if the arguments passed to the function don't have a
+            TypeError: if the arguments passed to the function don't have a
                 supported type.
         """
         super().__init__(interval=interval, num_samples=num_samples, plot=plot)
-        directories_to_monitor = (
-            ["."] if directories_to_monitor is None else directories_to_monitor
-        )
-        for idx, path in enumerate(directories_to_monitor):
+        disks_to_monitor = ["/"] if disks_to_monitor is None else disks_to_monitor
+        for idx, path in enumerate(disks_to_monitor):
             if not isinstance(path, str):
-                raise InvalidDataTypeError(
-                    f"MonitorCPU.directories_to_monitor[{idx}]", type(path)
+                raise TypeError(  # noqa: TRY003
+                    "CPU monitoring `partitions_to_monitor` should be a `List[str]`, "
+                    f"but got {type(path)} at position {idx}"
                 )
-        self._directories_to_monitor = directories_to_monitor
+        self._disks_to_monitor = disks_to_monitor
 
     def _get_metrics(self) -> Dict[str, Union[float, int]]:
         ram_info = psutil.virtual_memory()
@@ -146,13 +152,18 @@ class MonitorCPU(_MonitorSystem):
             * (ram_info.total / GIGABYTES_DIVIDER),
             "system/ram/total (GB)": ram_info.total / GIGABYTES_DIVIDER,
         }
-        for idx, directory in enumerate(self._directories_to_monitor):
-            if not Path(directory).exists():
+        for disk_name in self._disks_to_monitor:
+            if not Path(disk_name).exists():
                 continue
-            disk_info = psutil.disk_usage(directory)
-            result[f"system/disk/usage (%)/{idx}"] = disk_info.percent
-            result[f"system/disk/usage (GB)/{idx}"] = disk_info.used / GIGABYTES_DIVIDER
-            result[f"system/disk/total (GB)/{idx}"] = (
-                disk_info.total / GIGABYTES_DIVIDER
-            )
+            disk_info = psutil.disk_usage(disk_name)
+            disk_path = Path(disk_name).as_posix().lstrip("/")
+            disk_metrics = {
+                f"system/disk/usage (%)/{disk_path}": disk_info.percent,
+                f"system/disk/usage (GB)/{disk_path}": disk_info.used
+                / GIGABYTES_DIVIDER,
+                f"system/disk/total (GB)/{disk_path}": disk_info.total
+                / GIGABYTES_DIVIDER,
+            }
+            disk_metrics = {k.rstrip("/"): v for k, v in disk_metrics.items()}
+            result.update(disk_metrics)
         return result

@@ -9,17 +9,7 @@ import shutil
 import tempfile
 
 from pathlib import Path, PurePath
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-    TYPE_CHECKING,
-    Literal,
-)
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     import numpy as np
@@ -51,7 +41,7 @@ from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEn
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, post_to_studio
-from .monitor_system import MonitorCPU
+from .monitor_system import CPUMonitor
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -174,10 +164,10 @@ class Live:
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
 
-        self._monitor_cpu = None
+        self._cpu_monitor = None
         if monitor_system:
-            self._monitor_cpu = MonitorCPU()
-            self._monitor_cpu(self)
+            self._cpu_monitor = CPUMonitor()
+            self._cpu_monitor(self)
 
     def _init_resume(self):
         self._read_params()
@@ -398,15 +388,15 @@ class Live:
         logger.debug(f"Step: {self.step}")
 
     @property
-    def monitor_cpu(self) -> Optional[MonitorCPU]:
-        return self._monitor_cpu or None
+    def cpu_monitor(self) -> Optional[CPUMonitor]:
+        return self._cpu_monitor or None
 
-    @monitor_cpu.setter
-    def monitor_cpu(self, monitor_cpu: MonitorCPU) -> None:
-        if self._monitor_cpu is not None:
-            self._monitor_cpu.end()
-        self._monitor_cpu = monitor_cpu
-        self._monitor_cpu(self)
+    @cpu_monitor.setter
+    def cpu_monitor(self, cpu_monitor: CPUMonitor) -> None:
+        if self._cpu_monitor is not None:
+            self._cpu_monitor.end()
+        self._cpu_monitor = cpu_monitor
+        self._cpu_monitor(self)
 
     def sync(self):
         self.make_summary()
@@ -897,8 +887,8 @@ class Live:
             self.step = self.summary["step"]
 
         # Kill threads that monitor the system metrics
-        if self._monitor_cpu is not None:
-            self._monitor_cpu.end()
+        if self._cpu_monitor is not None:
+            self._cpu_monitor.end()
 
         self.sync()
 

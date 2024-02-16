@@ -2,7 +2,7 @@ import time
 from pathlib import Path
 
 from dvclive import Live
-from dvclive.monitor_system import MonitorCPU
+from dvclive.monitor_system import CPUMonitor
 from dvclive.utils import parse_metrics
 
 
@@ -40,7 +40,7 @@ def test_get_cpus_metrics_mocker(tmp_dir, mocker):
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        monitor = MonitorCPU(directories_to_monitor=["/", "/"])
+        monitor = CPUMonitor(disks_to_monitor=["/", "/home"])
         monitor(live)
         metrics = monitor._get_metrics()
         monitor.end()
@@ -51,32 +51,32 @@ def test_get_cpus_metrics_mocker(tmp_dir, mocker):
     assert "system/ram/usage (%)" in metrics
     assert "system/ram/usage (GB)" in metrics
     assert "system/ram/total (GB)" in metrics
-    assert "system/disk/usage (%)/0" in metrics
-    assert "system/disk/usage (%)/1" in metrics
-    assert "system/disk/usage (GB)/0" in metrics
-    assert "system/disk/usage (GB)/1" in metrics
-    assert "system/disk/total (GB)/0" in metrics
-    assert "system/disk/total (GB)/1" in metrics
+    assert "system/disk/usage (%)" in metrics
+    assert "system/disk/usage (%)/home" in metrics
+    assert "system/disk/usage (GB)" in metrics
+    assert "system/disk/usage (GB)/home" in metrics
+    assert "system/disk/total (GB)" in metrics
+    assert "system/disk/total (GB)/home" in metrics
 
 
-def test_ignore_missing_directories(tmp_dir, mocker):
+def test_ignore_non_existent_directories(tmp_dir, mocker):
     mock_psutil(mocker)
     with Live(
         tmp_dir,
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        missing_directories = "______"
-        monitor = MonitorCPU(directories_to_monitor=["/", missing_directories])
+        non_existent_directories = "/non-existent"
+        monitor = CPUMonitor(disks_to_monitor=["/", non_existent_directories])
         monitor(live)
         metrics = monitor._get_metrics()
         monitor.end()
 
-    assert not Path(missing_directories).exists()
+    assert not Path(non_existent_directories).exists()
 
-    assert "system/disk/usage (%)/1" not in metrics
-    assert "system/disk/usage (GB)/1" not in metrics
-    assert "system/disk/total (GB)/1" not in metrics
+    assert "system/disk/usage (%)/non-existent" not in metrics
+    assert "system/disk/usage (GB)/non-existent" not in metrics
+    assert "system/disk/total (GB)/non-existent" not in metrics
 
 
 def test_monitor_system(tmp_dir, mocker):
@@ -103,7 +103,6 @@ def test_monitor_system(tmp_dir, mocker):
     assert "total (GB)" in latest["system"]["ram"]
     assert "disk" in latest["system"]
     assert "usage (%)" in latest["system"]["disk"]
-    assert "0" in latest["system"]["disk"]["usage (%)"]
     assert "usage (GB)" in latest["system"]["disk"]
     assert "total (GB)" in latest["system"]["disk"]
 
@@ -114,13 +113,11 @@ def test_monitor_system(tmp_dir, mocker):
     )
     assert any(str(Path("system/ram/usage (%).tsv")) in key for key in timeseries)
     assert any(str(Path("system/ram/usage (GB).tsv")) in key for key in timeseries)
-    assert any(str(Path("system/disk/usage (%)/0.tsv")) in key for key in timeseries)
-    assert any(str(Path("system/disk/usage (GB)/0.tsv")) in key for key in timeseries)
+    assert any(str(Path("system/disk/usage (%).tsv")) in key for key in timeseries)
+    assert any(str(Path("system/disk/usage (GB).tsv")) in key for key in timeseries)
     assert all(len(timeseries[key]) == 2 for key in timeseries if "system" in key)
 
     # blacklisted timeseries
     assert all(str(Path("system/cpu/count.tsv")) not in key for key in timeseries)
     assert all(str(Path("system/ram/total (GB).tsv")) not in key for key in timeseries)
-    assert all(
-        str(Path("system/disk/total (GB)/0.tsv")) not in key for key in timeseries
-    )
+    assert all(str(Path("system/disk/total (GB).tsv")) not in key for key in timeseries)
