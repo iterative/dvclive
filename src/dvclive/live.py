@@ -160,7 +160,6 @@ class Live:
         self._studio_events_to_skip: Set[str] = set()
         self._dvc_studio_config: Dict[str, Any] = {}
         self._num_points_sent_to_studio: Dict[str, int] = {}
-        self._num_points_read_from_file: Dict[str, int] = {}
         self._init_studio()
 
     def _init_resume(self):

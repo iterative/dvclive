@@ -63,12 +63,10 @@ def get_studio_updates(live):
     metrics = {metrics_file: {"data": metrics}}
 
     plots_to_send = {}
-    live._num_points_read_from_file = {}
     for name, plot in plots.items():
         path = _adapt_path(live, name)
-        nb_points_already_sent = live._num_points_sent_to_studio.get(path, 0)
-        plots_to_send[path] = _cast_to_numbers(plot[nb_points_already_sent:])
-        live._num_points_read_from_file.update({path: len(plot)})
+        num_points_sent = live._num_points_sent_to_studio.get(path, 0)
+        plots_to_send[path] = _cast_to_numbers(plot[num_points_sent:])
 
     plots_to_send = {k: {"data": v} for k, v in plots_to_send.items()}
     plots_to_send.update(_adapt_images(live))
@@ -81,6 +79,14 @@ def get_dvc_studio_config(live):
     if live._dvc_repo:
         config = live._dvc_repo.config.get("studio")
     return get_studio_config(dvc_studio_config=config)
+
+
+def increment_num_points_sent_to_studio(live, plots):
+    for name, plot in plots.items():
+        if "data" in plot:
+            num_points_sent = live._num_points_sent_to_studio.get(name, 0)
+            live._num_points_sent_to_studio[name] = num_points_sent + len(plot["data"])
+    return live
 
 
 def post_to_studio(live, event):
@@ -114,8 +120,7 @@ def post_to_studio(live, event):
             live._studio_events_to_skip.add("data")
             live._studio_events_to_skip.add("done")
     elif event == "data":
-        for path, num_points in live._num_points_read_from_file.items():
-            live._num_points_sent_to_studio[path] = num_points
+        live = increment_num_points_sent_to_studio(live, plots)
         live._latest_studio_step = live.step
 
     if event == "done":
