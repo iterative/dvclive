@@ -464,3 +464,17 @@ def test_post_to_studio_skip_if_no_repo_url(
         live.next_step()
 
     assert mocked_post.call_count == 0
+
+
+def test_post_to_studio_increment_internal_state(
+    tmp_dir, mocked_dvc_repo, mocked_studio_post
+):
+    live = Live()
+    foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
+
+    live.log_metric("foo", 1)
+    live.make_summary()  # required for `post_to_studio`
+    assert live._num_points_sent_to_studio == {}
+
+    live.post_to_studio("data")
+    assert live._num_points_sent_to_studio == {foo_path: 1}
