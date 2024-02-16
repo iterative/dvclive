@@ -16,6 +16,18 @@ GIGABYTES_DIVIDER = 1024.0**3
 
 MINIMUM_CPU_USAGE_TO_BE_ACTIVE = 20
 
+METRIC_CPU_COUNT = "system/cpu/count"
+METRIC_CPU_USAGE_PERCENT = "system/cpu/usage (%)"
+METRIC_CPU_PARALLELIZATION_PERCENT = "system/cpu/parallelization (%)"
+
+METRIC_RAM_USAGE_PERCENT = "system/ram/usage (%)"
+METRIC_RAM_USAGE_GB = "system/ram/usage (GB)"
+METRIC_RAM_TOTAL_GB = "system/ram/total (GB)"
+
+METRIC_DISK_USAGE_PERCENT = "system/disk/usage (%)"
+METRIC_DISK_USAGE_GB = "system/disk/usage (GB)"
+METRIC_DISK_TOTAL_GB = "system/disk/total (GB)"
+
 
 class _SystemMonitor(abc.ABC):
     """
@@ -96,8 +108,8 @@ class _SystemMonitor(abc.ABC):
 
 class CPUMonitor(_SystemMonitor):
     _plot_blacklist_prefix: Tuple = (
-        "system/cpu/count",
-        "system/ram/total (GB)",
+        METRIC_CPU_COUNT,
+        METRIC_RAM_TOTAL_GB,
         "system/disk/total (GB)",
     )
 
@@ -151,9 +163,9 @@ class CPUMonitor(_SystemMonitor):
         nb_cpus = psutil.cpu_count()
         cpus_percent = psutil.cpu_percent(percpu=True)
         result = {
-            "system/cpu/usage (%)": mean(cpus_percent),
-            "system/cpu/count": nb_cpus,
-            "system/cpu/parallelization (%)": len(
+            METRIC_CPU_COUNT: nb_cpus,
+            METRIC_CPU_USAGE_PERCENT: mean(cpus_percent),
+            METRIC_CPU_PARALLELIZATION_PERCENT: len(
                 [
                     percent
                     for percent in cpus_percent
@@ -162,20 +174,20 @@ class CPUMonitor(_SystemMonitor):
             )
             * 100
             / nb_cpus,
-            "system/ram/usage (%)": ram_info.percent,
-            "system/ram/usage (GB)": (ram_info.percent / 100)
+            METRIC_RAM_USAGE_PERCENT: ram_info.percent,
+            METRIC_RAM_USAGE_GB: (ram_info.percent / 100)
             * (ram_info.total / GIGABYTES_DIVIDER),
-            "system/ram/total (GB)": ram_info.total / GIGABYTES_DIVIDER,
+            METRIC_RAM_TOTAL_GB: ram_info.total / GIGABYTES_DIVIDER,
         }
         for disk_name, disk_path in self._disks_to_monitor.items():
             if not Path(disk_path).exists():
                 continue
             disk_info = psutil.disk_usage(disk_path)
             disk_metrics = {
-                f"system/disk/usage (%)/{disk_name}": disk_info.percent,
-                f"system/disk/usage (GB)/{disk_name}": disk_info.used
+                f"{METRIC_DISK_USAGE_PERCENT}/{disk_name}": disk_info.percent,
+                f"{METRIC_DISK_USAGE_GB}/{disk_name}": disk_info.used
                 / GIGABYTES_DIVIDER,
-                f"system/disk/total (GB)/{disk_name}": disk_info.total
+                f"{METRIC_DISK_TOTAL_GB}/{disk_name}": disk_info.total
                 / GIGABYTES_DIVIDER,
             }
             disk_metrics = {k.rstrip("/"): v for k, v in disk_metrics.items()}

@@ -1,8 +1,20 @@
 import time
 from pathlib import Path
+import dpath
 
 from dvclive import Live
-from dvclive.monitor_system import CPUMonitor
+from dvclive.monitor_system import (
+    CPUMonitor,
+    METRIC_CPU_COUNT,
+    METRIC_CPU_USAGE_PERCENT,
+    METRIC_CPU_PARALLELIZATION_PERCENT,
+    METRIC_RAM_USAGE_PERCENT,
+    METRIC_RAM_USAGE_GB,
+    METRIC_RAM_TOTAL_GB,
+    METRIC_DISK_USAGE_PERCENT,
+    METRIC_DISK_USAGE_GB,
+    METRIC_DISK_TOTAL_GB,
+)
 from dvclive.utils import parse_metrics
 
 from voluptuous import Union
@@ -50,18 +62,18 @@ def test_get_cpus_metrics_mocker(tmp_dir, mocker):
 
     assert metrics == S(
         {
-            "system/cpu/usage (%)": Union(int, float),
-            "system/cpu/count": int,
-            "system/cpu/parallelization (%)": Union(int, float),
-            "system/ram/usage (%)": Union(int, float),
-            "system/ram/usage (GB)": Union(int, float),
-            "system/ram/total (GB)": Union(int, float),
-            "system/disk/usage (%)/main": Union(int, float),
-            "system/disk/usage (%)/home": Union(int, float),
-            "system/disk/usage (GB)/main": Union(int, float),
-            "system/disk/usage (GB)/home": Union(int, float),
-            "system/disk/total (GB)/main": Union(int, float),
-            "system/disk/total (GB)/home": Union(int, float),
+            METRIC_CPU_COUNT: int,
+            METRIC_CPU_USAGE_PERCENT: Union(int, float),
+            METRIC_CPU_PARALLELIZATION_PERCENT: Union(int, float),
+            METRIC_RAM_USAGE_PERCENT: Union(int, float),
+            METRIC_RAM_USAGE_GB: Union(int, float),
+            METRIC_RAM_TOTAL_GB: Union(int, float),
+            f"{METRIC_DISK_USAGE_PERCENT}/main": Union(int, float),
+            f"{METRIC_DISK_USAGE_PERCENT}/home": Union(int, float),
+            f"{METRIC_DISK_USAGE_GB}/main": Union(int, float),
+            f"{METRIC_DISK_USAGE_GB}/home": Union(int, float),
+            f"{METRIC_DISK_TOTAL_GB}/main": Union(int, float),
+            f"{METRIC_DISK_TOTAL_GB}/home": Union(int, float),
         }
     )
 
@@ -109,9 +121,9 @@ def test_ignore_non_existent_directories(tmp_dir, mocker):
 
     assert not Path(non_existent_disk).exists()
 
-    assert "system/disk/usage (%)/non-existent" not in metrics
-    assert "system/disk/usage (GB)/non-existent" not in metrics
-    assert "system/disk/total (GB)/non-existent" not in metrics
+    assert f"{METRIC_DISK_USAGE_PERCENT}/non-existent" not in metrics
+    assert f"{METRIC_DISK_USAGE_GB}/non-existent" not in metrics
+    assert f"{METRIC_DISK_TOTAL_GB}/non-existent" not in metrics
 
 
 def test_monitor_system_metrics(tmp_dir, mocker):
@@ -123,7 +135,7 @@ def test_monitor_system_metrics(tmp_dir, mocker):
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        live.cpu_monitor = CPUMonitor(interval=0.05, num_samples=4)
+        live.cpu_monitor = CPUMonitor(interval=interval, num_samples=num_samples)
         time.sleep(interval * num_samples + interval)  # log metrics once
         live.next_step()
         time.sleep(interval * num_samples + interval)  # log metrics twice
@@ -131,29 +143,22 @@ def test_monitor_system_metrics(tmp_dir, mocker):
 
         _, latest = parse_metrics(live)
 
-    # metrics.json file contains all the system metrics
-    assert latest == S(
-        {
-            "step": Union(int, float),
-            "system": {
-                "cpu": {
-                    "usage (%)": Union(int, float),
-                    "count": Union(int, float),
-                    "parallelization (%)": Union(int, float),
-                },
-                "ram": {
-                    "usage (%)": Union(int, float),
-                    "usage (GB)": Union(int, float),
-                    "total (GB)": Union(int, float),
-                },
-                "disk": {
-                    "usage (%)": {"main": Union(int, float)},
-                    "usage (GB)": {"main": Union(int, float)},
-                    "total (GB)": {"main": Union(int, float)},
-                },
-            },
-        }
-    )
+    schema = {}
+    for name in [
+        "step",
+        METRIC_CPU_COUNT,
+        METRIC_CPU_USAGE_PERCENT,
+        METRIC_CPU_PARALLELIZATION_PERCENT,
+        METRIC_RAM_USAGE_PERCENT,
+        METRIC_RAM_USAGE_GB,
+        METRIC_RAM_TOTAL_GB,
+        f"{METRIC_DISK_USAGE_PERCENT}/main",
+        f"{METRIC_DISK_USAGE_GB}/main",
+        f"{METRIC_DISK_TOTAL_GB}/main",
+    ]:
+        dpath.new(schema, name, Union(int, float))
+
+    assert latest == S(schema)
 
 
 def test_monitor_system_timeseries(tmp_dir, mocker):
@@ -165,7 +170,7 @@ def test_monitor_system_timeseries(tmp_dir, mocker):
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        live.cpu_monitor = CPUMonitor(interval=0.05, num_samples=4)
+        live.cpu_monitor = CPUMonitor(interval=interval, num_samples=num_samples)
         time.sleep(interval * num_samples + interval)  # log metrics once
         live.next_step()
         time.sleep(interval * num_samples + interval)  # log metrics twice
@@ -173,29 +178,28 @@ def test_monitor_system_timeseries(tmp_dir, mocker):
 
         timeseries, _ = parse_metrics(live)
 
-    def timeserie_metric_schema(name):
+    def timeserie_schema(name):
         return [{name: str, "timestamp": str, "step": str} for _ in range(2)]
 
     # timeseries contains all the system metrics
+    prefix = Path(tmp_dir) / "plots/metrics"
     assert timeseries == S(
         {
-            str(
-                Path(tmp_dir) / "plots/metrics" / "system/cpu/usage (%).tsv"
-            ): timeserie_metric_schema("usage (%)"),
-            str(
-                Path(tmp_dir) / "plots/metrics" / "system/cpu/parallelization (%).tsv"
-            ): timeserie_metric_schema("parallelization (%)"),
-            str(
-                Path(tmp_dir) / "plots/metrics" / "system/ram/usage (%).tsv"
-            ): timeserie_metric_schema("usage (%)"),
-            str(
-                Path(tmp_dir) / "plots/metrics" / "system/ram/usage (GB).tsv"
-            ): timeserie_metric_schema("usage (GB)"),
-            str(
-                Path(tmp_dir) / "plots/metrics" / "system/disk/usage (%)/main.tsv"
-            ): timeserie_metric_schema("main"),
-            str(
-                Path(tmp_dir) / "plots/metrics" / "system/disk/usage (GB)/main.tsv"
-            ): timeserie_metric_schema("main"),
+            str(prefix / f"{METRIC_CPU_USAGE_PERCENT}.tsv"): timeserie_schema(
+                METRIC_CPU_USAGE_PERCENT.split("/")[-1]
+            ),
+            str(prefix / f"{METRIC_CPU_PARALLELIZATION_PERCENT}.tsv"): timeserie_schema(
+                METRIC_CPU_PARALLELIZATION_PERCENT.split("/")[-1]
+            ),
+            str(prefix / f"{METRIC_RAM_USAGE_PERCENT}.tsv"): timeserie_schema(
+                METRIC_RAM_USAGE_PERCENT.split("/")[-1]
+            ),
+            str(prefix / f"{METRIC_RAM_USAGE_GB}.tsv"): timeserie_schema(
+                METRIC_RAM_USAGE_GB.split("/")[-1]
+            ),
+            str(prefix / f"{METRIC_DISK_USAGE_PERCENT}/main.tsv"): timeserie_schema(
+                "main"
+            ),
+            str(prefix / f"{METRIC_DISK_USAGE_GB}/main.tsv"): timeserie_schema("main"),
         }
     )

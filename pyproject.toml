@@ -34,6 +34,7 @@ dependencies = [
   "dvc>=3.33.3",
   "dvc-render>=1.0.0,<2",
   "dvc-studio-client>=0.17.1,<1",
+  "dpath",
   "funcy",
   "gto",
   "ruamel.yaml",
