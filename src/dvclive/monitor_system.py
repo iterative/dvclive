@@ -2,7 +2,6 @@ import abc
 import logging
 import os
 from typing import Dict, Union, Optional, Tuple
-from pathlib import Path
 
 import psutil
 from statistics import mean
@@ -40,23 +39,25 @@ class _SystemMonitor(abc.ABC):
 
     def __init__(
         self,
-        interval: float = 0.5,
-        num_samples: int = 10,
+        interval: float,
+        num_samples: int,
         plot: bool = True,
     ):
-        if not isinstance(interval, (int, float)):
-            raise TypeError(  # noqa: TRY003
-                "System monitoring `interval` should be an `int` or a `float`, but got "
-                f"'{type(interval)}'"
+        max_interval = 0.1
+        if interval > max_interval:
+            interval = max_interval
+            logger.warning(
+                f"System monitoring `interval` should be less than {max_interval} "
+                f"seconds. Setting `interval` to {interval} seconds."
             )
-        if not isinstance(num_samples, int):
-            raise TypeError(  # noqa: TRY003
-                "System monitoring `num_samples` should be an `int`, but got "
-                f"'{type(num_samples)}'"
-            )
-        if not isinstance(plot, bool):
-            raise TypeError(  # noqa: TRY003
-                f"System monitoring `plot` should be a `bool`, but got '{type(plot)}'"
+
+        min_num_samples = 1
+        max_num_samples = 30
+        if min_num_samples < num_samples < max_num_samples:
+            num_samples = max(min(num_samples, max_num_samples), min_num_samples)
+            logger.warning(
+                f"System monitoring `num_samples` should be between {min_num_samples} "
+                f"and {max_num_samples}. Setting `num_samples` to {num_samples}."
             )
 
         self._interval = interval  # seconds
@@ -115,9 +116,9 @@ class CPUMonitor(_SystemMonitor):
 
     def __init__(
         self,
-        interval: float = 0.5,
-        num_samples: int = 10,
-        disks_to_monitor: Optional[Dict[str, str]] = None,
+        interval: float = 0.1,
+        num_samples: int = 20,
+        folders_to_monitor: Optional[Dict[str, str]] = None,
         plot: bool = True,
     ):
         """Monitor CPU resources and log them to DVC Live.
@@ -126,37 +127,35 @@ class CPUMonitor(_SystemMonitor):
             interval (float): interval in seconds between two measurements.
                 Defaults to 0.5.
             num_samples (int): number of samples to average. Defaults to 10.
-            disks_to_monitor (Optional[Dict[str, str]]): paths to the disks or
-                partitions to monitor disk usage statistics. The key is the name that
-                will be displayed in the metric name. The value is the path to the disk
-                or partition. Defaults to {"main": "/"}.
+            folders_to_monitor (Optional[Dict[str, str]]): monitor disk usage
+                statistics about the partition which contains the given paths. The
+                statistics include total and used space in gygabytes and percent.
+                This argument expect a dict where the key is the name that will be used
+                in the metric's name and the value is the path to the folder to monitor.
+                Defaults to {"main": "/"}.
             plot (bool): should the system metrics be saved as plots. Defaults to True.
 
         Raises:
-            TypeError: if the arguments passed to the function don't have a
+            ValueError: if the arguments passed to the function don't have a
                 supported type.
         """
         super().__init__(interval=interval, num_samples=num_samples, plot=plot)
-        disks_to_monitor = (
-            {"main": "/"} if disks_to_monitor is None else disks_to_monitor
+        folders_to_monitor = (
+            {"main": "/"} if folders_to_monitor is None else folders_to_monitor
         )
-        for disk_name, disk_path in disks_to_monitor.items():
-            if not isinstance(disk_name, str):
-                raise TypeError(  # noqa: TRY003
-                    "Keys for `partitions_to_monitor` should be a `str`"
-                    f", but got '{type(disk_name)}'"
-                )
-            if not isinstance(disk_path, str):
-                raise TypeError(  # noqa: TRY003
-                    "Value for `partitions_to_monitor` should be a `str`"
-                    f", but got '{type(disk_path)}'"
-                )
+        self._disks_to_monitor = {}
+        for disk_name, disk_path in folders_to_monitor.items():
             if disk_name != os.path.normpath(disk_name):
                 raise ValueError(  # noqa: TRY003
                     "Keys for `partitions_to_monitor` should be a valid name"
-                    f", but got '{disk_name}'"
+                    f", but got '{disk_name}'."
                 )
-        self._disks_to_monitor = disks_to_monitor
+            try:
+                psutil.disk_usage(disk_path)
+            except OSError:
+                logger.warning(f"Couldn't find partition '{disk_path}', ignoring it.")
+                continue
+            self._disks_to_monitor[disk_name] = disk_path
 
     def _get_metrics(self) -> Dict[str, Union[float, int]]:
         ram_info = psutil.virtual_memory()
@@ -180,8 +179,6 @@ class CPUMonitor(_SystemMonitor):
             METRIC_RAM_TOTAL_GB: ram_info.total / GIGABYTES_DIVIDER,
         }
         for disk_name, disk_path in self._disks_to_monitor.items():
-            if not Path(disk_path).exists():
-                continue
             disk_info = psutil.disk_usage(disk_path)
             disk_metrics = {
                 f"{METRIC_DISK_USAGE_PERCENT}/{disk_name}": disk_info.percent,

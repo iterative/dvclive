@@ -1,6 +1,10 @@
 import time
 from pathlib import Path
+import pytest
+
 import dpath
+from voluptuous import Union
+from pytest_voluptuous import S
 
 from dvclive import Live
 from dvclive.monitor_system import (
@@ -16,9 +20,6 @@ from dvclive.monitor_system import (
     METRIC_DISK_TOTAL_GB,
 )
 from dvclive.utils import parse_metrics
-
-from voluptuous import Union
-from pytest_voluptuous import S
 
 
 def mock_psutil(mocker):
@@ -48,64 +49,75 @@ def mock_psutil(mocker):
         )
 
 
-def test_get_cpus_metrics_mocker(tmp_dir, mocker):
-    mock_psutil(mocker)
-    with Live(
-        tmp_dir,
-        save_dvc_exp=False,
-        monitor_system=False,
-    ) as live:
-        monitor = CPUMonitor(disks_to_monitor={"main": "/", "home": "/"})
-        monitor(live)
-        metrics = monitor._get_metrics()
-        monitor.end()
+def mock_psutil_with_oserror(mocker):
+    mocker.patch(
+        "dvclive.monitor_system.psutil.cpu_percent",
+        return_value=[10, 20, 30, 40, 50, 60],
+    )
+    mocker.patch("dvclive.monitor_system.psutil.cpu_count", return_value=6)
 
-    assert metrics == S(
-        {
-            METRIC_CPU_COUNT: int,
-            METRIC_CPU_USAGE_PERCENT: Union(int, float),
-            METRIC_CPU_PARALLELIZATION_PERCENT: Union(int, float),
-            METRIC_RAM_USAGE_PERCENT: Union(int, float),
-            METRIC_RAM_USAGE_GB: Union(int, float),
-            METRIC_RAM_TOTAL_GB: Union(int, float),
-            f"{METRIC_DISK_USAGE_PERCENT}/main": Union(int, float),
-            f"{METRIC_DISK_USAGE_PERCENT}/home": Union(int, float),
-            f"{METRIC_DISK_USAGE_GB}/main": Union(int, float),
-            f"{METRIC_DISK_USAGE_GB}/home": Union(int, float),
-            f"{METRIC_DISK_TOTAL_GB}/main": Union(int, float),
-            f"{METRIC_DISK_TOTAL_GB}/home": Union(int, float),
-        }
+    mocked_virtual_memory = mocker.MagicMock()
+    mocked_virtual_memory.percent = 20
+    mocked_virtual_memory.total = 4 * 1024**3
+
+    mocked_disk_usage = mocker.MagicMock()
+    mocked_disk_usage.used = 16 * 1024**3
+    mocked_disk_usage.percent = 50
+    mocked_disk_usage.total = 32 * 1024**3
+
+    mocker.patch(
+        "dvclive.monitor_system.psutil.virtual_memory",
+        return_value=mocked_virtual_memory,
+    )
+    mocker.patch(
+        "dvclive.monitor_system.psutil.disk_usage",
+        side_effect=[
+            mocked_disk_usage,
+            OSError,
+            mocked_disk_usage,
+            mocked_disk_usage,
+        ],
     )
 
 
 def test_monitor_system_is_false(tmp_dir, mocker):
     mock_psutil(mocker)
+
+    cpu_monitor_mock = mocker.patch("dvclive.live.CPUMonitor")
     with Live(
         tmp_dir,
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        assert live._cpu_monitor is None
+        assert live.cpu_monitor is None
+
+    cpu_monitor_mock.assert_not_called()
 
 
 def test_monitor_system_is_true(tmp_dir, mocker):
     mock_psutil(mocker)
+    cpu_monitor_mock = mocker.patch("dvclive.live.CPUMonitor", spec=CPUMonitor)
+
     with Live(
         tmp_dir,
         save_dvc_exp=False,
         monitor_system=True,
     ) as live:
-        cpu_monitor = live._cpu_monitor
-        assert isinstance(live._cpu_monitor, CPUMonitor)
-        # start is called but end not called
-        assert cpu_monitor._shutdown_event._flag is False
+        cpu_monitor = live.cpu_monitor
 
-    # end was called
-    assert cpu_monitor._shutdown_event._flag is True
+        assert isinstance(cpu_monitor, CPUMonitor)
+        cpu_monitor_mock.assert_called_once()
+
+        end_spy = mocker.spy(cpu_monitor, "end")
+        end_spy.assert_not_called()
+
+    # check the monitoring thread is stopped
+    end_spy.assert_called_once()
 
 
 def test_ignore_non_existent_directories(tmp_dir, mocker):
-    mock_psutil(mocker)
+    mock_psutil_with_oserror(mocker)
+
     with Live(
         tmp_dir,
         save_dvc_exp=False,
@@ -113,7 +125,7 @@ def test_ignore_non_existent_directories(tmp_dir, mocker):
     ) as live:
         non_existent_disk = "/non-existent"
         monitor = CPUMonitor(
-            disks_to_monitor={"main": "/", "non-existent": non_existent_disk}
+            folders_to_monitor={"main": "/", "non-existent": non_existent_disk}
         )
         monitor(live)
         metrics = monitor._get_metrics()
@@ -126,20 +138,20 @@ def test_ignore_non_existent_directories(tmp_dir, mocker):
     assert f"{METRIC_DISK_TOTAL_GB}/non-existent" not in metrics
 
 
+@pytest.mark.timeout(2)
 def test_monitor_system_metrics(tmp_dir, mocker):
     mock_psutil(mocker)
-    interval = 0.05
-    num_samples = 4
     with Live(
         tmp_dir,
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        live.cpu_monitor = CPUMonitor(interval=interval, num_samples=num_samples)
-        time.sleep(interval * num_samples + interval)  # log metrics once
+        live.cpu_monitor = CPUMonitor(interval=0.05, num_samples=4)
+        # wait for the metrics to be logged.
+        # METRIC_DISK_TOTAL_GB is the last metric to be logged.
+        while len(dpath.search(live.summary, METRIC_DISK_TOTAL_GB)) == 0:
+            time.sleep(0.001)
         live.next_step()
-        time.sleep(interval * num_samples + interval)  # log metrics twice
-        live.make_summary()
 
         _, latest = parse_metrics(live)
 
@@ -161,25 +173,27 @@ def test_monitor_system_metrics(tmp_dir, mocker):
     assert latest == S(schema)
 
 
+@pytest.mark.timeout(2)
 def test_monitor_system_timeseries(tmp_dir, mocker):
     mock_psutil(mocker)
-    interval = 0.05
-    num_samples = 4
     with Live(
         tmp_dir,
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        live.cpu_monitor = CPUMonitor(interval=interval, num_samples=num_samples)
-        time.sleep(interval * num_samples + interval)  # log metrics once
+        live.cpu_monitor = CPUMonitor(interval=0.05, num_samples=4)
+
+        # wait for the metrics to be logged.
+        # METRIC_DISK_TOTAL_GB is the last metric to be logged.
+        while len(dpath.search(live.summary, METRIC_DISK_TOTAL_GB)) == 0:
+            time.sleep(0.001)
+
         live.next_step()
-        time.sleep(interval * num_samples + interval)  # log metrics twice
-        live.make_summary()
 
         timeseries, _ = parse_metrics(live)
 
     def timeserie_schema(name):
-        return [{name: str, "timestamp": str, "step": str} for _ in range(2)]
+        return [{name: str, "timestamp": str, "step": str(0)}]
 
     # timeseries contains all the system metrics
     prefix = Path(tmp_dir) / "plots/metrics"

@@ -34,7 +34,6 @@ dependencies = [
   "dvc>=3.33.3",
   "dvc-render>=1.0.0,<2",
   "dvc-studio-client>=0.17.1,<1",
-  "dpath",
   "funcy",
   "gto",
   "ruamel.yaml",
@@ -54,13 +53,14 @@ tests = [
   "pytest-mock>=3.8.2,<4.0",
   "dvclive[image,plots,markdown]",
   "ipython",
-  "pytest_voluptuous"
+  "pytest_voluptuous",
+  "dpath",
+  "voluptuous"
 ]
 dev = [
   "dvclive[all,tests]",
   "mypy>=1.1.1",
-  "types-PyYAML",
-  "voluptuous"
+  "types-PyYAML"
 ]
 mmcv = ["mmcv"]
 tf = ["tensorflow"]
