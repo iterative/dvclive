@@ -524,7 +524,9 @@ class Live:
         image.dump(val)
 
         if annotations:
-            Annotations.could_log(annotations)
+            if not Annotations.could_log(annotations):
+                raise InvalidDataTypeError(name, type(annotations))
+
             annotation_object = Annotations(name, self.plots_dir)
             self._images[name]["annotations"] = annotation_object
             annotation_object.step = self.step

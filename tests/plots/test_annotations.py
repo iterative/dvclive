@@ -3,7 +3,8 @@ import pytest
 
 from dvclive import Live
 from dvclive.plots import Annotations
-from dvclive.error import InvalidDataTypeError, InvalidSameSizeError
+from dvclive.plots.annotations import BOXES_NAME, LABELS_NAME, SCORES_NAME, FORMAT_NAME
+from dvclive.error import InvalidDataTypeError
 
 
 @pytest.mark.parametrize(
@@ -39,10 +40,10 @@ def test_save_annotation_file(name, boxes, labels, scores, tmp_dir):
         name,
         img,
         annotations={
-            "boxes": boxes,
-            "labels": labels,
-            "scores": scores,
-            "format": "tlbr",
+            BOXES_NAME: boxes,
+            LABELS_NAME: labels,
+            SCORES_NAME: scores,
+            FORMAT_NAME: "tlbr",
         },
     )
     assert (tmp_dir / live.plots_dir / Annotations.subfolder / name).exists()
@@ -54,83 +55,173 @@ def test_save_annotation_file(name, boxes, labels, scores, tmp_dir):
 
 
 @pytest.mark.parametrize(
-    ("name", "boxes", "labels", "scores"),
+    "annotations",
     [
-        ("image.png", [[10, 20, 30, 40], [10, 20, 30, 40]], ["A"], [0.1, 0.2]),
-        ("image.png", [[10, 20, 30, 40]], ["A", "B"], [0.7]),
+        {
+            LABELS_NAME: ["A", "B"],
+            SCORES_NAME: [0.1, 0.2],
+            FORMAT_NAME: "tlbr",
+        },
+        {
+            BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
+            SCORES_NAME: [0.1, 0.2],
+            FORMAT_NAME: "tlbr",
+        },
+        {
+            BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
+            LABELS_NAME: ["A", "B"],
+            FORMAT_NAME: "tlbr",
+        },
+        {
+            BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
+            LABELS_NAME: ["A", "B"],
+            SCORES_NAME: [0.1, 0.2],
+        },
     ],
 )
-def test_invalid_labels_size(name, boxes, labels, scores, tmp_dir):
+def test_invalid_field(tmp_dir, annotations, caplog):
     live = Live()
     img = np.zeros((30, 30, 3), dtype=np.uint8)
     with pytest.raises(
-        InvalidSameSizeError,
-        match="'boxes' and 'labels' must have the same length",
+        InvalidDataTypeError,
+        match="Data 'image.png' has not supported type <class 'dict'>",
     ):
         live.log_image(
-            name,
+            "image.png",
             img,
-            annotations={
-                "boxes": boxes,
-                "labels": labels,
-                "scores": scores,
-                "format": "tlbr",
-            },
+            annotations=annotations,
         )
+    assert (
+        "Missing fields in annotations. Expected: 'boxes', 'labels', 'scores', and "
+        "'format'." in caplog.text
+    )
 
 
 @pytest.mark.parametrize(
-    ("name", "boxes", "labels", "scores"),
+    "annotations",
     [
-        ("image.png", [[10, 20, 30, 40], [10, 20, 30, 40]], ["A", "B"], [0.1]),
-        ("image.png", [[10, 20, 30, 40]], ["A"], [0.7, 0.4]),
+        {
+            BOXES_NAME: [[10, 20, 30, 40]],
+            LABELS_NAME: ["A", "B"],
+            SCORES_NAME: [0.1, 0.2],
+            FORMAT_NAME: "tlbr",
+        },
+        {
+            BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
+            LABELS_NAME: ["A"],
+            SCORES_NAME: [0.1, 0.2],
+            FORMAT_NAME: "tlbr",
+        },
+        {
+            BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
+            LABELS_NAME: ["A", "B"],
+            SCORES_NAME: [0.1],
+            FORMAT_NAME: "tlbr",
+        },
     ],
 )
-def test_invalid_scores_size(name, boxes, labels, scores, tmp_dir):
+def test_invalid_labels_size(tmp_dir, annotations, caplog):
     live = Live()
     img = np.zeros((30, 30, 3), dtype=np.uint8)
     with pytest.raises(
-        InvalidSameSizeError,
-        match="'boxes' and 'scores' must have the same length",
+        InvalidDataTypeError,
+        match="Data 'image.png' has not supported type <class 'dict'>",
     ):
         live.log_image(
-            name,
+            "image.png",
             img,
-            annotations={
-                "boxes": boxes,
-                "labels": labels,
-                "scores": scores,
-                "format": "tlbr",
-            },
+            annotations=annotations,
         )
+    assert "'boxes', 'labels', and 'scores' should have the same size." in caplog.text
 
 
-@pytest.mark.parametrize(
-    ("name", "boxes", "labels", "scores"),
-    [
-        ("image.png", [[10, 20, 30.5, 40], [10, 20, 30, 40]], ["A", "B"], [0.1, 0.2]),
-        ("image.png", [[10, 20, 30, 40]], [0], [0.7]),
-        ("image.png", [[10, 20, 30, 40]], [0.1], [0.7]),
-        ("image.png", [[10, 20, 30, 40]], [["A", "B"]], [0.7]),
-        ("image.png", [[10, 20, 30, 40]], ["A"], [1]),
-        ("image.png", [[10, 20, 30, 40]], ["A"], [0]),
-        ("image.png", [[10, 20, 30, 40]], ["A"], ["score"]),
-    ],
-)
-def test_invalid_inputs_format(name, boxes, labels, scores, tmp_dir):
+def test_invalid_boxes_type(tmp_dir, caplog):
     live = Live()
     img = np.zeros((30, 30, 3), dtype=np.uint8)
-    with pytest.raises(InvalidDataTypeError):
+    with pytest.raises(
+        InvalidDataTypeError,
+        match="Data 'image.png' has not supported type <class 'dict'>",
+    ):
         live.log_image(
-            name,
+            "image.png",
             img,
             annotations={
-                "boxes": boxes,
-                "labels": labels,
-                "scores": scores,
-                "format": "tlbr",
+                BOXES_NAME: [[10, 20, 30, 40.5], [10, 20, 30, 40]],
+                LABELS_NAME: ["A", "B"],
+                SCORES_NAME: [0.1, 0.4],
+                FORMAT_NAME: "tlbr",
             },
         )
+    assert (
+        "Annotations `'boxes'` should be a `List[int]`, received "
+        "'[[10, 20, 30, 40.5], [10, 20, 30, 40]]'." in caplog.text
+    )
+
+
+def test_invalid_boxes_length(tmp_dir, caplog):
+    live = Live()
+    img = np.zeros((30, 30, 3), dtype=np.uint8)
+    with pytest.raises(
+        InvalidDataTypeError,
+        match="Data 'image.png' has not supported type <class 'dict'>",
+    ):
+        live.log_image(
+            "image.png",
+            img,
+            annotations={
+                BOXES_NAME: [[10, 20, 30, 40, 50], [10, 20, 30, 40]],
+                LABELS_NAME: ["A", "B"],
+                SCORES_NAME: [0.1, 0.4],
+                FORMAT_NAME: "tlbr",
+            },
+        )
+    assert "Annotations `'boxes'` should be of length 4." in caplog.text
+
+
+def test_invalid_labels_type(tmp_dir, caplog):
+    live = Live()
+    img = np.zeros((30, 30, 3), dtype=np.uint8)
+    with pytest.raises(
+        InvalidDataTypeError,
+        match="Data 'image.png' has not supported type <class 'dict'>",
+    ):
+        live.log_image(
+            "image.png",
+            img,
+            annotations={
+                BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
+                LABELS_NAME: ["A", 1],
+                SCORES_NAME: [0.1, 0.5],
+                FORMAT_NAME: "tlbr",
+            },
+        )
+    assert (
+        "Annotations `'labels'` should be a `List[str]`, received '['A', 1]'."
+        in caplog.text
+    )
+
+
+def test_invalid_scores_type(tmp_dir, caplog):
+    live = Live()
+    img = np.zeros((30, 30, 3), dtype=np.uint8)
+    with pytest.raises(
+        InvalidDataTypeError,
+        match="Data 'image.png' has not supported type <class 'dict'>",
+    ):
+        live.log_image(
+            "image.png",
+            img,
+            annotations={
+                BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
+                LABELS_NAME: ["A", "B"],
+                SCORES_NAME: [0.1, 4],
+                FORMAT_NAME: "tlbr",
+            },
+        )
+    assert (
+        "Annotations `'scores'` should be a `List[float]`, received '[0.1, 4]'."
+        in caplog.text
+    )
 
 
 @pytest.mark.parametrize(

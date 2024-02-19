@@ -1,4 +1,4 @@
-from typing import List, Literal, Union, Dict
+from typing import List, Literal, Union, Dict, get_args
 import math
 
 import numpy as np
@@ -6,9 +6,17 @@ from pathlib import Path
 
 from dvclive.plots.utils import NumpyEncoder
 from dvclive.serialize import dump_json
-from dvclive.error import InvalidSameSizeError, InvalidDataTypeError, MissingFieldError
+import logging
 
 from .base import Data
+
+
+logger = logging.getLogger("dvclive")
+
+BOXES_NAME = "boxes"
+LABELS_NAME = "labels"
+SCORES_NAME = "scores"
+FORMAT_NAME = "format"
 
 BboxFormatKind = Literal["tlbr", "tlhw", "xywh", "ltrb"]
 
@@ -24,58 +32,83 @@ class Annotations(Data):
         return _path
 
     @staticmethod
-    def could_log(  # noqa: C901
+    def could_log(  # noqa: PLR0911
         annotations: Dict[str, List],
     ) -> bool:
         # no missing fields
-        for field in ["boxes", "labels", "scores", "format"]:
-            if field not in annotations:
-                raise MissingFieldError(annotations, field)
+        if any(
+            field not in annotations
+            for field in [BOXES_NAME, LABELS_NAME, SCORES_NAME, FORMAT_NAME]
+        ):
+            logger.warning(
+                f"Missing fields in annotations. Expected: '{BOXES_NAME}',"
+                f" '{LABELS_NAME}', '{SCORES_NAME}', and '{FORMAT_NAME}'."
+            )
+            return False
 
         # `boxes`, `labels`, and `scores` fields should have the same size
-        if len(annotations["boxes"]) != len(annotations["labels"]):
-            raise InvalidSameSizeError("boxes", "labels")
-
-        if len(annotations["boxes"]) != len(annotations["scores"]):
-            raise InvalidSameSizeError("boxes", "scores")
+        boxes_and_labels_same_size = len(annotations[BOXES_NAME]) == len(
+            annotations[LABELS_NAME]
+        )
+        boxes_and_scores_same_size = len(annotations[BOXES_NAME]) == len(
+            annotations[SCORES_NAME]
+        )
+        if not boxes_and_labels_same_size or not boxes_and_scores_same_size:
+            logger.warning(
+                f"'{BOXES_NAME}', '{LABELS_NAME}', and '{SCORES_NAME}' should have the "
+                "same size."
+            )
+            return False
 
         # `format` should be one of the supported formats
-        if annotations["format"] not in ["tlbr", "tlhw", "xywh", "ltrb"]:
-            raise InvalidDataTypeError("format", type(format))
+        if annotations[FORMAT_NAME] not in get_args(BboxFormatKind):
+            logger.warning(
+                f"Annotations format '{annotations['format']}' is not supported."
+            )
+            return False
 
         # `scores` should be a List[float]
-        for idx, score in enumerate(annotations["scores"]):
-            if not isinstance(score, (float, np.floating)):
-                raise InvalidDataTypeError(
-                    "scores", type(score), f"annotations['scores'][{idx}]"
-                )
+        if not all(
+            isinstance(score, (float, np.floating))
+            for score in annotations[SCORES_NAME]
+        ):
+            logger.warning(
+                "Annotations `'scores'` should be a `List[float]`, received "
+                f"'{annotations[SCORES_NAME]}'."
+            )
+            return False
 
         # `boxes` should be a List[List[int, 4]]
-        for idx, boxes in enumerate(annotations["boxes"]):
+        for boxes in annotations[BOXES_NAME]:
             if not all(isinstance(x, (int, np.int_)) for x in boxes):
-                raise InvalidDataTypeError(
-                    "boxes", type(boxes), f"annotations['boxes'][{idx}]"
+                logger.warning(
+                    f"Annotations `'{BOXES_NAME}'` should be a `List[int]`, received "
+                    f"'{annotations[BOXES_NAME]}'."
                 )
+                return False
+
             if len(boxes) != 4:  # noqa: PLR2004
-                raise InvalidDataTypeError(
-                    "boxes", len(boxes), f"annotations['boxes'][{idx}]"
-                )
+                logger.warning(f"Annotations `'{BOXES_NAME}'` should be of length 4.")
+                return False
 
         # `labels` should be a List[str]
-        for idx, label in enumerate(annotations["labels"]):
-            if not isinstance(label, str):
-                raise InvalidDataTypeError(
-                    "labels", type(label), f"annotations['labels'][{idx}]"
-                )
+        if not all(
+            isinstance(label, (str, np.str_)) for label in annotations[LABELS_NAME]
+        ):
+            logger.warning(
+                f"Annotations `'{LABELS_NAME}'` should be a `List[str]`, received "
+                f"'{annotations[LABELS_NAME]}'."
+            )
+            return False
         return True
 
     def dump(
         self,
         val,
     ):
-        boxes = self.convert_to_tlbr(val["boxes"], val["format"])
-        labels = val["labels"]
-        scores = val["scores"]
+        boxes = self.convert_to_tlbr(val[BOXES_NAME], val[FORMAT_NAME])
+        labels = val[LABELS_NAME]
+        scores = val[SCORES_NAME]
         boxes_info = [
             {
                 "label": label,
@@ -98,7 +131,7 @@ class Annotations(Data):
             boxes_json[label].append(box)
 
         dump_json(
-            {"boxes": boxes_json},
+            {"annotations": boxes_json},
             self.output_path.with_suffix(".json"),
             cls=NumpyEncoder,
         )

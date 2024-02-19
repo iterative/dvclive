@@ -6,16 +6,10 @@ class DvcLiveError(Exception):
 
 
 class InvalidDataTypeError(DvcLiveError):
-    def __init__(self, name, val, subfield=None):
+    def __init__(self, name, val):
         self.name = name
         self.val = val
-        self.subfield = subfield
-        if subfield:
-            super().__init__(
-                f"Data '{name}' has not supported type {val} for subfield {subfield}"
-            )
-        else:
-            super().__init__(f"Data '{name}' has not supported type {val}")
+        super().__init__(f"Data '{name}' has not supported type {val}")
 
 
 class InvalidDvcyamlError(DvcLiveError):
@@ -51,17 +45,3 @@ class InvalidReportModeError(DvcLiveError):
             f"`report` can only be `None`, `auto`, `html`, `notebook` or `md`. "
             f"Got {val} instead."
         )
-
-
-class InvalidSameSizeError(DvcLiveError):
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        super().__init__(f"'{x}' and '{y}' must have the same length")
-
-
-class MissingFieldError(DvcLiveError):
-    def __init__(self, dictionary, field):
-        self.dictionary = dictionary
-        self.field = field
-        super().__init__(f"{dictionary} does not contain the '{field}' field")
