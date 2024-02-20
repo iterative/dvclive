@@ -10,7 +10,6 @@ from funcy import merge_with
 
 
 logger = logging.getLogger("dvclive")
-MEGABYTES_DIVIDER = 1024.0**2
 GIGABYTES_DIVIDER = 1024.0**3
 
 MINIMUM_CPU_USAGE_TO_BE_ACTIVE = 20
@@ -118,7 +117,7 @@ class CPUMonitor(_SystemMonitor):
         self,
         interval: float = 0.1,
         num_samples: int = 20,
-        folders_to_monitor: Optional[Dict[str, str]] = None,
+        directories_to_monitor: Optional[Dict[str, str]] = None,
         plot: bool = True,
     ):
         """Monitor CPU resources and log them to DVC Live.
@@ -127,12 +126,12 @@ class CPUMonitor(_SystemMonitor):
             interval (float): interval in seconds between two measurements.
                 Defaults to 0.5.
             num_samples (int): number of samples to average. Defaults to 10.
-            folders_to_monitor (Optional[Dict[str, str]]): monitor disk usage
+            directories_to_monitor (Optional[Dict[str, str]]): monitor disk usage
                 statistics about the partition which contains the given paths. The
                 statistics include total and used space in gygabytes and percent.
                 This argument expect a dict where the key is the name that will be used
-                in the metric's name and the value is the path to the folder to monitor.
-                Defaults to {"main": "/"}.
+                in the metric's name and the value is the path to the directory to
+                monitor. Defaults to {"main": "/"}.
             plot (bool): should the system metrics be saved as plots. Defaults to True.
 
         Raises:
@@ -140,22 +139,19 @@ class CPUMonitor(_SystemMonitor):
                 supported type.
         """
         super().__init__(interval=interval, num_samples=num_samples, plot=plot)
-        folders_to_monitor = (
-            {"main": "/"} if folders_to_monitor is None else folders_to_monitor
+        directories_to_monitor = (
+            {"main": "/"} if directories_to_monitor is None else directories_to_monitor
         )
         self._disks_to_monitor = {}
-        for disk_name, disk_path in folders_to_monitor.items():
+        for disk_name, disk_path in directories_to_monitor.items():
             if disk_name != os.path.normpath(disk_name):
                 raise ValueError(  # noqa: TRY003
-                    "Keys for `partitions_to_monitor` should be a valid name"
+                    "Keys for `directories_to_monitor` should be a valid name"
                     f", but got '{disk_name}'."
                 )
-            try:
-                psutil.disk_usage(disk_path)
-            except OSError:
-                logger.warning(f"Couldn't find partition '{disk_path}', ignoring it.")
-                continue
             self._disks_to_monitor[disk_name] = disk_path
+
+        self._warn_disk_doesnt_exist: Dict[str, bool] = {}
 
     def _get_metrics(self) -> Dict[str, Union[float, int]]:
         ram_info = psutil.virtual_memory()
@@ -174,12 +170,19 @@ class CPUMonitor(_SystemMonitor):
             * 100
             / nb_cpus,
             METRIC_RAM_USAGE_PERCENT: ram_info.percent,
-            METRIC_RAM_USAGE_GB: (ram_info.percent / 100)
-            * (ram_info.total / GIGABYTES_DIVIDER),
+            METRIC_RAM_USAGE_GB: ram_info.used / GIGABYTES_DIVIDER,
             METRIC_RAM_TOTAL_GB: ram_info.total / GIGABYTES_DIVIDER,
         }
         for disk_name, disk_path in self._disks_to_monitor.items():
-            disk_info = psutil.disk_usage(disk_path)
+            try:
+                disk_info = psutil.disk_usage(disk_path)
+            except OSError:
+                if self._warn_disk_doesnt_exist.get(disk_name, True):
+                    logger.warning(
+                        f"Couldn't find directory '{disk_path}', ignoring it."
+                    )
+                    self._warn_disk_doesnt_exist[disk_name] = False
+                continue
             disk_metrics = {
                 f"{METRIC_DISK_USAGE_PERCENT}/{disk_name}": disk_info.percent,
                 f"{METRIC_DISK_USAGE_GB}/{disk_name}": disk_info.used

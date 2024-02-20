@@ -54,8 +54,7 @@ tests = [
   "dvclive[image,plots,markdown]",
   "ipython",
   "pytest_voluptuous",
-  "dpath",
-  "voluptuous"
+  "dpath"
 ]
 dev = [
   "dvclive[all,tests]",

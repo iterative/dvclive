@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 
 import dpath
-from voluptuous import Union
 from pytest_voluptuous import S
 
 from dvclive import Live
@@ -18,71 +17,57 @@ from dvclive.monitor_system import (
     METRIC_DISK_USAGE_PERCENT,
     METRIC_DISK_USAGE_GB,
     METRIC_DISK_TOTAL_GB,
+    GIGABYTES_DIVIDER,
 )
 from dvclive.utils import parse_metrics
 
 
-def mock_psutil(mocker):
+def mock_psutil_cpu(mocker):
     mocker.patch(
         "dvclive.monitor_system.psutil.cpu_percent",
-        return_value=[10, 20, 30, 40, 50, 60],
+        return_value=[10, 10, 10, 40, 50, 60],
     )
     mocker.patch("dvclive.monitor_system.psutil.cpu_count", return_value=6)
 
-    mocked_virtual_memory = mocker.MagicMock()
-    mocked_virtual_memory.percent = 20
-    mocked_virtual_memory.total = 4 * 1024**3
 
-    mocked_disk_usage = mocker.MagicMock()
-    mocked_disk_usage.used = 16 * 1024**3
-    mocked_disk_usage.percent = 50
-    mocked_disk_usage.total = 32 * 1024**3
-
-    mocking_dict = {
-        "virtual_memory": mocked_virtual_memory,
-        "disk_usage": mocked_disk_usage,
-    }
-    for function_name, return_value in mocking_dict.items():
-        mocker.patch(
-            f"dvclive.monitor_system.psutil.{function_name}",
-            return_value=return_value,
-        )
-
-
-def mock_psutil_with_oserror(mocker):
+def mock_psutil_ram(mocker):
+    mocked_ram = mocker.MagicMock()
+    mocked_ram.percent = 50
+    mocked_ram.used = 2 * GIGABYTES_DIVIDER
+    mocked_ram.total = 4 * GIGABYTES_DIVIDER
     mocker.patch(
-        "dvclive.monitor_system.psutil.cpu_percent",
-        return_value=[10, 20, 30, 40, 50, 60],
+        "dvclive.monitor_system.psutil.virtual_memory", return_value=mocked_ram
     )
-    mocker.patch("dvclive.monitor_system.psutil.cpu_count", return_value=6)
 
-    mocked_virtual_memory = mocker.MagicMock()
-    mocked_virtual_memory.percent = 20
-    mocked_virtual_memory.total = 4 * 1024**3
 
-    mocked_disk_usage = mocker.MagicMock()
-    mocked_disk_usage.used = 16 * 1024**3
-    mocked_disk_usage.percent = 50
-    mocked_disk_usage.total = 32 * 1024**3
+def mock_psutil_disk(mocker):
+    mocked_disk = mocker.MagicMock()
+    mocked_disk.percent = 50
+    mocked_disk.used = 16 * GIGABYTES_DIVIDER
+    mocked_disk.total = 32 * GIGABYTES_DIVIDER
+    mocker.patch("dvclive.monitor_system.psutil.disk_usage", return_value=mocked_disk)
 
-    mocker.patch(
-        "dvclive.monitor_system.psutil.virtual_memory",
-        return_value=mocked_virtual_memory,
-    )
+
+def mock_psutil_disk_with_oserror(mocker):
+    mocked_disk = mocker.MagicMock()
+    mocked_disk.percent = 50
+    mocked_disk.used = 16 * GIGABYTES_DIVIDER
+    mocked_disk.total = 32 * GIGABYTES_DIVIDER
     mocker.patch(
         "dvclive.monitor_system.psutil.disk_usage",
         side_effect=[
-            mocked_disk_usage,
+            mocked_disk,
             OSError,
-            mocked_disk_usage,
-            mocked_disk_usage,
+            mocked_disk,
+            OSError,
         ],
     )
 
 
 def test_monitor_system_is_false(tmp_dir, mocker):
-    mock_psutil(mocker)
-
+    mock_psutil_cpu(mocker)
+    mock_psutil_ram(mocker)
+    mock_psutil_disk(mocker)
     cpu_monitor_mock = mocker.patch("dvclive.live.CPUMonitor")
     with Live(
         tmp_dir,
@@ -95,7 +80,9 @@ def test_monitor_system_is_false(tmp_dir, mocker):
 
 
 def test_monitor_system_is_true(tmp_dir, mocker):
-    mock_psutil(mocker)
+    mock_psutil_cpu(mocker)
+    mock_psutil_ram(mocker)
+    mock_psutil_disk(mocker)
     cpu_monitor_mock = mocker.patch("dvclive.live.CPUMonitor", spec=CPUMonitor)
 
     with Live(
@@ -116,8 +103,9 @@ def test_monitor_system_is_true(tmp_dir, mocker):
 
 
 def test_ignore_non_existent_directories(tmp_dir, mocker):
-    mock_psutil_with_oserror(mocker)
-
+    mock_psutil_cpu(mocker)
+    mock_psutil_ram(mocker)
+    mock_psutil_disk_with_oserror(mocker)
     with Live(
         tmp_dir,
         save_dvc_exp=False,
@@ -125,7 +113,7 @@ def test_ignore_non_existent_directories(tmp_dir, mocker):
     ) as live:
         non_existent_disk = "/non-existent"
         monitor = CPUMonitor(
-            folders_to_monitor={"main": "/", "non-existent": non_existent_disk}
+            directories_to_monitor={"main": "/", "non-existent": non_existent_disk}
         )
         monitor(live)
         metrics = monitor._get_metrics()
@@ -140,7 +128,9 @@ def test_ignore_non_existent_directories(tmp_dir, mocker):
 
 @pytest.mark.timeout(2)
 def test_monitor_system_metrics(tmp_dir, mocker):
-    mock_psutil(mocker)
+    mock_psutil_cpu(mocker)
+    mock_psutil_ram(mocker)
+    mock_psutil_disk(mocker)
     with Live(
         tmp_dir,
         save_dvc_exp=False,
@@ -156,26 +146,28 @@ def test_monitor_system_metrics(tmp_dir, mocker):
         _, latest = parse_metrics(live)
 
     schema = {}
-    for name in [
-        "step",
-        METRIC_CPU_COUNT,
-        METRIC_CPU_USAGE_PERCENT,
-        METRIC_CPU_PARALLELIZATION_PERCENT,
-        METRIC_RAM_USAGE_PERCENT,
-        METRIC_RAM_USAGE_GB,
-        METRIC_RAM_TOTAL_GB,
-        f"{METRIC_DISK_USAGE_PERCENT}/main",
-        f"{METRIC_DISK_USAGE_GB}/main",
-        f"{METRIC_DISK_TOTAL_GB}/main",
-    ]:
-        dpath.new(schema, name, Union(int, float))
+    for name, value in {
+        "step": 0,
+        METRIC_CPU_COUNT: 6,
+        METRIC_CPU_USAGE_PERCENT: 30.0,
+        METRIC_CPU_PARALLELIZATION_PERCENT: 50.0,
+        METRIC_RAM_USAGE_PERCENT: 50.0,
+        METRIC_RAM_USAGE_GB: 2.0,
+        METRIC_RAM_TOTAL_GB: 4.0,
+        f"{METRIC_DISK_USAGE_PERCENT}/main": 50.0,
+        f"{METRIC_DISK_USAGE_GB}/main": 16.0,
+        f"{METRIC_DISK_TOTAL_GB}/main": 32.0,
+    }.items():
+        dpath.new(schema, name, value)
 
     assert latest == S(schema)
 
 
 @pytest.mark.timeout(2)
 def test_monitor_system_timeseries(tmp_dir, mocker):
-    mock_psutil(mocker)
+    mock_psutil_cpu(mocker)
+    mock_psutil_ram(mocker)
+    mock_psutil_disk(mocker)
     with Live(
         tmp_dir,
         save_dvc_exp=False,
