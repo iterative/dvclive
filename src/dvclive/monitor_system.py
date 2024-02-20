@@ -110,7 +110,7 @@ class CPUMonitor(_SystemMonitor):
     _plot_blacklist_prefix: Tuple = (
         METRIC_CPU_COUNT,
         METRIC_RAM_TOTAL_GB,
-        "system/disk/total (GB)",
+        METRIC_DISK_TOTAL_GB,
     )
 
     def __init__(
