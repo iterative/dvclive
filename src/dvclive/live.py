@@ -42,7 +42,7 @@ from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEn
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, post_to_studio
-from .monitor_system import GPU_AVAILABLE, CPUMonitor, GPUMonitor
+from .monitor_system import SystemMonitor
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -169,14 +169,10 @@ class Live:
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
 
-        self._monitor_cpu = None
-        self._monitor_gpu = None
+        self._system_monitor = None
         if monitor_system:
-            self._monitor_cpu = CPUMonitor()
-            self._monitor_cpu(self)
-            if GPU_AVAILABLE:
-                self._monitor_gpu = GPUMonitor()
-                self._monitor_gpu(self)
+            self._system_monitor = SystemMonitor()
+            self._system_monitor(self)
 
     def _init_resume(self):
         self._read_params()
@@ -382,26 +378,15 @@ class Live:
         logger.debug(f"Step: {self.step}")
 
     @property
-    def cpu_monitor(self) -> Optional[CPUMonitor]:
-        return self._monitor_cpu or None
+    def system_monitor(self) -> Optional[SystemMonitor]:
+        return self._system_monitor or None
 
-    @cpu_monitor.setter
-    def cpu_monitor(self, cpu_monitor: CPUMonitor) -> None:
-        if self._monitor_cpu is not None:
-            self._monitor_cpu.end()
-        self._monitor_cpu = cpu_monitor
-        self._monitor_cpu(self)
-
-    @property
-    def monitor_gpu(self) -> Optional[GPUMonitor]:
-        return self._monitor_gpu or None
-
-    @monitor_gpu.setter
-    def monitor_gpu(self, monitor_gpu: GPUMonitor) -> None:
-        if self._monitor_gpu is not None:
-            self._monitor_gpu.end()
-        self._monitor_gpu = monitor_gpu
-        self._monitor_gpu(self)
+    @system_monitor.setter
+    def system_monitor(self, system_monitor: SystemMonitor) -> None:
+        if self._system_monitor is not None:
+            self._system_monitor.end()
+        self._system_monitor = system_monitor
+        self._system_monitor(self)
 
     def sync(self):
         self.make_summary()
@@ -892,10 +877,8 @@ class Live:
             self.step = self.summary["step"]
 
         # Kill threads that monitor the system metrics
-        if self._monitor_cpu is not None:
-            self._monitor_cpu.end()
-        if self._monitor_gpu is not None:
-            self._monitor_gpu.end()
+        if self._system_monitor is not None:
+            self._system_monitor.end()
 
         self.sync()
 

@@ -7,8 +7,7 @@ from pytest_voluptuous import S
 
 from dvclive import Live
 from dvclive.monitor_system import (
-    CPUMonitor,
-    GPUMonitor,
+    SystemMonitor,
     METRIC_CPU_COUNT,
     METRIC_CPU_USAGE_PERCENT,
     METRIC_CPU_PARALLELIZATION_PERCENT,
@@ -18,6 +17,11 @@ from dvclive.monitor_system import (
     METRIC_DISK_USAGE_PERCENT,
     METRIC_DISK_USAGE_GB,
     METRIC_DISK_TOTAL_GB,
+    METRIC_GPU_COUNT,
+    METRIC_GPU_USAGE_PERCENT,
+    METRIC_VRAM_USAGE_PERCENT,
+    METRIC_VRAM_USAGE_GB,
+    METRIC_VRAM_TOTAL_GB,
     GIGABYTES_DIVIDER,
 )
 from dvclive.utils import parse_metrics
@@ -65,38 +69,115 @@ def mock_psutil_disk_with_oserror(mocker):
     )
 
 
+def mock_pynvml(mocker, num_gpus=2):
+    prefix = "dvclive.monitor_system"
+    mocker.patch(f"{prefix}.GPU_AVAILABLE", bool(num_gpus))
+    mocker.patch(f"{prefix}.nvmlDeviceGetCount", return_value=num_gpus)
+    mocker.patch(f"{prefix}.nvmlInit", return_value=None)
+    mocker.patch(f"{prefix}.nvmlShutdown", return_value=None)
+    mocker.patch(f"{prefix}.nvmlDeviceGetHandleByIndex", return_value=None)
+
+    vram_info = mocker.MagicMock()
+    vram_info.used = 3 * 1024**3
+    vram_info.total = 6 * 1024**3
+
+    gpu_usage = mocker.MagicMock()
+    gpu_usage.memory = 5
+    gpu_usage.gpu = 10
+
+    mocker.patch(f"{prefix}.nvmlDeviceGetMemoryInfo", return_value=vram_info)
+    mocker.patch(f"{prefix}.nvmlDeviceGetUtilizationRates", return_value=gpu_usage)
+
+
+@pytest.fixture()
+def cpu_metrics():
+    content = {
+        METRIC_CPU_COUNT: 6,
+        METRIC_CPU_USAGE_PERCENT: 30.0,
+        METRIC_CPU_PARALLELIZATION_PERCENT: 50.0,
+        METRIC_RAM_USAGE_PERCENT: 50.0,
+        METRIC_RAM_USAGE_GB: 2.0,
+        METRIC_RAM_TOTAL_GB: 4.0,
+        f"{METRIC_DISK_USAGE_PERCENT}/main": 50.0,
+        f"{METRIC_DISK_USAGE_GB}/main": 16.0,
+        f"{METRIC_DISK_TOTAL_GB}/main": 32.0,
+    }
+    result = {}
+    for name, value in content.items():
+        dpath.new(result, name, value)
+    return result
+
+
+def _timeserie_schema(name, value):
+    return [{name: str(value), "timestamp": str, "step": "0"}]
+
+
+@pytest.fixture()
+def cpu_timeseries():
+    return {
+        f"{METRIC_CPU_USAGE_PERCENT}.tsv": _timeserie_schema(
+            METRIC_CPU_USAGE_PERCENT.split("/")[-1], 30.0
+        ),
+        f"{METRIC_CPU_PARALLELIZATION_PERCENT}.tsv": _timeserie_schema(
+            METRIC_CPU_PARALLELIZATION_PERCENT.split("/")[-1], 50.0
+        ),
+        f"{METRIC_RAM_USAGE_PERCENT}.tsv": _timeserie_schema(
+            METRIC_RAM_USAGE_PERCENT.split("/")[-1], 50.0
+        ),
+        f"{METRIC_RAM_USAGE_GB}.tsv": _timeserie_schema(
+            METRIC_RAM_USAGE_GB.split("/")[-1], 2.0
+        ),
+        f"{METRIC_DISK_USAGE_PERCENT}/main.tsv": _timeserie_schema("main", 50.0),
+        f"{METRIC_DISK_USAGE_GB}/main.tsv": _timeserie_schema("main", 16.0),
+    }
+
+
+@pytest.fixture()
+def gpu_timeseries():
+    return {
+        f"{METRIC_GPU_USAGE_PERCENT}/0.tsv": _timeserie_schema("0", 50.0),
+        f"{METRIC_GPU_USAGE_PERCENT}/1.tsv": _timeserie_schema("1", 50.0),
+        f"{METRIC_VRAM_USAGE_PERCENT}/0.tsv": _timeserie_schema("0", 50.0),
+        f"{METRIC_VRAM_USAGE_PERCENT}/1.tsv": _timeserie_schema("1", 50.0),
+        f"{METRIC_VRAM_USAGE_GB}/0.tsv": _timeserie_schema("0", 3.0),
+        f"{METRIC_VRAM_USAGE_GB}/1.tsv": _timeserie_schema("1", 3.0),
+    }
+
+
 def test_monitor_system_is_false(tmp_dir, mocker):
     mock_psutil_cpu(mocker)
     mock_psutil_ram(mocker)
     mock_psutil_disk(mocker)
-    cpu_monitor_mock = mocker.patch("dvclive.live.CPUMonitor")
+    mock_pynvml(mocker, num_gpus=0)
+    system_monitor_mock = mocker.patch("dvclive.live.SystemMonitor", spec=SystemMonitor)
     with Live(
         tmp_dir,
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        assert live.cpu_monitor is None
+        assert live.system_monitor is None
 
-    cpu_monitor_mock.assert_not_called()
+    system_monitor_mock.assert_not_called()
 
 
 def test_monitor_system_is_true(tmp_dir, mocker):
     mock_psutil_cpu(mocker)
     mock_psutil_ram(mocker)
     mock_psutil_disk(mocker)
-    cpu_monitor_mock = mocker.patch("dvclive.live.CPUMonitor", spec=CPUMonitor)
+    mock_pynvml(mocker, num_gpus=0)
+    system_monitor_mock = mocker.patch("dvclive.live.SystemMonitor", spec=SystemMonitor)
 
     with Live(
         tmp_dir,
         save_dvc_exp=False,
         monitor_system=True,
     ) as live:
-        cpu_monitor = live.cpu_monitor
+        system_monitor = live.system_monitor
 
-        assert isinstance(cpu_monitor, CPUMonitor)
-        cpu_monitor_mock.assert_called_once()
+        assert isinstance(system_monitor, SystemMonitor)
+        system_monitor_mock.assert_called_once()
 
-        end_spy = mocker.spy(cpu_monitor, "end")
+        end_spy = mocker.spy(system_monitor, "end")
         end_spy.assert_not_called()
 
     # check the monitoring thread is stopped
@@ -107,13 +188,14 @@ def test_ignore_non_existent_directories(tmp_dir, mocker):
     mock_psutil_cpu(mocker)
     mock_psutil_ram(mocker)
     mock_psutil_disk_with_oserror(mocker)
+    mock_pynvml(mocker, num_gpus=0)
     with Live(
         tmp_dir,
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
         non_existent_disk = "/non-existent"
-        monitor = CPUMonitor(
+        monitor = SystemMonitor(
             directories_to_monitor={"main": "/", "non-existent": non_existent_disk}
         )
         monitor(live)
@@ -128,16 +210,17 @@ def test_ignore_non_existent_directories(tmp_dir, mocker):
 
 
 @pytest.mark.timeout(2)
-def test_monitor_system_metrics(tmp_dir, mocker):
+def test_monitor_system_metrics(tmp_dir, cpu_metrics, mocker):
     mock_psutil_cpu(mocker)
     mock_psutil_ram(mocker)
     mock_psutil_disk(mocker)
+    mock_pynvml(mocker, num_gpus=0)
     with Live(
         tmp_dir,
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        live.cpu_monitor = CPUMonitor(interval=0.05, num_samples=4)
+        live.system_monitor = SystemMonitor(interval=0.05, num_samples=4)
         # wait for the metrics to be logged.
         # METRIC_DISK_TOTAL_GB is the last metric to be logged.
         while len(dpath.search(live.summary, METRIC_DISK_TOTAL_GB)) == 0:
@@ -146,35 +229,22 @@ def test_monitor_system_metrics(tmp_dir, mocker):
 
         _, latest = parse_metrics(live)
 
-    schema = {}
-    for name, value in {
-        "step": 0,
-        METRIC_CPU_COUNT: 6,
-        METRIC_CPU_USAGE_PERCENT: 30.0,
-        METRIC_CPU_PARALLELIZATION_PERCENT: 50.0,
-        METRIC_RAM_USAGE_PERCENT: 50.0,
-        METRIC_RAM_USAGE_GB: 2.0,
-        METRIC_RAM_TOTAL_GB: 4.0,
-        f"{METRIC_DISK_USAGE_PERCENT}/main": 50.0,
-        f"{METRIC_DISK_USAGE_GB}/main": 16.0,
-        f"{METRIC_DISK_TOTAL_GB}/main": 32.0,
-    }.items():
-        dpath.new(schema, name, value)
-
+    schema = {"step": 0, **cpu_metrics}
     assert latest == S(schema)
 
 
 @pytest.mark.timeout(2)
-def test_monitor_system_timeseries(tmp_dir, mocker):
+def test_monitor_system_timeseries(tmp_dir, cpu_timeseries, mocker):
     mock_psutil_cpu(mocker)
     mock_psutil_ram(mocker)
     mock_psutil_disk(mocker)
+    mock_pynvml(mocker, num_gpus=0)
     with Live(
         tmp_dir,
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        live.cpu_monitor = CPUMonitor(interval=0.05, num_samples=4)
+        live.system_monitor = SystemMonitor(interval=0.05, num_samples=4)
 
         # wait for the metrics to be logged.
         # METRIC_DISK_TOTAL_GB is the last metric to be logged.
@@ -185,121 +255,69 @@ def test_monitor_system_timeseries(tmp_dir, mocker):
 
         timeseries, _ = parse_metrics(live)
 
-    def timeserie_schema(name):
-        return [{name: str, "timestamp": str, "step": str(0)}]
-
-    # timeseries contains all the system metrics
     prefix = Path(tmp_dir) / "plots/metrics"
-    assert timeseries == S(
-        {
-            str(prefix / f"{METRIC_CPU_USAGE_PERCENT}.tsv"): timeserie_schema(
-                METRIC_CPU_USAGE_PERCENT.split("/")[-1]
-            ),
-            str(prefix / f"{METRIC_CPU_PARALLELIZATION_PERCENT}.tsv"): timeserie_schema(
-                METRIC_CPU_PARALLELIZATION_PERCENT.split("/")[-1]
-            ),
-            str(prefix / f"{METRIC_RAM_USAGE_PERCENT}.tsv"): timeserie_schema(
-                METRIC_RAM_USAGE_PERCENT.split("/")[-1]
-            ),
-            str(prefix / f"{METRIC_RAM_USAGE_GB}.tsv"): timeserie_schema(
-                METRIC_RAM_USAGE_GB.split("/")[-1]
-            ),
-            str(prefix / f"{METRIC_DISK_USAGE_PERCENT}/main.tsv"): timeserie_schema(
-                "main"
-            ),
-            str(prefix / f"{METRIC_DISK_USAGE_GB}/main.tsv"): timeserie_schema("main"),
-        }
-    )
+    schema = {str(prefix / name): value for name, value in cpu_timeseries.items()}
+    assert timeseries == S(schema)
 
 
-def mock_pynvml(mocker, num_gpus=2, crash_index=None):
-    mocker.patch("dvclive.monitor_system.GPU_AVAILABLE", return_value=num_gpus)
-    mocker.patch("dvclive.monitor_system.nvmlDeviceGetCount", return_value=num_gpus)
-    mocker.patch("dvclive.monitor_system.nvmlInit", return_value=None)
-    mocker.patch("dvclive.monitor_system.nvmlShutdown", return_value=None)
-
-    mocked_memory_info = mocker.MagicMock()
-    mocked_memory_info.used = 3 * 1024**3
-    mocked_memory_info.total = 5 * 1024**3
-
-    mocked_utilization_rate = mocker.MagicMock()
-    mocked_utilization_rate.memory = 5
-    mocked_utilization_rate.gpu = 10
-
-    mocking_dict = {
-        "nvmlDeviceGetHandleByIndex": None,
-        "nvmlDeviceGetMemoryInfo": mocked_memory_info,
-        "nvmlDeviceGetUtilizationRates": mocked_utilization_rate,
-    }
-
-    for function_name, return_value in mocking_dict.items():
-        mocker.patch(
-            f"dvclive.monitor_system.{function_name}",
-            return_value=return_value,
-        )
-
-
-def test_get_gpus_metrics_mocker(mocker, tmp_dir):
+@pytest.mark.timeout(2)
+def test_monitor_system_metrics_with_gpu(tmp_dir, cpu_metrics, mocker):
+    mock_psutil_cpu(mocker)
+    mock_psutil_ram(mocker)
+    mock_psutil_disk(mocker)
     mock_pynvml(mocker, num_gpus=2)
     with Live(
         tmp_dir,
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        monitor = GPUMonitor()
-        monitor(live)
-        metrics = monitor._get_metrics()
-        monitor.end()
-    assert "system/gpu/usage (%)/0" in metrics
-    assert "system/gpu/usage (%)/1" in metrics
-    assert "system/vram/usage (%)/0" in metrics
-    assert "system/vram/usage (%)/1" in metrics
-    assert "system/vram/usage (GB)/0" in metrics
-    assert "system/vram/usage (GB)/1" in metrics
-    assert "system/vram/total (GB)/0" in metrics
-    assert "system/vram/total (GB)/1" in metrics
+        live.system_monitor = SystemMonitor(interval=0.05, num_samples=4)
+        # wait for the metrics to be logged.
+        # f"{METRIC_VRAM_TOTAL_GB}/1" is the last metric to be logged if there is a GPU.
+        while len(dpath.search(live.summary, f"{METRIC_VRAM_TOTAL_GB}/1")) == 0:
+            time.sleep(0.001)
+        live.next_step()
+
+        _, latest = parse_metrics(live)
+
+    schema = {"step": 0, **cpu_metrics}
+    gpu_content = {
+        METRIC_GPU_COUNT: 2,
+        f"{METRIC_GPU_USAGE_PERCENT}": {"0": 50.0, "1": 50.0},
+        f"{METRIC_VRAM_USAGE_PERCENT}": {"0": 50.0, "1": 50.0},
+        f"{METRIC_VRAM_USAGE_GB}": {"0": 3.0, "1": 3.0},
+        f"{METRIC_VRAM_TOTAL_GB}": {"0": 6.0, "1": 6.0},
+    }
+    for name, value in gpu_content.items():
+        dpath.new(schema, name, value)
+    assert latest == S(schema)
 
 
-def test_monitor_gpu_system(tmp_dir, mocker):
+@pytest.mark.timeout(2)
+def test_monitor_system_timeseries_with_gpu(
+    tmp_dir, cpu_timeseries, gpu_timeseries, mocker
+):
     mock_psutil_cpu(mocker)
     mock_psutil_ram(mocker)
     mock_psutil_disk(mocker)
-    mock_pynvml(mocker, num_gpus=1)
+    mock_pynvml(mocker, num_gpus=2)
     with Live(
         tmp_dir,
         save_dvc_exp=False,
-        monitor_system=True,
+        monitor_system=False,
     ) as live:
-        time.sleep(5 + 1)  # allow the thread to finish
+        live.system_monitor = SystemMonitor(interval=0.05, num_samples=4)
+
+        # wait for the metrics to be logged.
+        # f"{METRIC_VRAM_TOTAL_GB}/1" is the last metric to be logged if there is a GPU.
+        while len(dpath.search(live.summary, f"{METRIC_VRAM_TOTAL_GB}/1")) == 0:
+            time.sleep(0.001)
+
         live.next_step()
-        time.sleep(5 + 1)  # allow the thread to finish
-        timeseries, latest = parse_metrics(live)
 
-    # metrics.json records CPU and RAM metrics if GPU detected
-    assert "system" in latest
-    assert "cpu" in latest["system"]
-    assert "ram" in latest["system"]
-    assert "disk" in latest["system"]
+        timeseries, _ = parse_metrics(live)
 
-    # metrics.json file contains all the system metrics
-    assert "gpu" in latest["system"]
-    assert "count" in latest["system"]["gpu"]
-    assert "usage (%)" in latest["system"]["gpu"]
-    assert "0" in latest["system"]["gpu"]["usage (%)"]
-    assert "vram" in latest["system"]
-    assert "usage (%)" in latest["system"]["vram"]
-    assert "0" in latest["system"]["vram"]["usage (%)"]
-    assert "usage (GB)" in latest["system"]["vram"]
-    assert "0" in latest["system"]["vram"]["usage (GB)"]
-    assert "total (GB)" in latest["system"]["vram"]
-    assert "0" in latest["system"]["vram"]["total (GB)"]
-
-    # timeseries contains all the system metrics
-    assert any(str(Path("system/gpu/usage (%)/0.tsv")) in key for key in timeseries)
-    assert any(str(Path("system/vram/usage (%)/0.tsv")) in key for key in timeseries)
-    assert any(str(Path("system/vram/usage (GB)/0.tsv")) in key for key in timeseries)
-    assert all(len(timeseries[key]) == 2 for key in timeseries if "system" in key)
-
-    # blacklisted timeseries
-    assert all(str(Path("system/gpu/count.tsv")) not in key for key in timeseries)
-    assert all(str(Path("system/vram/total (GB).tsv")) not in key for key in timeseries)
+    prefix = Path(tmp_dir) / "plots/metrics"
+    schema = {str(prefix / name): value for name, value in cpu_timeseries.items()}
+    schema.update({str(prefix / name): value for name, value in gpu_timeseries.items()})
+    assert timeseries == S(schema)
