@@ -52,7 +52,7 @@ class _SystemMonitor(abc.ABC):
 
         min_num_samples = 1
         max_num_samples = 30
-        if min_num_samples < num_samples < max_num_samples:
+        if not min_num_samples < num_samples < max_num_samples:
             num_samples = max(min(num_samples, max_num_samples), min_num_samples)
             logger.warning(
                 f"System monitoring `num_samples` should be between {min_num_samples} "
