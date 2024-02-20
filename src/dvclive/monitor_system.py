@@ -1,13 +1,12 @@
+import abc
 import logging
-from typing import Dict, Union, Optional, List, Tuple
-from pathlib import Path
+import os
+from typing import Dict, Union, Optional, Tuple
 
 import psutil
 from statistics import mean
 from threading import Event, Thread
 from funcy import merge_with
-
-from .error import InvalidDataTypeError
 
 
 try:
@@ -25,16 +24,27 @@ except ImportError:
     GPU_AVAILABLE = False
 
 logger = logging.getLogger("dvclive")
-MEGABYTES_DIVIDER = 1024.0**2
 GIGABYTES_DIVIDER = 1024.0**3
 
 MINIMUM_CPU_USAGE_TO_BE_ACTIVE = 20
 
+METRIC_CPU_COUNT = "system/cpu/count"
+METRIC_CPU_USAGE_PERCENT = "system/cpu/usage (%)"
+METRIC_CPU_PARALLELIZATION_PERCENT = "system/cpu/parallelization (%)"
 
-class _MonitorSystem:
+METRIC_RAM_USAGE_PERCENT = "system/ram/usage (%)"
+METRIC_RAM_USAGE_GB = "system/ram/usage (GB)"
+METRIC_RAM_TOTAL_GB = "system/ram/total (GB)"
+
+METRIC_DISK_USAGE_PERCENT = "system/disk/usage (%)"
+METRIC_DISK_USAGE_GB = "system/disk/usage (GB)"
+METRIC_DISK_TOTAL_GB = "system/disk/total (GB)"
+
+
+class _SystemMonitor(abc.ABC):
     """
     Monitor system resources and log them to DVC Live.
-    Use a separate thread to call a `_get_metrics` function at  fix interval and
+    Use a separate thread to call a `_get_metrics` function at fix interval and
     aggregate the results of this sampling using the average.
     """
 
@@ -42,16 +52,26 @@ class _MonitorSystem:
 
     def __init__(
         self,
-        interval: float = 0.5,
-        num_samples: int = 10,
+        interval: float,
+        num_samples: int,
         plot: bool = True,
     ):
-        if not isinstance(interval, (int, float)):
-            raise InvalidDataTypeError("MonitorSystem.interval", type(interval))
-        if not isinstance(num_samples, int):
-            raise InvalidDataTypeError("MonitorSystem.sample", type(num_samples))
-        if not isinstance(plot, bool):
-            raise InvalidDataTypeError("MonitorSystem.plot", type(plot))
+        max_interval = 0.1
+        if interval > max_interval:
+            interval = max_interval
+            logger.warning(
+                f"System monitoring `interval` should be less than {max_interval} "
+                f"seconds. Setting `interval` to {interval} seconds."
+            )
+
+        min_num_samples = 1
+        max_num_samples = 30
+        if min_num_samples < num_samples < max_num_samples:
+            num_samples = max(min(num_samples, max_num_samples), min_num_samples)
+            logger.warning(
+                f"System monitoring `num_samples` should be between {min_num_samples} "
+                f"and {max_num_samples}. Setting `num_samples` to {num_samples}."
+            )
 
         self._interval = interval  # seconds
         self._nb_samples = num_samples
@@ -92,25 +112,26 @@ class _MonitorSystem:
                     plot=None if blacklisted else self._plot,
                 )
 
-    def _get_metrics(self):
+    @abc.abstractmethod
+    def _get_metrics(self) -> Dict[str, Union[float, int]]:
         pass
 
     def end(self):
         self._shutdown_event.set()
 
 
-class MonitorCPU(_MonitorSystem):
+class CPUMonitor(_SystemMonitor):
     _plot_blacklist_prefix: Tuple = (
-        "system/cpu/count",
-        "system/ram/total (GB)",
+        METRIC_CPU_COUNT,
+        METRIC_RAM_TOTAL_GB,
         "system/disk/total (GB)",
     )
 
     def __init__(
         self,
-        interval: float = 0.5,
-        num_samples: int = 10,
-        directories_to_monitor: Optional[List[str]] = None,
+        interval: float = 0.1,
+        num_samples: int = 20,
+        directories_to_monitor: Optional[Dict[str, str]] = None,
         plot: bool = True,
     ):
         """Monitor CPU resources and log them to DVC Live.
@@ -119,34 +140,41 @@ class MonitorCPU(_MonitorSystem):
             interval (float): interval in seconds between two measurements.
                 Defaults to 0.5.
             num_samples (int): number of samples to average. Defaults to 10.
-            directories_to_monitor (Optional[List[str]]): paths of the directories that
-            needs to be monitor for disk storage metrics. Defaults to the current
-            directory.
+            directories_to_monitor (Optional[Dict[str, str]]): monitor disk usage
+                statistics about the partition which contains the given paths. The
+                statistics include total and used space in gygabytes and percent.
+                This argument expect a dict where the key is the name that will be used
+                in the metric's name and the value is the path to the directory to
+                monitor. Defaults to {"main": "/"}.
             plot (bool): should the system metrics be saved as plots. Defaults to True.
 
         Raises:
-            InvalidDataTypeError: if the arguments passed to the function don't have a
+            ValueError: if the arguments passed to the function don't have a
                 supported type.
         """
         super().__init__(interval=interval, num_samples=num_samples, plot=plot)
         directories_to_monitor = (
-            ["."] if directories_to_monitor is None else directories_to_monitor
+            {"main": "/"} if directories_to_monitor is None else directories_to_monitor
         )
-        for idx, path in enumerate(directories_to_monitor):
-            if not isinstance(path, str):
-                raise InvalidDataTypeError(
-                    f"MonitorCPU.directories_to_monitor[{idx}]", type(path)
+        self._disks_to_monitor = {}
+        for disk_name, disk_path in directories_to_monitor.items():
+            if disk_name != os.path.normpath(disk_name):
+                raise ValueError(  # noqa: TRY003
+                    "Keys for `directories_to_monitor` should be a valid name"
+                    f", but got '{disk_name}'."
                 )
-        self._directories_to_monitor = directories_to_monitor
+            self._disks_to_monitor[disk_name] = disk_path
+
+        self._warn_disk_doesnt_exist: Dict[str, bool] = {}
 
     def _get_metrics(self) -> Dict[str, Union[float, int]]:
         ram_info = psutil.virtual_memory()
         nb_cpus = psutil.cpu_count()
         cpus_percent = psutil.cpu_percent(percpu=True)
         result = {
-            "system/cpu/usage (%)": mean(cpus_percent),
-            "system/cpu/count": nb_cpus,
-            "system/cpu/parallelization (%)": len(
+            METRIC_CPU_COUNT: nb_cpus,
+            METRIC_CPU_USAGE_PERCENT: mean(cpus_percent),
+            METRIC_CPU_PARALLELIZATION_PERCENT: len(
                 [
                     percent
                     for percent in cpus_percent
@@ -155,24 +183,33 @@ class MonitorCPU(_MonitorSystem):
             )
             * 100
             / nb_cpus,
-            "system/ram/usage (%)": ram_info.percent,
-            "system/ram/usage (GB)": (ram_info.percent / 100)
-            * (ram_info.total / GIGABYTES_DIVIDER),
-            "system/ram/total (GB)": ram_info.total / GIGABYTES_DIVIDER,
+            METRIC_RAM_USAGE_PERCENT: ram_info.percent,
+            METRIC_RAM_USAGE_GB: ram_info.used / GIGABYTES_DIVIDER,
+            METRIC_RAM_TOTAL_GB: ram_info.total / GIGABYTES_DIVIDER,
         }
-        for idx, directory in enumerate(self._directories_to_monitor):
-            if not Path(directory).exists():
+        for disk_name, disk_path in self._disks_to_monitor.items():
+            try:
+                disk_info = psutil.disk_usage(disk_path)
+            except OSError:
+                if self._warn_disk_doesnt_exist.get(disk_name, True):
+                    logger.warning(
+                        f"Couldn't find directory '{disk_path}', ignoring it."
+                    )
+                    self._warn_disk_doesnt_exist[disk_name] = False
                 continue
-            disk_info = psutil.disk_usage(directory)
-            result[f"system/disk/usage (%)/{idx}"] = disk_info.percent
-            result[f"system/disk/usage (GB)/{idx}"] = disk_info.used / GIGABYTES_DIVIDER
-            result[f"system/disk/total (GB)/{idx}"] = (
-                disk_info.total / GIGABYTES_DIVIDER
-            )
+            disk_metrics = {
+                f"{METRIC_DISK_USAGE_PERCENT}/{disk_name}": disk_info.percent,
+                f"{METRIC_DISK_USAGE_GB}/{disk_name}": disk_info.used
+                / GIGABYTES_DIVIDER,
+                f"{METRIC_DISK_TOTAL_GB}/{disk_name}": disk_info.total
+                / GIGABYTES_DIVIDER,
+            }
+            disk_metrics = {k.rstrip("/"): v for k, v in disk_metrics.items()}
+            result.update(disk_metrics)
         return result
 
 
-class MonitorGPU(_MonitorSystem):
+class GPUMonitor(_SystemMonitor):
     _plot_blacklist_prefix = ("system/gpu/count", "system/vram/total (GB)")
 
     def __init__(
