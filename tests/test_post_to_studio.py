@@ -467,6 +467,7 @@ def test_post_to_studio_skip_if_no_repo_url(
 
 
 def test_post_to_studio_repeat_step(tmp_dir, mocked_dvc_repo, mocked_studio_post):
+    # for more context see the PR https://github.com/iterative/dvclive/pull/788
     live = Live()
 
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
