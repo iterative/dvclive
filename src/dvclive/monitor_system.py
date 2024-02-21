@@ -177,7 +177,7 @@ class SystemMonitor:
             **self._get_disk_info(),
         }
         if GPU_AVAILABLE:
-            result.update(self.__get_gpu_info())
+            result.update(self._get_gpu_info())
         return result
 
     def _get_ram_info(self) -> Dict[str, Union[float, int]]:
@@ -228,7 +228,7 @@ class SystemMonitor:
             result.update(disk_metrics)
         return result
 
-    def __get_gpu_info(self) -> Dict[str, Union[float, int]]:
+    def _get_gpu_info(self) -> Dict[str, Union[float, int]]:
         nvmlInit()
         num_gpus = nvmlDeviceGetCount()
         gpu_metrics = {
