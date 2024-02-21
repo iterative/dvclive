@@ -1,6 +1,4 @@
 import os
-import threading
-import time
 from contextlib import redirect_stdout
 from io import StringIO
 from unittest import mock
@@ -287,7 +285,6 @@ def test_lightning_val_updates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio
     logs, _ = parse_metrics(dvclive_logger.experiment)
     latest = logs[val_loss][-1]
     calls = mocked_post.call_args_list
-
     latest_called = False
     for call in calls:
         try:
@@ -350,53 +347,3 @@ def test_dvclive_logger_init_args():
             "dir": "results",  # Resolve from Live.__init__
         },
     )
-
-
-def log_metrics_from_outside_lightning(live):
-    step = 0
-    while True:
-        if live.step == step:
-            live.log_metric("test", 0.5)
-            step += 1
-        else:
-            time.sleep(0.001)
-
-
-@pytest.mark.timeout(3)
-def test_metrics_from_outside_lightning_updates_to_studio(
-    tmp_dir, mocked_dvc_repo, mocked_studio_post
-):
-    mocked_post, _ = mocked_studio_post
-
-    model = ValLitXOR()
-    dvclive_logger = DVCLiveLogger()
-    trainer = Trainer(
-        logger=dvclive_logger,
-        max_steps=4,
-        val_check_interval=2,
-        log_every_n_steps=1,
-        enable_checkpointing=False,
-    )
-
-    independent_logger = threading.Thread(
-        target=log_metrics_from_outside_lightning,
-        args=(trainer.logger.experiment,),
-        daemon=True,
-    )
-    independent_logger.start()
-    trainer.fit(model)
-
-    test_metric = "dvclive/plots/metrics/test.tsv"
-    logs, _ = parse_metrics(dvclive_logger.experiment)
-    calls = mocked_post.call_args_list
-
-    data_calls = [call for call in calls if call[1]["json"]["type"] == "data"]
-
-    test_calls = []
-    # data are sent twice, using 2 `post` calls in `post_live_metrics`.
-    for call in data_calls[::2]:
-        test_calls.extend(call[1]["json"]["plots"][test_metric]["data"])
-
-    # data read from file is read as str
-    test_calls = [{k: str(v) for k, v in data.items()} for data in test_calls]
-    assert test_calls == logs[test_metric]

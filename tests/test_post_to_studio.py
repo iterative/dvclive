@@ -464,3 +464,38 @@ def test_post_to_studio_skip_if_no_repo_url(
         live.next_step()
 
     assert mocked_post.call_count == 0
+
+
+def test_post_to_studio_repeat_step(tmp_dir, mocked_dvc_repo, mocked_studio_post):
+    live = Live()
+
+    foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
+
+    mocked_post, _ = mocked_studio_post
+
+    live.step = 0
+    live.log_metric("foo", 1)
+    live.sync()
+
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        **get_studio_call(
+            "data",
+            exp_name=live._exp_name,
+            step=0,
+            plots={f"{foo_path}": {"data": [{"step": 0, "foo": 1.0}]}},
+        ),
+    )
+
+    live.log_metric("foo", 2)
+    live.sync()
+
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        **get_studio_call(
+            "data",
+            exp_name=live._exp_name,
+            step=0,
+            plots={f"{foo_path}": {"data": [{"step": 0, "foo": 2.0}]}},
+        ),
+    )
