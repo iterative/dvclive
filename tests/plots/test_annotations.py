@@ -2,8 +2,7 @@ import numpy as np
 import pytest
 
 from dvclive import Live
-from dvclive.plots import Annotations
-from dvclive.plots.annotations import BOXES_NAME, LABELS_NAME, SCORES_NAME, FORMAT_NAME
+from dvclive.plots import Annotations, BBoxes
 from dvclive.error import InvalidDataTypeError
 
 
@@ -40,10 +39,10 @@ def test_save_annotation_file(name, boxes, labels, scores, tmp_dir):
         name,
         img,
         annotations={
-            BOXES_NAME: boxes,
-            LABELS_NAME: labels,
-            SCORES_NAME: scores,
-            FORMAT_NAME: "tlbr",
+            "boxes": boxes,
+            "labels": labels,
+            "scores": scores,
+            "box_format": "tlbr",
         },
     )
     assert (tmp_dir / live.plots_dir / Annotations.subfolder / name).exists()
@@ -58,28 +57,28 @@ def test_save_annotation_file(name, boxes, labels, scores, tmp_dir):
     "annotations",
     [
         {
-            LABELS_NAME: ["A", "B"],
-            SCORES_NAME: [0.1, 0.2],
-            FORMAT_NAME: "tlbr",
+            "labels": ["A", "B"],
+            "scores": [0.1, 0.2],
+            "box_format": "tlbr",
         },
         {
-            BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
-            SCORES_NAME: [0.1, 0.2],
-            FORMAT_NAME: "tlbr",
+            "boxes": [[10, 20, 30, 40], [10, 20, 30, 40]],
+            "scores": [0.1, 0.2],
+            "box_format": "tlbr",
         },
         {
-            BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
-            LABELS_NAME: ["A", "B"],
-            FORMAT_NAME: "tlbr",
+            "boxes": [[10, 20, 30, 40], [10, 20, 30, 40]],
+            "labels": ["A", "B"],
+            "box_format": "tlbr",
         },
         {
-            BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
-            LABELS_NAME: ["A", "B"],
-            SCORES_NAME: [0.1, 0.2],
+            "boxes": [[10, 20, 30, 40], [10, 20, 30, 40]],
+            "labels": ["A", "B"],
+            "scores": [0.1, 0.2],
         },
     ],
 )
-def test_invalid_field(tmp_dir, annotations, caplog):
+def test_invalid_field(tmp_dir, annotations):
     live = Live()
     img = np.zeros((30, 30, 3), dtype=np.uint8)
     with pytest.raises(
@@ -91,36 +90,32 @@ def test_invalid_field(tmp_dir, annotations, caplog):
             img,
             annotations=annotations,
         )
-    assert (
-        "Missing fields in annotations. Expected: 'boxes', 'labels', 'scores', and "
-        "'format'." in caplog.text
-    )
 
 
 @pytest.mark.parametrize(
     "annotations",
     [
         {
-            BOXES_NAME: [[10, 20, 30, 40]],
-            LABELS_NAME: ["A", "B"],
-            SCORES_NAME: [0.1, 0.2],
-            FORMAT_NAME: "tlbr",
+            "boxes": [[10, 20, 30, 40]],
+            "labels": ["A", "B"],
+            "scores": [0.1, 0.2],
+            "box_format": "tlbr",
         },
         {
-            BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
-            LABELS_NAME: ["A"],
-            SCORES_NAME: [0.1, 0.2],
-            FORMAT_NAME: "tlbr",
+            "boxes": [[10, 20, 30, 40], [10, 20, 30, 40]],
+            "labels": ["A"],
+            "scores": [0.1, 0.2],
+            "box_format": "tlbr",
         },
         {
-            BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
-            LABELS_NAME: ["A", "B"],
-            SCORES_NAME: [0.1],
-            FORMAT_NAME: "tlbr",
+            "boxes": [[10, 20, 30, 40], [10, 20, 30, 40]],
+            "labels": ["A", "B"],
+            "scores": [0.1],
+            "box_format": "tlbr",
         },
     ],
 )
-def test_invalid_labels_size(tmp_dir, annotations, caplog):
+def test_invalid_labels_size(tmp_dir, annotations):
     live = Live()
     img = np.zeros((30, 30, 3), dtype=np.uint8)
     with pytest.raises(
@@ -132,10 +127,9 @@ def test_invalid_labels_size(tmp_dir, annotations, caplog):
             img,
             annotations=annotations,
         )
-    assert "'boxes', 'labels', and 'scores' should have the same size." in caplog.text
 
 
-def test_invalid_boxes_type(tmp_dir, caplog):
+def test_invalid_boxes_type(tmp_dir):
     live = Live()
     img = np.zeros((30, 30, 3), dtype=np.uint8)
     with pytest.raises(
@@ -146,19 +140,15 @@ def test_invalid_boxes_type(tmp_dir, caplog):
             "image.png",
             img,
             annotations={
-                BOXES_NAME: [[10, 20, 30, 40.5], [10, 20, 30, 40]],
-                LABELS_NAME: ["A", "B"],
-                SCORES_NAME: [0.1, 0.4],
-                FORMAT_NAME: "tlbr",
+                "boxes": [[10, 20, 30, 40.5], [10, 20, 30, 40]],
+                "labels": ["A", "B"],
+                "scores": [0.1, 0.4],
+                "box_format": "tlbr",
             },
         )
-    assert (
-        "Annotations `'boxes'` should be a `List[int]`, received "
-        "'[[10, 20, 30, 40.5], [10, 20, 30, 40]]'." in caplog.text
-    )
 
 
-def test_invalid_boxes_length(tmp_dir, caplog):
+def test_invalid_boxes_length(tmp_dir):
     live = Live()
     img = np.zeros((30, 30, 3), dtype=np.uint8)
     with pytest.raises(
@@ -169,16 +159,15 @@ def test_invalid_boxes_length(tmp_dir, caplog):
             "image.png",
             img,
             annotations={
-                BOXES_NAME: [[10, 20, 30, 40, 50], [10, 20, 30, 40]],
-                LABELS_NAME: ["A", "B"],
-                SCORES_NAME: [0.1, 0.4],
-                FORMAT_NAME: "tlbr",
+                "boxes": [[10, 20, 30, 40, 50], [10, 20, 30, 40]],
+                "labels": ["A", "B"],
+                "scores": [0.1, 0.4],
+                "box_format": "tlbr",
             },
         )
-    assert "Annotations `'boxes'` should be of length 4." in caplog.text
 
 
-def test_invalid_labels_type(tmp_dir, caplog):
+def test_invalid_labels_type(tmp_dir):
     live = Live()
     img = np.zeros((30, 30, 3), dtype=np.uint8)
     with pytest.raises(
@@ -189,19 +178,15 @@ def test_invalid_labels_type(tmp_dir, caplog):
             "image.png",
             img,
             annotations={
-                BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
-                LABELS_NAME: ["A", 1],
-                SCORES_NAME: [0.1, 0.5],
-                FORMAT_NAME: "tlbr",
+                "boxes": [[10, 20, 30, 40], [10, 20, 30, 40]],
+                "labels": ["A", 1],
+                "scores": [0.1, 0.5],
+                "box_format": "tlbr",
             },
         )
-    assert (
-        "Annotations `'labels'` should be a `List[str]`, received '['A', 1]'."
-        in caplog.text
-    )
 
 
-def test_invalid_scores_type(tmp_dir, caplog):
+def test_invalid_scores_type(tmp_dir):
     live = Live()
     img = np.zeros((30, 30, 3), dtype=np.uint8)
     with pytest.raises(
@@ -212,20 +197,16 @@ def test_invalid_scores_type(tmp_dir, caplog):
             "image.png",
             img,
             annotations={
-                BOXES_NAME: [[10, 20, 30, 40], [10, 20, 30, 40]],
-                LABELS_NAME: ["A", "B"],
-                SCORES_NAME: [0.1, 4],
-                FORMAT_NAME: "tlbr",
+                "boxes": [[10, 20, 30, 40], [10, 20, 30, 40]],
+                "labels": ["A", "B"],
+                "scores": [0.1, 4],
+                "box_format": "tlbr",
             },
         )
-    assert (
-        "Annotations `'scores'` should be a `List[float]`, received '[0.1, 4]'."
-        in caplog.text
-    )
 
 
 @pytest.mark.parametrize(
-    ("boxes", "format", "expected_result"),
+    ("boxes", "box_format", "expected_result"),
     [
         ([[10, 20, 30, 40]], "tlbr", [[10, 20, 30, 40]]),
         (
@@ -254,5 +235,12 @@ def test_invalid_scores_type(tmp_dir, caplog):
         ),
     ],
 )
-def test_tlbr_conversion(boxes, format, expected_result):  # noqa: A002
-    assert expected_result == Annotations.convert_to_tlbr(boxes, format)
+def test_tlbr_conversion(boxes, box_format, expected_result):
+    new_bbox = BBoxes(
+        boxes=boxes,
+        labels=["A" for _ in boxes],
+        scores=[0.1 for _ in boxes],
+        box_format=box_format,
+    )
+    assert expected_result == new_bbox.boxes
+    assert new_bbox.box_format == "tlbr"

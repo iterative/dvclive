@@ -1,24 +1,76 @@
-from typing import List, Literal, Union, Dict, get_args
+from typing import List, Literal, TYPE_CHECKING
 import math
 
-import numpy as np
+
 from pathlib import Path
+from pydantic import BaseModel, PydanticUserError, field_validator, model_validator
+import logging
 
 from dvclive.plots.utils import NumpyEncoder
 from dvclive.serialize import dump_json
-import logging
+
+if TYPE_CHECKING:
+    from dvclive.live import BBoxes as UserFacingBBoxes
 
 from .base import Data
 
-
+LEN_BOX = 4
 logger = logging.getLogger("dvclive")
 
-BOXES_NAME = "boxes"
-LABELS_NAME = "labels"
-SCORES_NAME = "scores"
-FORMAT_NAME = "format"
 
-BboxFormatKind = Literal["tlbr", "tlhw", "xywh", "ltrb"]
+class BBoxes(BaseModel):
+    boxes: List[List[int]]
+    labels: List[str]
+    scores: List[float]
+    box_format: Literal["tlbr", "tlhw", "xywh", "ltrb"]
+
+    @field_validator("boxes")
+    @classmethod
+    def box_contains_4_values(cls, boxes):
+        if any(len(box) != LEN_BOX for box in boxes):
+            err_msg = "Annotations 'boxes' must contain lists of length 4."
+            raise ValueError(err_msg)
+        return boxes
+
+    @field_validator("scores")
+    @classmethod
+    def score_is_between_0_and_1(cls, scores):
+        if any(score > 1 or score < 0 for score in scores):
+            err_msg = "Annotations 'score' must be between 0 and 1."
+            raise ValueError(err_msg)
+        return scores
+
+    @model_validator(mode="after")
+    def boxes_labels_scores_have_same_length(self):
+        if len(self.boxes) != len(self.labels) or len(self.boxes) != len(self.scores):
+            err_msg = (
+                "Annotations 'boxes', 'labels', and 'scores' should have the same size."
+            )
+            raise ValueError(err_msg)
+        return self
+
+    @model_validator(mode="after")
+    def convert_box_to_tlbr(self):
+        if self.box_format == "tlhw":
+            self.boxes = [
+                [box[0], box[1], box[0] + box[2], box[1] + box[3]] for box in self.boxes
+            ]
+
+        elif self.box_format == "ltrb":
+            self.boxes = [[box[1], box[0], box[3], box[2]] for box in self.boxes]
+
+        elif self.box_format == "xywh":
+            self.boxes = [
+                [
+                    box[0] - math.ceil(box[2] / 2),
+                    box[1] - math.ceil(box[3] / 2),
+                    box[0] + math.floor(box[2] / 2),
+                    box[1] + math.floor(box[3] / 2),
+                ]
+                for box in self.boxes
+            ]
+        self.box_format = "tlbr"
+        return self
 
 
 class Annotations(Data):
@@ -32,83 +84,22 @@ class Annotations(Data):
         return _path
 
     @staticmethod
-    def could_log(  # noqa: PLR0911
-        annotations: Dict[str, List],
+    def could_log(
+        annotations: "UserFacingBBoxes",
     ) -> bool:
-        # no missing fields
-        if any(
-            field not in annotations
-            for field in [BOXES_NAME, LABELS_NAME, SCORES_NAME, FORMAT_NAME]
-        ):
-            logger.warning(
-                f"Missing fields in annotations. Expected: '{BOXES_NAME}',"
-                f" '{LABELS_NAME}', '{SCORES_NAME}', and '{FORMAT_NAME}'."
-            )
-            return False
-
-        # `boxes`, `labels`, and `scores` fields should have the same size
-        boxes_and_labels_same_size = len(annotations[BOXES_NAME]) == len(
-            annotations[LABELS_NAME]
-        )
-        boxes_and_scores_same_size = len(annotations[BOXES_NAME]) == len(
-            annotations[SCORES_NAME]
-        )
-        if not boxes_and_labels_same_size or not boxes_and_scores_same_size:
-            logger.warning(
-                f"'{BOXES_NAME}', '{LABELS_NAME}', and '{SCORES_NAME}' should have the "
-                "same size."
-            )
-            return False
-
-        # `format` should be one of the supported formats
-        if annotations[FORMAT_NAME] not in get_args(BboxFormatKind):
-            logger.warning(
-                f"Annotations format '{annotations['format']}' is not supported."
-            )
-            return False
-
-        # `scores` should be a List[float]
-        if not all(
-            isinstance(score, (float, np.floating))
-            for score in annotations[SCORES_NAME]
-        ):
-            logger.warning(
-                "Annotations `'scores'` should be a `List[float]`, received "
-                f"'{annotations[SCORES_NAME]}'."
-            )
-            return False
-
-        # `boxes` should be a List[List[int, 4]]
-        for boxes in annotations[BOXES_NAME]:
-            if not all(isinstance(x, (int, np.int_)) for x in boxes):
-                logger.warning(
-                    f"Annotations `'{BOXES_NAME}'` should be a `List[int]`, received "
-                    f"'{annotations[BOXES_NAME]}'."
-                )
-                return False
-
-            if len(boxes) != 4:  # noqa: PLR2004
-                logger.warning(f"Annotations `'{BOXES_NAME}'` should be of length 4.")
-                return False
-
-        # `labels` should be a List[str]
-        if not all(
-            isinstance(label, (str, np.str_)) for label in annotations[LABELS_NAME]
-        ):
-            logger.warning(
-                f"Annotations `'{LABELS_NAME}'` should be a `List[str]`, received "
-                f"'{annotations[LABELS_NAME]}'."
-            )
-            return False
-        return True
+        result = True
+        try:
+            BBoxes(**annotations)
+        except PydanticUserError as exc:
+            logger.warning(exc)
+            result = False
+        return result
 
     def dump(
         self,
-        val,
+        val,  # UserFacingBBoxes
     ):
-        boxes = self.convert_to_tlbr(val[BOXES_NAME], val[FORMAT_NAME])
-        labels = val[LABELS_NAME]
-        scores = val[SCORES_NAME]
+        annotations = BBoxes(**val)
         boxes_info = [
             {
                 "label": label,
@@ -120,9 +111,12 @@ class Annotations(Data):
                 },
                 "score": score,
             }
-            for tlbr, label, score in zip(boxes, labels, scores)
+            for tlbr, label, score in zip(
+                annotations.boxes, annotations.labels, annotations.scores
+            )
         ]
-        # format for VScode and Studio
+
+        # group by label (https://github.com/iterative/dvc/issues/10198)
         boxes_json = {}
         for box in boxes_info:
             label = box.pop("label")
@@ -135,32 +129,3 @@ class Annotations(Data):
             self.output_path.with_suffix(".json"),
             cls=NumpyEncoder,
         )
-
-    @staticmethod
-    def convert_to_tlbr(
-        bboxes: Union[List[List[int]], "np.ndarray"],
-        format: BboxFormatKind,  # noqa: A002
-    ) -> Union[List[List[int]], "np.ndarray"]:
-        """
-        Converts bounding boxes from different formats to the top, left, bottom, right
-        format.
-        """
-        if format == "tlhw":
-            return [
-                [box[0], box[1], box[0] + box[2], box[1] + box[3]] for box in bboxes
-            ]
-
-        if format == "ltrb":
-            return [[box[1], box[0], box[3], box[2]] for box in bboxes]
-
-        if format == "xywh":
-            return [
-                [
-                    box[0] - math.ceil(box[2] / 2),
-                    box[1] - math.ceil(box[3] / 2),
-                    box[0] + math.floor(box[2] / 2),
-                    box[1] + math.floor(box[3] / 2),
-                ]
-                for box in bboxes
-            ]
-        return bboxes

@@ -1,4 +1,5 @@
 from typing import Any
+from pydantic import ValidationError as PydanticValidationError  # noqa: F401
 
 
 class DvcLiveError(Exception):

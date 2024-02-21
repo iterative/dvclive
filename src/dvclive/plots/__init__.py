@@ -1,6 +1,6 @@
 from .custom import CustomPlot
 from .image import Image
-from .annotations import Annotations  # noqa: F401
+from .annotations import Annotations, BBoxes  # noqa: F401
 from .metric import Metric
 from .sklearn import Calibration, ConfusionMatrix, Det, PrecisionRecall, Roc
 from .utils import NumpyEncoder  # noqa: F401

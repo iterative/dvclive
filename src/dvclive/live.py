@@ -8,7 +8,18 @@ import os
 import shutil
 import tempfile
 from pathlib import Path, PurePath
-from typing import Any, Dict, List, Optional, Set, Tuple, Union, TYPE_CHECKING, Literal
+from typing import (
+    Any,
+    Dict,
+    TypedDict,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+    TYPE_CHECKING,
+    Literal,
+)
 
 if TYPE_CHECKING:
     import numpy as np
@@ -35,6 +46,7 @@ from .error import (
     InvalidParameterTypeError,
     InvalidPlotTypeError,
     InvalidReportModeError,
+    PydanticValidationError,
 )
 from .plots import (
     PLOT_TYPES,
@@ -73,6 +85,13 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
+
+
+class BBoxes(TypedDict):
+    boxes: List[List[int]]
+    labels: List[str]
+    scores: List[float]
+    box_format: Literal["tlbr", "tlhw", "xywh", "ltrb"]
 
 
 class Live:
@@ -465,7 +484,7 @@ class Live:
         self,
         name: str,
         val: Union[np.ndarray, matplotlib.figure.Figure, PIL.Image, StrPath],
-        annotations: Optional[Dict] = None,
+        annotations: Optional[BBoxes] = None,
     ):
         """
         Saves the given image `val` to the output file `name`.
@@ -492,7 +511,21 @@ class Live:
             name (str): name of the image file that this command will output
             val (np.ndarray | matplotlib.figure.Figure | PIL.Image | StrPath):
                 image to be saved. See the list of supported values in the description.
-
+            annotations (Optional[BBoxes]): a dictionary containing annotations
+                to display as overlays on the image. To display bounding boxes, the dict
+                should contain the following keys: `boxes`, `labels`, `scores`, and
+                `box_format`. The `boxes` key should contain a `List[List[int]]` of
+                boxes like `[[1,2,13,14], [5,6,17,18]]` for two bounding boxes. The
+                `labels` key should contain a `List[str]` of labels like
+                `["cat", "dog"]`. The `scores` key should contain a `List[float] of
+                scores like `[0.9, 0.8]`. All these lists ('boxes', 'labels', 'scores')
+                should have the same length. The `box_format` key specify the logic you
+                used for the boxes coordinates. It should be one of the
+                following strings:
+                 - "tlbr" (top-left-bottom-right)
+                 - "ltrb" (left-top-right-bottom)
+                 - "tlhw" (top-left-height-width)
+                 - "xywh" (center_x-center_y-width-height)
         Raises:
             `InvalidDataTypeError`: thrown if the provided `val` does not have a
                 supported type.
@@ -524,13 +557,13 @@ class Live:
         image.dump(val)
 
         if annotations:
-            if not Annotations.could_log(annotations):
-                raise InvalidDataTypeError(name, type(annotations))
-
             annotation_object = Annotations(name, self.plots_dir)
             self._images[name]["annotations"] = annotation_object
             annotation_object.step = self.step
-            annotation_object.dump(annotations)
+            try:
+                annotation_object.dump(annotations)
+            except PydanticValidationError as err:
+                raise InvalidDataTypeError(name, type(annotations)) from err
 
         logger.debug(f"Logged {name}: {val}")
 
