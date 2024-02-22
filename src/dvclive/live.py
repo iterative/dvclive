@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     import PIL
 
 from dvc.exceptions import DvcException
+from dvc.utils.studio import get_subrepo_relpath
 from funcy import set_in
 from ruamel.yaml.representer import RepresenterError
 
@@ -147,6 +148,7 @@ class Live:
         self._baseline_rev: str = os.getenv(env.DVC_EXP_BASELINE_REV, NULL_SHA)
         self._exp_name: Optional[str] = exp_name or os.getenv(env.DVC_EXP_NAME)
         self._exp_message: Optional[str] = exp_message
+        self._subdir: Optional[str] = None
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
         self._inside_dvc_pipeline: bool = False
@@ -249,6 +251,8 @@ class Live:
 
         if self._inside_dvc_pipeline:
             return
+
+        self._subdir = get_subrepo_relpath(self._dvc_repo)
 
         if self._save_dvc_exp:
             mark_dvclive_only_started(self._exp_name)
