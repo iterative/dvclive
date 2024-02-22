@@ -122,8 +122,8 @@ class Live:
                 provided string will be passed to `dvc exp save --message`.
                 If DVCLive is used inside `dvc exp run`, the option will be ignored, use
                 `dvc exp run --message` instead.
-            monitor_system (bool): if `True`, DVCLive will monitor CPU, ram, and disk
-                usage. Defaults to `False`.
+            monitor_system (bool): if `True`, DVCLive will monitor GPU, CPU, ram, and
+                disk usage. Defaults to `False`.
         """
         self.summary: Dict[str, Any] = {}
 

@@ -61,7 +61,6 @@ class SystemMonitor:
             This argument expect a dict where the key is the name that will be used
             in the metric's name and the value is the path to the directory to
             monitor. Defaults to {"main": "/"}.
-        plot (bool): should the system metrics be saved as plots. Defaults to True.
 
     Raises:
         ValueError: if the keys in `directories_to_monitor` contains invalid characters
@@ -81,7 +80,6 @@ class SystemMonitor:
         interval: float = 0.05,  # seconds
         num_samples: int = 20,
         directories_to_monitor: Optional[Dict[str, str]] = None,
-        plot: bool = True,
     ):
         self._interval = self._check_interval(interval, max_interval=0.1)
         self._num_samples = self._check_num_samples(
@@ -90,7 +88,6 @@ class SystemMonitor:
         self._disks_to_monitor = self._check_directories_to_monitor(
             directories_to_monitor
         )
-        self._plot = plot
         self._warn_cpu_problem = True
         self._warn_gpu_problem = True
         self._warn_disk_doesnt_exist: Dict[str, bool] = {}
@@ -167,7 +164,7 @@ class SystemMonitor:
                     name,
                     values / self._num_samples,
                     timestamp=True,
-                    plot=None if blacklisted else self._plot,
+                    plot=None if blacklisted else True,
                 )
 
     def _get_metrics(self) -> Dict[str, Union[float, int]]:
