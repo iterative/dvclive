@@ -37,7 +37,9 @@ dependencies = [
   "funcy",
   "gto",
   "ruamel.yaml",
-  "scmrepo>=3,<4"
+  "scmrepo>=3,<4",
+  "psutil",
+  "pynvml"
 ]
 
 [project.optional-dependencies]
@@ -51,7 +53,9 @@ tests = [
   "pytest-cov>=3.0.0,<4.0",
   "pytest-mock>=3.8.2,<4.0",
   "dvclive[image,plots,markdown]",
-  "ipython"
+  "ipython",
+  "pytest_voluptuous",
+  "dpath"
 ]
 dev = [
   "dvclive[all,tests]",

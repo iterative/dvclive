@@ -7,8 +7,10 @@ import math
 import os
 import shutil
 import tempfile
+
 from pathlib import Path, PurePath
 from typing import Any, Dict, List, Optional, Set, Tuple, Union, TYPE_CHECKING, Literal
+
 
 if TYPE_CHECKING:
     import numpy as np
@@ -41,6 +43,7 @@ from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEn
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, post_to_studio
+from .monitor_system import _SystemMonitor
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -81,6 +84,7 @@ class Live:
         cache_images: bool = False,
         exp_name: Optional[str] = None,
         exp_message: Optional[str] = None,
+        monitor_system: bool = False,
     ):
         """
         Initializes a DVCLive logger. A `Live()` instance is required in order to log
@@ -119,6 +123,8 @@ class Live:
                 provided string will be passed to `dvc exp save --message`.
                 If DVCLive is used inside `dvc exp run`, the option will be ignored, use
                 `dvc exp run --message` instead.
+            monitor_system (bool): if `True`, DVCLive will monitor GPU, CPU, ram, and
+                disk usage. Defaults to `False`.
         """
         self.summary: Dict[str, Any] = {}
 
@@ -164,6 +170,10 @@ class Live:
         self._studio_events_to_skip: Set[str] = set()
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
+
+        self._system_monitor: Optional[_SystemMonitor] = None  # Monitoring thread
+        if monitor_system:
+            self.monitor_system()
 
     def _init_resume(self):
         self._read_params()
@@ -369,6 +379,43 @@ class Live:
     def step(self, value: int) -> None:
         self._step = value
         logger.debug(f"Step: {self.step}")
+
+    def monitor_system(
+        self,
+        interval: float = 0.05,  # seconds
+        num_samples: int = 20,
+        directories_to_monitor: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Monitor GPU, CPU, ram, and disk resources and log them to DVC Live.
+
+        Args:
+            interval (float): the time interval between samples in seconds. To keep the
+                sampling interval small, the maximum value allowed is 0.1 seconds.
+                Default to 0.05.
+            num_samples (int): the number of samples to collect before the aggregation.
+                The value should be between 1 and 30 samples. Default to 20.
+            directories_to_monitor (Optional[Dict[str, str]]): a dictionary with the
+                information about which directories to monitor. The `key` would be the
+                name of the metric and the `value` is the path to the directory.
+                The metric tracked concerns the partition that contains the directory.
+                Default to `{"main": "/"}`.
+
+        Raises:
+            ValueError: if the keys in `directories_to_monitor` contains invalid
+                characters as defined by `os.path.normpath`.
+        """
+        if directories_to_monitor is None:
+            directories_to_monitor = {"main": "/"}
+
+        if self._system_monitor is not None:
+            self._system_monitor.end()
+
+        self._system_monitor = _SystemMonitor(
+            live=self,
+            interval=interval,
+            num_samples=num_samples,
+            directories_to_monitor=directories_to_monitor,
+        )
 
     def sync(self):
         self.make_summary()
@@ -857,6 +904,11 @@ class Live:
         # If next_step called before end, don't want to update step number
         if "step" in self.summary:
             self.step = self.summary["step"]
+
+        # Kill threads that monitor the system metrics
+        if self._system_monitor is not None:
+            self._system_monitor.end()
+
         self.sync()
 
         if self._inside_dvc_exp and self._dvc_repo:
