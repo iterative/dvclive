@@ -37,7 +37,9 @@ dependencies = [
   "funcy",
   "gto",
   "ruamel.yaml",
-  "scmrepo"
+  "scmrepo",
+  "psutil",
+  "pynvml"
 ]
 
 [project.optional-dependencies]
@@ -50,7 +52,7 @@ tests = [
   "pytest-sugar>=0.9.6,<1.0",
   "pytest-cov>=3.0.0,<4.0",
   "pytest-mock>=3.8.2,<4.0",
-  "dvclive[image,plots,markdown,system]",
+  "dvclive[image,plots,markdown]",
   "ipython",
   "pytest_voluptuous",
   "dpath"
@@ -69,9 +71,8 @@ catalyst = ["catalyst>22"]
 fastai = ["fastai"]
 lightning = ["lightning>=2.0", "torch", "jsonargparse[signatures]>=4.26.1"]
 optuna = ["optuna"]
-system = ["psutil", "pynvml"]
 all = [
-  "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,lightning,optuna,plots,markdown,system]"
+  "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,lightning,optuna,plots,markdown]"
 ]
 
 [project.urls]
