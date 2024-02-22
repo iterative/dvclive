@@ -470,12 +470,15 @@ def test_post_to_studio_repeat_step(tmp_dir, mocked_dvc_repo, mocked_studio_post
     # for more context see the PR https://github.com/iterative/dvclive/pull/788
     live = Live()
 
-    foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
+    prefix = Path(live.plots_dir) / Metric.subfolder
+    foo_path = (prefix / "foo.tsv").as_posix()
+    bar_path = (prefix / "bar.tsv").as_posix()
 
     mocked_post, _ = mocked_studio_post
 
     live.step = 0
     live.log_metric("foo", 1)
+    live.log_metric("bar", 0.1)
     live.sync()
 
     mocked_post.assert_called_with(
@@ -484,11 +487,16 @@ def test_post_to_studio_repeat_step(tmp_dir, mocked_dvc_repo, mocked_studio_post
             "data",
             exp_name=live._exp_name,
             step=0,
-            plots={f"{foo_path}": {"data": [{"step": 0, "foo": 1.0}]}},
+            plots={
+                f"{foo_path}": {"data": [{"step": 0, "foo": 1.0}]},
+                f"{bar_path}": {"data": [{"step": 0, "bar": 0.1}]},
+            },
         ),
     )
 
     live.log_metric("foo", 2)
+    live.log_metric("foo", 3)
+    live.log_metric("bar", 0.2)
     live.sync()
 
     mocked_post.assert_called_with(
@@ -497,6 +505,11 @@ def test_post_to_studio_repeat_step(tmp_dir, mocked_dvc_repo, mocked_studio_post
             "data",
             exp_name=live._exp_name,
             step=0,
-            plots={f"{foo_path}": {"data": [{"step": 0, "foo": 2.0}]}},
+            plots={
+                f"{foo_path}": {
+                    "data": [{"step": 0, "foo": 2.0}, {"step": 0, "foo": 3.0}]
+                },
+                f"{bar_path}": {"data": [{"step": 0, "bar": 0.2}]},
+            },
         ),
     )
