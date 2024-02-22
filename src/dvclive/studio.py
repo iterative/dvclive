@@ -96,13 +96,16 @@ def increment_num_points_sent_to_studio(live, plots):
     return live
 
 
-def post_to_studio(live: Live, event: Literal["start", "data", "done"]):
+def post_to_studio(live: Live, event: Literal["start", "data", "done"]):  # noqa: C901
     if event in live._studio_events_to_skip:
         return
 
     kwargs = {}
-    if event == "start" and live._exp_message:
-        kwargs["message"] = live._exp_message
+    if event == "start":
+        if message := live._exp_message:
+            kwargs["message"] = message
+        if subdir := live._subdir:
+            kwargs["subdir"] = subdir
     elif event == "data":
         metrics, params, plots = get_studio_updates(live)
         kwargs["step"] = live.step  # type: ignore
