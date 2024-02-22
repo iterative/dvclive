@@ -1,12 +1,11 @@
 import logging
 import os
-from typing import Dict, Union, Optional, Tuple
+from typing import Dict, Union, Tuple
 
 import psutil
 from statistics import mean
 from threading import Event, Thread
 from funcy import merge_with
-
 
 try:
     from pynvml import (
@@ -47,26 +46,7 @@ METRIC_VRAM_USAGE_GB = "system/vram/usage (GB)"
 METRIC_VRAM_TOTAL_GB = "system/vram/total (GB)"
 
 
-class SystemMonitor:
-    """Monitor CPU, ram, and disk resources and log them to DVC Live. Monitor also the
-    GPU resources if available.
-
-    Args:
-        interval (float): interval in seconds between two measurements.
-            Defaults to 0.05.
-        num_samples (int): number of samples to average. Defaults to 20.
-        directories_to_monitor (Optional[Dict[str, str]]): monitor disk usage
-            statistics about the partition which contains the given paths. The
-            statistics include total and used space in gygabytes and percent.
-            This argument expect a dict where the key is the name that will be used
-            in the metric's name and the value is the path to the directory to
-            monitor. Defaults to {"main": "/"}.
-
-    Raises:
-        ValueError: if the keys in `directories_to_monitor` contains invalid characters
-        as defined by `os.path.normpath`.
-    """
-
+class _SystemMonitor:
     _plot_blacklist_prefix: Tuple = (
         METRIC_CPU_COUNT,
         METRIC_RAM_TOTAL_GB,
@@ -77,10 +57,12 @@ class SystemMonitor:
 
     def __init__(
         self,
-        interval: float = 0.05,  # seconds
-        num_samples: int = 20,
-        directories_to_monitor: Optional[Dict[str, str]] = None,
+        live,
+        interval: float,  # seconds
+        num_samples: int,
+        directories_to_monitor: Dict[str, str],
     ):
+        self._live = live
         self._interval = self._check_interval(interval, max_interval=0.1)
         self._num_samples = self._check_num_samples(
             num_samples, min_num_samples=1, max_num_samples=30
@@ -91,6 +73,11 @@ class SystemMonitor:
         self._warn_cpu_problem = True
         self._warn_gpu_problem = True
         self._warn_disk_doesnt_exist: Dict[str, bool] = {}
+
+        self._shutdown_event = Event()
+        Thread(
+            target=self._monitoring_loop,
+        ).start()
 
     def _check_interval(self, interval: float, max_interval: float) -> float:
         if interval > max_interval:
@@ -115,11 +102,8 @@ class SystemMonitor:
         return num_samples
 
     def _check_directories_to_monitor(
-        self, directories_to_monitor: Optional[Dict[str, str]]
+        self, directories_to_monitor: Dict[str, str]
     ) -> Dict[str, str]:
-        if directories_to_monitor is None:
-            return {"main": "/"}
-
         disks_to_monitor = {}
         for disk_name, disk_path in directories_to_monitor.items():
             if disk_name != os.path.normpath(disk_name):
@@ -129,13 +113,6 @@ class SystemMonitor:
                 )
             disks_to_monitor[disk_name] = disk_path
         return disks_to_monitor
-
-    def __call__(self, live):
-        self._live = live
-        self._shutdown_event = Event()
-        Thread(
-            target=self._monitoring_loop,
-        ).start()
 
     def _monitoring_loop(self):
         while not self._shutdown_event.is_set():
@@ -168,14 +145,12 @@ class SystemMonitor:
                 )
 
     def _get_metrics(self) -> Dict[str, Union[float, int]]:
-        result = {
+        return {
+            **self._get_gpu_info(),
             **self._get_cpu_info(),
             **self._get_ram_info(),
             **self._get_disk_info(),
         }
-        if GPU_AVAILABLE:
-            result.update(self._get_gpu_info())
-        return result
 
     def _get_ram_info(self) -> Dict[str, Union[float, int]]:
         ram_info = psutil.virtual_memory()
@@ -226,6 +201,9 @@ class SystemMonitor:
         return result
 
     def _get_gpu_info(self) -> Dict[str, Union[float, int]]:
+        if not GPU_AVAILABLE:
+            return {}
+
         nvmlInit()
         num_gpus = nvmlDeviceGetCount()
         gpu_metrics = {

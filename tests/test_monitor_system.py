@@ -7,7 +7,7 @@ from pytest_voluptuous import S
 
 from dvclive import Live
 from dvclive.monitor_system import (
-    SystemMonitor,
+    _SystemMonitor,
     METRIC_CPU_COUNT,
     METRIC_CPU_USAGE_PERCENT,
     METRIC_CPU_PARALLELIZATION_PERCENT,
@@ -149,14 +149,10 @@ def test_monitor_system_is_false(tmp_dir, mocker):
     mock_psutil_ram(mocker)
     mock_psutil_disk(mocker)
     mock_pynvml(mocker, num_gpus=0)
-    system_monitor_mock = mocker.patch("dvclive.live.SystemMonitor", spec=SystemMonitor)
-    with Live(
-        tmp_dir,
-        save_dvc_exp=False,
-        monitor_system=False,
-    ) as live:
-        assert live.system_monitor is None
-
+    system_monitor_mock = mocker.patch(
+        "dvclive.live._SystemMonitor", spec=_SystemMonitor
+    )
+    Live(tmp_dir, save_dvc_exp=False, monitor_system=False)
     system_monitor_mock.assert_not_called()
 
 
@@ -165,23 +161,35 @@ def test_monitor_system_is_true(tmp_dir, mocker):
     mock_psutil_ram(mocker)
     mock_psutil_disk(mocker)
     mock_pynvml(mocker, num_gpus=0)
-    system_monitor_mock = mocker.patch("dvclive.live.SystemMonitor", spec=SystemMonitor)
+    system_monitor_mock = mocker.patch(
+        "dvclive.live._SystemMonitor", spec=_SystemMonitor
+    )
+
+    Live(tmp_dir, save_dvc_exp=False, monitor_system=True)
+    system_monitor_mock.assert_called_once()
+
+
+def test_all_threads_close(tmp_dir, mocker):
+    mock_psutil_cpu(mocker)
+    mock_psutil_ram(mocker)
+    mock_psutil_disk(mocker)
+    mock_pynvml(mocker, num_gpus=0)
 
     with Live(
         tmp_dir,
         save_dvc_exp=False,
         monitor_system=True,
     ) as live:
-        system_monitor = live.system_monitor
+        first_end_spy = mocker.spy(live._system_monitor, "end")
+        first_end_spy.assert_not_called()
 
-        assert isinstance(system_monitor, SystemMonitor)
-        system_monitor_mock.assert_called_once()
+        live.monitor_system(interval=0.01)
+        first_end_spy.assert_called_once()
 
-        end_spy = mocker.spy(system_monitor, "end")
-        end_spy.assert_not_called()
+        second_end_spy = mocker.spy(live._system_monitor, "end")
 
     # check the monitoring thread is stopped
-    end_spy.assert_called_once()
+    second_end_spy.assert_called_once()
 
 
 def test_ignore_non_existent_directories(tmp_dir, mocker):
@@ -195,12 +203,14 @@ def test_ignore_non_existent_directories(tmp_dir, mocker):
         monitor_system=False,
     ) as live:
         non_existent_disk = "/non-existent"
-        monitor = SystemMonitor(
-            directories_to_monitor={"main": "/", "non-existent": non_existent_disk}
+        system_monitor = _SystemMonitor(
+            live=live,
+            interval=0.1,
+            num_samples=4,
+            directories_to_monitor={"main": "/", "non-existent": non_existent_disk},
         )
-        monitor(live)
-        metrics = monitor._get_metrics()
-        monitor.end()
+        metrics = system_monitor._get_metrics()
+        system_monitor.end()
 
     assert not Path(non_existent_disk).exists()
 
@@ -220,7 +230,7 @@ def test_monitor_system_metrics(tmp_dir, cpu_metrics, mocker):
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        live.system_monitor = SystemMonitor(interval=0.05, num_samples=4)
+        live.monitor_system(interval=0.05, num_samples=4)
         # wait for the metrics to be logged.
         # METRIC_DISK_TOTAL_GB is the last metric to be logged.
         while len(dpath.search(live.summary, METRIC_DISK_TOTAL_GB)) == 0:
@@ -244,7 +254,7 @@ def test_monitor_system_timeseries(tmp_dir, cpu_timeseries, mocker):
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        live.system_monitor = SystemMonitor(interval=0.05, num_samples=4)
+        live.monitor_system(interval=0.05, num_samples=4)
 
         # wait for the metrics to be logged.
         # METRIC_DISK_TOTAL_GB is the last metric to be logged.
@@ -271,10 +281,10 @@ def test_monitor_system_metrics_with_gpu(tmp_dir, cpu_metrics, mocker):
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        live.system_monitor = SystemMonitor(interval=0.05, num_samples=4)
+        live.monitor_system(interval=0.05, num_samples=4)
         # wait for the metrics to be logged.
-        # f"{METRIC_VRAM_TOTAL_GB}/1" is the last metric to be logged if there is a GPU.
-        while len(dpath.search(live.summary, f"{METRIC_VRAM_TOTAL_GB}/1")) == 0:
+        # METRIC_DISK_TOTAL_GB is the last metric to be logged.
+        while len(dpath.search(live.summary, METRIC_DISK_TOTAL_GB)) == 0:
             time.sleep(0.001)
         live.next_step()
 
@@ -306,11 +316,11 @@ def test_monitor_system_timeseries_with_gpu(
         save_dvc_exp=False,
         monitor_system=False,
     ) as live:
-        live.system_monitor = SystemMonitor(interval=0.05, num_samples=4)
+        live.monitor_system(interval=0.05, num_samples=4)
 
         # wait for the metrics to be logged.
-        # f"{METRIC_VRAM_TOTAL_GB}/1" is the last metric to be logged if there is a GPU.
-        while len(dpath.search(live.summary, f"{METRIC_VRAM_TOTAL_GB}/1")) == 0:
+        # METRIC_DISK_TOTAL_GB is the last metric to be logged.
+        while len(dpath.search(live.summary, METRIC_DISK_TOTAL_GB)) == 0:
             time.sleep(0.001)
 
         live.next_step()

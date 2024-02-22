@@ -42,7 +42,7 @@ from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEn
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, post_to_studio
-from .monitor_system import SystemMonitor
+from .monitor_system import _SystemMonitor
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -169,10 +169,9 @@ class Live:
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
 
-        self._system_monitor = None
+        self._system_monitor: Optional[_SystemMonitor] = None  # Monitoring thread
         if monitor_system:
-            self._system_monitor = SystemMonitor()
-            self._system_monitor(self)
+            self.monitor_system()
 
     def _init_resume(self):
         self._read_params()
@@ -377,16 +376,42 @@ class Live:
         self._step = value
         logger.debug(f"Step: {self.step}")
 
-    @property
-    def system_monitor(self) -> Optional[SystemMonitor]:
-        return self._system_monitor or None
+    def monitor_system(
+        self,
+        interval: float = 0.05,  # seconds
+        num_samples: int = 20,
+        directories_to_monitor: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Monitor GPU, CPU, ram, and disk resources and log them to DVC Live.
 
-    @system_monitor.setter
-    def system_monitor(self, system_monitor: SystemMonitor) -> None:
+        Args:
+            interval (float): the time interval between samples in seconds. To keep the
+                sampling interval small, the maximum value allowed is 0.1 seconds.
+                Default to 0.05.
+            num_samples (int): the number of samples to collect before the aggregation.
+                The value should be between 1 and 30 samples. Default to 20.
+            directories_to_monitor (Optional[Dict[str, str]]): a dictionary with the
+                information about which directories to monitor. The `key` would be the
+                name of the metric and the `value` is the path to the directory.
+                The metric tracked concerns the partition that contains the directory.
+                Default to `{"main": "/"}`.
+
+        Raises:
+            ValueError: if the keys in `directories_to_monitor` contains invalid
+                characters as defined by `os.path.normpath`.
+        """
+        if directories_to_monitor is None:
+            directories_to_monitor = {"main": "/"}
+
         if self._system_monitor is not None:
             self._system_monitor.end()
-        self._system_monitor = system_monitor
-        self._system_monitor(self)
+
+        self._system_monitor = _SystemMonitor(
+            live=self,
+            interval=interval,
+            num_samples=num_samples,
+            directories_to_monitor=directories_to_monitor,
+        )
 
     def sync(self):
         self.make_summary()
