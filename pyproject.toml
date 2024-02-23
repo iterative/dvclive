@@ -37,7 +37,8 @@ dependencies = [
   "funcy",
   "gto",
   "ruamel.yaml",
-  "scmrepo"
+  "scmrepo",
+  "pydantic>=2.0,<3.0"
 ]
 
 [project.optional-dependencies]
