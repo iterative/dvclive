@@ -81,6 +81,18 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     )
 
 
+def test_post_to_studio_subrepo(tmp_dir, mocked_dvc_subrepo, mocked_studio_post):
+    live = Live()
+    live.log_param("fooparam", 1)
+
+    mocked_post, _ = mocked_studio_post
+
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        **get_studio_call("start", exp_name=live._exp_name, subdir="subdir"),
+    )
+
+
 def test_post_to_studio_failed_data_request(
     tmp_dir, mocker, mocked_dvc_repo, mocked_studio_post
 ):
@@ -235,10 +247,9 @@ def test_post_to_studio_shorten_names(tmp_dir, mocked_dvc_repo, mocked_studio_po
 
 @pytest.mark.studio()
 def test_post_to_studio_inside_dvc_exp(
-    tmp_dir, mocker, monkeypatch, mocked_studio_post
+    tmp_dir, mocker, monkeypatch, mocked_studio_post, mocked_dvc_repo
 ):
     mocked_post, _ = mocked_studio_post
-    mocker.patch("dvclive.live.get_dvc_repo", return_value=None)
 
     monkeypatch.setenv(DVC_EXP_BASELINE_REV, "f" * 40)
     monkeypatch.setenv(DVC_EXP_NAME, "bar")
@@ -310,9 +321,8 @@ def test_post_to_studio_inside_subdir_dvc_exp(
     )
 
 
-def test_post_to_studio_requires_exp(tmp_dir, mocked_dvc_repo, mocked_studio_post):
-    assert Live(save_dvc_exp=False)._studio_events_to_skip == {"start", "data", "done"}
-    assert not Live()._studio_events_to_skip
+def test_post_to_studio_without_exp(tmp_dir, mocked_dvc_repo, mocked_studio_post):
+    assert not Live(save_dvc_exp=False)._studio_events_to_skip
 
 
 def test_get_dvc_studio_config_none(mocker):
@@ -396,3 +406,73 @@ def test_post_to_studio_if_done_skipped(tmp_dir, mocked_dvc_repo, mocked_studio_
     mocked_post, _ = mocked_studio_post
     call_types = [call.kwargs["json"]["type"] for call in mocked_post.call_args_list]
     assert "data" in call_types
+
+
+@pytest.mark.studio()
+def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post):
+    monkeypatch.setenv(DVC_STUDIO_TOKEN, "STUDIO_TOKEN")
+    monkeypatch.setenv(DVC_STUDIO_REPO_URL, "STUDIO_REPO_URL")
+
+    live = Live(save_dvc_exp=True)
+    live.log_param("fooparam", 1)
+
+    foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
+
+    mocked_post, _ = mocked_studio_post
+
+    mocked_post.assert_called()
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        **get_studio_call("start", baseline_sha="0" * 40, exp_name=live._exp_name),
+    )
+
+    live.log_metric("foo", 1)
+
+    live.next_step()
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        **get_studio_call(
+            "data",
+            baseline_sha="0" * 40,
+            exp_name=live._exp_name,
+            step=0,
+            plots={f"{foo_path}": {"data": [{"step": 0, "foo": 1.0}]}},
+        ),
+    )
+
+    live.log_metric("foo", 2)
+
+    live.next_step()
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        **get_studio_call(
+            "data",
+            baseline_sha="0" * 40,
+            exp_name=live._exp_name,
+            step=1,
+            plots={f"{foo_path}": {"data": [{"step": 1, "foo": 2.0}]}},
+        ),
+    )
+
+    live.end()
+    mocked_post.assert_called_with(
+        "https://0.0.0.0/api/live",
+        **get_studio_call("done", baseline_sha="0" * 40, exp_name=live._exp_name),
+    )
+
+
+@pytest.mark.studio()
+def test_post_to_studio_skip_if_no_repo_url(
+    tmp_dir,
+    mocker,
+    monkeypatch,
+):
+    mocked_post = mocker.patch("dvclive.studio.post_live_metrics", return_value=None)
+
+    monkeypatch.setenv(DVC_STUDIO_TOKEN, "token")
+
+    with Live() as live:
+        live.log_metric("foo", 1)
+        live.next_step()
+
+    assert mocked_post.call_count == 0
