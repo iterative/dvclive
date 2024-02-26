@@ -49,7 +49,6 @@ from .error import (
     InvalidParameterTypeError,
     InvalidPlotTypeError,
     InvalidReportModeError,
-    PydanticValidationError,
 )
 from .plots import (
     PLOT_TYPES,
@@ -595,13 +594,12 @@ class Live:
         image.dump(val)
 
         if annotations:
+            if not Annotations.could_log(annotations):
+                raise InvalidDataTypeError(name, type(annotations))
             annotation_object = Annotations(name, self.plots_dir)
             self._images[name]["annotations"] = annotation_object
             annotation_object.step = self.step
-            try:
-                annotation_object.dump(annotations)
-            except PydanticValidationError as err:
-                raise InvalidDataTypeError(name, type(annotations)) from err
+            annotation_object.dump(annotations)
 
         logger.debug(f"Logged {name}: {val}")
 
