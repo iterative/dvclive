@@ -7,8 +7,10 @@ import math
 import os
 import shutil
 import tempfile
+
 from pathlib import Path, PurePath
 from typing import Any, Dict, List, Optional, Set, Tuple, Union, TYPE_CHECKING, Literal
+
 
 if TYPE_CHECKING:
     import numpy as np
@@ -17,6 +19,7 @@ if TYPE_CHECKING:
     import PIL
 
 from dvc.exceptions import DvcException
+from dvc.utils.studio import get_subrepo_relpath
 from funcy import set_in
 from ruamel.yaml.representer import RepresenterError
 
@@ -40,6 +43,7 @@ from .plots import PLOT_TYPES, SKLEARN_PLOTS, CustomPlot, Image, Metric, NumpyEn
 from .report import BLANK_NOTEBOOK_REPORT, make_report
 from .serialize import dump_json, dump_yaml, load_yaml
 from .studio import get_dvc_studio_config, post_to_studio
+from .monitor_system import _SystemMonitor
 from .utils import (
     StrPath,
     catch_and_warn,
@@ -66,6 +70,8 @@ logger.addHandler(handler)
 
 ParamLike = Union[int, float, str, bool, List["ParamLike"], Dict[str, "ParamLike"]]
 
+NULL_SHA: str = "0" * 40
+
 
 class Live:
     def __init__(
@@ -78,6 +84,7 @@ class Live:
         cache_images: bool = False,
         exp_name: Optional[str] = None,
         exp_message: Optional[str] = None,
+        monitor_system: bool = False,
     ):
         """
         Initializes a DVCLive logger. A `Live()` instance is required in order to log
@@ -116,6 +123,8 @@ class Live:
                 provided string will be passed to `dvc exp save --message`.
                 If DVCLive is used inside `dvc exp run`, the option will be ignored, use
                 `dvc exp run --message` instead.
+            monitor_system (bool): if `True`, DVCLive will monitor GPU, CPU, ram, and
+                disk usage. Defaults to `False`.
         """
         self.summary: Dict[str, Any] = {}
 
@@ -136,9 +145,10 @@ class Live:
         self._report_notebook = None
         self._init_report()
 
-        self._baseline_rev: Optional[str] = None
-        self._exp_name: Optional[str] = exp_name
+        self._baseline_rev: str = os.getenv(env.DVC_EXP_BASELINE_REV, NULL_SHA)
+        self._exp_name: Optional[str] = exp_name or os.getenv(env.DVC_EXP_NAME)
         self._exp_message: Optional[str] = exp_message
+        self._subdir: Optional[str] = None
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
         self._inside_dvc_pipeline: bool = False
@@ -156,10 +166,14 @@ class Live:
         else:
             self._init_cleanup()
 
-        self._latest_studio_step = self.step if resume else -1
+        self._latest_studio_step: int = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
         self._dvc_studio_config: Dict[str, Any] = {}
         self._init_studio()
+
+        self._system_monitor: Optional[_SystemMonitor] = None  # Monitoring thread
+        if monitor_system:
+            self.monitor_system()
 
     def _init_resume(self):
         self._read_params()
@@ -189,7 +203,7 @@ class Live:
             os.remove(dvc_file)
 
     @catch_and_warn(DvcException, logger)
-    def _init_dvc(self):
+    def _init_dvc(self):  # noqa: C901
         from dvc.scm import NoSCM
 
         if os.getenv(env.DVC_ROOT, None):
@@ -197,12 +211,20 @@ class Live:
             self._init_dvc_pipeline()
         self._dvc_repo = get_dvc_repo()
 
+        scm = self._dvc_repo.scm if self._dvc_repo else None
+        if isinstance(scm, NoSCM):
+            scm = None
+        if scm:
+            self._baseline_rev = scm.get_rev()
+        self._exp_name = get_exp_name(self._exp_name, scm, self._baseline_rev)
+        logger.info(f"Logging to experiment '{self._exp_name}'")
+
         dvc_logger = logging.getLogger("dvc")
         dvc_logger.setLevel(os.getenv(env.DVCLIVE_LOGLEVEL, "WARNING").upper())
 
         self._dvc_file = self._init_dvc_file()
 
-        if (self._dvc_repo is None) or isinstance(self._dvc_repo.scm, NoSCM):
+        if not scm:
             if self._save_dvc_exp:
                 logger.warning(
                     "Can't save experiment without a Git Repo."
@@ -210,7 +232,7 @@ class Live:
                 )
                 self._save_dvc_exp = False
             return
-        if self._dvc_repo.scm.no_commits:
+        if scm.no_commits:
             if self._save_dvc_exp:
                 logger.warning(
                     "Can't save experiment to an empty Git Repo."
@@ -230,12 +252,9 @@ class Live:
         if self._inside_dvc_pipeline:
             return
 
-        self._baseline_rev = self._dvc_repo.scm.get_rev()
+        self._subdir = get_subrepo_relpath(self._dvc_repo)
+
         if self._save_dvc_exp:
-            self._exp_name = get_exp_name(
-                self._exp_name, self._dvc_repo.scm, self._baseline_rev
-            )
-            logger.info(f"Logging to experiment '{self._exp_name}'")
             mark_dvclive_only_started(self._exp_name)
             self._include_untracked.append(self.dir)
 
@@ -249,8 +268,6 @@ class Live:
     def _init_dvc_pipeline(self):
         if os.getenv(env.DVC_EXP_BASELINE_REV, None):
             # `dvc exp` execution
-            self._baseline_rev = os.getenv(env.DVC_EXP_BASELINE_REV, "")
-            self._exp_name = os.getenv(env.DVC_EXP_NAME, "")
             self._inside_dvc_exp = True
             if self._save_dvc_exp:
                 logger.info("Ignoring `save_dvc_exp` because `dvc exp run` is running")
@@ -274,22 +291,6 @@ class Live:
         elif self._inside_dvc_exp:
             logger.debug("Skipping `studio` report `start` and `done` events.")
             self._studio_events_to_skip.add("start")
-            self._studio_events_to_skip.add("done")
-        elif self._dvc_repo is None:
-            logger.warning(
-                "Can't connect to Studio without a DVC Repo."
-                "\nYou can create a DVC Repo by calling `dvc init`."
-            )
-            self._studio_events_to_skip.add("start")
-            self._studio_events_to_skip.add("data")
-            self._studio_events_to_skip.add("done")
-        elif not self._save_dvc_exp:
-            logger.warning(
-                "Can't connect to Studio without creating a DVC experiment."
-                "\nIf you have a DVC Pipeline, run it with `dvc exp run`."
-            )
-            self._studio_events_to_skip.add("start")
-            self._studio_events_to_skip.add("data")
             self._studio_events_to_skip.add("done")
         else:
             self.post_to_studio("start")
@@ -338,7 +339,7 @@ class Live:
             )
 
     @property
-    def dir(self) -> str:  # noqa: A003
+    def dir(self) -> str:
         """Location of the directory to store outputs."""
         return self._dir
 
@@ -378,6 +379,43 @@ class Live:
     def step(self, value: int) -> None:
         self._step = value
         logger.debug(f"Step: {self.step}")
+
+    def monitor_system(
+        self,
+        interval: float = 0.05,  # seconds
+        num_samples: int = 20,
+        directories_to_monitor: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Monitor GPU, CPU, ram, and disk resources and log them to DVC Live.
+
+        Args:
+            interval (float): the time interval between samples in seconds. To keep the
+                sampling interval small, the maximum value allowed is 0.1 seconds.
+                Default to 0.05.
+            num_samples (int): the number of samples to collect before the aggregation.
+                The value should be between 1 and 30 samples. Default to 20.
+            directories_to_monitor (Optional[Dict[str, str]]): a dictionary with the
+                information about which directories to monitor. The `key` would be the
+                name of the metric and the `value` is the path to the directory.
+                The metric tracked concerns the partition that contains the directory.
+                Default to `{"main": "/"}`.
+
+        Raises:
+            ValueError: if the keys in `directories_to_monitor` contains invalid
+                characters as defined by `os.path.normpath`.
+        """
+        if directories_to_monitor is None:
+            directories_to_monitor = {"main": "/"}
+
+        if self._system_monitor is not None:
+            self._system_monitor.end()
+
+        self._system_monitor = _SystemMonitor(
+            live=self,
+            interval=interval,
+            num_samples=num_samples,
+            directories_to_monitor=directories_to_monitor,
+        )
 
     def sync(self):
         self.make_summary()
@@ -840,7 +878,7 @@ class Live:
         make_dvcyaml(self)
 
     @catch_and_warn(DvcException, logger)
-    def post_to_studio(self, event: str):
+    def post_to_studio(self, event: Literal["start", "data", "done"]):
         post_to_studio(self, event)
 
     def end(self):
@@ -866,6 +904,11 @@ class Live:
         # If next_step called before end, don't want to update step number
         if "step" in self.summary:
             self.step = self.summary["step"]
+
+        # Kill threads that monitor the system metrics
+        if self._system_monitor is not None:
+            self._system_monitor.end()
+
         self.sync()
 
         if self._inside_dvc_exp and self._dvc_repo:
