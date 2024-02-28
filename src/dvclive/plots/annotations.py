@@ -3,7 +3,7 @@ import math
 
 
 from pathlib import Path
-from pydantic import BaseModel, PydanticUserError, field_validator, model_validator
+from pydantic import BaseModel, ValidationError, field_validator, model_validator
 import logging
 
 from dvclive.plots.utils import NumpyEncoder
@@ -90,7 +90,7 @@ class Annotations(Data):
         result = True
         try:
             BBoxes(**annotations)
-        except PydanticUserError as exc:
+        except ValidationError as exc:
             logger.warning(exc)
             result = False
         return result
