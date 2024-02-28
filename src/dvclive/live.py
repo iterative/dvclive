@@ -195,6 +195,7 @@ class Live:
         self._latest_studio_step: int = self.step if resume else -1
         self._studio_events_to_skip: Set[str] = set()
         self._dvc_studio_config: Dict[str, Any] = {}
+        self._num_points_sent_to_studio: Dict[str, int] = {}
         self._init_studio()
 
         self._system_monitor: Optional[_SystemMonitor] = None  # Monitoring thread

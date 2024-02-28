@@ -17,8 +17,9 @@ try:
         Trainer,
         TrainingArguments,
     )
+    from transformers.integrations import DVCLiveCallback as ExternalCallback
 
-    from dvclive.huggingface import DVCLiveCallback
+    from dvclive.huggingface import DVCLiveCallback as InternalCallback
 except ImportError:
     pytest.skip("skipping huggingface tests", allow_module_level=True)
 
@@ -101,11 +102,12 @@ def args():
         evaluation_strategy="epoch",
         num_train_epochs=2,
         save_strategy="epoch",
-        report_to="none",
+        report_to="none",  # Disable auto-reporting to avoid duplication
     )
 
 
-def test_huggingface_integration(tmp_dir, model, args, data, mocker):
+@pytest.mark.parametrize("callback", [ExternalCallback, InternalCallback])
+def test_huggingface_integration(tmp_dir, model, args, data, mocker, callback):
     trainer = Trainer(
         model,
         args,
@@ -113,9 +115,8 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker):
         eval_dataset=data[1],
         compute_metrics=compute_metrics,
     )
-    callback = DVCLiveCallback()
-    live = callback.live
-    spy = mocker.spy(live, "end")
+    callback = callback()
+    spy = mocker.spy(Live, "end")
     trainer.add_callback(callback)
     trainer.train()
     spy.assert_called_once()
@@ -124,8 +125,6 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker):
     assert os.path.exists(live.dir)
 
     logs, _ = parse_metrics(live)
-
-    assert len(logs) == 10
 
     scalars = os.path.join(live.plots_dir, Metric.subfolder)
     assert os.path.join(scalars, "eval", "foo.tsv") in logs
@@ -138,19 +137,31 @@ def test_huggingface_integration(tmp_dir, model, args, data, mocker):
     assert params["num_train_epochs"] == 2
 
 
-@pytest.mark.parametrize("log_model", ["all", True, None])
+@pytest.mark.parametrize("log_model", ["all", True, False, None])
 @pytest.mark.parametrize("best", [True, False])
-def test_huggingface_log_model(tmp_dir, model, data, mocker, log_model, best):
-    live_callback = DVCLiveCallback(log_model=log_model)
-    log_artifact = mocker.patch.object(live_callback.live, "log_artifact")
+@pytest.mark.parametrize("callback", [ExternalCallback, InternalCallback])
+def test_huggingface_log_model(
+    tmp_dir,
+    mocked_dvc_repo,
+    model,
+    data,
+    args,
+    monkeypatch,
+    mocker,
+    log_model,
+    best,
+    callback,
+):
+    live = Live()
+    log_artifact = mocker.patch.object(live, "log_artifact")
+    if callback == ExternalCallback:
+        monkeypatch.setenv("HF_DVCLIVE_LOG_MODEL", str(log_model))
+        live_callback = callback(live=live)
+    else:
+        live_callback = callback(live=live, log_model=log_model)
 
-    args = TrainingArguments(
-        "foo",
-        evaluation_strategy="epoch",
-        num_train_epochs=2,
-        save_strategy="epoch",
-        load_best_model_at_end=best,
-    )
+    args.load_best_model_at_end = best
+
     trainer = Trainer(
         model,
         args,
@@ -164,11 +175,12 @@ def test_huggingface_log_model(tmp_dir, model, data, mocker, log_model, best):
     expected_call_count = {
         "all": 2,
         True: 1,
+        False: 0,
         None: 0,
     }
     assert log_artifact.call_count == expected_call_count[log_model]
 
-    if log_model == "last":
+    if log_model is True:
         name = "best" if best else "last"
         log_artifact.assert_called_with(
             os.path.join(args.output_dir, name),
@@ -178,8 +190,27 @@ def test_huggingface_log_model(tmp_dir, model, data, mocker, log_model, best):
         )
 
 
-def test_huggingface_pass_logger():
+@pytest.mark.parametrize("callback", [ExternalCallback, InternalCallback])
+def test_huggingface_pass_logger(callback):
     logger = Live("train_logs")
 
-    assert DVCLiveCallback().live is not logger
-    assert DVCLiveCallback(live=logger).live is logger
+    assert callback().live is not logger
+    assert callback(live=logger).live is logger
+
+
+@pytest.mark.parametrize("report_to", ["all", "dvclive", "none"])
+def test_huggingface_report_to(model, report_to):
+    args = TrainingArguments("foo", report_to=report_to)
+    trainer = Trainer(
+        model,
+        args,
+    )
+    live_cbs = [
+        cb
+        for cb in trainer.callback_handler.callbacks
+        if isinstance(cb, ExternalCallback)
+    ]
+    if report_to == "none":
+        assert not any(live_cbs)
+    else:
+        assert any(live_cbs)

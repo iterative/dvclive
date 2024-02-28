@@ -24,6 +24,11 @@ class DVCLiveCallback(TrainerCallback):
         log_model: Optional[Union[Literal["all"], bool]] = None,
         **kwargs,
     ):
+        logger.warning(
+            "This callback is deprecated and will be removed in DVCLive 4.0"
+            " in favor of `transformers.integrations.DVCLiveCallback`"
+            " https://dvc.org/doc/dvclive/ml-frameworks/huggingface."
+        )
         super().__init__()
         self._log_model = log_model
         self.live = live if live is not None else Live(**kwargs)
