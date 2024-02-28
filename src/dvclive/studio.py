@@ -18,10 +18,6 @@ from dvclive.utils import parse_metrics, rel_path, StrPath
 logger = logging.getLogger("dvclive")
 
 
-def _get_unsent_datapoints(plot: Mapping, latest_step: int):
-    return [x for x in plot if int(x["step"]) > latest_step]
-
-
 def _cast_to_numbers(datapoints: Mapping):
     for datapoint in datapoints:
         for k, v in datapoint.items():
@@ -44,11 +40,6 @@ def _adapt_path(live: Live, name: StrPath):
     if os.name == "nt":
         name = str(PureWindowsPath(name).as_posix())
     return name
-
-
-def _adapt_plot_datapoints(live: Live, plot: Mapping):
-    datapoints = _get_unsent_datapoints(plot, live._latest_studio_step)
-    return _cast_to_numbers(datapoints)
 
 
 def _adapt_image(image_path: StrPath):
@@ -78,15 +69,16 @@ def get_studio_updates(live: Live):
     metrics_file = _adapt_path(live, metrics_file)
     metrics = {metrics_file: {"data": metrics}}
 
-    plots = {
-        _adapt_path(live, name): _adapt_plot_datapoints(live, plot)
-        for name, plot in plots.items()
-    }
-    plots = {k: {"data": v} for k, v in plots.items()}
+    plots_to_send = {}
+    for name, plot in plots.items():
+        path = _adapt_path(live, name)
+        num_points_sent = live._num_points_sent_to_studio.get(path, 0)
+        plots_to_send[path] = _cast_to_numbers(plot[num_points_sent:])
 
-    plots.update(_adapt_images(live))
+    plots_to_send = {k: {"data": v} for k, v in plots_to_send.items()}
+    plots_to_send.update(_adapt_images(live))
 
-    return metrics, params, plots
+    return metrics, params, plots_to_send
 
 
 def get_dvc_studio_config(live: Live):
@@ -94,6 +86,14 @@ def get_dvc_studio_config(live: Live):
     if live._dvc_repo:
         config = live._dvc_repo.config.get("studio")
     return get_studio_config(dvc_studio_config=config)
+
+
+def increment_num_points_sent_to_studio(live, plots):
+    for name, plot in plots.items():
+        if "data" in plot:
+            num_points_sent = live._num_points_sent_to_studio.get(name, 0)
+            live._num_points_sent_to_studio[name] = num_points_sent + len(plot["data"])
+    return live
 
 
 def post_to_studio(live: Live, event: Literal["start", "data", "done"]):  # noqa: C901
@@ -130,6 +130,7 @@ def post_to_studio(live: Live, event: Literal["start", "data", "done"]):  # noqa
             live._studio_events_to_skip.add("data")
             live._studio_events_to_skip.add("done")
     elif event == "data":
+        live = increment_num_points_sent_to_studio(live, plots)
         live._latest_studio_step = live.step
 
     if event == "done":

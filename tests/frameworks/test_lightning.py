@@ -268,7 +268,6 @@ class ValLitXOR(LitXOR):
 
 
 def test_lightning_val_updates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
-    """Test the `self.experiment._latest_studio_step -= 1` logic."""
     mocked_post, _ = mocked_studio_post
 
     model = ValLitXOR()
@@ -286,8 +285,6 @@ def test_lightning_val_updates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio
     logs, _ = parse_metrics(dvclive_logger.experiment)
     latest = logs[val_loss][-1]
     calls = mocked_post.call_args_list
-    # Without `self.experiment._latest_studio_step -= 1`
-    # Latest data would not be posted
     latest_called = False
     for call in calls:
         try:
