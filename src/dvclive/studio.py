@@ -121,6 +121,7 @@ def post_to_studio(live: Live, event: Literal["start", "data", "done"]):  # noqa
         live._exp_name,  # type: ignore
         "dvclive",
         dvc_studio_config=live._dvc_studio_config,
+        studio_repo_url=live._repo_url,
         **kwargs,  # type: ignore
     )
     if not response:
