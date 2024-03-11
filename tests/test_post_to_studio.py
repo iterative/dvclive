@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from dvc.env import DVC_EXP_GIT_REMOTE
 from dvc_studio_client import DEFAULT_STUDIO_URL
 from dvc_studio_client.env import DVC_STUDIO_REPO_URL, DVC_STUDIO_TOKEN
 from PIL import Image as ImagePIL
@@ -91,6 +92,17 @@ def test_post_to_studio_subrepo(tmp_dir, mocked_dvc_subrepo, mocked_studio_post)
         "https://0.0.0.0/api/live",
         **get_studio_call("start", exp_name=live._exp_name, subdir="subdir"),
     )
+
+
+def test_post_to_studio_repo_url(tmp_dir, dvc_repo, mocked_studio_post, monkeypatch):
+    monkeypatch.setenv(DVC_EXP_GIT_REMOTE, "dvc_exp_git_remote")
+
+    live = Live()
+    live.log_param("fooparam", 1)
+
+    mocked_post, _ = mocked_studio_post
+
+    assert mocked_post.call_args.kwargs["json"]["repo_url"] == "dvc_exp_git_remote"
 
 
 def test_post_to_studio_failed_data_request(
