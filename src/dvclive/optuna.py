@@ -27,12 +27,14 @@ class DVCLiveCallback:
                 names = [self.metric_name]
 
         elif len(self.metric_name) != len(values):
-            raise ValueError(
+            msg = (
                 "Running multi-objective optimization "
-                f"with {len(values)} objective values, but {len(self.metric_name)} names specified. "
+                f"with {len(values)} objective values, "
+                f"but {len(self.metric_name)} names specified. "
                 "Match objective values and names,"
                 "or use default broadcasting."
             )
+            raise ValueError(msg)
 
         else:
             names = [*self.metric_name]
