@@ -14,60 +14,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test_full:
-    timeout-minutes: 30
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.9"
-          cache: "pip"
-          cache-dependency-path: setup.cfg
-
-      - name: Upgrade pip
-        run: |
-          python -m pip install --upgrade pip wheel
-          pip --version
-
-      - run: python -m pip install pre-commit
-
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit/
-          key: pre-commit-4|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
-
-      - name: pre-commit
-        run: |
-          pre-commit run --show-diff-on-failure --color=always --all-files
-
-      - name: Full install
-        run: pip install -e '.[dev]'
-
-      - name: mypy
-        run: |
-          python -m mypy
-
-      - name: Run tests
-        run: pytest -v tests --cov --cov-report=xml --cov-config=pyproject.toml
-
-      - name: Upload coverage report
-        uses: codecov/codecov-action@v4.3.0
-
-  test_core:
-    timeout-minutes: 30
+  tests:
+    timeout-minutes: 10
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, windows-latest, macos-latest]
-        pyv: ["3.9", "3.10", "3.11", "3.12"]
+        pyv: ['3.9', '3.10', '3.11', '3.12']
 
     steps:
       - name: Check out the repository
@@ -79,17 +33,34 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.pyv }}
-          cache: "pip"
-          cache-dependency-path: setup.cfg
+          cache: 'pip'
 
-      - name: Upgrade pip
+      - name: Upgrade nox and uv
         run: |
-          python -m pip install --upgrade pip wheel
-          pip --version
+          python -m pip install --upgrade 'nox[uv]'
+          nox --version
+          uv --version
 
-      - name: Install core
-        run: |
-          pip install -e '.[tests]'
+      - name: Cache mypy
+        uses: actions/cache@v4
+        with:
+          path: .mypy_cache
+          key: mypy-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Cache pre-commit hooks
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit/
+          key: pre-commit-4|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Lint code
+        run: nox -s lint
 
       - name: Run tests
-        run: pytest -v tests --ignore=tests/frameworks
+        run: nox -s tests-${{ matrix.pyv }} -- --cov-report=xml
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4
+
+      - name: Build package
+        run: nox -s build
