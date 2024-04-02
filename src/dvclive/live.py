@@ -497,7 +497,7 @@ class Live:
     def log_image(
         self,
         name: str,
-        val: Union[np.ndarray, matplotlib.figure.Figure, "PIL.Image.Image", StrPath],
+        val: Union[np.ndarray, matplotlib.figure.Figure, PIL.Image.Image, StrPath],
     ):
         """
         Saves the given image `val` to the output file `name`.
