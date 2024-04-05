@@ -45,7 +45,7 @@ def dump_yaml(content, output_file):
         yaml.dump(content, fd)
 
 
-def dump_json(content, output_file, indent=4, **kwargs):
+def dump_json(content, output_file, indent=2, **kwargs):
     make_dir(output_file)
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(content, f, indent=indent, **kwargs)
