@@ -175,7 +175,11 @@ def test_custom_title(tmp_dir, y_true_y_pred_y_score):
         "confusion_matrix", y_true, y_pred, name="val/cm", title="Val Confusion Matrix"
     )
     live.log_sklearn_plot(
-        "precision_recall", y_true, y_score, name="val/prc", title="Val Precision Recall"
+        "precision_recall",
+        y_true,
+        y_score,
+        name="val/prc",
+        title="Val Precision Recall",
     )
     assert (out / "train" / "cm.json").exists()
     assert (out / "val" / "cm.json").exists()
