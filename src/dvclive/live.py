@@ -7,6 +7,7 @@ import math
 import os
 import shutil
 import tempfile
+import threading
 
 from pathlib import Path, PurePath
 from typing import Any, Dict, List, Optional, Set, Tuple, Union, TYPE_CHECKING, Literal
@@ -882,7 +883,8 @@ class Live:
 
     @catch_and_warn(DvcException, logger)
     def post_to_studio(self, event: Literal["start", "data", "done"]):
-        post_to_studio(self, event)
+        thread = threading.Thread(target=post_to_studio, args=(self, event))
+        thread.start()
 
     def end(self):
         """
