@@ -664,7 +664,7 @@ class Live:
             raise InvalidPlotTypeError(name)
 
         sklearn_kwargs = {
-            k: v for k, v in kwargs.items() if k not in plot_config or k != "normalized"
+            k: v for k, v in kwargs.items() if k not in plot_config or k == "normalized"
         }
         plot.step = self.step
         plot.dump(val, **sklearn_kwargs)
