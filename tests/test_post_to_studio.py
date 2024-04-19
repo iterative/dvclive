@@ -430,11 +430,13 @@ def test_post_to_studio_name(tmp_dir, mocked_dvc_repo, mocked_studio_post):
 
 
 def test_post_to_studio_if_done_skipped(tmp_dir, mocked_dvc_repo, mocked_studio_post):
-    live = Live()
-    live._studio_events_to_skip.add("start")
-    live._studio_events_to_skip.add("done")
-    live.log_metric("foo", 1)
-    live.end()
+    with Live() as live:
+        live._studio_events_to_skip.add("start")
+        live._studio_events_to_skip.add("done")
+        live.log_metric("foo", 1)
+        live.step = 0
+        live.make_summary()
+        post_to_studio(live, "data")
 
     mocked_post, _ = mocked_studio_post
     call_types = [call.kwargs["json"]["type"] for call in mocked_post.call_args_list]
