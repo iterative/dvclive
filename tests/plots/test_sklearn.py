@@ -188,3 +188,25 @@ def test_custom_title(tmp_dir, y_true_y_pred_y_score):
     assert live._plots["train/cm"].plot_config["title"] == "Train Confusion Matrix"
     assert live._plots["val/cm"].plot_config["title"] == "Val Confusion Matrix"
     assert live._plots["val/prc"].plot_config["title"] == "Val Precision Recall"
+
+
+
+def test_custom_labels(tmp_dir, y_true_y_pred_y_score):
+    """https://github.com/iterative/dvclive/issues/453"""
+    live = Live()
+    out = tmp_dir / live.plots_dir / SKLearnPlot.subfolder
+
+    y_true, y_pred, y_score = y_true_y_pred_y_score
+
+    live.log_sklearn_plot(
+        "precision_recall",
+        y_true,
+        y_score,
+        name="val/prc",
+        x_label="x_test",
+        y_label="y_test",
+    )
+    assert (out / "val" / "prc.json").exists()
+
+    assert live._plots["val/prc"].plot_config["x_label"] == "x_test"
+    assert live._plots["val/prc"].plot_config["y_label"] == "y_test"
