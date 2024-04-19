@@ -190,7 +190,6 @@ def test_custom_title(tmp_dir, y_true_y_pred_y_score):
     assert live._plots["val/prc"].plot_config["title"] == "Val Precision Recall"
 
 
-
 def test_custom_labels(tmp_dir, y_true_y_pred_y_score):
     """https://github.com/iterative/dvclive/issues/453"""
     live = Live()

@@ -656,12 +656,16 @@ class Live:
         """
         val = (labels, predictions)
 
-        plot_config = {k: v for k, v in {
-            "title": title,
-            "x_label": x_label,
-            "y_label": y_label,
-            "normalized": normalized
-        }.items() if v is not None}
+        plot_config = {
+            k: v
+            for k, v in {
+                "title": title,
+                "x_label": x_label,
+                "y_label": y_label,
+                "normalized": normalized,
+            }.items()
+            if v is not None
+        }
 
         name = name or kind
         if name in self._plots:
@@ -672,9 +676,7 @@ class Live:
         else:
             raise InvalidPlotTypeError(name)
 
-        sklearn_kwargs = {
-            k: v for k, v in kwargs.items() if k not in plot_config
-        }
+        sklearn_kwargs = {k: v for k, v in kwargs.items() if k not in plot_config}
         plot.step = self.step
         plot.dump(val, **sklearn_kwargs)
         logger.debug(f"Logged {name}")
