@@ -7,8 +7,11 @@ import os
 from pathlib import PureWindowsPath
 from typing import TYPE_CHECKING, Literal, Mapping
 
+from dvc.exceptions import DvcException
 from dvc_studio_client.config import get_studio_config
 from dvc_studio_client.post_live_metrics import post_live_metrics
+
+from .utils import catch_and_warn
 
 if TYPE_CHECKING:
     from dvclive.live import Live
@@ -96,6 +99,7 @@ def increment_num_points_sent_to_studio(live, plots):
     return live
 
 
+@catch_and_warn(DvcException, logger)
 def post_to_studio(live: Live, event: Literal["start", "data", "done"]):  # noqa: C901
     if event in live._studio_events_to_skip:
         return
