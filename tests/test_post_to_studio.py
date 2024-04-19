@@ -163,6 +163,7 @@ def test_post_to_studio_failed_start_request(
     live.next_step()
 
     assert mocked_post.call_count == 1
+    assert live._studio_events_to_skip == {"start", "data", "done"}
 
 
 def test_post_to_studio_done_only_once(tmp_dir, mocked_dvc_repo, mocked_studio_post):
@@ -219,7 +220,9 @@ def test_post_to_studio_dvc_studio_config(
 
     with Live() as live:
         live.log_metric("foo", 1)
-        live.next_step()
+        live.step = 0
+        live.make_summary()
+        post_to_studio(live, "data")
 
     assert mocked_post.call_args.kwargs["headers"]["Authorization"] == "token token"
 
@@ -240,7 +243,9 @@ def test_post_to_studio_skip_if_no_token(
 
     with Live() as live:
         live.log_metric("foo", 1)
-        live.next_step()
+        live.step = 0
+        live.make_summary()
+        post_to_studio(live, "data")
 
     assert mocked_post.call_count == 0
 
@@ -279,7 +284,9 @@ def test_post_to_studio_inside_dvc_exp(
 
     with Live() as live:
         live.log_metric("foo", 1)
-        live.next_step()
+        live.step = 0
+        live.make_summary()
+        post_to_studio(live, "data")
 
     call_types = [call.kwargs["json"]["type"] for call in mocked_post.call_args_list]
     assert "start" not in call_types
@@ -382,7 +389,9 @@ def test_post_to_studio_images(tmp_dir, mocked_dvc_repo, mocked_studio_post):
 
     live = Live()
     live.log_image("foo.png", ImagePIL.new("RGB", (10, 10), (0, 0, 0)))
-    live.next_step()
+    live.step = 0
+    live.make_summary()
+    post_to_studio(live, "data")
 
     foo_path = (Path(live.plots_dir) / Image.subfolder / "foo.png").as_posix()
 
@@ -500,7 +509,9 @@ def test_post_to_studio_skip_if_no_repo_url(
 
     with Live() as live:
         live.log_metric("foo", 1)
-        live.next_step()
+        live.step = 0
+        live.make_summary()
+        post_to_studio(live, "data")
 
     assert mocked_post.call_count == 0
 

@@ -6,6 +6,7 @@ import logging
 import math
 import os
 import shutil
+import queue
 import tempfile
 import threading
 
@@ -172,6 +173,7 @@ class Live:
         self._studio_events_to_skip: Set[str] = set()
         self._dvc_studio_config: Dict[str, Any] = {}
         self._num_points_sent_to_studio: Dict[str, int] = {}
+        self._studio_queue = None
         self._init_studio()
 
         self._system_monitor: Optional[_SystemMonitor] = None  # Monitoring thread
@@ -297,7 +299,7 @@ class Live:
             self._studio_events_to_skip.add("start")
             self._studio_events_to_skip.add("done")
         else:
-            self.post_to_studio("start")
+            post_to_studio(self, "start")
 
     def _init_report(self):
         if self._report_mode not in {None, "html", "notebook", "md"}:
@@ -429,7 +431,7 @@ class Live:
 
         self.make_report()
 
-        self.post_to_studio("data")
+        self.post_data_to_studio()
 
     def next_step(self):
         """
@@ -881,10 +883,19 @@ class Live:
         """
         make_dvcyaml(self)
 
-    @catch_and_warn(DvcException, logger)
-    def post_to_studio(self, event: Literal["start", "data", "done"]):
-        thread = threading.Thread(target=post_to_studio, args=(self, event))
-        thread.start()
+    def post_data_to_studio(self):
+        if not self._studio_queue:
+            self._studio_queue = queue.Queue()
+
+            def worker():
+                while True:
+                    item = self._studio_queue.get()
+                    post_to_studio(item, "data")
+                    self._studio_queue.task_done()
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        self._studio_queue.put(self)
 
     def end(self):
         """
@@ -928,7 +939,7 @@ class Live:
         self.save_dvc_exp()
 
         # Mark experiment as done
-        self.post_to_studio("done")
+        post_to_studio(self, "done")
 
         cleanup_dvclive_step_completed()
 
