@@ -195,7 +195,7 @@ def test_custom_labels(tmp_dir, y_true_y_pred_y_score):
     live = Live()
     out = tmp_dir / live.plots_dir / SKLearnPlot.subfolder
 
-    y_true, y_pred, y_score = y_true_y_pred_y_score
+    y_true, _, y_score = y_true_y_pred_y_score
 
     live.log_sklearn_plot(
         "precision_recall",

@@ -676,9 +676,8 @@ class Live:
         else:
             raise InvalidPlotTypeError(name)
 
-        sklearn_kwargs = {k: v for k, v in kwargs.items() if k not in plot_config}
         plot.step = self.step
-        plot.dump(val, **sklearn_kwargs)
+        plot.dump(val, **kwargs)
         logger.debug(f"Logged {name}")
 
     def _read_params(self):
