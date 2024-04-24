@@ -624,6 +624,10 @@ class Live:
         labels: Union[List, np.ndarray],
         predictions: Union[List, Tuple, np.ndarray],
         name: Optional[str] = None,
+        title: Optional[str] = None,
+        x_label: Optional[str] = None,
+        y_label: Optional[str] = None,
+        normalized: Optional[bool] = None,
         **kwargs,
     ):
         """
@@ -638,14 +642,17 @@ class Live:
                 "roc"): a supported plot type.
             labels (List | np.ndarray): array of ground truth labels.
             predictions (List | np.ndarray): array of predicted labels (for
-            `"confusion_matrix"`) or predicted probabilities (for other plots).
+                `"confusion_matrix"`) or predicted probabilities (for other plots).
             name (str): optional name of the output file. If not provided, `kind` will
-            be used as name.
+                be used as name.
+            title (str): optional title to be displayed.
+            x_label (str): optional label for the x axis.
+            y_label (str): optional label for the y axis.
+            normalized (bool): optional, `confusion_matrix` with values normalized to
+                `<0, 1>` range.
             kwargs: additional arguments to tune the result. Arguments are passed to the
                 scikit-learn function (e.g. `drop_intermediate=True` for the `"roc"`
-                type). Plus extra arguments supported by the type of a plot are:
-                 - `normalized`: default to `False`. `confusion_matrix` with values
-                    normalized to `<0, 1>` range.
+                type).
         Raises:
             InvalidPlotTypeError: thrown if the provided `kind` does not correspond to
                 any of the supported plots.
@@ -654,9 +661,15 @@ class Live:
 
         plot_config = {
             k: v
-            for k, v in kwargs.items()
-            if k in ("title", "x_label", "y_label", "normalized")
+            for k, v in {
+                "title": title,
+                "x_label": x_label,
+                "y_label": y_label,
+                "normalized": normalized,
+            }.items()
+            if v is not None
         }
+
         name = name or kind
         if name in self._plots:
             plot = self._plots[name]
@@ -666,11 +679,8 @@ class Live:
         else:
             raise InvalidPlotTypeError(name)
 
-        sklearn_kwargs = {
-            k: v for k, v in kwargs.items() if k not in plot_config or k != "normalized"
-        }
         plot.step = self.step
-        plot.dump(val, **sklearn_kwargs)
+        plot.dump(val, **kwargs)
         logger.debug(f"Logged {name}")
 
     def _read_params(self):
