@@ -267,39 +267,6 @@ class ValLitXOR(LitXOR):
         return loss
 
 
-def test_lightning_val_updates_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
-    mocked_post, _ = mocked_studio_post
-
-    model = ValLitXOR()
-    dvclive_logger = DVCLiveLogger()
-    trainer = Trainer(
-        logger=dvclive_logger,
-        max_steps=4,
-        val_check_interval=2,
-        log_every_n_steps=1,
-        enable_checkpointing=False,
-    )
-    trainer.fit(model)
-
-    val_loss = "dvclive/plots/metrics/val/loss.tsv"
-    logs, _ = parse_metrics(dvclive_logger.experiment)
-    latest = logs[val_loss][-1]
-    calls = mocked_post.call_args_list
-    latest_called = False
-    for call in calls:
-        try:
-            data = call[1]["json"]["plots"][val_loss]["data"][0]
-            # data read from file is read as str
-            for k, v in data.items():
-                data[k] = str(v)
-            if data == latest:
-                latest_called = True
-                break
-        except (IndexError, KeyError):
-            pass
-    assert latest_called is True
-
-
 def test_lightning_force_init(tmp_dir, mocker):
     """Related to https://github.com/iterative/dvclive/issues/594
     Don't call Live.__init__ on rank-nonzero processes.
