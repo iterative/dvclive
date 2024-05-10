@@ -277,13 +277,11 @@ class Live:
             self._inside_dvc_exp = True
             if self._save_dvc_exp:
                 logger.info("Ignoring `save_dvc_exp` because `dvc exp run` is running")
-        else:
-            # `dvc repro` execution
-            if self._save_dvc_exp:
-                logger.info("Ignoring `save_dvc_exp` because `dvc repro` is running")
+        # `dvc repro` execution
+        elif self._save_dvc_exp:
             logger.warning(
-                "Some DVCLive features are unsupported in `dvc repro`."
-                "\nTo use DVCLive with a DVC Pipeline, run it with `dvc exp run`."
+                "Ignoring `save_dvc_exp` because `dvc repro` is running."
+                "\nUse `dvc exp run` to save experiment."
             )
         self._save_dvc_exp = False
 
