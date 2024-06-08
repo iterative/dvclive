@@ -78,7 +78,7 @@ def test_log_prc_curve(tmp_dir, y_true_y_pred_y_score, mocker):
 
     live.log_sklearn_plot("precision_recall", y_true, y_score)
 
-    spy.assert_called_once_with(y_true, y_score)
+    spy.assert_called_once_with(y_true=y_true, probas_pred=y_score)
     assert (out / "precision_recall.json").exists()
 
 
