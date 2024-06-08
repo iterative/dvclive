@@ -905,6 +905,11 @@ class Live:
 
         self._studio_queue.put(self)
 
+    def _wait_for_studio_updates_posted(self):
+        if self._studio_queue:
+            logger.debug("Waiting for studio updates to be posted")
+            self._studio_queue.join()
+
     def end(self):
         """
         Signals that the current experiment has ended.
@@ -945,6 +950,8 @@ class Live:
                 )
 
         self.save_dvc_exp()
+
+        self._wait_for_studio_updates_posted()
 
         # Mark experiment as done
         post_to_studio(self, "done")
