@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import time
 from dvc.env import DVC_EXP_GIT_REMOTE
 from dvc_studio_client import DEFAULT_STUDIO_URL
 from dvc_studio_client.env import DVC_STUDIO_REPO_URL, DVC_STUDIO_TOKEN
@@ -184,6 +185,30 @@ def test_post_to_studio_done_only_once(tmp_dir, mocked_dvc_repo, mocked_studio_p
         if call.kwargs["json"]["type"] == "done"
     ]
     assert expected_done_calls == actual_done_calls
+
+
+def test_studio_updates_posted_on_end(tmp_path, mocked_dvc_repo, mocked_studio_post):
+    mocked_post, valid_response = mocked_studio_post
+    metrics_file = tmp_path / "metrics.json"
+    metrics_content = "metrics"
+
+    def long_post(*args, **kwargs):
+        # in case of `data` `long_post` should be called from a separate thread,
+        # meanwhile main thread go forward without slowing down, so if there is no
+        # some kind of wait in the Live main thread, then it will complete before
+        # we even can have a chance to write the file below
+        if kwargs["json"]["type"] == "data":
+            time.sleep(1)
+            metrics_file.write_text(metrics_content)
+
+        return valid_response
+
+    mocked_post.side_effect = long_post
+
+    with Live() as live:
+        live.log_metric("foo", 1)
+
+    assert metrics_file.read_text() == metrics_content
 
 
 @pytest.mark.studio()
