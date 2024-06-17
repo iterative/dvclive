@@ -58,7 +58,7 @@ jobs:
         run: pytest -v tests --cov --cov-report=xml --cov-config=pyproject.toml
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v4.4.1
+        uses: codecov/codecov-action@v4.5.0
 
   test_core:
     timeout-minutes: 30
