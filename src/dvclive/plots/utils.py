@@ -1,7 +1,6 @@
 import json
 
 NUMPY_INTS = [
-    "int_",
     "intc",
     "intp",
     "int8",
@@ -13,7 +12,7 @@ NUMPY_INTS = [
     "uint32",
     "uint64",
 ]
-NUMPY_FLOATS = ["float_", "float16", "float32", "float64"]
+NUMPY_FLOATS = ["float16", "float32", "float64"]
 NUMPY_SCALARS = NUMPY_INTS + NUMPY_FLOATS
 
 
