@@ -55,11 +55,13 @@ tests = [
   "dvclive[image,plots,markdown]",
   "ipython",
   "pytest_voluptuous",
-  "dpath"
+  "dpath",
+  "transformers[torch]",
+  "tf-keras"
 ]
 dev = [
   "dvclive[all,tests]",
-  "mypy==1.10.0",
+  "mypy==1.10.1",
   "types-PyYAML"
 ]
 mmcv = ["mmcv"]
@@ -67,12 +69,11 @@ tf = ["tensorflow"]
 xgb = ["xgboost"]
 lgbm = ["lightgbm"]
 huggingface = ["transformers", "datasets"]
-catalyst = ["catalyst>22"]
 fastai = ["fastai"]
 lightning = ["lightning>=2.0", "torch", "jsonargparse[signatures]>=4.26.1"]
 optuna = ["optuna"]
 all = [
-  "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,catalyst,fastai,lightning,optuna,plots,markdown]"
+  "dvclive[image,mmcv,tf,xgb,lgbm,huggingface,fastai,lightning,optuna,plots,markdown]"
 ]
 
 [project.urls]

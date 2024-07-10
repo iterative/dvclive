@@ -103,6 +103,7 @@ def args():
         num_train_epochs=2,
         save_strategy="epoch",
         report_to="none",  # Disable auto-reporting to avoid duplication
+        use_cpu=True,
     )
 
 
@@ -173,7 +174,7 @@ def test_huggingface_log_model(
     trainer.train()
 
     expected_call_count = {
-        "all": 2,
+        "all": 3,
         True: 1,
         False: 0,
         None: 0,
