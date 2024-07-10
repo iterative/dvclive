@@ -57,7 +57,7 @@ tests = [
   "pytest_voluptuous",
   "dpath",
   "transformers[torch]",
-  "keras<3"
+  "tf-keras"
 ]
 dev = [
   "dvclive[all,tests]",

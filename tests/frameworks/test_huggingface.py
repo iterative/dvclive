@@ -103,6 +103,7 @@ def args():
         num_train_epochs=2,
         save_strategy="epoch",
         report_to="none",  # Disable auto-reporting to avoid duplication
+        use_cpu=True,
     )
 
 
