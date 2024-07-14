@@ -140,7 +140,7 @@ files = ["src", "tests"]
 ignore-words-list = "fpr"
 
 [tool.ruff.lint]
-ignore = ["N818", "UP006", "UP007", "UP035", "UP038", "B905", "PGH003"]
+ignore = ["N818", "UP006", "UP007", "UP035", "UP038", "B905", "PGH003", "SIM103"]
 select = ["F", "E", "W", "C90", "N", "UP", "YTT", "S", "BLE", "B", "A", "C4", "T10", "EXE", "ISC", "INP", "PIE", "T20", "PT", "Q", "RSE", "RET", "SLF", "SIM", "TID", "TCH", "INT", "ARG", "PGH", "PL", "TRY", "NPY", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
