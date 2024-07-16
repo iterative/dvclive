@@ -132,7 +132,9 @@ class DVCLiveLogger(Logger):
         }
 
         # logging of argparse.Namespace is not supported, sanitize as string
-        params = {k: str(v) if isinstance(v, Namespace) else v for k, v in params.items()}
+        params = {
+            k: str(v) if isinstance(v, Namespace) else v for k, v in params.items()
+        }
 
         return params  # noqa: RET504
 
