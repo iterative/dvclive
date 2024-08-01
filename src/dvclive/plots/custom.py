@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from dvclive.serialize import dump_json
 
@@ -15,7 +15,7 @@ class CustomPlot(Data):
         name: str,
         output_folder: str,
         x: str,
-        y: str,
+        y: Union[str, list[str]],
         template: Optional[str],
         title: Optional[str] = None,
         x_label: Optional[str] = None,
