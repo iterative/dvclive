@@ -562,7 +562,7 @@ class Live:
         name: str,
         datapoints: Union[pd.DataFrame, np.ndarray, List[Dict]],
         x: str,
-        y: str,
+        y: Union[str, list[str]],
         template: Optional[str] = "linear",
         title: Optional[str] = None,
         x_label: Optional[str] = None,
@@ -579,7 +579,8 @@ class Live:
             datapoints (pd.DataFrame | np.ndarray | List[Dict]): Pandas DataFrame, Numpy
                 Array or List of dictionaries containing the data for the plot.
             x (str): name of the key (present in the dictionaries) to use as the x axis.
-            y (str): name of the key (present in the dictionaries) to use the y axis.
+            y (str | list[str]): name of the key or keys (present in the
+                dictionaries) to use the y axis.
             template (str): name of the `DVC plots template` to use. Defaults to
                 `"linear"`.
             title (str): title to be displayed. Defaults to
