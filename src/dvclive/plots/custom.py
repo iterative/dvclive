@@ -23,7 +23,7 @@ class CustomPlot(Data):
     ) -> None:
         super().__init__(name, output_folder)
         self.name = self.name.replace(".json", "")
-        if template is not None and template.strip() == "":
+        if not template:
             template = None
 
         config = {
