@@ -83,4 +83,3 @@ def test_log_custom_plot_with_template_as_empty_string(tmp_dir):
         "x_label": "x_label",
         "y_label": "y_label",
     }
-
