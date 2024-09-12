@@ -82,7 +82,7 @@ class Live:
         resume: bool = False,
         report: Literal["md", "notebook", "html", None] = None,
         save_dvc_exp: bool = True,
-        dvcyaml:  Union[str, os.PathLike, bool, None] = "dvc.yaml",
+        dvcyaml: Union[str, os.PathLike, bool, None] = "dvc.yaml",
         cache_images: bool = False,
         exp_name: Optional[str] = None,
         exp_message: Optional[str] = None,
@@ -269,14 +269,14 @@ class Live:
             return "dvc.yaml"
         if isinstance(self._dvcyaml, bool):
             return "dvc.yaml"
-        
+
         self._dvcyaml = os.fspath(self._dvcyaml)
         if (
             isinstance(self._dvcyaml, str)
             and os.path.basename(self._dvcyaml) == "dvc.yaml"
         ):
             return self._dvcyaml
-        
+
         raise InvalidDvcyamlError
 
     def _init_dvc_pipeline(self):
