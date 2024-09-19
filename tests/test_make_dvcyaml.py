@@ -2,6 +2,7 @@ import os
 
 import pytest
 from PIL import Image
+from pathlib import Path
 
 from dvclive import Live
 from dvclive.dvc import make_dvcyaml
@@ -423,7 +424,7 @@ def test_warn_on_dvcyaml_output_overlap(tmp_dir, mocker, mocked_dvc_repo, dvcyam
 
 @pytest.mark.parametrize(
     "dvcyaml",
-    [True, False, "dvc.yaml"],
+    [True, False, "dvc.yaml", Path("dvc.yaml")],
 )
 def test_make_dvcyaml(tmp_dir, mocked_dvc_repo, dvcyaml):
     dvclive = Live("logs", dvcyaml=dvcyaml)
