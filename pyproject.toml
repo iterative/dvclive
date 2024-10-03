@@ -61,7 +61,7 @@ tests = [
 ]
 dev = [
   "dvclive[all,tests]",
-  "mypy==1.11.1",
+  "mypy==1.11.2",
   "types-PyYAML"
 ]
 mmcv = ["mmcv"]
