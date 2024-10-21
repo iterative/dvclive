@@ -18,12 +18,12 @@ except ImportError:
     pytest.skip("skipping xgboost tests", allow_module_level=True)
 
 
-@pytest.fixture()
+@pytest.fixture
 def train_params():
     return {"objective": "multi:softmax", "num_class": 3, "seed": 0}
 
 
-@pytest.fixture()
+@pytest.fixture
 def iris_data():
     iris = datasets.load_iris()
     x = pd.DataFrame(iris["data"], columns=iris["feature_names"])
@@ -31,7 +31,7 @@ def iris_data():
     return xgb.DMatrix(x, y)
 
 
-@pytest.fixture()
+@pytest.fixture
 def iris_train_eval_data():
     iris = datasets.load_iris()
     x_train, x_eval, y_train, y_eval = train_test_split(
