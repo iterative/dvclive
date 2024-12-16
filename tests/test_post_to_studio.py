@@ -211,7 +211,7 @@ def test_studio_updates_posted_on_end(tmp_path, mocked_dvc_repo, mocked_studio_p
     assert metrics_file.read_text() == metrics_content
 
 
-@pytest.mark.studio()
+@pytest.mark.studio
 def test_post_to_studio_skip_start_and_done_on_env_var(
     tmp_dir, mocked_dvc_repo, mocked_studio_post, monkeypatch
 ):
@@ -230,7 +230,7 @@ def test_post_to_studio_skip_start_and_done_on_env_var(
     assert "done" not in call_types
 
 
-@pytest.mark.studio()
+@pytest.mark.studio
 def test_post_to_studio_dvc_studio_config(
     tmp_dir, mocker, mocked_dvc_repo, mocked_studio_post, monkeypatch
 ):
@@ -252,7 +252,7 @@ def test_post_to_studio_dvc_studio_config(
     assert mocked_post.call_args.kwargs["headers"]["Authorization"] == "token token"
 
 
-@pytest.mark.studio()
+@pytest.mark.studio
 def test_post_to_studio_skip_if_no_token(
     tmp_dir,
     mocker,
@@ -297,7 +297,7 @@ def test_post_to_studio_shorten_names(tmp_dir, mocked_dvc_repo, mocked_studio_po
     )
 
 
-@pytest.mark.studio()
+@pytest.mark.studio
 def test_post_to_studio_inside_dvc_exp(
     tmp_dir, mocker, monkeypatch, mocked_studio_post, mocked_dvc_repo
 ):
@@ -318,7 +318,7 @@ def test_post_to_studio_inside_dvc_exp(
     assert "done" not in call_types
 
 
-@pytest.mark.studio()
+@pytest.mark.studio
 def test_post_to_studio_inside_subdir(
     tmp_dir, dvc_repo, mocker, monkeypatch, mocked_studio_post, mocked_dvc_repo
 ):
@@ -346,7 +346,7 @@ def test_post_to_studio_inside_subdir(
     )
 
 
-@pytest.mark.studio()
+@pytest.mark.studio
 def test_post_to_studio_inside_subdir_dvc_exp(
     tmp_dir, dvc_repo, monkeypatch, mocked_studio_post, mocked_dvc_repo
 ):
@@ -468,7 +468,7 @@ def test_post_to_studio_if_done_skipped(tmp_dir, mocked_dvc_repo, mocked_studio_
     assert "data" in call_types
 
 
-@pytest.mark.studio()
+@pytest.mark.studio
 def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post):
     monkeypatch.setenv(DVC_STUDIO_TOKEN, "STUDIO_TOKEN")
     monkeypatch.setenv(DVC_STUDIO_REPO_URL, "STUDIO_REPO_URL")
@@ -524,7 +524,7 @@ def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post):
     )
 
 
-@pytest.mark.studio()
+@pytest.mark.studio
 def test_post_to_studio_skip_if_no_repo_url(
     tmp_dir,
     mocker,

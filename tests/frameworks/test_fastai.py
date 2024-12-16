@@ -21,7 +21,7 @@ except ImportError:
     pytest.skip("skipping fastai tests", allow_module_level=True)
 
 
-@pytest.fixture()
+@pytest.fixture
 def data_loader():
     from pandas import DataFrame
 

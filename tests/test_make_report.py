@@ -104,7 +104,7 @@ def test_make_report(tmp_dir, mode):
         last_report = current_report
 
 
-@pytest.mark.vscode()
+@pytest.mark.vscode
 def test_make_report_open(tmp_dir, mocker, monkeypatch):
     mocked_open = mocker.patch("webbrowser.open")
     live = Live()

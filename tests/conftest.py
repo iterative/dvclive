@@ -7,13 +7,13 @@ from dvc_studio_client.env import DVC_STUDIO_TOKEN, DVC_STUDIO_URL, STUDIO_REPO_
 from dvclive.utils import rel_path
 
 
-@pytest.fixture()
+@pytest.fixture
 def tmp_dir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     return tmp_path
 
 
-@pytest.fixture()
+@pytest.fixture
 def mocked_dvc_repo(tmp_dir, mocker):
     _dvc_repo = mocker.MagicMock()
     _dvc_repo.index.stages = []
@@ -28,13 +28,13 @@ def mocked_dvc_repo(tmp_dir, mocker):
     return _dvc_repo
 
 
-@pytest.fixture()
+@pytest.fixture
 def mocked_dvc_subrepo(tmp_dir, mocker, mocked_dvc_repo):
     mocked_dvc_repo.root_dir = tmp_dir / "subdir"
     return mocked_dvc_repo
 
 
-@pytest.fixture()
+@pytest.fixture
 def dvc_repo(tmp_dir):
     from dvc.repo import Repo
     from scmrepo.git import Git
@@ -62,7 +62,7 @@ def _mocked_ci(monkeypatch):
     monkeypatch.setenv("CI", "false")
 
 
-@pytest.fixture()
+@pytest.fixture
 def mocked_studio_post(mocker, monkeypatch):
     valid_response = mocker.MagicMock()
     valid_response.status_code = 200
