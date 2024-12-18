@@ -117,6 +117,7 @@ class _SystemMonitor:
     def _monitoring_loop(self):
         while not self._shutdown_event.is_set():
             self._metrics = {}
+            last_metrics = {}
             for _ in range(self._num_samples):
                 try:
                     last_metrics = self._get_metrics()
