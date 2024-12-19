@@ -162,6 +162,7 @@ def test_huggingface_log_model(
         live_callback = callback(live=live, log_model=log_model)
 
     args.load_best_model_at_end = best
+    args.metric_for_best_model = "loss"
 
     trainer = Trainer(
         model,
