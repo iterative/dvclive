@@ -73,7 +73,10 @@ class DVCLiveCallback(TrainerCallback):
     ):
         if self._log_model is True and state.is_world_process_zero:
             fake_trainer = Trainer(
-                args=args, model=kwargs.get("model"), tokenizer=kwargs.get("tokenizer")
+                args=args,
+                model=kwargs.get("model"),
+                tokenizer=kwargs.get("tokenizer"),
+                eval_dataset=["fake"],
             )
             name = "best" if args.load_best_model_at_end else "last"
             output_dir = os.path.join(args.output_dir, name)
