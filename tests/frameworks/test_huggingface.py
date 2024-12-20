@@ -84,18 +84,18 @@ class RegressionPreTrainedModel(PreTrainedModel):
         return (loss, y, y) if self.double_output else (loss, y)
 
 
-@pytest.fixture()
+@pytest.fixture
 def data():
     return RegressionDataset(), RegressionDataset()
 
 
-@pytest.fixture()
+@pytest.fixture
 def model():
     config = RegressionModelConfig()
     return RegressionPreTrainedModel(config)
 
 
-@pytest.fixture()
+@pytest.fixture
 def args():
     return TrainingArguments(
         "foo",

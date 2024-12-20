@@ -8,7 +8,7 @@ from dvclive import Live
 from dvclive.plots.sklearn import SKLearnPlot
 
 
-@pytest.fixture()
+@pytest.fixture
 def y_true_y_pred_y_score():
     from sklearn.datasets import make_classification
     from sklearn.ensemble import RandomForestClassifier

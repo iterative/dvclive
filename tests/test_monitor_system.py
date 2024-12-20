@@ -89,7 +89,7 @@ def mock_pynvml(mocker, num_gpus=2):
     mocker.patch(f"{prefix}.nvmlDeviceGetUtilizationRates", return_value=gpu_usage)
 
 
-@pytest.fixture()
+@pytest.fixture
 def cpu_metrics():
     content = {
         METRIC_CPU_COUNT: 6,
@@ -112,7 +112,7 @@ def _timeserie_schema(name, value):
     return [{name: str(value), "timestamp": str, "step": "0"}]
 
 
-@pytest.fixture()
+@pytest.fixture
 def cpu_timeseries():
     return {
         f"{METRIC_CPU_USAGE_PERCENT}.tsv": _timeserie_schema(
@@ -132,7 +132,7 @@ def cpu_timeseries():
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def gpu_timeseries():
     return {
         f"{METRIC_GPU_USAGE_PERCENT}/0.tsv": _timeserie_schema("0", 50.0),

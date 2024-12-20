@@ -6,7 +6,7 @@ import pytest
 from dvclive import Live, env
 
 
-@pytest.mark.vscode()
+@pytest.mark.vscode
 @pytest.mark.parametrize("dvc_root", [True, False])
 def test_vscode_dvclive_step_completed_signal_file(
     tmp_dir, dvc_root, mocker, monkeypatch
@@ -58,7 +58,7 @@ def test_vscode_dvclive_step_completed_signal_file(
     assert not os.path.exists(signal_file)
 
 
-@pytest.mark.vscode()
+@pytest.mark.vscode
 @pytest.mark.parametrize("dvc_root", [True, False])
 def test_vscode_dvclive_only_signal_file(tmp_dir, dvc_root, mocker):
     signal_file = os.path.join(tmp_dir, ".dvc", "tmp", "exps", "run", "DVCLIVE_ONLY")

@@ -12,7 +12,7 @@ except ImportError:
     pytest.skip("skipping keras tests", allow_module_level=True)
 
 
-@pytest.fixture()
+@pytest.fixture
 def xor_model():
     import numpy as np
     import tensorflow as tf

@@ -17,12 +17,12 @@ except ImportError:
     pytest.skip("skipping lightgbm tests", allow_module_level=True)
 
 
-@pytest.fixture()
+@pytest.fixture
 def model_params():
     return {"objective": "multiclass", "n_estimators": 5, "seed": 0}
 
 
-@pytest.fixture()
+@pytest.fixture
 def iris_data():
     iris = datasets.load_iris()
     x = pd.DataFrame(iris["data"], columns=iris["feature_names"])
