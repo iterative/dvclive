@@ -13,7 +13,7 @@ try:
     from lightning.pytorch.utilities import rank_zero_only
 except ImportError:
     from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint  # type: ignore[assignment]
-    from pytorch_lightning.loggers.logger import Logger
+    from pytorch_lightning.loggers.logger import Logger  # type: ignore[assignment]
     from pytorch_lightning.utilities import rank_zero_only
 
     try:
