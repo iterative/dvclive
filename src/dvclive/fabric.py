@@ -11,7 +11,7 @@ try:
     )
     from lightning.fabric.utilities.rank_zero import rank_zero_only
 except ImportError:
-    from lightning_fabric.loggers.logger import Logger, rank_zero_experiment
+    from lightning_fabric.loggers.logger import Logger, rank_zero_experiment  # type: ignore[assignment]
     from lightning_fabric.utilities.logger import (
         _add_prefix,
         _convert_params,
