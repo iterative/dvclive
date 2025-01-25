@@ -1,4 +1,7 @@
+from collections import defaultdict
+from copy import deepcopy
 from pathlib import Path
+import unittest
 
 import pytest
 import time
@@ -49,7 +52,8 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     live.log_metric("foo", 1)
     live.step = 0
     live.make_summary()
-    post_to_studio(live, "data")
+    data = live._get_live_data()
+    post_to_studio(live, "data", data)
 
     mocked_post.assert_called_with(
         "https://0.0.0.0/api/live",
@@ -64,7 +68,8 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     live.step += 1
     live.log_metric("foo", 2)
     live.make_summary()
-    post_to_studio(live, "data")
+    data = live._get_live_data()
+    post_to_studio(live, "data", data)
 
     mocked_post.assert_called_with(
         "https://0.0.0.0/api/live",
@@ -78,7 +83,8 @@ def test_post_to_studio(tmp_dir, mocked_dvc_repo, mocked_studio_post):
 
     mocked_post.reset_mock()
     live.save_dvc_exp()
-    post_to_studio(live, "done")
+    data = live._get_live_data()
+    post_to_studio(live, "done", data)
 
     mocked_post.assert_called_with(
         "https://0.0.0.0/api/live",
@@ -126,13 +132,15 @@ def test_post_to_studio_failed_data_request(
     live.log_metric("foo", 1)
     live.step = 0
     live.make_summary()
-    post_to_studio(live, "data")
+    data = live._get_live_data()
+    post_to_studio(live, "data", data)
 
     mocked_post = mocker.patch("requests.post", return_value=valid_response)
     live.step += 1
     live.log_metric("foo", 2)
     live.make_summary()
-    post_to_studio(live, "data")
+    data = live._get_live_data()
+    post_to_studio(live, "data", data)
     mocked_post.assert_called_with(
         "https://0.0.0.0/api/live",
         **get_studio_call(
@@ -185,6 +193,61 @@ def test_post_to_studio_done_only_once(tmp_dir, mocked_dvc_repo, mocked_studio_p
         if call.kwargs["json"]["type"] == "done"
     ]
     assert expected_done_calls == actual_done_calls
+
+
+def test_post_to_studio_snapshots_data_to_send(
+    tmp_dir, mocked_dvc_repo, mocked_studio_post
+):
+    # Tests race condition between main app thread and Studio post thread
+    # where the main thread can be faster in producing metrics than the
+    # Studio post thread in sending them.
+    mocked_post, _ = mocked_studio_post
+
+    calls = defaultdict(dict)
+
+    def _long_post(*_, **kwargs):
+        if kwargs["json"]["type"] == "data":
+            # Mock by default doesn't copy lists, dict, we share "body" var in
+            # some calls, thus we can't rely on `mocked_post.call_args_list`
+            json = deepcopy(kwargs)["json"]
+            step = json["step"]
+            for key in ["metrics", "params", "plots"]:
+                if key in json:
+                    calls[step][key] = json[key]
+            time.sleep(0.1)
+        return unittest.mock.DEFAULT
+
+    mocked_post.side_effect = lambda *args, **kwargs: _long_post(*args, **kwargs)
+
+    live = Live()
+    for i in range(10):
+        live.log_metric("foo", i)
+        live.log_param(f"fooparam-{i}", i)
+        live.log_image(f"foo.{i}.png", ImagePIL.new("RGB", (i + 1, i + 1), (0, 0, 0)))
+        live.next_step()
+
+    live._wait_for_studio_updates_posted()
+
+    assert len(calls) == 10
+    for i in range(10):
+        call = calls[i]
+        assert call["metrics"] == {
+            "dvclive/metrics.json": {"data": {"foo": i, "step": i}}
+        }
+        assert call["params"] == {
+            "dvclive/params.yaml": {f"fooparam-{k}": k for k in range(i + 1)}
+        }
+        # Check below that `plots`` has the following shape
+        # {
+        #    'dvclive/plots/metrics/foo.tsv': {'data': [{'step': i, 'foo': float(i)}]},
+        #    f"dvclive/plots/images/foo.{i}.png": {'image': '...'}
+        # }
+        assert len(call["plots"]) == 2
+        foo_data = call["plots"]["dvclive/plots/metrics/foo.tsv"]["data"]
+        assert len(foo_data) == 1
+        assert foo_data[0]["step"] == i
+        assert foo_data[0]["foo"] == pytest.approx(float(i))
+        assert call["plots"][f"dvclive/plots/images/foo.{i}.png"]["image"]
 
 
 def test_studio_updates_posted_on_end(tmp_path, mocked_dvc_repo, mocked_studio_post):
@@ -247,7 +310,8 @@ def test_post_to_studio_dvc_studio_config(
         live.log_metric("foo", 1)
         live.step = 0
         live.make_summary()
-        post_to_studio(live, "data")
+        data = live._get_live_data()
+        post_to_studio(live, "data", data)
 
     assert mocked_post.call_args.kwargs["headers"]["Authorization"] == "token token"
 
@@ -270,7 +334,8 @@ def test_post_to_studio_skip_if_no_token(
         live.log_metric("foo", 1)
         live.step = 0
         live.make_summary()
-        post_to_studio(live, "data")
+        data = live._get_live_data()
+        post_to_studio(live, "data", data)
 
     assert mocked_post.call_count == 0
 
@@ -281,7 +346,8 @@ def test_post_to_studio_shorten_names(tmp_dir, mocked_dvc_repo, mocked_studio_po
     live = Live()
     live.log_metric("eval/loss", 1)
     live.make_summary()
-    post_to_studio(live, "data")
+    data = live._get_live_data()
+    post_to_studio(live, "data", data)
 
     plots_path = Path(live.plots_dir)
     loss_path = (plots_path / Metric.subfolder / "eval/loss.tsv").as_posix()
@@ -311,7 +377,8 @@ def test_post_to_studio_inside_dvc_exp(
         live.log_metric("foo", 1)
         live.step = 0
         live.make_summary()
-        post_to_studio(live, "data")
+        data = live._get_live_data()
+        post_to_studio(live, "data", data)
 
     call_types = [call.kwargs["json"]["type"] for call in mocked_post.call_args_list]
     assert "start" not in call_types
@@ -330,7 +397,8 @@ def test_post_to_studio_inside_subdir(
     live = Live()
     live.log_metric("foo", 1)
     live.make_summary()
-    post_to_studio(live, "data")
+    data = live._get_live_data()
+    post_to_studio(live, "data", data)
 
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
 
@@ -361,7 +429,8 @@ def test_post_to_studio_inside_subdir_dvc_exp(
     live = Live()
     live.log_metric("foo", 1)
     live.make_summary()
-    post_to_studio(live, "data")
+    data = live._get_live_data()
+    post_to_studio(live, "data", data)
 
     foo_path = (Path(live.plots_dir) / Metric.subfolder / "foo.tsv").as_posix()
 
@@ -416,7 +485,8 @@ def test_post_to_studio_images(tmp_dir, mocked_dvc_repo, mocked_studio_post):
     live.log_image("foo.png", ImagePIL.new("RGB", (10, 10), (0, 0, 0)))
     live.step = 0
     live.make_summary()
-    post_to_studio(live, "data")
+    data = live._get_live_data()
+    post_to_studio(live, "data", data)
 
     foo_path = (Path(live.plots_dir) / Image.subfolder / "foo.png").as_posix()
 
@@ -461,7 +531,8 @@ def test_post_to_studio_if_done_skipped(tmp_dir, mocked_dvc_repo, mocked_studio_
         live.log_metric("foo", 1)
         live.step = 0
         live.make_summary()
-        post_to_studio(live, "data")
+        data = live._get_live_data()
+        post_to_studio(live, "data", data)
 
     mocked_post, _ = mocked_studio_post
     call_types = [call.kwargs["json"]["type"] for call in mocked_post.call_args_list]
@@ -488,7 +559,8 @@ def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post):
 
     live.log_metric("foo", 1)
     live.make_summary()
-    post_to_studio(live, "data")
+    data = live._get_live_data()
+    post_to_studio(live, "data", data)
 
     mocked_post.assert_called_with(
         "https://0.0.0.0/api/live",
@@ -504,7 +576,8 @@ def test_post_to_studio_no_repo(tmp_dir, monkeypatch, mocked_studio_post):
     live.step += 1
     live.log_metric("foo", 2)
     live.make_summary()
-    post_to_studio(live, "data")
+    data = live._get_live_data()
+    post_to_studio(live, "data", data)
 
     mocked_post.assert_called_with(
         "https://0.0.0.0/api/live",
@@ -538,7 +611,8 @@ def test_post_to_studio_skip_if_no_repo_url(
         live.log_metric("foo", 1)
         live.step = 0
         live.make_summary()
-        post_to_studio(live, "data")
+        data = live._get_live_data()
+        post_to_studio(live, "data", data)
 
     assert mocked_post.call_count == 0
 
@@ -557,7 +631,8 @@ def test_post_to_studio_repeat_step(tmp_dir, mocked_dvc_repo, mocked_studio_post
     live.log_metric("foo", 1)
     live.log_metric("bar", 0.1)
     live.make_summary()
-    post_to_studio(live, "data")
+    data = live._get_live_data()
+    post_to_studio(live, "data", data)
 
     mocked_post.assert_called_with(
         "https://0.0.0.0/api/live",
@@ -576,7 +651,8 @@ def test_post_to_studio_repeat_step(tmp_dir, mocked_dvc_repo, mocked_studio_post
     live.log_metric("foo", 3)
     live.log_metric("bar", 0.2)
     live.make_summary()
-    post_to_studio(live, "data")
+    data = live._get_live_data()
+    post_to_studio(live, "data", data)
 
     mocked_post.assert_called_with(
         "https://0.0.0.0/api/live",
