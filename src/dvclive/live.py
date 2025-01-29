@@ -55,6 +55,7 @@ from .utils import (
     inside_notebook,
     matplotlib_installed,
     open_file_in_browser,
+    parse_metrics,
 )
 from .vscode import (
     cleanup_dvclive_step_completed,
@@ -135,7 +136,7 @@ class Live:
         self._save_dvc_exp: bool = save_dvc_exp
         self._step: Optional[int] = None
         self._metrics: Dict[str, Any] = {}
-        self._images: Dict[str, Any] = {}
+        self._images: Dict[str, Image] = {}
         self._params: Dict[str, Any] = {}
         self._plots: Dict[str, Any] = {}
         self._artifacts: Dict[str, Dict] = {}
@@ -901,19 +902,41 @@ class Live:
         """
         make_dvcyaml(self)
 
+    def _get_live_data(self) -> Optional[dict[str, Any]]:
+        params = load_yaml(self.params_file) if os.path.isfile(self.params_file) else {}
+        plots, metrics = parse_metrics(self)
+
+        # Plots can grow large, we don't want to keep in memory data
+        # that we 100% sent already
+        plots_to_send = {}
+        plots_start_idx = {}
+        for name, plot in plots.items():
+            num_points_sent = self._num_points_sent_to_studio.get(name, 0)
+            plots_to_send[name] = plot[num_points_sent:]
+            plots_start_idx[name] = num_points_sent
+
+        return {
+            "params": params,
+            "plots": plots_to_send,
+            "plots_start_idx": plots_start_idx,
+            "metrics": metrics,
+            "images": list(self._images.values()),
+            "step": self.step,
+        }
+
     def post_data_to_studio(self):
         if not self._studio_queue:
             self._studio_queue = queue.Queue()
 
             def worker():
                 while True:
-                    item = self._studio_queue.get()
-                    post_to_studio(item, "data")
+                    item, data = self._studio_queue.get()
+                    post_to_studio(item, "data", data)
                     self._studio_queue.task_done()
 
             threading.Thread(target=worker, daemon=True).start()
 
-        self._studio_queue.put(self)
+        self._studio_queue.put((self, self._get_live_data()))
 
     def _wait_for_studio_updates_posted(self):
         if self._studio_queue:
