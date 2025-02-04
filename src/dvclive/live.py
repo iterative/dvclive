@@ -929,10 +929,17 @@ class Live:
             self._studio_queue = queue.Queue()
 
             def worker():
+                error_occurred = False
                 while True:
                     item, data = self._studio_queue.get()
-                    post_to_studio(item, "data", data)
-                    self._studio_queue.task_done()
+                    try:
+                        if not error_occurred:
+                            post_to_studio(item, "data", data)
+                    except Exception:
+                        logger.exception("Failed to post data to studio")
+                        error_occurred = True
+                    finally:
+                        self._studio_queue.task_done()
 
             threading.Thread(target=worker, daemon=True).start()
 
