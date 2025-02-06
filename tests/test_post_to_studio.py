@@ -274,6 +274,36 @@ def test_studio_updates_posted_on_end(tmp_path, mocked_dvc_repo, mocked_studio_p
     assert metrics_file.read_text() == metrics_content
 
 
+def test_studio_update_raises_exception(tmp_path, mocked_dvc_repo, mocked_studio_post):
+    # Test that if a studio update raises an exception, main process doesn't hang on
+    # queue join in the Live main thread.
+    # https://github.com/iterative/dvclive/pull/864
+    mocked_post, valid_response = mocked_studio_post
+
+    def post_raises_exception(*args, **kwargs):
+        if kwargs["json"]["type"] == "data":
+            # We'll hit this sleep only once, other calls are ignored
+            # after the exception is raised
+            time.sleep(1)
+            raise Exception("test exception")  # noqa: TRY002, TRY003
+        return valid_response
+
+    mocked_post.side_effect = post_raises_exception
+
+    with Live() as live:
+        live.log_metric("foo", 1)
+        live.log_metric("foo", 2)
+        live.log_metric("foo", 3)
+
+    # Only 1 data call is made, other calls are ignored after the exception is raised
+    assert mocked_post.call_count == 3
+    assert [e.kwargs["json"]["type"] for e in mocked_post.call_args_list] == [
+        "start",
+        "data",
+        "done",
+    ]
+
+
 @pytest.mark.studio
 def test_post_to_studio_skip_start_and_done_on_env_var(
     tmp_dir, mocked_dvc_repo, mocked_studio_post, monkeypatch
