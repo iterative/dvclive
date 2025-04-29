@@ -27,16 +27,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
-          cache: "pip"
-          cache-dependency-path: setup.cfg
+          python-version: "3.12"
 
-      - name: Upgrade pip
-        run: |
-          python -m pip install --upgrade pip wheel
-          pip --version
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-suffix: ${{ matrix.pyv }}
+          cache-dependency-glob: pyproject.toml
 
-      - run: python -m pip install pre-commit
+      - name: Full install
+        run: uv pip install -e '.[dev]' --system
 
       - uses: actions/cache@v4
         with:
@@ -44,15 +44,10 @@ jobs:
           key: pre-commit-4|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
 
       - name: pre-commit
-        run: |
-          pre-commit run --show-diff-on-failure --color=always --all-files
-
-      - name: Full install
-        run: pip install -e '.[dev]'
+        run: uv tool run pre-commit run --show-diff-on-failure --color=always --all-files
 
       - name: mypy
-        run: |
-          python -m mypy
+        run: mypy
 
       - name: Run tests
         run: pytest -v tests --cov --cov-report=xml --cov-config=pyproject.toml

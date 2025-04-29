@@ -99,7 +99,7 @@ def model():
 def args():
     return TrainingArguments(
         "foo",
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",
         num_train_epochs=2,
         save_strategy="epoch",
         report_to="none",  # Disable auto-reporting to avoid duplication
@@ -175,7 +175,7 @@ def test_huggingface_log_model(
     trainer.train()
 
     expected_call_count = {
-        "all": 3,
+        "all": 2,
         True: 1,
         False: 0,
         None: 0,
