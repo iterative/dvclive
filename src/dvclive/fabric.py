@@ -90,8 +90,8 @@ class DVCLiveLogger(Logger):
 
         for metric_name, metric_val in metrics.items():
             val = metric_val
-            if is_tensor(val):
-                val = val.cpu().detach().item()  # type: ignore[union-attr]
+            if is_tensor(val):  # type: ignore[unreachable]
+                val = val.cpu().detach().item()  # type: ignore[union-attr,unreachable]
             name = standardize_metric_name(metric_name, __name__)
             if Metric.could_log(val):
                 self.experiment.log_metric(name=name, val=val)

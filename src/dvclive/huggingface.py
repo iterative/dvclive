@@ -62,6 +62,7 @@ class DVCLiveCallback(TrainerCallback):
         **kwargs,
     ):
         if self._log_model == "all" and state.is_world_process_zero:
+            assert args.output_dir is not None  # noqa: S101
             self.live.log_artifact(args.output_dir)
 
     def on_train_end(
@@ -79,6 +80,7 @@ class DVCLiveCallback(TrainerCallback):
                 eval_dataset=["fake"],
             )
             name = "best" if args.load_best_model_at_end else "last"
+            assert args.output_dir is not None  # noqa: S101
             output_dir = os.path.join(args.output_dir, name)
             fake_trainer.save_model(output_dir)
             self.live.log_artifact(output_dir, name=name, type="model", copy=True)
