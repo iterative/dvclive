@@ -175,7 +175,7 @@ def test_huggingface_log_model(
     trainer.train()
 
     expected_call_count = {
-        "all": 3,
+        "all": 2,
         True: 1,
         False: 0,
         None: 0,
