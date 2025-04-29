@@ -99,7 +99,7 @@ def model():
 def args():
     return TrainingArguments(
         "foo",
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",
         num_train_epochs=2,
         save_strategy="epoch",
         report_to="none",  # Disable auto-reporting to avoid duplication
