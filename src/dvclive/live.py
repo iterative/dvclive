@@ -14,10 +14,10 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union, TYPE_CHECKING, 
 
 
 if TYPE_CHECKING:
-    import numpy as np  # noqa: TC004
-    import pandas as pd  # noqa: TC004
-    import matplotlib  # noqa: TC004
-    import PIL  # noqa: TC004
+    import numpy as np
+    import pandas as pd
+    import matplotlib
+    import PIL
     from dvc.repo import Repo
     from IPython.display import DisplayHandle
 
@@ -509,7 +509,7 @@ class Live:
     def log_image(
         self,
         name: str,
-        val: Union[np.ndarray, matplotlib.figure.Figure, PIL.Image.Image, StrPath],
+        val: "Union[np.ndarray, matplotlib.figure.Figure, PIL.Image.Image, StrPath]",
     ):
         """
         Saves the given image `val` to the output file `name`.
@@ -571,7 +571,7 @@ class Live:
     def log_plot(
         self,
         name: str,
-        datapoints: Union[pd.DataFrame, np.ndarray, List[Dict]],
+        datapoints: "Union[pd.DataFrame, np.ndarray, List[Dict]]",
         x: str,
         y: Union[str, list[str]],
         template: Optional[str] = "linear",
@@ -631,8 +631,8 @@ class Live:
     def log_sklearn_plot(
         self,
         kind: str,
-        labels: Union[List, np.ndarray],
-        predictions: Union[List, Tuple, np.ndarray],
+        labels: "Union[List, np.ndarray]",
+        predictions: "Union[List, Tuple, np.ndarray]",
         name: Optional[str] = None,
         title: Optional[str] = None,
         x_label: Optional[str] = None,
