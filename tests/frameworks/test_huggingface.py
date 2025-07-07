@@ -67,7 +67,7 @@ class RegressionModelConfig(PretrainedConfig):
 
 
 class RegressionPreTrainedModel(PreTrainedModel):
-    config_class = RegressionModelConfig
+    config_class = RegressionModelConfig  # type: ignore[assignment]
     base_model_prefix = "regression"
 
     def __init__(self, config):
