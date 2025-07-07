@@ -1,4 +1,3 @@
-# ruff: noqa: ARG002
 # mypy: disable-error-code="no-redef"
 import inspect
 from pathlib import Path

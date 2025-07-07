@@ -1,4 +1,3 @@
-# ruff: noqa: ARG002
 import sys
 
 import pytest
