@@ -1,5 +1,4 @@
 # ruff: noqa: SLF001
-from __future__ import annotations
 import base64
 import logging
 import math
@@ -37,7 +36,7 @@ def _cast_to_numbers(datapoints: Mapping):
     return datapoints
 
 
-def _adapt_path(live: Live, name: StrPath):
+def _adapt_path(live: "Live", name: StrPath):
     if live._dvc_repo is not None:
         name = rel_path(name, live._dvc_repo.root_dir)
     if os.name == "nt":
@@ -50,7 +49,7 @@ def _adapt_image(image_path: StrPath):
         return base64.b64encode(fobj.read()).decode("utf-8")
 
 
-def _adapt_images(live: Live, images: list[Image]):
+def _adapt_images(live: "Live", images: "list[Image]"):
     return {
         _adapt_path(live, image.output_path): {"image": _adapt_image(image.output_path)}
         for image in images
@@ -58,7 +57,7 @@ def _adapt_images(live: Live, images: list[Image]):
     }
 
 
-def _get_studio_updates(live: Live, data: dict[str, Any]):
+def _get_studio_updates(live: "Live", data: dict[str, Any]):
     params = data["params"]
     plots = data["plots"]
     plots_start_idx = data["plots_start_idx"]
@@ -86,7 +85,7 @@ def _get_studio_updates(live: Live, data: dict[str, Any]):
     return metrics, params, plots_to_send
 
 
-def get_dvc_studio_config(live: Live):
+def get_dvc_studio_config(live: "Live"):
     config = {}
     if live._dvc_repo:
         config = live._dvc_repo.config.get("studio")
@@ -105,7 +104,7 @@ def increment_num_points_sent_to_studio(live, plots_sent, data):
 
 @catch_and_warn(DvcException, logger)
 def post_to_studio(  # noqa: C901
-    live: Live,
+    live: "Live",
     event: Literal["start", "data", "done"],
     data: Optional[dict[str, Any]] = None,
 ):

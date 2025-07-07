@@ -1,4 +1,3 @@
-from __future__ import annotations
 import builtins
 import glob
 import json
@@ -19,6 +18,8 @@ if TYPE_CHECKING:
     import pandas as pd
     import matplotlib
     import PIL
+    from dvc.repo import Repo
+    from IPython.display import DisplayHandle
 
 from dvc.exceptions import DvcException
 from dvc.utils.studio import get_repo_url, get_subrepo_relpath
@@ -145,7 +146,7 @@ class Live:
         self._cache_images = cache_images
 
         self._report_mode: Optional[str] = report
-        self._report_notebook = None
+        self._report_notebook: Optional[DisplayHandle] = None
         self._init_report()
 
         self._baseline_rev: str = os.getenv(env.DVC_EXP_BASELINE_REV, NULL_SHA)
@@ -156,7 +157,7 @@ class Live:
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
         self._inside_dvc_pipeline: bool = False
-        self._dvc_repo = None
+        self._dvc_repo: Optional[Repo] = None
         self._include_untracked: List[str] = []
         if env2bool(env.DVCLIVE_TEST):
             self._init_test()
@@ -508,7 +509,7 @@ class Live:
     def log_image(
         self,
         name: str,
-        val: Union[np.ndarray, matplotlib.figure.Figure, PIL.Image.Image, StrPath],
+        val: "Union[np.ndarray, matplotlib.figure.Figure, PIL.Image.Image, StrPath]",
     ):
         """
         Saves the given image `val` to the output file `name`.
@@ -570,7 +571,7 @@ class Live:
     def log_plot(
         self,
         name: str,
-        datapoints: Union[pd.DataFrame, np.ndarray, List[Dict]],
+        datapoints: "Union[pd.DataFrame, np.ndarray, List[Dict]]",
         x: str,
         y: Union[str, list[str]],
         template: Optional[str] = "linear",
@@ -630,8 +631,8 @@ class Live:
     def log_sklearn_plot(
         self,
         kind: str,
-        labels: Union[List, np.ndarray],
-        predictions: Union[List, Tuple, np.ndarray],
+        labels: "Union[List, np.ndarray]",
+        predictions: "Union[List, Tuple, np.ndarray]",
         name: Optional[str] = None,
         title: Optional[str] = None,
         x_label: Optional[str] = None,
