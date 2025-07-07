@@ -44,7 +44,7 @@ dependencies = [
 
 [project.optional-dependencies]
 image = ["numpy", "pillow"]
-sklearn = ["scikit-learn"]
+sklearn = ["scikit-learn>=1.5.0"]
 plots = ["scikit-learn", "pandas", "numpy"]
 markdown = ["matplotlib"]
 tests = [

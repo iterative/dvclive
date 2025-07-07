@@ -54,7 +54,7 @@ class PrecisionRecall(SKLearnPlot):
         from sklearn import metrics
 
         precision, recall, prc_thresholds = metrics.precision_recall_curve(
-            y_true=val[0], probas_pred=val[1], **kwargs
+            y_true=val[0], y_score=val[1], **kwargs
         )
 
         prc = {
