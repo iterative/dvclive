@@ -1,5 +1,4 @@
 # ruff: noqa: SLF001
-from __future__ import annotations
 import base64
 import logging
 import math
@@ -14,8 +13,8 @@ from dvc_studio_client.post_live_metrics import post_live_metrics
 from .utils import catch_and_warn
 
 if TYPE_CHECKING:
-    from dvclive.plots.image import Image
-    from dvclive.live import Live
+    from dvclive.plots.image import Image  # noqa: TC004
+    from dvclive.live import Live  # noqa: TC004
 from dvclive.utils import rel_path, StrPath
 
 logger = logging.getLogger("dvclive")

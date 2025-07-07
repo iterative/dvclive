@@ -122,7 +122,7 @@ class DVCLiveLogger(Logger):
             self.experiment.end()
 
     @staticmethod
-    def _sanitize_params(params: Dict[str, Any]) -> Dict[str, Any]:
+    def _sanitize_params(params: Union[Dict[str, Any], Namespace]) -> Dict[str, Any]:
         from argparse import Namespace
 
         # logging of arrays with dimension > 1 is not supported, sanitize as string

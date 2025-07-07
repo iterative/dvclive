@@ -1,4 +1,3 @@
-from __future__ import annotations
 import builtins
 import glob
 import json
@@ -15,10 +14,12 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union, TYPE_CHECKING, 
 
 
 if TYPE_CHECKING:
-    import numpy as np
-    import pandas as pd
-    import matplotlib
-    import PIL
+    import numpy as np  # noqa: TC004
+    import pandas as pd  # noqa: TC004
+    import matplotlib  # noqa: TC004
+    import PIL  # noqa: TC004
+    from dvc.repo import Repo
+    from IPython.display import DisplayHandle
 
 from dvc.exceptions import DvcException
 from dvc.utils.studio import get_repo_url, get_subrepo_relpath
@@ -145,7 +146,7 @@ class Live:
         self._cache_images = cache_images
 
         self._report_mode: Optional[str] = report
-        self._report_notebook = None
+        self._report_notebook: Optional[DisplayHandle] = None
         self._init_report()
 
         self._baseline_rev: str = os.getenv(env.DVC_EXP_BASELINE_REV, NULL_SHA)
@@ -156,7 +157,7 @@ class Live:
         self._experiment_rev: Optional[str] = None
         self._inside_dvc_exp: bool = False
         self._inside_dvc_pipeline: bool = False
-        self._dvc_repo = None
+        self._dvc_repo: Optional[Repo] = None
         self._include_untracked: List[str] = []
         if env2bool(env.DVCLIVE_TEST):
             self._init_test()
