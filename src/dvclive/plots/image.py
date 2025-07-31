@@ -37,7 +37,7 @@ class Image(Data):
         elif isinstance_without_import(val, "matplotlib.figure", "Figure"):
             import matplotlib.pyplot as plt
 
-            plt.savefig(self.output_path)
+            val.savefig(self.output_path)
             plt.close(val)
         elif isinstance_without_import(val, "PIL.Image", "Image"):
             val.save(self.output_path)
