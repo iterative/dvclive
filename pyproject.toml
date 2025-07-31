@@ -84,10 +84,6 @@ Repository = "https://github.com/iterative/dvclive"
 Changelog = "https://github.com/iterative/dvclive/releases"
 Issues = "https://github.com/iterative/dvclive/issues"
 
-[tool.setuptools]
-license-files = ["LICENSE"]
-platforms = ["any"]
-
 [tool.setuptools.packages.find]
 exclude = ["tests", "tests.*"]
 where = ["src"]
