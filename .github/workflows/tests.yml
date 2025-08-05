@@ -92,3 +92,12 @@ jobs:
 
       - name: Run tests
         run: pytest -v tests --ignore=tests/frameworks
+
+  check:
+    if: always()
+    needs: [test_full, test_core]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
