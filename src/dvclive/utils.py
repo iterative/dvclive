@@ -214,7 +214,7 @@ def read_latest(live, metric_name):
 
 
 def convert_datapoints_to_list_of_dicts(
-    datapoints: Union[List[Dict], pd.DataFrame, np.ndarray],
+    datapoints: Union[List[Dict], "pd.DataFrame", "np.ndarray"],
 ) -> List[Dict]:
     """
     Convert the given datapoints to a list of dictionaries.
