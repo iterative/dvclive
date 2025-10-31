@@ -5,16 +5,32 @@ import os
 
 import nox
 
+nox.options.default_venv_backend = "uv|virtualenv"
 nox.options.reuse_existing_virtualenvs = True
 nox.options.sessions = "lint", "tests"
-locations = "src", "tests"
+
+project = nox.project.load_toml()
+python_versions = nox.project.python_versions(project)
 
 
-@nox.session(python=["3.9", "3.10", "3.11", "3.12", "pypy3.9", "pypy3.10"])
+@nox.session(python=python_versions)
 def tests(session: nox.Session) -> None:
+    session.install(".[dev]")
+    session.run(
+        "pytest",
+        "--cov",
+        "--cov-config=pyproject.toml",
+        *session.posargs,
+        env={"COVERAGE_FILE": f".coverage.{session.python}"},
+    )
+
+
+@nox.session(python=python_versions)
+def core_tests(session: nox.Session) -> None:
     session.install(".[tests]")
     session.run(
         "pytest",
+        "--ignore=tests/frameworks",
         "--cov",
         "--cov-config=pyproject.toml",
         *session.posargs,
@@ -42,8 +58,8 @@ def safety(session: nox.Session) -> None:
 
 @nox.session
 def build(session: nox.Session) -> None:
-    session.install("build", "setuptools", "twine")
-    session.run("python", "-m", "build")
+    session.install("twine", "uv")
+    session.run("uv", "build")
     dists = glob.glob("dist/*")
     session.run("twine", "check", *dists, silent=True)
 
