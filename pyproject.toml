@@ -42,7 +42,7 @@ dependencies = [
   "ruamel.yaml",
   "scmrepo>=3,<4",
   "psutil",
-  "pynvml"
+  "nvidia-ml-py"
 ]
 
 [project.optional-dependencies]
