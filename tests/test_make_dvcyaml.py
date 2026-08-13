@@ -471,3 +471,23 @@ def test_make_dvcyaml_none(tmp_dir, mocker):
     dvclive.end()
 
     assert not os.path.exists("dvc.yaml")
+
+
+def test_make_dvcyaml_nested_dir_not_duplicated(tmp_dir, mocked_dvc_repo):
+    """
+    Regression test for iterative/dvclive#848.
+
+    Entries are written with POSIX separators, so the prefix used to recognize
+    and replace them must be POSIX as well. On Windows the native separator
+    made every existing entry look foreign, and rerunning appended a duplicate
+    instead of replacing it. Only reproducible on Windows; a no-op elsewhere.
+    """
+    for _ in range(2):
+        live = Live(os.path.join("dvclive", "subdir"), dvcyaml="dvc.yaml")
+        live.log_metric("metric", 1)
+        make_dvcyaml(live)
+
+    assert load_yaml(live.dvc_file) == {
+        "metrics": ["dvclive/subdir/metrics.json"],
+        "plots": [{"dvclive/subdir/plots/metrics": {"x": "step"}}],
+    }

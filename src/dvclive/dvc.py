@@ -94,7 +94,11 @@ def update_dvcyaml(live, updates):
     from dvc.utils.serialize import modify_yaml
 
     dvcyaml_dir = os.path.abspath(os.path.dirname(live.dvc_file))
-    dvclive_dir = os.path.relpath(live.dir, dvcyaml_dir) + "/"
+    # Entries are written with POSIX separators (see `rel_path`), so the prefix
+    # used to recognize them has to be POSIX too. Using the native separator
+    # here means no existing entry matches on Windows and stale entries pile up
+    # instead of being replaced.
+    dvclive_dir = Path(os.path.relpath(live.dir, dvcyaml_dir)).as_posix() + "/"
 
     def _drop_stale_dvclive_entries(entries):
         non_dvclive = []
